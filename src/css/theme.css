@@ -8,7 +8,7 @@
     --faint:   #999;
     --link:    #0066cc;
 
-    --measure: 860px;
+    --measure: 768px;
     --pad:     2rem 1.25rem 4rem;
 
     --border:        1px solid color-mix(in srgb, currentColor 18%, transparent);

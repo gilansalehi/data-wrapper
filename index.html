@@ -6,10 +6,7 @@
     <title>data-wrapper — HTML-first reactivity</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="manifest" href="/site.webmanifest">
-    <link rel="stylesheet" href="/src/theme.css">
-    <link rel="stylesheet" href="/src/reset.css">
-    <link rel="stylesheet" href="/src/atoms.css">
-    <link rel="stylesheet" href="/src/app.css">
+    <link rel="stylesheet" href="/src/css/index.css">
     <script src="/dist/data-wrapper.js" type="module"></script>
 </head>
 <body>
@@ -39,7 +36,7 @@
     </button>
     <div class="nav-backdrop" @click="nav/close" aria-hidden="true"></div>
 
-    <dialog $open="/navOpen" aria-label="Site navigation">
+    <dialog $open="/navOpen?format=bool" aria-label="Site navigation">
         <header class="nav-header">
             <strong>data-wrapper</strong>
             <button @click="nav/close" class="nav-close" aria-label="Close navigation">✕</button>

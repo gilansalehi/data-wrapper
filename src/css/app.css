@@ -205,8 +205,8 @@ data-wrapper[data-filter="done"]   button[data-val="done"] {
 #nav[data-nav-open="true"] .nav-hamburger hr:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
 
 /* Sidebar dialog */
-
-#nav dialog {
+#nav dialog { display: none; }
+#nav dialog[open] {
     position: fixed;
     inset-block: 0;
     inset-inline-end: 0;

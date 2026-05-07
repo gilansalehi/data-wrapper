@@ -1,0 +1,552 @@
+/* ============================================================
+   data-wrapper docs
+   ============================================================ */
+
+/* ── Design tokens ── */
+
+:root, [data-theme="light"] {
+    --bg:      #ffffff;
+    --surface: #f6f8fa;
+    --text:    #1a1a1a;
+    --muted:   #5d5d5d;
+    --faint:   #999;
+    --link:    #0066cc;
+
+    --measure: 768px;
+    --pad:     2rem 1.25rem 4rem;
+
+    --border:       1px solid color-mix(in srgb, currentColor 18%, transparent);
+    --border-strong: 1px solid color-mix(in srgb, currentColor 32%, transparent);
+
+    --mono: ui-monospace, monospace;
+
+    --control-bg:     #fff;
+    --control-hover:  color-mix(in srgb, var(--surface) 60%, #fff);
+    --control-border: color-mix(in srgb, currentColor 28%, var(--surface));
+
+    --ink:      #1e1e1e;
+    --ink-text: #9cdcfe;
+
+    --ok-bg:   #d4edda; --ok-text: #155724;
+    --ng-bg:   #f8d7da; --ng-text: #721c24;
+}
+
+[data-theme="dark"] {
+    --bg:      #0e0e16;
+    --surface: #171923;
+    --text:    #dde1e9;
+    --muted:   #a0a6b4;
+    --faint:   #555;
+    --link:    #79c0ff;
+
+    --border:        1px solid color-mix(in srgb, currentColor 20%, transparent);
+    --border-strong: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+
+    --control-bg:     var(--surface);
+    --control-hover:  color-mix(in srgb, var(--surface) 80%, currentColor);
+    --control-border: color-mix(in srgb, currentColor 36%, var(--surface));
+
+    --ink:      #0d1117;
+    --ink-text: #79c0ff;
+
+    --ok-bg:   #1a3326; --ok-text: #7ee787;
+    --ng-bg:   #3a1414; --ng-text: #f85149;
+}
+
+/* ── Reset ── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+    scroll-behavior: smooth;
+    color-scheme: light dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+}
+
+img { display: block; max-width: 100%; }
+
+/* ── Base ── */
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+    line-height: 1.6;
+}
+
+/* ── Layout ── */
+
+body > header,
+main {
+    max-width: var(--measure);
+    margin-inline: auto;
+    padding: var(--pad);
+}
+
+body > header { padding-bottom: 0; }
+
+/* ── Typography ── */
+
+h1 { font-size: 2rem;   margin: 0 0 .2rem; }
+h2 { font-size: 1.2rem; margin: 3rem 0 .75rem; padding-bottom: .4rem; border-bottom: var(--border-strong); }
+h3 { font-size: .95rem; color: var(--muted); margin: 1.75rem 0 .5rem; }
+p  { font-size: .9rem;  margin: .4rem 0 .75rem; }
+
+a {
+    color: var(--link);
+    text-underline-offset: .18em;
+}
+
+a:hover { font-weight: 600; }
+
+.tagline {
+    font-size: 1.05rem;
+    color: var(--muted);
+    margin: .25rem 0 1.5rem;
+}
+
+code {
+    font-size: .82rem;
+    background: var(--surface);
+    padding: .15em .4em;
+    border-radius: 3px;
+    font-family: var(--mono);
+}
+
+/* ── Install snippet ── */
+
+.install {
+    background: var(--ink);
+    color: var(--ink-text);
+    padding: .8rem 1.1rem;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: .82rem;
+    margin: 0 0 1.25rem;
+    overflow-x: auto;
+}
+
+/* ── Demo box ── */
+
+.demo {
+    border: var(--border-strong);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: .4rem;
+    background: var(--surface);
+}
+
+.note { font-size: .78rem; color: var(--faint); margin: .2rem 0 1.5rem; }
+
+/* ── Collapsible source ── */
+
+details {
+    border: var(--border);
+    border-radius: 6px;
+    margin: .4rem 0 1.5rem;
+}
+
+details summary {
+    padding: .4rem .85rem;
+    cursor: pointer;
+    font-size: .75rem;
+    font-family: var(--mono);
+    color: var(--muted);
+    background: var(--surface);
+    border-radius: 6px;
+    user-select: none;
+    list-style: none;
+
+    &:hover { font-weight: 600; }
+}
+
+details summary::marker { content: '+ '; }
+details[open] summary::marker { content: '− '; }
+
+details[open] summary {
+    border-radius: 6px 6px 0 0;
+    border-bottom: var(--border);
+}
+
+details pre {
+    margin: 0;
+    padding: 1rem 1.1rem;
+    background: var(--bg);
+    border-radius: 0 0 6px 6px;
+    font-size: .78rem;
+    font-family: var(--mono);
+    line-height: 1.75;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text);
+}
+
+/* ── Reference tables ── */
+
+table { width: 100%; border-collapse: collapse; font-size: .85rem; margin: .5rem 0 1.25rem; }
+
+th {
+    text-align: left;
+    padding: .45rem .75rem;
+    background: var(--surface);
+    border-bottom: var(--border-strong);
+    color: var(--text);
+}
+
+td {
+    padding: .4rem .75rem;
+    border-bottom: var(--border);
+    vertical-align: top;
+
+    & code { background: none; padding: 0; }
+}
+
+tr:last-child td { border-bottom: none; }
+
+/* ── Form controls ── */
+
+label {
+    display: block;
+    font-size: .85rem;
+    color: var(--muted);
+    margin-bottom: .25rem;
+}
+
+input[type="text"],
+input[type="number"] {
+    padding: .4rem .65rem;
+    font-size: .9rem;
+    border: var(--border-strong);
+    border-radius: 4px;
+    width: 100%;
+    margin-bottom: .5rem;
+    background: var(--bg);
+    color: var(--text);
+}
+
+button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.15em;
+    padding: .35em .8em;
+    font: inherit;
+    cursor: pointer;
+    border: var(--border-strong);
+    border-radius: 4px;
+    background: var(--control-bg);
+    color: var(--text);
+
+    &:hover:not(:disabled) { background: var(--control-hover); }
+
+    &:focus-visible {
+        outline: 2px solid var(--link);
+        outline-offset: 2px;
+    }
+
+    &:disabled { opacity: .55; cursor: not-allowed; }
+}
+
+/* ── Layout helpers ── */
+
+.row {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: .5rem;
+}
+
+/* ── Badge ── */
+
+.badge {
+    display: inline-block;
+    padding: .2rem .75rem;
+    border-radius: 99px;
+    font-size: .8rem;
+    font-weight: 600;
+    background: var(--surface);
+
+    &.on  { background: var(--ok-bg); color: var(--ok-text); }
+    &.off { background: var(--ng-bg); color: var(--ng-text); }
+}
+
+/* ── Counter display ── */
+
+.count-display {
+    font-size: 2rem;
+    font-weight: 700;
+    min-width: 3rem;
+    text-align: center;
+}
+
+/* ── Formatter demo ── */
+
+.fmt-output {
+    font-weight: 600;
+    color: var(--link);
+    font-family: var(--mono);
+}
+
+/* ── Todo list ── */
+
+#app form {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .75rem;
+
+    & input { flex: 1; margin: 0; }
+    & button { white-space: nowrap; }
+}
+
+.todo-list { list-style: none; padding: 0; margin: .75rem 0; }
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-bottom: var(--border);
+
+    &.done span { text-decoration: line-through; opacity: .45; }
+}
+
+.delete-btn {
+    margin-left: auto;
+    color: var(--ng-text);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: .15rem .4rem;
+    font-size: 1rem;
+    min-height: 0;
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: .75rem;
+    font-size: .88rem;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.filter-btns button { margin-left: .2rem; }
+
+.vp-empty-msg { text-align: center; padding: 2rem; color: var(--faint); font-style: italic; }
+
+/* Two-way binding inputs */
+#twoway .row input { flex: 1; margin: 0; }
+#twoway p          { margin: .25rem 0 0; font-size: .85rem; }
+
+/* ── State inspector ── */
+
+.state-pre {
+    background: var(--ink);
+    color: var(--ink-text);
+    border-radius: 6px;
+    padding: .75rem 1rem;
+    font-size: .72rem;
+    font-family: var(--mono);
+    max-height: 200px;
+    overflow: auto;
+    white-space: pre;
+    margin: .5rem 0 0;
+}
+
+/* ── Profile card ── */
+
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    border: var(--border);
+}
+
+/* ── Computed demo ── */
+
+.computed-output { font-size: 1.1rem; font-weight: 600; margin: .5rem 0 0; }
+
+/* ── Demo interior ── */
+
+.demo p:last-child  { margin-bottom: 0; }
+.demo p:first-child { margin-top: 0; }
+
+/* ── CSS-as-view-layer: active filter button ── */
+
+data-wrapper[data-filter="all"]    button[data-val="all"],
+data-wrapper[data-filter="active"] button[data-val="active"],
+data-wrapper[data-filter="done"]   button[data-val="done"] {
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: .18em;
+}
+
+/* ============================================================
+   NAV SIDEBAR
+   Open state driven entirely by data-nav-open attribute — CSS only.
+   ============================================================ */
+
+/* Backdrop */
+.nav-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.35);
+    z-index: 20;
+    cursor: pointer;
+}
+
+#nav[data-nav-open="true"] .nav-backdrop { display: block; }
+
+/* ── Hamburger button — 3 hr lines animate to X via CSS attribute selector ── */
+
+.nav-hamburger {
+    position: fixed;
+    top: .9rem;
+    right: .9rem;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 38px;
+    height: 38px;
+    padding: 9px;
+    border-radius: 6px;
+    background: var(--bg);
+    border: var(--border-strong);
+    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    min-height: 0;
+}
+
+.nav-hamburger hr {
+    all: unset;
+    height: 1.5px;
+    width: 1em;
+    background: currentColor;
+    border-radius: 2px;
+    transition: transform .28s ease, opacity .18s;
+}
+
+/* Animate hamburger → X when nav is open (CSS only, driven by data-nav-open="true") */
+#nav[data-nav-open="true"] .nav-hamburger hr:nth-child(1) {
+    transform: translateY(6.5px) rotate(45deg);
+}
+#nav[data-nav-open="true"] .nav-hamburger hr:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+#nav[data-nav-open="true"] .nav-hamburger hr:nth-child(3) {
+    transform: translateY(-6.5px) rotate(-45deg);
+}
+
+/* Sidebar dialog */
+#nav dialog {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-end: 0;
+    height: 100dvh;
+    width: 240px;
+    margin: 0;
+    max-height: none;
+    border: none;
+    border-left: var(--border-strong);
+    padding: 0;
+    z-index: 25;
+    box-shadow: -2px 0 20px rgba(0,0,0,.1);
+    background: var(--bg);
+    color: var(--text);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.1rem .9rem;
+    border-bottom: var(--border);
+
+    & strong { font-size: .95rem; }
+}
+
+.nav-close {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    color: var(--muted);
+    padding: .15rem .35rem;
+    border-radius: 4px;
+    min-height: 0;
+
+    &:hover { background: var(--surface); color: var(--text); }
+}
+
+.nav-links {
+    display: flex;
+    flex-direction: column;
+    padding: .5rem 0 1rem;
+
+    & a {
+        padding: .5rem 1.1rem;
+        text-decoration: none;
+        color: var(--text);
+        font-size: .88rem;
+        line-height: 1.3;
+
+        &:hover { background: var(--surface); color: var(--link); font-weight: inherit; }
+    }
+}
+
+.nav-footer {
+    padding: .75rem 1.1rem 1.1rem;
+    border-top: var(--border);
+    margin-top: auto;
+}
+
+.theme-toggle {
+    width: 100%;
+    justify-content: flex-start;
+    font-size: .82rem;
+    color: var(--muted);
+    border-color: transparent;
+    background: none;
+    min-height: 0;
+    padding: .35em .4em;
+
+    &:hover:not(:disabled) {
+        background: var(--surface);
+        color: var(--text);
+    }
+}
+
+.nav-section-label {
+    padding: .6rem 1.1rem .2rem;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--faint);
+}
