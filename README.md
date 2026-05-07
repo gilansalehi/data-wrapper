@@ -1,0 +1,28 @@
+The DataWrapper Architecture: A "close-to-the-Metal" Reactivity Manifesto v1.0The DataWrapper framework is a high-performance, zero-dependency reactivity engine designed for the modern web. It rejects the overhead of the Virtual DOM, the bloat of proprietary template compilers, and the security risks of string-based execution in favor of Native URL Parsing, Direct DOM Authority, and Surgical fine-grained reactivity.1. The Core Philosophy: "The DOM is the Truth"Unlike modern frameworks that treat the DOM as a side effect of a JavaScript state machine, DataWrapper treats the DOM as the Master Schema.Bidirectional Mirroring: The <data-wrapper> element’s dataset is intimately linked to the internal Data Store. If a legacy script updates the DOM (el.dataset.user = ...), a MutationObserver catches it and updates the app. When the app updates, the DOM data-* attributes are instantly patched, enabling native CSS state targeting ([data-theme="dark"]).Declarative Tokens: The $, _, and @ attributes are the strict wiring diagrams for the entire application.Zero-Build Portability: Because it relies entirely on native Web Components and standard attributes, the framework requires no compilation or AST generation. It is "Write-Run-Succeed."2. The Native Engine: DWRL (Data Wrapper Resource Locator)We deleted custom string parsers. The framework’s entire routing and state-management system is powered by the browser's native new URL() engine. SEE UPDATED INFO below.  3. The Reactivity Pipeline: From $O(N)$ to $O(1)$The genius of the system lies in its lifecycle. We pay a minimal, one-time tax during the "Wiring Phase" to ensure the application runs at near-instant speeds with zero diffing.Phase A: Hydration & Wiring ($O(N)$)When a data-wrapper mounts, wakeNode performs a single scan of its subtree.Discovery: The parser completely ignores @ attributes for maximum speed, only waking $ (Read) and _ (Patch) elements.The Subscription Map: Subscriptions are mapped directly to memory paths via an identity map (this.subs.get('/user/name')).Phase B: Surgical Reaction & Batching ($O(1)$)Once wired, the framework never walks the tree again.Direct Execution: When a path changes, the wrapper looks up the specific callbacks tied to that path. If 1,000 nodes exist but only 1 is bound to the changed key, only 1 node is touched.Microtask Batching: To prevent layout thrashing, updates are not flushed instantly. Dirty paths are queued, and the DOM is painted exactly once per event loop using queueMicrotask.4. The Security & Event Model: Global DelegationWe’ve solved the event-listener memory leak nightmare by utilizing Global Event Delegation paired with DWRL verbs.The Global Router: Exactly three listeners (click, input, submit) are attached to the top-level wrapper.Zero-Memory Nodes: Because buttons do not have individual listeners, the framework can spawn or destroy thousands of DOM nodes instantly via node.remove() without a single memory leak.The Payload Carrier: When a user clicks, the global router catches the bubble, parses the DWRL command (e.g., @click="PUT /ui/modalOpen"), scrapes the DOM element's native value or checked property as the payload, and surgically mutates the Data Store.5. The Control Surface: Inert HTML TemplatesDataWrapper achieves complex layout routing without a Virtual DOM by hijacking standard, inert <template> tags.The Iterator ($list): Iterates over arrays using an Identity Token Strategy. It attaches a native Map to the parent container, tracking DOM nodes by their unique ID. When the array changes, it performs an $O(N)$ diff of the map to strictly append, re-order, or remove physical nodes, completely bypassing virtual tree diffing.The Standalone Conditional ($if): Rejects wrapper elements that break CSS layouts (Flexbox/Grid). It evaluates standalone templates using a strict Micro-Expression equation ($if="/user/age >= 18"). If true, it stamps the branch into the DOM. If false, it completely unmounts the nodes, saving memory.The kernel is locked. The parser is purely URL-driven. The reactivity is fine-grained. We have successfully rebuilt the foundations of a web framework without sacrificing a single ounce of "metal."
+
+UPDATED INFO:
+2. The Native Engine: DWRL (Data Wrapper Resource Locator)
+
+We deleted custom string parsers and REST verb redundancies. The framework’s entire routing and state-management system is powered by the browser's native new URL() engine. The Intent (Read vs. Write) is handled by the DOM Token ($, @, _), meaning the string itself is a pure, unadulterated address. Every dynamic attribute is parsed into a DWRL Request Object.
+
+The Canonical Structure: [Scheme]://[Authority].[Storage]/[Path] | [Pipes]
+
+    Schemes: * data:// (Default) - Targets the reactive Data Store.
+
+        action:// - Targets registered RPC functions in the Kernel.
+
+        api:// - Targets external network endpoints for zero-JS fetching.
+
+    Authority (Host): Targets the id of a specific <data-wrapper>, enabling native cross-component mesh routing (e.g., //cart.data/isOpen).
+
+    Storage (TLD): Defaults to .data (the internal store), but can target .local (localStorage) or .session (sessionStorage).
+
+    Path: Pure Unix-style directory paths (e.g., /ui/activeTab).
+
+    Pipes: An optional | separated list of synchronous formatters applied to the data (e.g., | upper | not).
+
+Shorthand Examples:
+
+    /draft -> Resolves natively to data://[current-wrapper].data/draft
+
+    //cart.data/isOpen -> Protocol-relative lookup bypassing the current wrapper to target the cart wrapper.

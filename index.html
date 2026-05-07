@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VanillaPlus Framework</title>
+    <style>
+        body { max-width: 500px; margin: 2rem auto; font-family: system-ui, sans-serif; padding: 1rem; }
+        input[name="task"] { width: 100%; padding: 0.8rem; font-size: 1.2rem; box-sizing: border-box; }
+        .todo-list { list-style: none; padding: 0; }
+        .todo-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; }
+        .todo-item.done span { text-decoration: line-through; opacity: 0.5; }
+        .vp-empty-msg { text-align: center; padding: 2rem; color: #888; font-style: italic; background: #fafafa; }
+        .controls { display: flex; justify-content: space-between; margin-top: 1rem; }
+        .delete-btn { margin-left: auto; color: red; background: none; border: none; cursor: pointer; }
+
+        data-wrapper[data-filter="all"] button[data-val="all"],
+        data-wrapper[data-filter="active"] button[data-val="active"],
+        data-wrapper[data-filter="done"] button[data-val="done"] {
+            font-weight: bold; text-decoration: underline;
+        }
+    </style>
+    <script src="/src/js/data-wrapper.js" type="module" ></script>
+</head>
+<body>
+
+    <template id="vp-empty">
+        <li class="vp-empty-msg">No tasks found. Time to relax!</li>
+    </template>
+
+    <data-wrapper id="app" data-filter="all">
+        <h1>Todos</h1>
+
+        <form @submit="todo:add">
+            <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off">
+        </form>
+
+        <ul class="todo-list" $list="view" data-empty="vp-empty">
+            <template>
+                <li class="todo-item" $class="status">
+                    <input type="checkbox" $checked="done" @change="todo:toggle">
+                    <span $text="task"></span>
+                    <button class="delete-btn" @click="todo:remove">✕</button>
+                </li>
+            </template>
+        </ul>
+
+        <div class="controls">
+            <span><strong $text="active | count">0</strong> items left</span>
+            <div>
+                <button @click="filter:set" data-val="all">All</button>
+                <button @click="filter:set" data-val="active">Active</button>
+                <button @click="filter:set" data-val="done">Done</button>
+            </div>
+        </div>
+    </data-wrapper>
+
+    <script async defer>
+    /* ==========================================================================
+       APP LOGIC
+       ========================================================================== */
+    customElements.whenDefined('data-wrapper').then(() => {
+        const app = document.getElementById('app');
+
+        app.put('todos', [
+            { id: 1, task: 'Master the DOM', status: 'done', done: true },
+            { id: 2, task: 'Deploy VanillaPlus', status: 'active', done: false }
+        ]);
+
+        const compute = () => {
+            const todos = app.state.get('todos') || [];
+            const filter = app.state.get('filter') || 'all';
+            app.put('active', todos.filter(t => !t.done));
+            app.put('view', todos.filter(t => filter === 'all' || (filter === 'active' && !t.done) || (filter === 'done' && t.done)));
+        };
+
+        app.addEventListener('data:sync', e => ['todos', 'filter'].includes(e.detail.key) && compute());
+        compute();
+
+        app.on('todo:add', e => {
+            e.preventDefault();
+            const input = e.target.querySelector('input');
+            if (!input.value.trim()) return;
+            app.put('todos', prev => [...(prev || []), { id: Date.now(), task: input.value.trim(), status: 'active', done: false }]);
+            input.value = '';
+        });
+
+        app.on('todo:toggle', e => app.put('todos', prev => prev.map(t => t.id === e.item.id ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' } : t)));
+        app.on('todo:remove', e => app.put('todos', prev => prev.filter(t => t.id !== e.item.id)));
+        app.on('filter:set', e => app.put('filter', e.target.dataset.val));
+    });
+</script>
+</body>
+</html>
