@@ -16,7 +16,9 @@ export const VP_FORMATTERS = new Map<string, Formatter>([
     ['currency', v => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(v) || 0)],
     ['date', v => v ? new Date(v as string).toLocaleDateString() : ''],
     ['trim', v => String(v || '').trim()],
-    ['bool', v => !!v],
+    ['bool',  v => !!v],
+    ['onoff', v => v ? 'on' : 'off'],
+    ['yesno', v => v ? 'yes' : 'no'],
 ]);
 
 export const PROP_ALIASES: Record<string, string> = {
