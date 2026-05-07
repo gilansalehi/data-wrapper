@@ -1,37 +1,39 @@
-import { q, qcb, emit, on } from './utils.ts';
-import { wakeTree } from './wire.ts';
+import { emit } from './utils.ts';
+import { RENDER_DIRECTIVES } from './registry.ts';
+import { applyBinding, reconcile } from './engine.ts';
+import { wake } from './wire.ts';
 import type { UpdateConfig } from './types.ts';
 
-type ItemNode = Element & { _vItem?: Record<string, unknown> };
-type VNode = Element & { _vBase?: Set<string>; _vState?: { dynamic: string; additive: string } };
-
 export class DataWrapper extends HTMLElement {
-    declare state: Record<string, unknown>;
-    declare subs: Record<string, UpdateConfig[]>;
-    declare _isSyncing: boolean;
-    declare _listCache: Map<Element, Map<unknown, Element>>;
-    declare observer: MutationObserver;
+    declare state:        Record<string, unknown>;
+    declare subs:         Record<string, UpdateConfig[]>;
+    declare _actions:     Record<string, EventListener>;
+    declare _boundEvents: Set<string>;
+    declare _isSyncing:   boolean;
+    declare _listCache:   Map<Element, Map<unknown, Element>>;
+    declare observer:     MutationObserver;
 
     constructor() {
         super();
         const self = this;
 
-        self.subs = {};
-        self._isSyncing = false;
-        self._listCache = new Map();
+        self.subs         = {};
+        self._actions     = {};
+        self._boundEvents = new Set();
+        self._isSyncing   = false;
+        self._listCache   = new Map();
 
         self.state = new Proxy(self.dataset as unknown as Record<string, unknown>, {
             set(target, key: string, value: unknown) {
                 const serialized = (value && typeof value === 'object')
                     ? JSON.stringify(value)
-                    : value;
+                    : String(value ?? '');
 
-                if ((target as DOMStringMap)[key] === String(serialized)) return true;
+                if ((target as DOMStringMap)[key] === serialized) return true;
 
                 self._isSyncing = true;
-                (target as DOMStringMap)[key] = String(serialized);
+                (target as DOMStringMap)[key] = serialized;
                 self._notify(key, value);
-
                 queueMicrotask(() => { self._isSyncing = false; });
                 return true;
             },
@@ -42,13 +44,13 @@ export class DataWrapper extends HTMLElement {
             },
         });
 
-        self.observer = new MutationObserver((mutations) => {
+        self.observer = new MutationObserver(mutations => {
             if (self._isSyncing) return;
             for (const m of mutations) {
                 const attr = m.attributeName;
                 if (attr?.startsWith('data-')) {
-                    const prop = attr.slice(5).replace(/-./g, match => match[1].toUpperCase());
-                    self._notify(prop, self.state[prop]);
+                    const key = attr.slice(5).replace(/-./g, c => c[1].toUpperCase());
+                    self._notify(key, self.state[key]);
                 }
             }
         });
@@ -56,10 +58,8 @@ export class DataWrapper extends HTMLElement {
 
     connectedCallback() {
         this.observer.observe(this, { attributes: true });
-        wakeTree(this, this);
-        for (const key of Object.keys(this.dataset)) {
-            this._notify(key, this.state[key]);
-        }
+        wake(this, null);
+        for (const key of Object.keys(this.dataset)) this._notify(key, this.state[key]);
         emit('data-wrapper:load', this);
     }
 
@@ -67,37 +67,66 @@ export class DataWrapper extends HTMLElement {
         this.observer.disconnect();
     }
 
-    _notify(key: string, value: unknown) {
-        const list = this.subs[key];
-        if (!list) return;
-        for (const config of list) {
-            if (!config.el.isConnected) continue;
-            let val = value;
-            for (const pipe of config.pipes) val = pipe(val);
-            const { el, prop, itemNode } = config;
-            if (itemNode) val = (itemNode as ItemNode)._vItem?.[key] ?? val;
+    // -----------------------------------------------------------------------
+    // _notify — broadcasts a state change to all wrapper-scoped subscribers
+    // -----------------------------------------------------------------------
 
-            if (prop === 'class') {
-                const v = el as VNode;
-                v._vBase = v._vBase ?? new Set([...el.classList]);
-                const s = v._vState = v._vState ?? { dynamic: '', additive: '' };
-                s.dynamic = String(val ?? '');
-                el.className = ([...v._vBase].join(' ') + ` ${s.dynamic} ${s.additive}`).replace(/\s+/g, ' ').trim();
-            } else if (prop in el) {
-                (el as unknown as Record<string, unknown>)[prop] = val;
+    _notify(key: string, val: unknown) {
+        for (const config of this.subs[key] || []) {
+            if (!config.el.isConnected) continue;
+            let v = val;
+            for (const pipe of config.pipes) v = pipe(v);
+
+            if (RENDER_DIRECTIVES.has(config.prop)) {
+                this._runDirective(config, v);
             } else {
-                el.setAttribute(prop, String(val));
+                applyBinding(config.el, config.prop, v);
             }
         }
     }
 
-    register(path: string, updater: UpdateConfig) {
-        (this.subs[path] = this.subs[path] || []).push(updater);
-        this._notify(path, this.state[path]);
+    // -----------------------------------------------------------------------
+    // _runDirective — executes a RENDER_DIRECTIVE for a given config + value
+    // -----------------------------------------------------------------------
+
+    _runDirective(config: UpdateConfig, val: unknown) {
+        if (config.prop === 'list') {
+            const tpl = Array.from(config.el.children)
+                .find(c => c.tagName === 'TEMPLATE') as HTMLTemplateElement | undefined;
+            if (!tpl) return;
+            let cache = this._listCache.get(config.el);
+            if (!cache) { cache = new Map(); this._listCache.set(config.el, cache); }
+            reconcile(config.el, val as Array<Record<string, unknown>> || [], cache, tpl, wake);
+        }
+        // future: 'match', 'if', ...
     }
 
+    // -----------------------------------------------------------------------
+    // _register — internal: adds a DOM subscription and fires initial sync
+    // -----------------------------------------------------------------------
+
+    _register(path: string, config: UpdateConfig) {
+        (this.subs[path] = this.subs[path] || []).push(config);
+        const val = this.state[path];
+        if (val !== undefined) this._notify(path, val);
+    }
+
+    // -----------------------------------------------------------------------
+    // Public API: register action handlers
+    // -----------------------------------------------------------------------
+
+    register(actions: Record<string, EventListener>) {
+        Object.assign(this._actions, actions);
+    }
+
+    // -----------------------------------------------------------------------
+    // State mutation API
+    // -----------------------------------------------------------------------
+
     put(key: string, val: unknown | ((prev: unknown) => unknown)) {
-        const next = typeof val === 'function' ? (val as (p: unknown) => unknown)(this.state[key]) : val;
+        const next = typeof val === 'function'
+            ? (val as (p: unknown) => unknown)(this.state[key])
+            : val;
         if (this.state[key] === next) return;
         this.state[key] = next;
         this.dispatchEvent(new CustomEvent('data:sync', { detail: { key }, bubbles: true }));
@@ -113,7 +142,7 @@ export class DataWrapper extends HTMLElement {
 
     pull(key: string, predicate: ((item: unknown) => boolean) | unknown) {
         const current = this.state[key] as unknown[] || [];
-        const fn = typeof predicate === 'function'
+        const fn      = typeof predicate === 'function'
             ? predicate as (i: unknown) => boolean
             : (i: unknown) => (i as Record<string, unknown>).id !== predicate;
         this.put(key, current.filter(fn));
@@ -123,16 +152,11 @@ export class DataWrapper extends HTMLElement {
         const url = new URL(input, base || 'dwrl://localhost/');
         return {
             authority: url.host,
-            segments: url.pathname.split('/').filter(Boolean),
-            property: url.hash.slice(1),
-            params: Object.fromEntries([...url.searchParams]),
+            segments:  url.pathname.split('/').filter(Boolean),
+            property:  url.hash.slice(1),
+            params:    Object.fromEntries([...url.searchParams]),
         };
     }
-
-    q(selector: string) { return q(selector, this); }
-    qcb(selector: string, cb?: (el: Element) => unknown) { return qcb(selector, cb, this); }
-    on(eventName: string, cb: EventListener, delegate = '') { return on(eventName, cb, delegate, this); }
-    emit(eventName: string, payload?: unknown) { return emit(eventName, payload, this); }
 }
 
 customElements.define('data-wrapper', DataWrapper);

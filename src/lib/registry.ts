@@ -34,6 +34,10 @@ export const PROP_ALIASES: Record<string, string> = {
 
 export const resolveAlias = (key: string) => PROP_ALIASES[key] || key;
 
+// Attributes whose values are DOM rendering directives, not simple prop setters.
+// These are intercepted before sync() and handled by _runDirective().
+export const RENDER_DIRECTIVES = new Set(['list']);
+
 export const sync = (el: Element, prop: string, val: unknown) => {
     const alias = resolveAlias(prop);
     if (alias in el) {

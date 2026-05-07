@@ -3,92 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VanillaPlus Framework</title>
+    <title>data-wrapper — Component Showcase</title>
     <style>
-        body { max-width: 500px; margin: 2rem auto; font-family: system-ui, sans-serif; padding: 1rem; }
-        input[name="task"] { width: 100%; padding: 0.8rem; font-size: 1.2rem; box-sizing: border-box; }
-        .todo-list { list-style: none; padding: 0; }
-        .todo-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; }
-        .todo-item.done span { text-decoration: line-through; opacity: 0.5; }
-        .vp-empty-msg { text-align: center; padding: 2rem; color: #888; font-style: italic; background: #fafafa; }
-        .controls { display: flex; justify-content: space-between; margin-top: 1rem; }
-        .delete-btn { margin-left: auto; color: red; background: none; border: none; cursor: pointer; }
-
-        data-wrapper[data-filter="all"] button[data-val="all"],
-        data-wrapper[data-filter="active"] button[data-val="active"],
-        data-wrapper[data-filter="done"] button[data-val="done"] {
-            font-weight: bold; text-decoration: underline;
-        }
+        * { box-sizing: border-box; }
+        body { max-width: 600px; margin: 2rem auto; font-family: system-ui, sans-serif; padding: 1rem; }
+        h1 { font-size: 1.4rem; }
+        h2 { font-size: 1rem; margin: 2rem 0 .5rem; color: #444; }
+        .demo { border: 1px solid #ddd; border-radius: 6px; padding: 1rem; margin-bottom: .5rem; }
+        .demo p { margin: .5rem 0 0; font-size: .9rem; color: #333; }
+        label { display: block; font-size: .85rem; color: #666; margin-bottom: .25rem; }
+        input[type="text"] { width: 100%; padding: .5rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: .4rem .9rem; font-size: .9rem; cursor: pointer; }
+        .status { display: inline-block; padding: .2rem .6rem; border-radius: 99px; font-size: .8rem; background: #eee; }
+        .status.on  { background: #d4edda; color: #155724; }
+        .status.off { background: #f8d7da; color: #721c24; }
+        pre { background: #f4f4f4; padding: .75rem; border-radius: 4px; font-size: .8rem; margin: .5rem 0 0; }
     </style>
     <script src="/dist/data-wrapper.js" type="module"></script>
 </head>
 <body>
 
-    <template id="vp-empty">
-        <li class="vp-empty-msg">No tasks found. Time to relax!</li>
-    </template>
+<h1>data-wrapper — Component Showcase</h1>
+<p style="font-size:.85rem;color:#888">Each demo is a standalone &lt;data-wrapper&gt; component. Open DevTools to inspect <code>data-*</code> attribute reflection.</p>
 
-    <data-wrapper id="app" data-filter="all">
-        <h1>Todos</h1>
-
-        <form @submit="todo:add">
-            <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off">
-        </form>
-
-        <ul class="todo-list" $list="view" data-empty="vp-empty">
-            <template>
-                <li class="todo-item" $class="status">
-                    <input type="checkbox" $checked="done" @change="todo:toggle">
-                    <span $text="task"></span>
-                    <button class="delete-btn" @click="todo:remove">✕</button>
-                </li>
-            </template>
-        </ul>
-
-        <div class="controls">
-            <span><strong $text="active | count">0</strong> items left</span>
-            <div>
-                <button @click="filter:set" data-val="all">All</button>
-                <button @click="filter:set" data-val="active">Active</button>
-                <button @click="filter:set" data-val="done">Done</button>
-            </div>
-        </div>
+<!-- =====================================================================
+     DEMO 1: Static binding
+     Tests: initial state hydration from data-* attrs, $text, no JS required
+     ===================================================================== -->
+<h2>1. Static binding (no JS)</h2>
+<div class="demo">
+    <data-wrapper data-greeting="Hello" data-name="World">
+        <p>
+            <span $text="/greeting"></span>,&nbsp;<strong $text="/name"></strong>!
+        </p>
     </data-wrapper>
+</div>
+<p style="font-size:.8rem;color:#888">Expects: "Hello, <strong>World</strong>!" rendered from the data-* attrs with no script.</p>
 
-    <script async defer>
-    /* ==========================================================================
-       APP LOGIC
-       ========================================================================== */
-    customElements.whenDefined('data-wrapper').then(() => {
-        const app = document.getElementById('app');
+<!-- =====================================================================
+     DEMO 2: Toggle
+     Tests: @click → action handler → put() → $text + $class update
+     ===================================================================== -->
+<h2>2. Toggle</h2>
+<div class="demo">
+    <data-wrapper id="toggle" data-on="false">
+        <button @click="action:toggle">Toggle</button>
+        <span class="status" $class="/on?format=boolclass">&nbsp;</span>
+        <p>State: <code $text="/on"></code></p>
+    </data-wrapper>
+</div>
+<p style="font-size:.8rem;color:#888">Expects: button click flips a boolean, text updates to <code>true</code>/<code>false</code>, badge class changes.</p>
 
-        app.put('todos', [
-            { id: 1, task: 'Master the DOM', status: 'done', done: true },
-            { id: 2, task: 'Deploy VanillaPlus', status: 'active', done: false }
-        ]);
+<!-- =====================================================================
+     DEMO 3: Controlled input
+     Tests: @input → action handler → put() → $text mirrors input value
+     ===================================================================== -->
+<h2>3. Controlled input</h2>
+<div class="demo">
+    <data-wrapper id="controlled" data-message="">
+        <label>Type something:</label>
+        <input type="text" @input="action:input/update" placeholder="…">
+        <p>Echo: <strong $text="/message"></strong></p>
+    </data-wrapper>
+</div>
+<p style="font-size:.8rem;color:#888">Expects: every keystroke updates the echo below in real time.</p>
 
-        const compute = () => {
-            const todos = app.state.todos || [];
-            const filter = app.state.filter || 'all';
-            app.put('active', todos.filter(t => !t.done));
-            app.put('view', todos.filter(t => filter === 'all' || (filter === 'active' && !t.done) || (filter === 'done' && t.done)));
-        };
+<!-- =====================================================================
+     DEMO 4: Two-way — input value bound back to itself
+     Tests: $value + @input round-trip
+     ===================================================================== -->
+<h2>4. Two-way binding</h2>
+<div class="demo">
+    <data-wrapper id="twoway" data-val="">
+        <label>Controlled input (value flows through state):</label>
+        <input type="text" $value="/val" @input="action:val/update" placeholder="…">
+        <p>State: <code $text="/val"></code></p>
+    </data-wrapper>
+</div>
+<p style="font-size:.8rem;color:#888">Expects: <code>$value</code> sets the input's value from state; typing updates state and the code below.</p>
 
-        app.addEventListener('data:sync', e => ['todos', 'filter'].includes(e.detail.key) && compute());
-        compute();
 
-        app.on('todo:add', e => {
-            e.preventDefault();
-            const input = e.target.querySelector('input');
-            if (!input.value.trim()) return;
-            app.put('todos', prev => [...(prev || []), { id: Date.now(), task: input.value.trim(), status: 'active', done: false }]);
-            input.value = '';
-        });
+<!-- =====================================================================
+     APP LOGIC
+     ===================================================================== -->
+<script>
+customElements.whenDefined('data-wrapper').then(() => {
 
-        app.on('todo:toggle', e => app.put('todos', prev => prev.map(t => t.id === e.item.id ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' } : t)));
-        app.on('todo:remove', e => app.put('todos', prev => prev.filter(t => t.id !== e.item.id)));
-        app.on('filter:set', e => app.put('filter', e.target.dataset.val));
+    // Demo 2 — Toggle
+    const toggle = document.getElementById('toggle');
+    toggle.register({
+        'toggle': () => toggle.put('on', v => !v),
     });
+
+    // Demo 3 — Controlled input
+    const controlled = document.getElementById('controlled');
+    controlled.register({
+        'input/update': e => controlled.put('message', e.target.value),
+    });
+
+    // Demo 4 — Two-way
+    const twoway = document.getElementById('twoway');
+    twoway.register({
+        'val/update': e => twoway.put('val', e.target.value),
+    });
+
+});
 </script>
+
 </body>
 </html>

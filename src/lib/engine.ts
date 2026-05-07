@@ -1,20 +1,57 @@
-import { VP_FORMATTERS, VP_TEMPLATES } from './registry.ts';
+import { VP_TEMPLATES, sync } from './registry.ts';
+import type { UpdateConfig } from './types.ts';
 
-type VNode = Element & { _vBase?: Set<string>; _vState?: { dynamic: string; additive: string } };
+// Internal augmented element types
+type VNode       = Element & { _vBase?: Set<string>; _vState?: { dynamic: string; additive: string } };
+type ItemElement = Element & { _vItem?: Record<string, unknown>; _vItemConfigs?: UpdateConfig[] };
+
+// ---------------------------------------------------------------------------
+// applyBinding — routes a resolved value to the correct DOM setter
+// ---------------------------------------------------------------------------
+
+export const applyBinding = (el: Element, prop: string, val: unknown) => {
+    if (val === undefined || val === null) return;
+
+    if (prop === 'class') {
+        const v     = el as VNode;
+        v._vBase    = v._vBase ?? new Set([...el.classList]);
+        const s     = v._vState = v._vState ?? { dynamic: '', additive: '' };
+        s.dynamic   = String(val);
+        el.className = ([...v._vBase].join(' ') + ' ' + s.dynamic + ' ' + s.additive)
+            .replace(/\s+/g, ' ').trim();
+        return;
+    }
+
+    if (prop === 'additive') {
+        const v     = el as VNode;
+        v._vBase    = v._vBase ?? new Set([...el.classList]);
+        const s     = v._vState = v._vState ?? { dynamic: '', additive: '' };
+        s.additive  = String(val);
+        el.className = ([...v._vBase].join(' ') + ' ' + s.dynamic + ' ' + s.additive)
+            .replace(/\s+/g, ' ').trim();
+        return;
+    }
+
+    sync(el, prop, val);
+};
+
+// ---------------------------------------------------------------------------
+// applyItemBindings — re-applies item-scoped configs after _vItem changes
+// ---------------------------------------------------------------------------
+
+export const applyItemBindings = (node: Element, item: Record<string, unknown>) => {
+    for (const config of (node as ItemElement)._vItemConfigs || []) {
+        let val: unknown = item[config.path];
+        for (const pipe of config.pipes) val = pipe(val);
+        applyBinding(config.el, config.prop, val);
+    }
+};
+
+// ---------------------------------------------------------------------------
+// reconcile — O(N) list diff against a Map cache keyed by item.id
+// ---------------------------------------------------------------------------
+
 type ContainerNode = Element & { _vEmptyNode?: Element | null };
-type ItemNode = Element & { _vItem?: unknown };
-
-export const applyPipes = (rawValue: unknown, pipes: string[]): unknown => {
-    if (!pipes || pipes.length === 0) return rawValue ?? '';
-    return pipes.reduce((acc, p) => (VP_FORMATTERS.get(p) ? VP_FORMATTERS.get(p)!(acc) : acc), rawValue) ?? '';
-};
-
-export const syncClass = (el: VNode, val: string, type: 'dynamic' | 'additive') => {
-    if (el._vBase === undefined) el._vBase = new Set([...el.classList]);
-    el._vState = el._vState || { dynamic: '', additive: '' };
-    el._vState[type] = val || '';
-    el.className = ([...el._vBase].join(' ') + ` ${el._vState.dynamic} ${el._vState.additive}`).replace(/\s+/g, ' ').trim();
-};
 
 export const reconcile = (
     container: ContainerNode,
@@ -23,16 +60,21 @@ export const reconcile = (
     tpl: HTMLTemplateElement,
     hydrate: (node: Element, itemNode: Element) => void,
 ) => {
+    // Empty state
     if (!data || data.length === 0) {
         cache.forEach(node => node.remove());
         cache.clear();
 
         if (!container._vEmptyNode) {
             const emptyName = container.getAttribute('data-empty') || 'vp-empty';
-            const emptyTpl = VP_TEMPLATES.get(emptyName);
-            const frag = emptyTpl
+            const emptyTpl  = VP_TEMPLATES.get(emptyName);
+            const frag      = emptyTpl
                 ? (emptyTpl.content.cloneNode(true) as DocumentFragment)
-                : (() => { const t = document.createElement('template'); t.innerHTML = '<slot></slot>'; return t.content.cloneNode(true) as DocumentFragment; })();
+                : (() => {
+                    const t = document.createElement('template');
+                    t.innerHTML = '<span></span>';
+                    return t.content.cloneNode(true) as DocumentFragment;
+                })();
             container._vEmptyNode = frag.firstElementChild ?? null;
             if (container._vEmptyNode) container.appendChild(container._vEmptyNode);
         }
@@ -45,27 +87,33 @@ export const reconcile = (
     }
 
     const activeIds = new Set<unknown>();
-    const fragment = document.createDocumentFragment();
+    const fragment  = document.createDocumentFragment();
 
     data.forEach(item => {
-        const id = item.id ?? JSON.stringify(item);
+        const id    = item.id ?? JSON.stringify(item);
         activeIds.add(id);
 
-        let node = cache.get(id);
+        let node  = cache.get(id);
         let isNew = false;
 
         if (!node) {
-            node = (tpl.content.cloneNode(true) as DocumentFragment).firstElementChild!;
+            node  = (tpl.content.cloneNode(true) as DocumentFragment).firstElementChild!;
             cache.set(id, node);
             isNew = true;
         }
 
-        (node as ItemNode)._vItem = item;
-        if (isNew) hydrate(node, node);
+        (node as ItemElement)._vItem = item;
+
+        if (isNew) {
+            hydrate(node, node);        // wake subtree; item-scoped bindings register + fire
+        } else {
+            applyItemBindings(node, item); // re-apply local bindings with updated item data
+        }
 
         fragment.appendChild(node);
     });
 
+    // Remove stale nodes
     cache.forEach((node, id) => {
         if (!activeIds.has(id)) { node.remove(); cache.delete(id); }
     });
