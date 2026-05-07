@@ -24,7 +24,7 @@ export const on = (eventName, cb, delegate = '', ctx = document) => {
 //#region REGISTRY
 export const CONFIG = Object.assign({
     TOKENS: { BIND: '$', ADD: '_', EVT: '@' },
-    NO_WAKE: ['DATA-WRAPPER', 'TEMPLATE', SVG],
+    NO_WAKE: ['DATA-WRAPPER', 'TEMPLATE', 'SVG'],
 }, window.VP_CUSTOM_CONFIG || {});
 
 export const VP_TEMPLATES = new Map();
