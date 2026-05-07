@@ -1,27 +1,27 @@
-import { emit } from './utils.ts';
+import { emit, q } from './utils.ts';
 import { RENDER_DIRECTIVES, CONFIG } from './registry.ts';
 import { applyBinding, reconcile } from './engine.ts';
 import { wake, ensureDelegation } from './wire.ts';
-import type { UpdateConfig } from './types.ts';
+import type { UpdateConfig } from './engine.ts';
 
 export class DataWrapper extends HTMLElement {
-    declare state:        Record<string, unknown>;
-    declare subs:         Record<string, UpdateConfig[]>;
-    declare _actions:     Record<string, EventListener>;
-    declare _boundEvents: Set<string>;
-    declare _isSyncing:   boolean;
-    declare _listCache:   Map<Element, Map<unknown, Element>>;
-    declare observer:     MutationObserver;
+    declare state:      Record<string, unknown>;
+    declare _subs:      Record<string, UpdateConfig[]>;
+    declare _actions:   Record<string, EventListener>;
+    declare _listeners: Map<string, () => void>;
+    declare _isSyncing: boolean;
+    declare _listCache: Map<Element, Map<unknown, Element>>;
+    declare _observer:  MutationObserver;
 
     constructor() {
         super();
         const self = this;
 
-        self.subs         = {};
-        self._actions     = {};
-        self._boundEvents = new Set();
-        self._isSyncing   = false;
-        self._listCache   = new Map();
+        self._subs      = {};
+        self._actions   = {};
+        self._listeners = new Map();
+        self._isSyncing = false;
+        self._listCache = new Map();
 
         self.state = new Proxy(self.dataset as unknown as Record<string, unknown>, {
             set(target, key: string, value: unknown) {
@@ -33,7 +33,7 @@ export class DataWrapper extends HTMLElement {
 
                 self._isSyncing = true;
                 (target as DOMStringMap)[key] = serialized;
-                self._notify(key, value);
+                self._broadcast(key, value);
                 queueMicrotask(() => { self._isSyncing = false; });
                 return true;
             },
@@ -44,41 +44,43 @@ export class DataWrapper extends HTMLElement {
             },
         });
 
-        self.observer = new MutationObserver(mutations => {
+        self._observer = new MutationObserver(mutations => {
             if (self._isSyncing) return;
             for (const m of mutations) {
                 const attr = m.attributeName;
                 if (attr?.startsWith('data-')) {
                     const key = attr.slice(5).replace(/-./g, c => c[1].toUpperCase());
-                    self._notify(key, self.state[key]);
+                    self._broadcast(key, self.state[key]);
                 }
             }
         });
     }
 
     connectedCallback() {
-        this.observer.observe(this, { attributes: true });
+        this._observer.observe(this, { attributes: true });
         wake(this, null);
-        for (const key of Object.keys(this.dataset)) this._notify(key, this.state[key]);
+        for (const key of Object.keys(this.dataset)) this._broadcast(key, this.state[key]);
         emit('data-wrapper:load', this);
     }
 
     disconnectedCallback() {
-        this.observer.disconnect();
+        this._observer.disconnect();
+        this._listeners.forEach(unsub => unsub());
+        this._listeners.clear();
     }
 
-    _notify(key: string, val: unknown) {
-        for (const config of this.subs[key] || []) {
+    _broadcast(key: string, val: unknown) {
+        for (const config of this._subs[key] || []) {
             if (!config.el.isConnected) continue;
             let v = val;
             for (const pipe of config.pipes) v = pipe(v);
             RENDER_DIRECTIVES.has(config.prop)
-                ? this._runDirective(config, v)
+                ? this._directive(config, v)
                 : applyBinding(config.el, config.prop, v);
         }
     }
 
-    _runDirective(config: UpdateConfig, val: unknown) {
+    _directive(config: UpdateConfig, val: unknown) {
         if (config.prop === 'list') {
             const tpl = config.el.querySelector(':scope > template') as HTMLTemplateElement | null;
             if (!tpl) return;
@@ -86,7 +88,7 @@ export class DataWrapper extends HTMLElement {
             // Pre-register event types from template content so delegation works
             // even when items are woken while still detached from the DOM.
             const { EVT } = CONFIG.TOKENS;
-            for (const el of tpl.content.querySelectorAll('*')) {
+            for (const el of q('*', tpl.content)) {
                 for (const { name } of [...el.attributes]) {
                     if (name.startsWith(EVT)) ensureDelegation(this, name.slice(EVT.length));
                 }
@@ -98,10 +100,10 @@ export class DataWrapper extends HTMLElement {
         }
     }
 
-    _register(path: string, config: UpdateConfig) {
-        (this.subs[path] = this.subs[path] || []).push(config);
+    _sub(path: string, config: UpdateConfig) {
+        (this._subs[path] = this._subs[path] || []).push(config);
         const val = this.state[path];
-        if (val !== undefined) this._notify(path, val);
+        if (val !== undefined) this._broadcast(path, val);
     }
 
     register(actions: Record<string, EventListener>) {

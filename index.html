@@ -1,156 +1,298 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>data-wrapper — Showcase & Reference</title>
     <style>
-        * { box-sizing: border-box; }
-        body { max-width: 860px; margin: 2rem auto; font-family: system-ui, sans-serif; padding: 1rem; }
-        h1 { font-size: 1.5rem; }
-        h2 { font-size: 1.1rem; margin: 2.5rem 0 .5rem; border-bottom: 1px solid #e5e5e5; padding-bottom: .4rem; }
-        h3 { font-size: .9rem; color: #555; margin: 1.5rem 0 .5rem; }
-        p  { font-size: .9rem; }
-        code { font-size: .82rem; background: #f4f4f4; padding: .15em .4em; border-radius: 3px; }
-        pre  { background: #f4f4f4; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: .8rem; line-height: 1.6; }
-        .demo { border: 1px solid #ddd; border-radius: 6px; padding: 1rem; margin-bottom: .25rem; }
-        .note { font-size: .78rem; color: #888; margin: 0 0 1.5rem; }
-        label { display: block; font-size: .85rem; color: #666; margin-bottom: .25rem; }
-        input[type="text"] { padding: .45rem .6rem; font-size: .95rem; border: 1px solid #ccc; border-radius: 4px; width: 100%; }
-        button { padding: .4rem .9rem; font-size: .9rem; cursor: pointer; }
-        .badge { display: inline-block; padding: .2rem .7rem; border-radius: 99px; font-size: .8rem; font-weight: 600; background: #eee; margin-left: .5rem; }
-        .badge.on  { background: #d4edda; color: #155724; }
-        .badge.off { background: #f8d7da; color: #721c24; }
-        .row { display: flex; gap: .5rem; align-items: center; margin-bottom: .5rem; }
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            max-width: 860px;
+            margin: 2rem auto;
+            font-family: system-ui, sans-serif;
+            padding: 1rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            margin: 2.5rem 0 .5rem;
+            border-bottom: 1px solid #e5e5e5;
+            padding-bottom: .4rem;
+        }
+
+        h3 {
+            font-size: .9rem;
+            color: #555;
+            margin: 1.5rem 0 .5rem;
+        }
+
+        p {
+            font-size: .9rem;
+        }
+
+        code {
+            font-size: .82rem;
+            background: #f4f4f4;
+            padding: .15em .4em;
+            border-radius: 3px;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: .8rem;
+            line-height: 1.6;
+        }
+
+        .demo {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: .25rem;
+        }
+
+        .note {
+            font-size: .78rem;
+            color: #888;
+            margin: 0 0 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-size: .85rem;
+            color: #666;
+            margin-bottom: .25rem;
+        }
+
+        input[type="text"] {
+            padding: .45rem .6rem;
+            font-size: .95rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        button {
+            padding: .4rem .9rem;
+            font-size: .9rem;
+            cursor: pointer;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: .2rem .7rem;
+            border-radius: 99px;
+            font-size: .8rem;
+            font-weight: 600;
+            background: #eee;
+            margin-left: .5rem;
+        }
+
+        .badge.on {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge.off {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .row {
+            display: flex;
+            gap: .5rem;
+            align-items: center;
+            margin-bottom: .5rem;
+        }
 
         /* todos */
-        .todo-list  { list-style: none; padding: 0; margin: 0; }
-        .todo-item  { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #f0f0f0; }
-        .todo-item.done span { text-decoration: line-through; opacity: .5; }
-        .vp-empty-msg { text-align: center; padding: 2rem; color: #888; font-style: italic; background: #fafafa; border-radius: 4px; }
-        .controls { display: flex; justify-content: space-between; align-items: center; margin-top: .75rem; font-size: .9rem; }
-        .delete-btn { margin-left: auto; color: #c00; background: none; border: none; cursor: pointer; }
-        .filter-btns button { margin-left: .25rem; }
-        data-wrapper[data-filter="all"]    button[data-val="all"],
+        .todo-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .todo-item.done span {
+            text-decoration: line-through;
+            opacity: .5;
+        }
+
+        .vp-empty-msg {
+            text-align: center;
+            padding: 2rem;
+            color: #888;
+            font-style: italic;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: .75rem;
+            font-size: .9rem;
+        }
+
+        .delete-btn {
+            margin-left: auto;
+            color: #c00;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .filter-btns button {
+            margin-left: .25rem;
+        }
+
+        data-wrapper[data-filter="all"] button[data-val="all"],
         data-wrapper[data-filter="active"] button[data-val="active"],
-        data-wrapper[data-filter="done"]   button[data-val="done"] { font-weight: bold; text-decoration: underline; }
+        data-wrapper[data-filter="done"] button[data-val="done"] {
+            font-weight: bold;
+            text-decoration: underline;
+        }
     </style>
     <script src="/dist/data-wrapper.js" type="module"></script>
 </head>
+
 <body>
 
-<h1>data-wrapper</h1>
-<p>Zero-dependency HTML-first reactivity. Every section below is a standalone <code>&lt;data-wrapper&gt;</code>. Inspect <code>data-*</code> attributes in DevTools to watch state reflect live.</p>
+    <h1>data-wrapper</h1>
+    <p>Zero-dependency HTML-first reactivity. Every section below is a standalone <code>&lt;data-wrapper&gt;</code>.
+        Inspect <code>data-*</code> attributes in DevTools to watch state reflect live.</p>
 
-<main>
+    <main>
 
-<!-- =====================================================================
+        <!-- =====================================================================
      COMPONENT SHOWCASE
      New demos go here, at the top of <main>.
      ===================================================================== -->
 
-<h2>Component Showcase</h2>
+        <h2>Component Showcase</h2>
 
-<!-- 1. Static binding -->
-<h3>1. Static binding (no JS)</h3>
-<div class="demo">
-    <data-wrapper data-greeting="Hello" data-name="World">
-        <p><span $text="/greeting"></span>,&nbsp;<strong $text="/name"></strong>!</p>
-    </data-wrapper>
-</div>
-<p class="note">Initial state from <code>data-*</code> attrs, no script. Expects: "Hello, <strong>World</strong>!"</p>
-
-<!-- 2. Toggle -->
-<h3>2. Toggle</h3>
-<div class="demo">
-    <data-wrapper id="toggle" data-on="false">
-        <button @click="action:toggle">Toggle</button>
-        <span class="badge" $class="/on?format=onoff">●</span>
-        <p>State: <code $text="/on"></code></p>
-    </data-wrapper>
-</div>
-<p class="note"><code>@click → register() → put() → $text + $class</code>. Badge uses the <code>onoff</code> formatter to map <code>true/false → on/off</code> class names.</p>
-
-<!-- 3. Controlled input -->
-<h3>3. Controlled input</h3>
-<div class="demo">
-    <data-wrapper id="controlled" data-message="">
-        <label>Type something:</label>
-        <input type="text" @input="action:input/update" placeholder="…">
-        <p>Echo: <strong $text="/message"></strong></p>
-    </data-wrapper>
-</div>
-<p class="note"><code>@input → action handler → put() → $text</code> mirrors every keystroke.</p>
-
-<!-- 4. Two-way binding -->
-<h3>4. Two-way binding</h3>
-<div class="demo">
-    <data-wrapper id="twoway" data-val="">
-        <label>Both inputs are controlled by the same state key:</label>
-        <div class="row">
-            <input type="text" $value="/val" @input="action:val/update" placeholder="Input A…">
-            <input type="text" $value="/val" @input="action:val/update" placeholder="Input B…">
+        <!-- 1. Static binding -->
+        <h3>1. Static binding (no JS)</h3>
+        <div class="demo">
+            <data-wrapper data-greeting="Hello" data-name="World">
+                <p><span $text="/greeting"></span>,&nbsp;<strong $text="/name"></strong>!</p>
+            </data-wrapper>
         </div>
-        <p>State: <code $text="/val"></code></p>
-    </data-wrapper>
-</div>
-<p class="note"><code>$value</code> seeds both inputs from state; typing in either one updates state and reflects in both.</p>
+        <p class="note">Initial state from <code>data-*</code> attrs, no script. Expects: "Hello,
+            <strong>World</strong>!"</p>
+
+        <!-- 2. Toggle -->
+        <h3>2. Toggle</h3>
+        <div class="demo">
+            <data-wrapper id="toggle" data-on="false">
+                <button @click="action:toggle">Toggle</button>
+                <span class="badge" $class="/on?format=onoff">●</span>
+                <p>State: <code $text="/on"></code></p>
+            </data-wrapper>
+        </div>
+        <p class="note"><code>@click → register() → put() → $text + $class</code>. Badge uses the <code>onoff</code>
+            formatter to map <code>true/false → on/off</code> class names.</p>
+
+        <!-- 3. Controlled input -->
+        <h3>3. Controlled input</h3>
+        <div class="demo">
+            <data-wrapper id="controlled" data-message="">
+                <label>Type something:</label>
+                <input type="text" @input="action:input/update" placeholder="…">
+                <p>Echo: <strong $text="/message"></strong></p>
+            </data-wrapper>
+        </div>
+        <p class="note"><code>@input → action handler → put() → $text</code> mirrors every keystroke.</p>
+
+        <!-- 4. Two-way binding -->
+        <h3>4. Two-way binding</h3>
+        <div class="demo">
+            <data-wrapper id="twoway" data-val="">
+                <label>Both inputs are controlled by the same state key:</label>
+                <div class="row">
+                    <input type="text" $value="/val" @input="action:val/update" placeholder="Input A…">
+                    <input type="text" $value="/val" @input="action:val/update" placeholder="Input B…">
+                </div>
+                <p>State: <code $text="/val"></code></p>
+            </data-wrapper>
+        </div>
+        <p class="note"><code>$value</code> seeds both inputs from state; typing in either one updates state and
+            reflects in both.</p>
 
 
-<!-- =====================================================================
+        <!-- =====================================================================
      TODOS APP (broken — used for render-pipeline diagnosis)
      ===================================================================== -->
 
-<h2>Todos App (in progress)</h2>
+        <h2>Todos App (in progress)</h2>
 
-<template id="vp-empty">
-    <li class="vp-empty-msg">No tasks found.</li>
-</template>
+        <template id="vp-empty">
+            <li class="vp-empty-msg">No tasks found.</li>
+        </template>
 
-<div class="demo">
-    <data-wrapper id="app" data-filter="all">
+        <div class="demo">
+            <data-wrapper id="app" data-filter="all">
 
-        <form @submit="action:todo/add">
-            <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off" style="margin-bottom:.5rem">
-        </form>
+                <form @submit="action:todo/add">
+                    <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off"
+                        style="margin-bottom:.5rem">
+                </form>
 
-        <ul class="todo-list" $list="view" data-empty="vp-empty">
-            <template>
-                <li class="todo-item" $class="./status">
-                    <input type="checkbox" $checked="./done" @change="action:todo/toggle" $value="./id">
-                    <span $text="./task"></span>
-                    <button class="delete-btn" @click="action:todo/remove" $value="./id">✕</button>
-                </li>
-            </template>
-        </ul>
+                <ul class="todo-list" $list="view" data-empty="vp-empty">
+                    <template>
+                        <li class="todo-item" $class="./status">
+                            <input type="checkbox" $checked="./done" @change="action:todo/toggle" $value="./id">
+                            <span $text="./task"></span>
+                            <button class="delete-btn" @click="action:todo/remove" $value="./id">✕</button>
+                        </li>
+                    </template>
+                </ul>
 
-        <div class="controls">
-            <span><strong $text="active?format=count">0</strong> items left</span>
-            <div class="filter-btns">
-                <button @click="action:filter/set" data-val="all">All</button>
-                <button @click="action:filter/set" data-val="active">Active</button>
-                <button @click="action:filter/set" data-val="done">Done</button>
-            </div>
+                <div class="controls">
+                    <span><strong $text="active?format=count">0</strong> items left</span>
+                    <div class="filter-btns">
+                        <button @click="action:filter/set" data-val="all">All</button>
+                        <button @click="action:filter/set" data-val="active">Active</button>
+                        <button @click="action:filter/set" data-val="done">Done</button>
+                    </div>
+                </div>
+
+            </data-wrapper>
         </div>
 
-    </data-wrapper>
-</div>
 
-
-<!-- =====================================================================
+        <!-- =====================================================================
      DWRL SYNTAX REFERENCE
      Proposal HTML — valid markup, not all patterns implemented yet.
      ===================================================================== -->
 
-<h2>DWRL Syntax Reference</h2>
-<p>
-    DWRL (Data Wrapper Resource Locator) is a URL-shaped addressing scheme parsed
-    by the browser's native <code>new URL()</code>. Intent (read vs. write) is
-    determined by the token (<code>$</code>, <code>_</code>, <code>@</code>), not a verb.
-</p>
+        <h2>DWRL Syntax Reference</h2>
+        <p>
+            DWRL (Data Wrapper Resource Locator) is a URL-shaped addressing scheme parsed
+            by the browser's native <code>new URL()</code>. Intent (read vs. write) is
+            determined by the token (<code>$</code>, <code>_</code>, <code>@</code>), not a verb.
+        </p>
 
-<h3>Path Resolution</h3>
-<pre>
+        <h3>Path Resolution</h3>
+        <pre>
 &lt;!-- Bare key or ./ prefix: item-scoped inside $list, falls back to wrapper state --&gt;
 &lt;span $text="./task"&gt;&lt;/span&gt;
 
@@ -164,8 +306,8 @@
 &lt;span $text="//cart/total"&gt;&lt;/span&gt;
 </pre>
 
-<h3>Text &amp; Property Bindings (<code>$</code>)</h3>
-<pre>
+        <h3>Text &amp; Property Bindings (<code>$</code>)</h3>
+        <pre>
 &lt;span $text="/username"&gt;&lt;/span&gt;
 &lt;div  $html="/bio"&gt;&lt;/div&gt;
 &lt;input $value="/draft"&gt;
@@ -176,8 +318,8 @@
 &lt;input $placeholder="/ui/searchHint"&gt;
 </pre>
 
-<h3>Formatters via Query Params</h3>
-<pre>
+        <h3>Formatters via Query Params</h3>
+        <pre>
 &lt;span $text="/price?format=currency"&gt;&lt;/span&gt;
 &lt;span $text="/label?format=upper"&gt;&lt;/span&gt;
 &lt;span $text="/items?format=count"&gt;&lt;/span&gt;
@@ -194,8 +336,8 @@
 &lt;span $class="/isActive?format=onoff"&gt;&lt;/span&gt;
 </pre>
 
-<h3>Class Bindings (<code>$class</code>)</h3>
-<pre>
+        <h3>Class Bindings (<code>$class</code>)</h3>
+        <pre>
 &lt;!-- Value-as-class: state value used as class string. Static class="" preserved. --&gt;
 &lt;li class="todo-item" $class="./status"&gt;&lt;/li&gt;
 &lt;!-- state.status = "active" → class="todo-item active" --&gt;
@@ -214,8 +356,8 @@
 &lt;!-- true → class="badge on", false → class="badge off" --&gt;
 </pre>
 
-<h3>Event Wiring (<code>@</code> + <code>action:</code>)</h3>
-<pre>
+        <h3>Event Wiring (<code>@</code> + <code>action:</code>)</h3>
+        <pre>
 &lt;button @click="action:todo/remove" $value="./id"&gt;Delete&lt;/button&gt;
 &lt;form   @submit="action:todo/add"&gt;...&lt;/form&gt;
 &lt;input  @input="action:search/update"&gt;
@@ -225,8 +367,8 @@
 &lt;button @click="action://modal/open"&gt;Open Modal&lt;/button&gt;
 </pre>
 
-<h3>List Rendering (<code>$list</code>)</h3>
-<pre>
+        <h3>List Rendering (<code>$list</code>)</h3>
+        <pre>
 &lt;ul $list="/todos"&gt;
     &lt;template&gt;
         &lt;li $text="./task"&gt;&lt;/li&gt;
@@ -257,8 +399,8 @@
 &lt;/ul&gt;
 </pre>
 
-<h3>Cross-Component Mesh</h3>
-<pre>
+        <h3>Cross-Component Mesh</h3>
+        <pre>
 &lt;data-wrapper id="cart"&gt;
     &lt;span $text="/items?format=count"&gt;&lt;/span&gt;
     &lt;span $text="/total?format=currency"&gt;&lt;/span&gt;
@@ -270,8 +412,8 @@
 &lt;/data-wrapper&gt;
 </pre>
 
-<h3>Component Init (<code>onload</code> + <code>register</code>)</h3>
-<pre>
+        <h3>Component Init (<code>onload</code> + <code>register</code>)</h3>
+        <pre>
 &lt;data-wrapper id="app" data-filter="all"
     onload="this.register({
         'todo/add':    e =&gt; { ... },
@@ -286,8 +428,8 @@
 &lt;/script&gt;
 </pre>
 
-<h3>Remote Data (<code>api://</code> — proposed)</h3>
-<pre>
+        <h3>Remote Data (<code>api://</code> — proposed)</h3>
+        <pre>
 &lt;data-wrapper id="users" src="api://jsonplaceholder.typicode.com/users"&gt;
     &lt;ul $list="/users"&gt;
         &lt;template&gt;&lt;li $text="./name"&gt;&lt;/li&gt;&lt;/template&gt;
@@ -295,86 +437,87 @@
 &lt;/data-wrapper&gt;
 </pre>
 
-</main><!-- end main -->
+    </main><!-- end main -->
 
 
-<!-- =====================================================================
+    <!-- =====================================================================
      APP LOGIC
      ===================================================================== -->
-<script>
-customElements.whenDefined('data-wrapper').then(() => {
+    <script>
+        customElements.whenDefined('data-wrapper').then(() => {
 
-    // --- Showcase demos ---
+            // --- Showcase demos ---
 
-    document.getElementById('toggle').register({
-        'toggle': () => {
-            const t = document.getElementById('toggle');
-            t.put('on', v => !v);
-        },
-    });
+            document.getElementById('toggle').register({
+                'toggle': () => {
+                    const t = document.getElementById('toggle');
+                    t.put('on', v => !v);
+                },
+            });
 
-    const controlled = document.getElementById('controlled');
-    controlled.register({
-        'input/update': e => controlled.put('message', e.target.value),
-    });
+            const controlled = document.getElementById('controlled');
+            controlled.register({
+                'input/update': e => controlled.put('message', e.target.value),
+            });
 
-    const twoway = document.getElementById('twoway');
-    twoway.register({
-        'val/update': e => twoway.put('val', e.target.value),
-    });
+            const twoway = document.getElementById('twoway');
+            twoway.register({
+                'val/update': e => twoway.put('val', e.target.value),
+            });
 
-    // --- Todos app ---
+            // --- Todos app ---
 
-    const app = document.getElementById('app');
+            const app = document.getElementById('app');
 
-    const compute = () => {
-        const todos  = app.state.todos  || [];
-        const filter = app.state.filter || 'all';
-        app.put('active', todos.filter(t => !t.done));
-        app.put('view',   todos.filter(t =>
-            filter === 'all' ||
-            (filter === 'active' && !t.done) ||
-            (filter === 'done'   &&  t.done)
-        ));
-    };
+            const compute = () => {
+                const todos = app.state.todos || [];
+                const filter = app.state.filter || 'all';
+                app.put('active', todos.filter(t => !t.done));
+                app.put('view', todos.filter(t =>
+                    filter === 'all' ||
+                    (filter === 'active' && !t.done) ||
+                    (filter === 'done' && t.done)
+                ));
+            };
 
-    app.register({
-        'todo/add': e => {
-            e.preventDefault();
-            const input = e.target.querySelector('input[name="task"]');
-            if (!input?.value.trim()) return;
-            app.put('todos', prev => [
-                ...(prev || []),
-                { id: Date.now(), task: input.value.trim(), status: 'active', done: false },
+            app.register({
+                'todo/add': e => {
+                    e.preventDefault();
+                    const input = e.target.querySelector('input[name="task"]');
+                    if (!input?.value.trim()) return;
+                    app.put('todos', prev => [
+                        ...(prev || []),
+                        { id: Date.now(), task: input.value.trim(), status: 'active', done: false },
+                    ]);
+                    input.value = '';
+                },
+                'todo/toggle': e => {
+                    app.put('todos', prev => (prev || []).map(t =>
+                        t.id === e.item?.id
+                            ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' }
+                            : t
+                    ));
+                },
+                'todo/remove': e => {
+                    app.put('todos', prev => (prev || []).filter(t => t.id !== e.item?.id));
+                },
+                'filter/set': e => {
+                    app.put('filter', e.delegateTarget?.dataset.val);
+                },
+            });
+
+            app.addEventListener('data:sync', e => {
+                if (['todos', 'filter'].includes(e.detail.key)) compute();
+            });
+
+            app.put('todos', [
+                { id: 1, task: 'Master the DOM', status: 'done', done: true },
+                { id: 2, task: 'Ship data-wrapper', status: 'active', done: false },
             ]);
-            input.value = '';
-        },
-        'todo/toggle': e => {
-            app.put('todos', prev => (prev || []).map(t =>
-                t.id === e.item?.id
-                    ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' }
-                    : t
-            ));
-        },
-        'todo/remove': e => {
-            app.put('todos', prev => (prev || []).filter(t => t.id !== e.item?.id));
-        },
-        'filter/set': e => {
-            app.put('filter', e.delegateTarget?.dataset.val);
-        },
-    });
 
-    app.addEventListener('data:sync', e => {
-        if (['todos', 'filter'].includes(e.detail.key)) compute();
-    });
-
-    app.put('todos', [
-        { id: 1, task: 'Master the DOM',   status: 'done',   done: true  },
-        { id: 2, task: 'Ship data-wrapper', status: 'active', done: false },
-    ]);
-
-});
-</script>
+        });
+    </script>
 
 </body>
+
 </html>

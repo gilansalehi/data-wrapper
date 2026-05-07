@@ -1,10 +1,9 @@
 const idop = (a: unknown) => a;
 
-export const q = (s: string, ctx: Element | Document = document) =>
-    [...ctx.querySelectorAll(s)] as Element[];
+// ctx broadened to DocumentFragment so q() works on template.content
+export const q = (s: string, ctx: Element | Document | DocumentFragment = document) => [...ctx.querySelectorAll(s)] as Element[];
 
-export const qcb = (s: string, cb: (el: Element) => unknown = idop, ctx: Element | Document = document) =>
-    q(s, ctx).map(cb);
+export const qcb = (s: string, cb: (el: Element) => unknown = idop, ctx: Element | Document | DocumentFragment = document) => q(s, ctx).map(cb);
 
 export const emit = (eventName: string, payload?: unknown, ctx: Element | Document = document) => {
     ctx.dispatchEvent(new CustomEvent(eventName, { detail: payload, bubbles: true }));

@@ -1,12 +1,17 @@
 import { VP_TEMPLATES, sync } from './registry.ts';
-import type { UpdateConfig } from './types.ts';
+import type { Formatter } from './registry.ts';
+
+// UpdateConfig owned here — used by engine, wire, and component.
+export interface UpdateConfig {
+    el:       Element;
+    path:     string;
+    prop:     string;
+    pipes:    Formatter[];
+    itemNode: Element | null;
+}
 
 type VNode       = Element & { _vBase?: Set<string>; _vState?: { dynamic: string; additive: string } };
 type ItemElement = Element & { _vItem?: Record<string, unknown>; _vItemConfigs?: UpdateConfig[] };
-
-// ---------------------------------------------------------------------------
-// applyBinding — routes a resolved value to the correct DOM setter
-// ---------------------------------------------------------------------------
 
 export const applyBinding = (el: Element, prop: string, val: unknown) => {
     if (val === undefined || val === null) return;
@@ -24,10 +29,6 @@ export const applyBinding = (el: Element, prop: string, val: unknown) => {
     sync(el, prop, val);
 };
 
-// ---------------------------------------------------------------------------
-// applyItemBindings — re-applies item-scoped configs after _vItem changes
-// ---------------------------------------------------------------------------
-
 export const applyItemBindings = (node: Element, item: Record<string, unknown>) => {
     for (const config of (node as ItemElement)._vItemConfigs || []) {
         let val: unknown = item[config.path];
@@ -35,10 +36,6 @@ export const applyItemBindings = (node: Element, item: Record<string, unknown>) 
         applyBinding(config.el, config.prop, val);
     }
 };
-
-// ---------------------------------------------------------------------------
-// reconcile — O(N) list diff against a Map cache keyed by item.id
-// ---------------------------------------------------------------------------
 
 type ContainerNode = Element & { _vEmptyNode?: Element | null };
 
@@ -77,8 +74,8 @@ export const reconcile = (
     const activeIds = new Set<unknown>();
     const fragment  = document.createDocumentFragment();
 
-    data.forEach(item => {
-        const id   = item.id ?? JSON.stringify(item);
+    for (const item of data) {
+        const id  = item.id ?? JSON.stringify(item);
         activeIds.add(id);
 
         let node  = cache.get(id);
@@ -91,15 +88,9 @@ export const reconcile = (
         }
 
         (node as ItemElement)._vItem = item;
-
-        if (isNew) {
-            hydrate(node, node);           // wake subtree; item-scoped bindings register + render
-        } else {
-            applyItemBindings(node, item); // re-apply local bindings with fresh item data
-        }
-
+        isNew ? hydrate(node, node) : applyItemBindings(node, item);
         fragment.appendChild(node);
-    });
+    }
 
     cache.forEach((node, id) => {
         if (!activeIds.has(id)) { node.remove(); cache.delete(id); }

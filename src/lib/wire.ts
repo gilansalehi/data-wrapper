@@ -1,17 +1,19 @@
 import { CONFIG, VP_FORMATTERS } from './registry.ts';
+import { on } from './utils.ts';
 import { applyBinding } from './engine.ts';
-import type { UpdateConfig, Formatter } from './types.ts';
+import type { UpdateConfig } from './engine.ts';
+import type { Formatter } from './registry.ts';
 
 type ItemNode = Element & { _vItem?: Record<string, unknown>; _vItemConfigs?: UpdateConfig[] };
 type WokeNode = Element & { _vWoke?: boolean };
 
 export interface WrapperNode extends HTMLElement {
-    state:        Record<string, unknown>;
-    subs:         Record<string, UpdateConfig[]>;
-    _actions:     Record<string, EventListener>;
-    _boundEvents: Set<string>;
-    _listCache:   Map<Element, Map<unknown, Element>>;
-    _register(path: string, config: UpdateConfig): void;
+    state:      Record<string, unknown>;
+    _subs:      Record<string, UpdateConfig[]>;
+    _actions:   Record<string, EventListener>;
+    _listeners: Map<string, () => void>;
+    _listCache: Map<Element, Map<unknown, Element>>;
+    _sub(path: string, config: UpdateConfig): void;
 }
 
 // ---------------------------------------------------------------------------
@@ -51,14 +53,12 @@ const _dispatchTopic = (wrapper: WrapperNode, e: Event, topic: string) => {
     wrapper.dispatchEvent(new CustomEvent(topic, { detail: e, bubbles: true }));
 };
 
-// Exported so _runDirective can pre-register events found inside <template> content.
 export const ensureDelegation = (wrapper: WrapperNode, eventName: string) => {
-    if (wrapper._boundEvents.has(eventName)) return;
-    wrapper._boundEvents.add(eventName);
+    if (wrapper._listeners.has(eventName)) return;
 
     const attrName = `${CONFIG.TOKENS.EVT}${eventName}`;
 
-    wrapper.addEventListener(eventName, (e: Event) => {
+    const unsub = on(eventName, (e: Event) => {
         let delegate: Element | null = null;
         let node: Element | null     = e.target as Element;
         while (node) {
@@ -81,7 +81,9 @@ export const ensureDelegation = (wrapper: WrapperNode, eventName: string) => {
         }
 
         _dispatchTopic(wrapper, e, delegate.getAttribute(attrName)!);
-    });
+    }, '', wrapper as unknown as Element);
+
+    wrapper._listeners.set(eventName, unsub);
 };
 
 // ---------------------------------------------------------------------------
@@ -104,7 +106,7 @@ export const subscribe = (
     const config: UpdateConfig = { el, path, prop, pipes, itemNode };
 
     if (isItemScoped && itemNode) {
-        // Never enters wrapper subs. Store on itemNode so reconciler can re-apply on update.
+        // Never enters wrapper _subs. Stored on itemNode so reconciler can re-apply on update.
         ((itemNode as ItemNode)._vItemConfigs ??= []).push(config);
         let val: unknown = (itemNode as ItemNode)._vItem?.[path];
         for (const pipe of pipes) val = pipe(val);
@@ -112,10 +114,10 @@ export const subscribe = (
         return;
     }
 
-    // Wrapper-root binding — requires DOM ancestry to find the wrapper.
+    // Wrapper-root binding — requires DOM ancestry.
     const wrapper = el.closest('data-wrapper') as WrapperNode | null;
     if (!wrapper) return;
-    wrapper._register(path, config);
+    wrapper._sub(path, config);
 };
 
 // ---------------------------------------------------------------------------
@@ -132,8 +134,8 @@ const _wireElement = (el: Element, itemNode: Element | null) => {
         if      (name.startsWith(BIND)) subscribe(el, 'dynamic',  name, value, itemNode);
         else if (name.startsWith(ADD))  subscribe(el, 'additive', name, value, itemNode);
         else if (name.startsWith(EVT)) {
-            // Wrapper lookup deferred to here — el may be detached (list item pre-append).
-            // Event types from templates are pre-registered via ensureDelegation in _runDirective.
+            // Wrapper lookup is deferred here — el may be detached during list hydration.
+            // Template event types are pre-registered by _directive before reconcile runs.
             const wrapper = el.closest('data-wrapper') as WrapperNode | null;
             if (wrapper) ensureDelegation(wrapper, name.slice(EVT.length));
         }

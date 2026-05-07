@@ -5,7 +5,6 @@
   "type": "module",
   "main": "./dist/data-wrapper.js",
   "module": "./dist/data-wrapper.js",
-  "types": "./types.d.ts",
   "exports": {
     ".": {
       "import": "./dist/data-wrapper.js",
@@ -13,8 +12,7 @@
     }
   },
   "files": [
-    "dist",
-    "types.d.ts"
+    "dist"
   ],
   "scripts": {
     "build": "bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.js --format esm --target browser && bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.min.js --format iife --minify --target browser",
