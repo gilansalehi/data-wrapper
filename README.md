@@ -1,28 +1,214 @@
-The DataWrapper Architecture: A "close-to-the-Metal" Reactivity Manifesto v1.0The DataWrapper framework is a high-performance, zero-dependency reactivity engine designed for the modern web. It rejects the overhead of the Virtual DOM, the bloat of proprietary template compilers, and the security risks of string-based execution in favor of Native URL Parsing, Direct DOM Authority, and Surgical fine-grained reactivity.1. The Core Philosophy: "The DOM is the Truth"Unlike modern frameworks that treat the DOM as a side effect of a JavaScript state machine, DataWrapper treats the DOM as the Master Schema.Bidirectional Mirroring: The <data-wrapper> element’s dataset is intimately linked to the internal Data Store. If a legacy script updates the DOM (el.dataset.user = ...), a MutationObserver catches it and updates the app. When the app updates, the DOM data-* attributes are instantly patched, enabling native CSS state targeting ([data-theme="dark"]).Declarative Tokens: The $, _, and @ attributes are the strict wiring diagrams for the entire application.Zero-Build Portability: Because it relies entirely on native Web Components and standard attributes, the framework requires no compilation or AST generation. It is "Write-Run-Succeed."2. The Native Engine: DWRL (Data Wrapper Resource Locator)We deleted custom string parsers. The framework’s entire routing and state-management system is powered by the browser's native new URL() engine. SEE UPDATED INFO below.  3. The Reactivity Pipeline: From $O(N)$ to $O(1)$The genius of the system lies in its lifecycle. We pay a minimal, one-time tax during the "Wiring Phase" to ensure the application runs at near-instant speeds with zero diffing.Phase A: Hydration & Wiring ($O(N)$)When a data-wrapper mounts, wakeNode performs a single scan of its subtree.Discovery: The parser completely ignores @ attributes for maximum speed, only waking $ (Read) and _ (Patch) elements.The Subscription Map: Subscriptions are mapped directly to memory paths via an identity map (this.subs.get('/user/name')).Phase B: Surgical Reaction & Batching ($O(1)$)Once wired, the framework never walks the tree again.Direct Execution: When a path changes, the wrapper looks up the specific callbacks tied to that path. If 1,000 nodes exist but only 1 is bound to the changed key, only 1 node is touched.Microtask Batching: To prevent layout thrashing, updates are not flushed instantly. Dirty paths are queued, and the DOM is painted exactly once per event loop using queueMicrotask.4. The Security & Event Model: Global DelegationWe’ve solved the event-listener memory leak nightmare by utilizing Global Event Delegation paired with DWRL verbs.The Global Router: Exactly three listeners (click, input, submit) are attached to the top-level wrapper.Zero-Memory Nodes: Because buttons do not have individual listeners, the framework can spawn or destroy thousands of DOM nodes instantly via node.remove() without a single memory leak.The Payload Carrier: When a user clicks, the global router catches the bubble, parses the DWRL command (e.g., @click="PUT /ui/modalOpen"), scrapes the DOM element's native value or checked property as the payload, and surgically mutates the Data Store.5. The Control Surface: Inert HTML TemplatesDataWrapper achieves complex layout routing without a Virtual DOM by hijacking standard, inert <template> tags.The Iterator ($list): Iterates over arrays using an Identity Token Strategy. It attaches a native Map to the parent container, tracking DOM nodes by their unique ID. When the array changes, it performs an $O(N)$ diff of the map to strictly append, re-order, or remove physical nodes, completely bypassing virtual tree diffing.The Standalone Conditional ($if): Rejects wrapper elements that break CSS layouts (Flexbox/Grid). It evaluates standalone templates using a strict Micro-Expression equation ($if="/user/age >= 18"). If true, it stamps the branch into the DOM. If false, it completely unmounts the nodes, saving memory.The kernel is locked. The parser is purely URL-driven. The reactivity is fine-grained. We have successfully rebuilt the foundations of a web framework without sacrificing a single ounce of "metal."
+# data-wrapper
 
-UPDATED INFO:
-2. The Native Engine: DWRL (Data Wrapper Resource Locator)
+A zero-dependency, HTML-first reactivity engine built on native Web Components. No build step, no virtual DOM, no framework lock-in — just import and go.
 
-We deleted custom string parsers and REST verb redundancies. The framework’s entire routing and state-management system is powered by the browser's native new URL() engine. The Intent (Read vs. Write) is handled by the DOM Token ($, @, _), meaning the string itself is a pure, unadulterated address. Every dynamic attribute is parsed into a DWRL Request Object.
+```html
+<script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"></script>
+```
 
-The Canonical Structure: [Scheme]://[Authority].[Storage]/[Path] | [Pipes]
+---
 
-    Schemes: * data:// (Default) - Targets the reactive Data Store.
+## Core Philosophy: The DOM Is the Truth
 
-        action:// - Targets registered RPC functions in the Kernel.
+Most frameworks treat the DOM as a side effect of a JavaScript state machine. `data-wrapper` inverts this. The `<data-wrapper>` element's `data-*` attributes **are** the state store, and the component is intimately aware of changes from any direction.
 
-        api:// - Targets external network endpoints for zero-JS fetching.
+- **JS → DOM**: Writing to `wrapper.state.theme = 'dark'` serialises the value and sets `data-theme="dark"` on the element.
+- **DOM → JS**: A `MutationObserver` watches the element. If any script sets `el.dataset.theme = 'dark'` directly, the framework catches it and notifies all subscribers.
+- **CSS targeting**: Because state lives on `data-*` attributes, you get native CSS selectors for free: `[data-theme="dark"] { ... }`.
 
-    Authority (Host): Targets the id of a specific <data-wrapper>, enabling native cross-component mesh routing (e.g., //cart.data/isOpen).
+---
 
-    Storage (TLD): Defaults to .data (the internal store), but can target .local (localStorage) or .session (sessionStorage).
+## Declarative Tokens
 
-    Path: Pure Unix-style directory paths (e.g., /ui/activeTab).
+Three attribute prefixes wire up the entire application — no JavaScript required in the template:
 
-    Pipes: An optional | separated list of synchronous formatters applied to the data (e.g., | upper | not).
+| Token | Name | Direction | Example |
+|-------|------|-----------|---------|
+| `$`   | Bind | State → DOM | `$text="username"` |
+| `_`   | Additive class | State → className | `_class="status"` |
+| `@`   | Event | DOM → State | `@click="todo:remove"` |
 
-Shorthand Examples:
+---
 
-    /draft -> Resolves natively to data://[current-wrapper].data/draft
+## DWRL — Data Wrapper Resource Locator
 
-    //cart.data/isOpen -> Protocol-relative lookup bypassing the current wrapper to target the cart wrapper.
+Binding expressions are pure URL-shaped addresses parsed by the browser's native `new URL()` engine. The intent (read vs. write) is determined by the DOM token (`$`, `_`, `@`), so the string itself needs no verb.
+
+**Canonical structure:** `[scheme]://[authority].[storage]/[path] | [pipes]`
+
+| Part | Description | Example |
+|------|-------------|---------|
+| `scheme` | `data://` (default), `action://`, `api://` | `data://` |
+| `authority` | `id` of the target `<data-wrapper>` | `cart` |
+| `storage` | `.data` (default), `.local`, `.session` | `.data` |
+| `path` | Unix-style key path | `/ui/activeTab` |
+| `pipes` | `\|`-separated formatter names | `\| upper \| trim` |
+
+**Shorthand resolution:**
+- `/draft` → `data://[current-wrapper].data/draft`
+- `//cart.data/isOpen` → crosses to the `#cart` wrapper
+
+---
+
+## Reactivity Pipeline
+
+### Phase A — Wiring (O(N), once at mount)
+
+When a `<data-wrapper>` connects, `wakeTree` performs a **single pass** over its subtree. For each `$` and `_` attribute it finds, it builds an `UpdateConfig` object and registers it in `wrapper.subs[path]`.
+
+`@` attributes are wired as event listeners on the wrapper element, delegated via the bubbling path.
+
+### Phase B — Reaction (O(1), per update)
+
+Once wired, the tree is never walked again. When `_notify(key, value)` is called:
+
+1. It looks up `subs[key]` — a direct identity map hit.
+2. It runs the resolved pipe functions over the value.
+3. It writes the result to the exact DOM property or attribute.
+
+Updates from `put` / `patch` / `push` / `pull` are synchronous; the `MutationObserver` path uses `queueMicrotask` to batch external DOM writes and avoid re-entrancy.
+
+---
+
+## State API
+
+All methods live on the `<data-wrapper>` element instance.
+
+```js
+const app = document.getElementById('app'); // <data-wrapper id="app">
+
+app.put('count', 1);                        // set
+app.put('count', n => n + 1);              // updater function
+app.patch('user', { name: 'Ali' });        // shallow merge
+app.push('todos', { id: 1, text: 'Buy milk' }); // append
+app.pull('todos', 1);                      // remove by id
+app.pull('todos', t => t.done);            // remove by predicate
+
+app.state.count;                           // read (parsed from dataset)
+```
+
+`state` is a Proxy over `dataset`. Reads auto-parse JSON; writes serialise objects to JSON and primitives to strings.
+
+---
+
+## List Rendering
+
+Attach `$list="keyName"` to any container that has a `<template>` child. The reconciler diffs the current array against a `Map` cache keyed by `item.id`, performing only the minimum DOM mutations (append / reorder / remove).
+
+```html
+<ul $list="todos">
+  <template>
+    <li $text="task" $class="status" @click="todo:remove"></li>
+  </template>
+</ul>
+```
+
+An optional empty-state template is shown when the array is empty:
+
+```html
+<template id="my-empty"><li>Nothing here yet.</li></template>
+<ul $list="todos" data-empty="my-empty"> ... </ul>
+```
+
+---
+
+## Events
+
+### Lifecycle
+
+```js
+document.addEventListener('data-wrapper:load', e => {
+  console.log('wrapper ready', e.detail); // the DataWrapper element
+});
+```
+
+### State sync
+
+```js
+app.addEventListener('data:sync', e => {
+  console.log('key changed:', e.detail.key);
+});
+```
+
+### Custom events via `@`
+
+`@submit="form:submit"` causes the wrapper to dispatch a `form:submit` CustomEvent when a `submit` fires inside it. Listen anywhere:
+
+```js
+app.addEventListener('form:submit', e => { ... });
+// or shorthand:
+app.on('form:submit', handler);
+```
+
+---
+
+## Utility API
+
+These utilities are exported from the package and also available as methods on any `DataWrapper` instance (with the element as the default context):
+
+```js
+import { q, qcb, on, emit } from 'data-wrapper';
+
+q('.item');                         // [...document.querySelectorAll('.item')]
+qcb('.item', el => el.textContent); // query + map
+on('click', handler, '.btn');       // delegated listener, returns unsubscribe
+emit('my:event', payload);          // CustomEvent dispatch
+```
+
+---
+
+## Built-in Pipes
+
+Pipes are applied with `|` in binding expressions: `$text="price | currency"`.
+
+| Pipe | Effect |
+|------|--------|
+| `count` | Array or string length |
+| `fallback` | `value ?? '—'` |
+| `json` | `JSON.stringify` (pretty) |
+| `upper` / `lower` | Case conversion |
+| `currency` | `Intl.NumberFormat` USD |
+| `date` | `toLocaleDateString()` |
+| `trim` | Whitespace trim |
+| `bool` | `!!value` |
+
+Register custom pipes before the wrapper mounts:
+
+```js
+import { VP_FORMATTERS } from 'data-wrapper';
+VP_FORMATTERS.set('reverse', v => String(v).split('').reverse().join(''));
+```
+
+---
+
+## Configuration
+
+Set `window.VP_CUSTOM_CONFIG` before the script loads to override defaults:
+
+```html
+<script>
+  window.VP_CUSTOM_CONFIG = {
+    TOKENS: { BIND: ':', ADD: '+', EVT: '#' }
+  };
+</script>
+<script src="/dist/data-wrapper.js" type="module"></script>
+```
+
+---
+
+## Quick Example
+
+```html
+<data-wrapper id="app" data-count="0">
+  <p>Count: <strong $text="count">0</strong></p>
+  <button @click="count:increment">+1</button>
+</data-wrapper>
+
+<script type="module" src="/dist/data-wrapper.js"></script>
+<script>
+  customElements.whenDefined('data-wrapper').then(() => {
+    const app = document.getElementById('app');
+    app.on('count:increment', () => app.put('count', n => Number(n) + 1));
+  });
+</script>
+```
