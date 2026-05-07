@@ -1,64 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>data-wrapper — Showcase & Reference</title>
+    <title>data-wrapper — HTML-first reactivity</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        *, *::before, *::after { box-sizing: border-box; }
 
         body {
-            max-width: 860px;
-            margin: 2rem auto;
+            max-width: 900px;
+            margin: 0 auto;
             font-family: system-ui, sans-serif;
-            padding: 1rem;
-        }
-
-        h1 {
-            font-size: 1.5rem;
-        }
-
-        h2 {
-            font-size: 1.1rem;
-            margin: 2.5rem 0 .5rem;
-            border-bottom: 1px solid #e5e5e5;
-            padding-bottom: .4rem;
-        }
-
-        h3 {
-            font-size: .9rem;
-            color: #555;
-            margin: 1.5rem 0 .5rem;
-        }
-
-        p {
-            font-size: .9rem;
-        }
-
-        code {
-            font-size: .82rem;
-            background: #f4f4f4;
-            padding: .15em .4em;
-            border-radius: 3px;
-        }
-
-        pre {
-            background: #f4f4f4;
-            padding: 1rem;
-            border-radius: 6px;
-            overflow-x: auto;
-            font-size: .8rem;
+            padding: 2rem 1.25rem 4rem;
+            color: #1a1a1a;
             line-height: 1.6;
         }
 
+        /* ---- Typography ---- */
+        h1 { font-size: 2rem; margin: 0 0 .25rem; }
+        h2 { font-size: 1.2rem; margin: 3rem 0 .75rem; padding-bottom: .4rem; border-bottom: 2px solid #eee; }
+        h3 { font-size: .95rem; color: #444; margin: 1.75rem 0 .5rem; }
+        p  { font-size: .9rem; margin: .4rem 0 .75rem; }
+
+        a { color: #0066cc; }
+
+        .tagline { font-size: 1.05rem; color: #555; margin: .25rem 0 2rem; }
+
+        code {
+            font-size: .82rem;
+            background: #f0f0f0;
+            padding: .15em .4em;
+            border-radius: 3px;
+            font-family: ui-monospace, monospace;
+        }
+
+        /* ---- Install snippet ---- */
+        .install {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: .85rem 1.1rem;
+            border-radius: 6px;
+            font-family: ui-monospace, monospace;
+            font-size: .85rem;
+            margin: 0 0 1rem;
+            overflow-x: auto;
+        }
+
+        /* ---- Demo box ---- */
         .demo {
             border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 1rem;
-            margin-bottom: .25rem;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: .5rem;
+            background: #fff;
         }
 
         .note {
@@ -67,61 +61,110 @@
             margin: 0 0 1.5rem;
         }
 
-        label {
-            display: block;
-            font-size: .85rem;
-            color: #666;
-            margin-bottom: .25rem;
+        /* ---- Collapsible source ---- */
+        details {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            margin: .4rem 0 1.25rem;
+        }
+        details summary {
+            padding: .45rem .85rem;
+            cursor: pointer;
+            font-size: .78rem;
+            font-family: ui-monospace, monospace;
+            color: #555;
+            background: #f8f8f8;
+            border-radius: 6px;
+            user-select: none;
+            list-style: none;
+        }
+        details summary::before { content: '▶  '; font-size: .65rem; }
+        details[open] summary::before { content: '▼  '; }
+        details[open] summary { border-radius: 6px 6px 0 0; border-bottom: 1px solid #e0e0e0; }
+        details pre {
+            margin: 0;
+            padding: 1rem 1.1rem;
+            background: #fafafa;
+            border-radius: 0 0 6px 6px;
+            font-size: .8rem;
+            font-family: ui-monospace, monospace;
+            line-height: 1.7;
+            overflow-x: auto;
+            white-space: pre;
         }
 
-        input[type="text"] {
-            padding: .45rem .6rem;
-            font-size: .95rem;
+        /* ---- Reference tables ---- */
+        table { width: 100%; border-collapse: collapse; font-size: .85rem; margin: .5rem 0 1.25rem; }
+        th { text-align: left; padding: .45rem .75rem; background: #f4f4f4; border-bottom: 2px solid #ddd; }
+        td { padding: .4rem .75rem; border-bottom: 1px solid #eee; vertical-align: top; }
+        tr:last-child td { border-bottom: none; }
+        td code { background: none; padding: 0; font-size: .82rem; }
+
+        /* ---- Demo-specific ---- */
+        label { display: block; font-size: .85rem; color: #555; margin-bottom: .25rem; }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"] {
+            padding: .4rem .6rem;
+            font-size: .9rem;
             border: 1px solid #ccc;
             border-radius: 4px;
             width: 100%;
+            margin-bottom: .5rem;
         }
 
         button {
             padding: .4rem .9rem;
             font-size: .9rem;
             cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
         }
-
-        .badge {
-            display: inline-block;
-            padding: .2rem .7rem;
-            border-radius: 99px;
-            font-size: .8rem;
-            font-weight: 600;
-            background: #eee;
-            margin-left: .5rem;
-        }
-
-        .badge.on {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .badge.off {
-            background: #f8d7da;
-            color: #721c24;
-        }
+        button:hover { background: #f4f4f4; }
 
         .row {
             display: flex;
             gap: .5rem;
             align-items: center;
+            flex-wrap: wrap;
             margin-bottom: .5rem;
         }
 
-        /* todos */
-        .todo-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+        .badge {
+            display: inline-block;
+            padding: .2rem .75rem;
+            border-radius: 99px;
+            font-size: .8rem;
+            font-weight: 600;
+            background: #eee;
+        }
+        .badge.on  { background: #d4edda; color: #155724; }
+        .badge.off { background: #f8d7da; color: #721c24; }
+
+        .count-display {
+            font-size: 2rem;
+            font-weight: 700;
+            min-width: 3rem;
+            text-align: center;
         }
 
+        /* ---- Formatters table ---- */
+        .fmt-output { font-weight: 600; color: #0066cc; }
+
+        /* ---- Profile card ---- */
+        .profile { display: flex; align-items: center; gap: 1rem; }
+        .avatar {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: #ddd;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        /* ---- Todo list ---- */
+        .todo-list { list-style: none; padding: 0; margin: .75rem 0; }
         .todo-item {
             display: flex;
             align-items: center;
@@ -129,402 +172,773 @@
             padding: 10px;
             border-bottom: 1px solid #f0f0f0;
         }
-
-        .todo-item.done span {
-            text-decoration: line-through;
-            opacity: .5;
-        }
-
-        .vp-empty-msg {
-            text-align: center;
-            padding: 2rem;
-            color: #888;
-            font-style: italic;
-            background: #fafafa;
-            border-radius: 4px;
-        }
-
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: .75rem;
-            font-size: .9rem;
-        }
-
+        .todo-item.done span { text-decoration: line-through; opacity: .45; }
         .delete-btn {
             margin-left: auto;
             color: #c00;
             background: none;
             border: none;
             cursor: pointer;
+            font-size: 1rem;
+            padding: .15rem .4rem;
         }
-
-        .filter-btns button {
-            margin-left: .25rem;
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: .75rem;
+            font-size: .88rem;
+            flex-wrap: wrap;
+            gap: .5rem;
         }
-
-        data-wrapper[data-filter="all"] button[data-val="all"],
+        .filter-btns button { margin-left: .2rem; }
+        .vp-empty-msg {
+            text-align: center;
+            padding: 2rem;
+            color: #999;
+            font-style: italic;
+        }
+        data-wrapper[data-filter="all"]    button[data-val="all"],
         data-wrapper[data-filter="active"] button[data-val="active"],
-        data-wrapper[data-filter="done"] button[data-val="done"] {
-            font-weight: bold;
+        data-wrapper[data-filter="done"]   button[data-val="done"] {
+            font-weight: 700;
             text-decoration: underline;
         }
+
+        /* ---- State inspector ---- */
+        .state-pre {
+            background: #1e1e1e;
+            color: #9cdcfe;
+            border-radius: 6px;
+            padding: .75rem 1rem;
+            font-size: .75rem;
+            font-family: ui-monospace, monospace;
+            max-height: 180px;
+            overflow: auto;
+            white-space: pre;
+            margin: .5rem 0;
+        }
+
+        /* ---- Computed demo ---- */
+        .computed-output {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: .5rem 0;
+            color: #333;
+        }
+
+        /* ---- Dividers ---- */
+        hr { border: none; border-top: 1px solid #eee; margin: 2.5rem 0; }
     </style>
     <script src="/dist/data-wrapper.js" type="module"></script>
 </head>
-
 <body>
 
-    <h1>data-wrapper</h1>
-    <p>Zero-dependency HTML-first reactivity. Every section below is a standalone <code>&lt;data-wrapper&gt;</code>.
-        Inspect <code>data-*</code> attributes in DevTools to watch state reflect live.</p>
+<h1>data-wrapper</h1>
+<p class="tagline">Zero-dependency HTML-first reactivity. A framework of the browser, for the browser.</p>
 
-    <main>
+<pre class="install">&lt;script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"&gt;&lt;/script&gt;
+&lt;!-- or: npm install data-wrapper --&gt;</pre>
 
-        <!-- =====================================================================
-     COMPONENT SHOWCASE
-     New demos go here, at the top of <main>.
+<p>State lives in <code>data-*</code> attributes — inspect it live in DevTools. Three token prefixes
+(<code>$</code>&thinsp;<code>_</code>&thinsp;<code>@</code>) are the entire API. No build step, no virtual DOM,
+no proprietary template language.</p>
+
+<main>
+
+<!-- =====================================================================
+     § GETTING STARTED
      ===================================================================== -->
 
-        <h2>Component Showcase</h2>
+<h2 id="start">Getting Started</h2>
+<p>A counter. State starts in HTML. One script block wires the button.</p>
 
-        <!-- 1. Static binding -->
-        <h3>1. Static binding (no JS)</h3>
-        <div class="demo">
-            <data-wrapper data-greeting="Hello" data-name="World">
-                <p><span $text="/greeting"></span>,&nbsp;<strong $text="/name"></strong>!</p>
-            </data-wrapper>
+<div class="demo">
+    <data-wrapper id="counter" data-count="0">
+        <div class="row">
+            <button @click="count/dec">−</button>
+            <span class="count-display" $text="/count"></span>
+            <button @click="count/inc">+</button>
         </div>
-        <p class="note">Initial state from <code>data-*</code> attrs, no script. Expects: "Hello,
-            <strong>World</strong>!"</p>
-
-        <!-- 2. Toggle -->
-        <h3>2. Toggle</h3>
-        <div class="demo">
-            <data-wrapper id="toggle" data-on="false">
-                <button @click="toggle">Toggle</button>
-                <span class="badge" $class="/on?format=onoff">●</span>
-                <p>State: <code $text="/on"></code></p>
-            </data-wrapper>
-        </div>
-        <p class="note"><code>@click → register() → put() → $text + $class</code>. Badge uses the <code>onoff</code>
-            formatter to map <code>true/false → on/off</code> class names.</p>
-
-        <!-- 3. Controlled input -->
-        <h3>3. Controlled input</h3>
-        <div class="demo">
-            <data-wrapper id="controlled" data-message="">
-                <label>Type something:</label>
-                <input type="text" @input="input/update" placeholder="…">
-                <p>Echo: <strong $text="/message"></strong></p>
-            </data-wrapper>
-        </div>
-        <p class="note"><code>@input → action handler → put() → $text</code> mirrors every keystroke.</p>
-
-        <!-- 4. Two-way binding -->
-        <h3>4. Two-way binding</h3>
-        <div class="demo">
-            <data-wrapper id="twoway" data-val="">
-                <label>Both inputs are controlled by the same state key:</label>
-                <div class="row">
-                    <input type="text" $value="/val" @input="val/update" placeholder="Input A…">
-                    <input type="text" $value="/val" @input="val/update" placeholder="Input B…">
-                </div>
-                <p>State: <code $text="/val"></code></p>
-            </data-wrapper>
-        </div>
-        <p class="note"><code>$value</code> seeds both inputs from state; typing in either one updates state and
-            reflects in both.</p>
-
-
-        <!-- =====================================================================
-     TODOS APP (broken — used for render-pipeline diagnosis)
-     ===================================================================== -->
-
-        <h2>Todos App (in progress)</h2>
-
-        <template id="vp-empty">
-            <li class="vp-empty-msg">No tasks found.</li>
-        </template>
-
-        <div class="demo">
-            <data-wrapper id="app" data-filter="all">
-
-                <form @submit="todo/add">
-                    <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off"
-                        style="margin-bottom:.5rem">
-                </form>
-
-                <ul class="todo-list" $list="view" data-empty="vp-empty">
-                    <template>
-                        <li class="todo-item" $class="./status">
-                            <input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id">
-                            <span $text="./task"></span>
-                            <button class="delete-btn" @click="todo/remove" $value="./id">✕</button>
-                        </li>
-                    </template>
-                </ul>
-
-                <div class="controls">
-                    <span><strong $text="active?format=count">0</strong> items left</span>
-                    <div class="filter-btns">
-                        <button @click="filter/set" data-val="all">All</button>
-                        <button @click="filter/set" data-val="active">Active</button>
-                        <button @click="filter/set" data-val="done">Done</button>
-                    </div>
-                </div>
-
-            </data-wrapper>
-        </div>
-
-
-        <!-- =====================================================================
-     DWRL SYNTAX REFERENCE
-     Proposal HTML — valid markup, not all patterns implemented yet.
-     ===================================================================== -->
-
-        <h2>DWRL Syntax Reference</h2>
-        <p>
-            DWRL (Data Wrapper Resource Locator) is a URL-shaped addressing scheme parsed
-            by the browser's native <code>new URL()</code>. Intent (read vs. write) is
-            determined by the token (<code>$</code>, <code>_</code>, <code>@</code>), not a verb.
+        <p style="margin:0;font-size:.85rem;color:#888">
+            Open DevTools → Elements and watch <code>data-count</code> update live.
         </p>
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML + JS</summary>
+    <pre>&lt;data-wrapper id="counter" data-count="0"&gt;
+  &lt;button @click="count/dec"&gt;−&lt;/button&gt;
+  &lt;span $text="/count"&gt;&lt;/span&gt;
+  &lt;button @click="count/inc"&gt;+&lt;/button&gt;
+&lt;/data-wrapper&gt;
 
-        <h3>Path Resolution</h3>
-        <pre>
-&lt;!-- Bare key or ./ prefix: item-scoped inside $list, falls back to wrapper state --&gt;
-&lt;span $text="./task"&gt;&lt;/span&gt;
+&lt;script&gt;
+  customElements.whenDefined('data-wrapper').then(() =&gt; {
+    const counter = document.getElementById('counter');
+    counter.register({
+      'count/inc': () =&gt; counter.put('count', n =&gt; Number(n) + 1),
+      'count/dec': () =&gt; counter.put('count', n =&gt; Number(n) - 1),
+    });
+  });
+&lt;/script&gt;</pre>
+</details>
 
-&lt;!-- Leading /: always wrapper-root state --&gt;
-&lt;span $text="/username"&gt;&lt;/span&gt;
+<!-- =====================================================================
+     § STATE
+     ===================================================================== -->
 
-&lt;!-- Nested path: drills into nested objects --&gt;
-&lt;span $text="/user/profile/name"&gt;&lt;/span&gt;
+<h2 id="state">State</h2>
+<p>The <code>data-*</code> attributes <em>are</em> the state store. No separate store object, no serialisation step.
+   Setting <code>app.state.name = 'Ali'</code> writes <code>data-name="Ali"</code> to the element.
+   Reading <code>app.state.todos</code> parses JSON from <code>data-todos</code>.</p>
 
-&lt;!-- Protocol-relative //: targets a specific wrapper by id --&gt;
-&lt;span $text="//cart/total"&gt;&lt;/span&gt;
-</pre>
+<h3>Static binding — no JavaScript required</h3>
+<p>Initial state declared in HTML. Bindings render immediately on connect.</p>
 
-        <h3>Text &amp; Property Bindings (<code>$</code>)</h3>
-        <pre>
-&lt;span $text="/username"&gt;&lt;/span&gt;
-&lt;div  $html="/bio"&gt;&lt;/div&gt;
-&lt;input $value="/draft"&gt;
-&lt;input type="checkbox" $checked="/settings/notifications"&gt;
-&lt;button $disabled="/isLoading"&gt;Submit&lt;/button&gt;
-&lt;a $href="/user/profileUrl"&gt;Profile&lt;/a&gt;
-&lt;img $src="/user/avatarUrl" $alt="/user/name"&gt;
-&lt;input $placeholder="/ui/searchHint"&gt;
-</pre>
+<div class="demo">
+    <data-wrapper data-greeting="Hello" data-name="World" data-version="0.1.0">
+        <p style="margin:0">
+            <span $text="/greeting"></span>,&nbsp;<strong $text="/name"></strong>!
+            &nbsp;·&nbsp; v<span $text="/version"></span>
+        </p>
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML — no script needed</summary>
+    <pre>&lt;data-wrapper data-greeting="Hello" data-name="World" data-version="0.1.0"&gt;
+  &lt;p&gt;
+    &lt;span $text="/greeting"&gt;&lt;/span&gt;, &lt;strong $text="/name"&gt;&lt;/strong&gt;!
+    v&lt;span $text="/version"&gt;&lt;/span&gt;
+  &lt;/p&gt;
+&lt;/data-wrapper&gt;</pre>
+</details>
 
-        <h3>Formatters via Query Params</h3>
-        <pre>
-&lt;span $text="/price?format=currency"&gt;&lt;/span&gt;
-&lt;span $text="/label?format=upper"&gt;&lt;/span&gt;
-&lt;span $text="/items?format=count"&gt;&lt;/span&gt;
+<h3>Bidirectional sync</h3>
+<p>Attribute mutations from any source — DevTools, external scripts, form libraries — propagate
+   automatically via MutationObserver. Try editing <code>data-name</code> directly in DevTools.</p>
 
-&lt;!-- Chained: applied left to right --&gt;
-&lt;span $text="/name?format=trim&amp;format=upper"&gt;&lt;/span&gt;
+<!-- =====================================================================
+     § TOKENS
+     ===================================================================== -->
 
-&lt;!-- Locale-aware (proposed) --&gt;
-&lt;span $text="/createdAt?format=date&amp;locale=en-GB"&gt;&lt;/span&gt;
-&lt;span $text="/price?format=currency&amp;currency=EUR&amp;locale=de-DE"&gt;&lt;/span&gt;
+<h2 id="tokens">Tokens</h2>
 
-&lt;!-- Boolean formatters --&gt;
-&lt;span $text="/isActive?format=yesno"&gt;&lt;/span&gt;
-&lt;span $class="/isActive?format=onoff"&gt;&lt;/span&gt;
-</pre>
+<table>
+    <thead><tr><th>Token</th><th>Direction</th><th>What it does</th><th>Example</th></tr></thead>
+    <tbody>
+        <tr>
+            <td><code>$</code></td>
+            <td>State → DOM</td>
+            <td>Binds a state path to a DOM property. <code>$text</code>, <code>$value</code>, <code>$checked</code>, <code>$href</code>, … any property works.</td>
+            <td><code>$text="/username"</code></td>
+        </tr>
+        <tr>
+            <td><code>_</code></td>
+            <td>State → DOM attr</td>
+            <td>Binds to an HTML attribute rather than a JS property. Useful for CSS hooks via attribute selectors. <em>(In progress.)</em></td>
+            <td><code>_data-active="/isActive"</code></td>
+        </tr>
+        <tr>
+            <td><code>@</code></td>
+            <td>DOM event → handler</td>
+            <td>Delegates a native event type to a registered handler. One listener per event type on the wrapper — zero per-element listeners.</td>
+            <td><code>@click="todo/remove"</code></td>
+        </tr>
+    </tbody>
+</table>
 
-        <h3>Class Bindings (<code>$class</code>)</h3>
-        <pre>
-&lt;!-- Value-as-class: state value used as class string. Static class="" preserved. --&gt;
-&lt;li class="todo-item" $class="./status"&gt;&lt;/li&gt;
-&lt;!-- state.status = "active" → class="todo-item active" --&gt;
+<!-- =====================================================================
+     § BINDINGS
+     ===================================================================== -->
 
-&lt;!-- toggle=name: add/remove class based on truthiness (proposed) --&gt;
-&lt;li class="todo-item" $class="./isDone?toggle=done"&gt;&lt;/li&gt;
+<h2 id="bindings">Bindings (<code>$</code>)</h2>
+<p><code>$prop="/path"</code> maps to <code>el[prop] = value</code>. A handful of aliases handle the common case
+   where HTML and JS names differ.</p>
 
-&lt;!-- map=val:class,...: map discrete values to class names (proposed) --&gt;
-&lt;li $class="./status?map=active:is-active,done:is-done"&gt;&lt;/li&gt;
+<table>
+    <thead><tr><th>Shorthand</th><th>Maps to</th><th>Use for</th></tr></thead>
+    <tbody>
+        <tr><td><code>$text</code></td><td><code>textContent</code></td><td>Safe text output</td></tr>
+        <tr><td><code>$html</code></td><td><code>innerHTML</code></td><td>Rich HTML — <strong>trusted sources only</strong>, XSS risk</td></tr>
+        <tr><td><code>$class</code></td><td><code>className</code></td><td>Dynamic class string, merged with static classes</td></tr>
+        <tr><td><code>$for</code></td><td><code>htmlFor</code></td><td><code>&lt;label&gt;</code> association</td></tr>
+        <tr><td><code>$readonly</code></td><td><code>readOnly</code></td><td>Input read-only state</td></tr>
+    </tbody>
+</table>
+<p>Any unlisted property falls through to <code>el[prop]</code> — so <code>$value</code>, <code>$checked</code>,
+   <code>$disabled</code>, <code>$href</code>, <code>$src</code>, <code>$placeholder</code> all work as-is.</p>
 
-&lt;!-- prefix: prepend a namespace to the value (proposed) --&gt;
-&lt;div class="card" $class="/theme?prefix=theme-"&gt;&lt;/div&gt;
+<h3>Live binding gallery</h3>
+<div class="demo">
+    <data-wrapper id="bindings-demo"
+        data-name="Jane Doe"
+        data-role="Senior Engineer"
+        data-active="true"
+        data-url="https://example.com"
+        data-score="9500">
 
-&lt;!-- Boolean formatters for class --&gt;
-&lt;span class="badge" $class="/isActive?format=onoff"&gt;&lt;/span&gt;
-&lt;!-- true → class="badge on", false → class="badge off" --&gt;
-</pre>
+        <div class="profile">
+            <div class="avatar">👤</div>
+            <div>
+                <strong $text="/name"></strong><br>
+                <span style="color:#666;font-size:.9rem" $text="/role"></span>
+            </div>
+            <span class="badge" $class="/active?format=onoff"></span>
+        </div>
 
-        <h3>Event Wiring (<code>@</code>)</h3>
-        <pre>
+        <div class="row" style="margin-top:.75rem">
+            <a $href="/url" target="_blank" rel="noopener">External link →</a>
+            &nbsp;·&nbsp; Score: <strong $text="/score?format=currency"></strong>
+        </div>
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML</summary>
+    <pre>&lt;data-wrapper data-name="Jane Doe" data-role="Senior Engineer"
+              data-active="true" data-url="https://example.com" data-score="9500"&gt;
+
+  &lt;strong $text="/name"&gt;&lt;/strong&gt;
+  &lt;span   $text="/role"&gt;&lt;/span&gt;
+  &lt;span class="badge" $class="/active?format=onoff"&gt;&lt;/span&gt;
+
+  &lt;a $href="/url"&gt;External link&lt;/a&gt;
+  &lt;strong $text="/score?format=currency"&gt;&lt;/strong&gt;
+
+&lt;/data-wrapper&gt;</pre>
+</details>
+
+<!-- =====================================================================
+     § FORMATTERS
+     ===================================================================== -->
+
+<h2 id="formatters">Formatters</h2>
+<p>Appended as <code>?format=name</code> query params. Chained left-to-right.
+   No JavaScript required to use them — they run inside the binding pipeline.</p>
+
+<div class="demo">
+    <data-wrapper id="fmt-demo"
+        data-amount="9.99"
+        data-label="  hello world  "
+        data-flag="true"
+        data-ts="2024-06-15"
+        data-items='[1,2,3,4,5]'>
+        <table>
+            <thead><tr><th>Formatter</th><th>Input</th><th>Output</th></tr></thead>
+            <tbody>
+                <tr><td><code>currency</code></td><td><code>9.99</code></td><td class="fmt-output" $text="/amount?format=currency"></td></tr>
+                <tr><td><code>upper</code></td><td><code>"  hello world  "</code></td><td class="fmt-output" $text="/label?format=upper"></td></tr>
+                <tr><td><code>lower</code></td><td><code>"  HELLO WORLD  "</code></td><td class="fmt-output" $text="/label?format=lower"></td></tr>
+                <tr><td><code>trim</code></td><td><code>"  hello world  "</code></td><td class="fmt-output" $text="/label?format=trim"></td></tr>
+                <tr><td><code>trim + upper</code></td><td><code>"  hello world  "</code></td><td class="fmt-output" $text="/label?format=trim&format=upper"></td></tr>
+                <tr><td><code>count</code></td><td><code>[1,2,3,4,5]</code></td><td class="fmt-output" $text="/items?format=count"></td></tr>
+                <tr><td><code>bool</code></td><td><code>true</code></td><td class="fmt-output" $text="/flag?format=bool"></td></tr>
+                <tr><td><code>yesno</code></td><td><code>true</code></td><td class="fmt-output" $text="/flag?format=yesno"></td></tr>
+                <tr><td><code>onoff</code></td><td><code>true</code></td><td class="fmt-output" $text="/flag?format=onoff"></td></tr>
+                <tr><td><code>date</code></td><td><code>2024-06-15</code></td><td class="fmt-output" $text="/ts?format=date"></td></tr>
+                <tr><td><code>json</code></td><td><code>[1,2,3,4,5]</code></td><td class="fmt-output" $text="/items?format=json"></td></tr>
+                <tr><td><code>fallback</code></td><td><em>undefined key</em></td><td class="fmt-output" $text="/missing?format=fallback"></td></tr>
+            </tbody>
+        </table>
+    </data-wrapper>
+</div>
+<p class="note">All output above is rendered live by <code>data-wrapper</code> with no JavaScript. Change the <code>data-*</code> values in DevTools to see the formatters re-run.</p>
+<details>
+    <summary>Registering a custom formatter</summary>
+    <pre>import { VP_FORMATTERS } from 'data-wrapper';
+
+// Register before mount
+VP_FORMATTERS.set('initials', v =&gt;
+  String(v).split(' ').map(w =&gt; w[0].toUpperCase()).join('')
+);
+
+VP_FORMATTERS.set('pluralise', v =&gt;
+  `${v} ${Number(v) === 1 ? 'item' : 'items'}`
+);</pre>
+</details>
+
+<!-- =====================================================================
+     § EVENTS
+     ===================================================================== -->
+
+<h2 id="events">Events (<code>@</code>)</h2>
+<p><code>@event="topic/name"</code> delegates the native event to a handler registered on the wrapper.
+   One listener per event type on the wrapper — never per-element. Works across dynamically added children.</p>
+
+<p>Handlers receive a <strong>CustomEvent</strong>. The original browser event is in <code>e.detail</code>:</p>
+
+<table>
+    <thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody>
+        <tr><td><code>e.detail</code></td><td>Original browser event (click, input, submit, …)</td></tr>
+        <tr><td><code>e.detail.target</code></td><td>Native event target — useful for <code>input.value</code></td></tr>
+        <tr><td><code>e.detail.delegateTarget</code></td><td>Element carrying the <code>@</code> attribute</td></tr>
+    </tbody>
+</table>
+
+<h3>Controlled input</h3>
+<div class="demo">
+    <data-wrapper id="controlled" data-message="">
+        <label>Type something:</label>
+        <input type="text" @input="input/update" placeholder="…">
+        <p style="margin:.5rem 0 0">Echo: <strong $text="/message"></strong></p>
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML + JS</summary>
+    <pre>&lt;data-wrapper id="controlled" data-message=""&gt;
+  &lt;input type="text" @input="input/update" placeholder="…"&gt;
+  &lt;strong $text="/message"&gt;&lt;/strong&gt;
+&lt;/data-wrapper&gt;
+
+&lt;script&gt;
+  controlled.register({
+    'input/update': e =&gt; controlled.put('message', e.detail.target.value),
+  });
+&lt;/script&gt;</pre>
+</details>
+
+<h3>Two-way binding</h3>
+<p>Multiple elements bound to the same state key stay in sync automatically.</p>
+<div class="demo">
+    <data-wrapper id="twoway" data-val="">
+        <label>Both inputs share the same state key:</label>
+        <div class="row">
+            <input type="text" $value="/val" @input="val/update" placeholder="Input A…" style="flex:1">
+            <input type="text" $value="/val" @input="val/update" placeholder="Input B…" style="flex:1">
+        </div>
+        <p style="margin:.25rem 0 0;font-size:.85rem">State: <code $text="/val"></code></p>
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML + JS</summary>
+    <pre>&lt;data-wrapper id="twoway" data-val=""&gt;
+  &lt;input type="text" $value="/val" @input="val/update" placeholder="A"&gt;
+  &lt;input type="text" $value="/val" @input="val/update" placeholder="B"&gt;
+&lt;/data-wrapper&gt;
+
+&lt;script&gt;
+  twoway.register({
+    'val/update': e =&gt; twoway.put('val', e.detail.target.value),
+  });
+&lt;/script&gt;</pre>
+</details>
+
+<h3>Toggle</h3>
+<div class="demo">
+    <data-wrapper id="toggle" data-on="false">
+        <div class="row">
+            <button @click="toggle">Toggle</button>
+            <span class="badge" $class="/on?format=onoff">●</span>
+            <code $text="/on"></code>
+        </div>
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML + JS</summary>
+    <pre>&lt;data-wrapper id="toggle" data-on="false"&gt;
+  &lt;button @click="toggle"&gt;Toggle&lt;/button&gt;
+  &lt;span class="badge" $class="/on?format=onoff"&gt;●&lt;/span&gt;
+  &lt;code $text="/on"&gt;&lt;/code&gt;
+&lt;/data-wrapper&gt;
+
+&lt;script&gt;
+  const t = document.getElementById('toggle');
+  t.register({
+    'toggle': () =&gt; t.put('on', v =&gt; !v),
+  });
+&lt;/script&gt;</pre>
+</details>
+
+<!-- =====================================================================
+     § LIST RENDERING
+     ===================================================================== -->
+
+<h2 id="lists">List Rendering (<code>$list</code>)</h2>
+<p>Bind an array to a container. The <code>&lt;template&gt;</code> child is the row definition.
+   The reconciler diffs by <code>item.id</code> — only changed rows are touched.
+   Inside the template, <code>./path</code> reads from the row's item object.</p>
+
+<template id="vp-empty">
+    <li class="vp-empty-msg">No tasks yet. Add one above.</li>
+</template>
+
+<div class="demo">
+    <data-wrapper id="app" data-filter="all">
+
+        <form @submit="todo/add" style="display:flex;gap:.5rem;margin-bottom:.75rem">
+            <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off" style="flex:1;margin:0">
+            <button type="submit" style="white-space:nowrap">Add task</button>
+        </form>
+
+        <ul class="todo-list" $list="/view" data-empty="vp-empty">
+            <template>
+                <li class="todo-item" $class="./status">
+                    <input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id">
+                    <span $text="./task"></span>
+                    <button class="delete-btn" @click="todo/remove" $value="./id">✕</button>
+                </li>
+            </template>
+        </ul>
+
+        <div class="controls">
+            <span><strong $text="/active?format=count">0</strong> active</span>
+            <div class="filter-btns">
+                <button @click="filter/set" data-val="all">All</button>
+                <button @click="filter/set" data-val="active">Active</button>
+                <button @click="filter/set" data-val="done">Done</button>
+            </div>
+        </div>
+
+        <details style="margin-top:1rem">
+            <summary>Live state — todos array</summary>
+            <pre class="state-pre" $text="/todos?format=json"></pre>
+        </details>
+
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML</summary>
+    <pre>&lt;ul class="todo-list" $list="/view" data-empty="vp-empty"&gt;
+  &lt;template&gt;
+    &lt;li class="todo-item" $class="./status"&gt;
+      &lt;input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id"&gt;
+      &lt;span $text="./task"&gt;&lt;/span&gt;
+      &lt;button @click="todo/remove" $value="./id"&gt;✕&lt;/button&gt;
+    &lt;/li&gt;
+  &lt;/template&gt;
+&lt;/ul&gt;
+
+&lt;!-- Override identity key: $list="/users?key=uuid" --&gt;</pre>
+</details>
+<p class="note">Try inspecting <code>#app</code> in DevTools — <code>data-todos</code> and <code>data-view</code> update with every action.</p>
+
+<!-- =====================================================================
+     § STATE API
+     ===================================================================== -->
+
+<h2 id="state-api">State API</h2>
+
+<table>
+    <thead><tr><th>Method</th><th>Description</th><th>Example</th></tr></thead>
+    <tbody>
+        <tr>
+            <td><code>put(key, val)</code></td>
+            <td>Set a state key. Accepts a value or an updater function.</td>
+            <td><code>app.put('count', n =&gt; n + 1)</code></td>
+        </tr>
+        <tr>
+            <td><code>patch(key, obj)</code></td>
+            <td>Shallow-merge an object into an existing state key.</td>
+            <td><code>app.patch('user', { name: 'Ali' })</code></td>
+        </tr>
+        <tr>
+            <td><code>push(key, item)</code></td>
+            <td>Append an item to an array state key.</td>
+            <td><code>app.push('todos', { id: 1, task: '…' })</code></td>
+        </tr>
+        <tr>
+            <td><code>pull(key, pred)</code></td>
+            <td>Remove items from an array by id or predicate.</td>
+            <td><code>app.pull('todos', t =&gt; t.done)</code></td>
+        </tr>
+        <tr>
+            <td><code>register(map)</code></td>
+            <td>Register event topic handlers on the wrapper.</td>
+            <td><code>app.register({ 'todo/add': e =&gt; … })</code></td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>System events</h3>
+<table>
+    <thead><tr><th>Event</th><th>Target</th><th>Detail</th></tr></thead>
+    <tbody>
+        <tr>
+            <td><code>data:sync</code></td>
+            <td>The wrapper element</td>
+            <td><code>{ key }</code> — the state key that changed</td>
+        </tr>
+        <tr>
+            <td><code>data-wrapper:load</code></td>
+            <td><code>document</code></td>
+            <td>The wrapper element that just connected</td>
+        </tr>
+        <tr>
+            <td><code>load</code></td>
+            <td>The wrapper element</td>
+            <td>The wrapper element — triggers <code>onload=""</code> attribute</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- =====================================================================
+     § PATTERNS
+     ===================================================================== -->
+
+<h2 id="patterns">Patterns</h2>
+
+<h3>Computed state via <code>data:sync</code></h3>
+<p>Listen for state changes and derive new values with <code>put</code>. No dependency tracking —
+   recompute whenever dependencies change.</p>
+
+<div class="demo">
+    <data-wrapper id="computed-demo" data-first-name="Jane" data-last-name="Doe">
+        <div class="row">
+            <input type="text" $value="/firstName" @input="first/set" placeholder="First name" style="flex:1;margin:0">
+            <input type="text" $value="/lastName"  @input="last/set"  placeholder="Last name"  style="flex:1;margin:0">
+        </div>
+        <p class="computed-output">Full name: <span $text="/fullName"></span></p>
+    </data-wrapper>
+</div>
+<details>
+    <summary>JS — computed state</summary>
+    <pre>const demo = document.getElementById('computed-demo');
+
+demo.register({
+  'first/set': e =&gt; demo.put('firstName', e.detail.target.value),
+  'last/set':  e =&gt; demo.put('lastName',  e.detail.target.value),
+});
+
+demo.addEventListener('data:sync', () =&gt; {
+  demo.put('fullName', `${demo.state.firstName} ${demo.state.lastName}`);
+});</pre>
+</details>
+
+<h3>Inline init via <code>onload</code></h3>
+<p>The <code>onload</code> attribute fires when the wrapper connects — before any external script runs.
+   Useful for self-contained components.</p>
+
+<div class="demo">
+    <data-wrapper data-count="10"
+        onload="this.register({ 'dec': () => this.put('count', n => Number(n) - 1) })">
+        <div class="row">
+            <button @click="dec">−1</button>
+            <strong class="count-display" $text="/count"></strong>
+        </div>
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML — no external script</summary>
+    <pre>&lt;data-wrapper data-count="10"
+  onload="this.register({ 'dec': () =&gt; this.put('count', n =&gt; Number(n) - 1) })"&gt;
+  &lt;button @click="dec"&gt;−1&lt;/button&gt;
+  &lt;strong $text="/count"&gt;&lt;/strong&gt;
+&lt;/data-wrapper&gt;</pre>
+</details>
+
+<!-- =====================================================================
+     § DWRL REFERENCE
+     ===================================================================== -->
+
+<h2 id="dwrl">DWRL Reference</h2>
+<p>Data Wrapper Resource Locator. A URL-shaped addressing scheme. Parsed by the browser's native
+   <code>new URL()</code> — no custom parser. The token (<code>$</code> / <code>_</code> / <code>@</code>)
+   determines intent; DWRL names the resource.</p>
+
+<h3>Path resolution</h3>
+<table>
+    <thead><tr><th>Syntax</th><th>Resolves to</th></tr></thead>
+    <tbody>
+        <tr><td><code>/key</code></td><td>Wrapper-root state key</td></tr>
+        <tr><td><code>/user/name</code></td><td>Nested: <code>state.user.name</code></td></tr>
+        <tr><td><code>./key</code></td><td>Item-scoped (inside <code>$list</code> template only)</td></tr>
+        <tr><td><code>//other-id/key</code></td><td>Cross-wrapper by element id <em>(in progress)</em></td></tr>
+    </tbody>
+</table>
+
+<h3>Query params</h3>
+<table>
+    <thead><tr><th>Param</th><th>Effect</th><th>Example</th></tr></thead>
+    <tbody>
+        <tr>
+            <td><code>?format=name</code></td>
+            <td>Apply named formatter. Chain multiple: applied left to right.</td>
+            <td><code>$text="/price?format=currency"</code></td>
+        </tr>
+        <tr>
+            <td><code>?key=field</code></td>
+            <td>Override identity key for <code>$list</code> reconciler (default: <code>id</code>).</td>
+            <td><code>$list="/users?key=uuid"</code></td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Event topics</h3>
+<p>The <code>@event</code> attribute value is the topic name. Use slash-separated paths as a
+   lightweight namespace: <code>todo/add</code>, <code>filter/set</code>, <code>modal/open</code>.</p>
+
+<pre style="background:#f8f8f8;border:1px solid #e0e0e0;border-radius:6px;padding:1rem;font-size:.82rem;font-family:ui-monospace,monospace;line-height:1.7">
 &lt;button @click="todo/remove" $value="./id"&gt;Delete&lt;/button&gt;
-&lt;form   @submit="todo/add"&gt;...&lt;/form&gt;
+&lt;form   @submit="todo/add"&gt;…&lt;/form&gt;
 &lt;input  @input="search/update"&gt;
 &lt;button @click="filter/set" data-val="active"&gt;Active&lt;/button&gt;
 
-&lt;!-- Handler receives CustomEvent; original event is in e.detail --&gt;
-&lt;script&gt;
+&lt;!-- All handlers receive a CustomEvent; original event is in e.detail --&gt;
 wrapper.register({
-    'todo/add': e =&gt; { e.detail.preventDefault(); ... },
-    'filter/set': e =&gt; { app.put('filter', e.detail.delegateTarget.dataset.val); },
-});
+  'todo/add':    e =&gt; { e.detail.preventDefault(); … },
+  'filter/set':  e =&gt; { app.put('filter', e.detail.delegateTarget.dataset.val); },
+  'search/update': e =&gt; { app.put('query', e.detail.target.value); },
+});</pre>
+
+<!-- =====================================================================
+     § CONFIGURATION
+     ===================================================================== -->
+
+<h2 id="config">Configuration</h2>
+
+<h3>Custom tokens</h3>
+<p>Override <code>window.VP_CUSTOM_CONFIG</code> before the script loads:</p>
+<details>
+    <summary>Custom token config</summary>
+    <pre>&lt;script&gt;
+  window.VP_CUSTOM_CONFIG = {
+    TOKENS: { BIND: ':', ADD: '+', EVT: '#' },
+    NO_WAKE: ['DATA-WRAPPER', 'TEMPLATE', 'SVG'],
+  };
 &lt;/script&gt;
-</pre>
+&lt;script src="/dist/data-wrapper.js" type="module"&gt;&lt;/script&gt;
 
-        <h3>List Rendering (<code>$list</code>)</h3>
-        <pre>
-&lt;ul $list="/todos"&gt;
-    &lt;template&gt;
-        &lt;li $text="./task"&gt;&lt;/li&gt;
-    &lt;/template&gt;
-&lt;/ul&gt;
+&lt;!-- Now use the custom tokens --&gt;
+&lt;span :text="/username"&gt;&lt;/span&gt;
+&lt;button #click="count/inc"&gt;+1&lt;/button&gt;</pre>
+</details>
 
-&lt;!-- Empty-state template --&gt;
-&lt;template id="no-results"&gt;&lt;li class="empty"&gt;Nothing here.&lt;/li&gt;&lt;/template&gt;
-&lt;ul $list="/results" data-empty="no-results"&gt;
-    &lt;template&gt;&lt;li $text="./label"&gt;&lt;/li&gt;&lt;/template&gt;
-&lt;/ul&gt;
+<h3>Custom formatters</h3>
+<details>
+    <summary>Registering formatters</summary>
+    <pre>import { VP_FORMATTERS } from 'data-wrapper';
 
-&lt;!-- Nested list: item-scoped $list (proposed) --&gt;
-&lt;ul $list="/projects"&gt;
-    &lt;template&gt;
-        &lt;li&gt;
-            &lt;strong $text="./name"&gt;&lt;/strong&gt;
-            &lt;ul $list="./tasks"&gt;
-                &lt;template&gt;&lt;li $text="./title"&gt;&lt;/li&gt;&lt;/template&gt;
-            &lt;/ul&gt;
-        &lt;/li&gt;
-    &lt;/template&gt;
-&lt;/ul&gt;
+VP_FORMATTERS.set('initials', v =&gt;
+  String(v).split(' ').map(w =&gt; w[0].toUpperCase()).join('')
+);
 
-&lt;!-- Filtered list via query param (proposed) --&gt;
-&lt;ul $list="/todos?where=done:false"&gt;
-    &lt;template&gt;&lt;li $text="./task"&gt;&lt;/li&gt;&lt;/template&gt;
-&lt;/ul&gt;
-</pre>
+VP_FORMATTERS.set('pluralise', v =&gt;
+  `${v} ${Number(v) === 1 ? 'item' : 'items'}`
+);
 
-        <h3>Cross-Component Mesh</h3>
-        <pre>
-&lt;data-wrapper id="cart"&gt;
-    &lt;span $text="/items?format=count"&gt;&lt;/span&gt;
-    &lt;span $text="/total?format=currency"&gt;&lt;/span&gt;
-&lt;/data-wrapper&gt;
+VP_FORMATTERS.set('ago', v =&gt; {
+  const diff = Date.now() - new Date(v as string).getTime();
+  const mins = Math.floor(diff / 60000);
+  return mins &lt; 1 ? 'just now' : `${mins}m ago`;
+});</pre>
+</details>
 
-&lt;data-wrapper id="header"&gt;
-    &lt;span $text="//cart/items?format=count"&gt;&lt;/span&gt;
-    &lt;button @click="action://cart/open"&gt;Cart&lt;/button&gt;
-&lt;/data-wrapper&gt;
-</pre>
+<h3>Named empty-state templates</h3>
+<details>
+    <summary>VP_TEMPLATES</summary>
+    <pre>import { VP_TEMPLATES } from 'data-wrapper';
 
-        <h3>Component Init (<code>onload</code> + <code>register</code>)</h3>
-        <pre>
-&lt;data-wrapper id="app" data-filter="all"
-    onload="this.register({
-        'todo/add':    e =&gt; { ... },
-        'todo/remove': e =&gt; { ... }
-    })"&gt;
-&lt;/data-wrapper&gt;
+// Or declare in HTML:
+// &lt;template id="my-empty"&gt;&lt;li class="empty"&gt;Nothing here.&lt;/li&gt;&lt;/template&gt;
+// &lt;ul $list="/items" data-empty="my-empty"&gt;…&lt;/ul&gt;
 
-&lt;!-- Or from a module script --&gt;
-&lt;script type="module"&gt;
-    await customElements.whenDefined('data-wrapper');
-    document.getElementById('app').register({ 'todo/add': e =&gt; { ... } });
-&lt;/script&gt;
-</pre>
+VP_TEMPLATES.set('my-empty', document.getElementById('my-empty'));</pre>
+</details>
 
-        <h3>Remote Data (<code>api://</code> — proposed)</h3>
-        <pre>
-&lt;data-wrapper id="users" src="api://jsonplaceholder.typicode.com/users"&gt;
-    &lt;ul $list="/users"&gt;
-        &lt;template&gt;&lt;li $text="./name"&gt;&lt;/li&gt;&lt;/template&gt;
-    &lt;/ul&gt;
-&lt;/data-wrapper&gt;
-</pre>
-
-    </main><!-- end main -->
+</main><!-- end main -->
 
 
-    <!-- =====================================================================
+<!-- =====================================================================
      APP LOGIC
      ===================================================================== -->
-    <script>
-        customElements.whenDefined('data-wrapper').then(() => {
+<script>
+    customElements.whenDefined('data-wrapper').then(() => {
 
-            // --- Showcase demos ---
-
-            document.getElementById('toggle').register({
-                'toggle': () => {
-                    const t = document.getElementById('toggle');
-                    t.put('on', v => !v);
-                },
-            });
-
-            const controlled = document.getElementById('controlled');
-            controlled.register({
-                'input/update': e => controlled.put('message', e.detail.target.value),
-            });
-
-            const twoway = document.getElementById('twoway');
-            twoway.register({
-                'val/update': e => twoway.put('val', e.detail.target.value),
-            });
-
-            // --- Todos app ---
-
-            const app = document.getElementById('app');
-
-            const compute = () => {
-                const todos = app.state.todos || [];
-                const filter = app.state.filter || 'all';
-                app.put('active', todos.filter(t => !t.done));
-                app.put('view', todos.filter(t =>
-                    filter === 'all' ||
-                    (filter === 'active' && !t.done) ||
-                    (filter === 'done' && t.done)
-                ));
-            };
-
-            app.register({
-                'todo/add': e => {
-                    e.detail.preventDefault();
-                    const input = e.detail.target.querySelector('input[name="task"]');
-                    if (!input?.value.trim()) return;
-                    app.put('todos', prev => [
-                        ...(prev || []),
-                        { id: Date.now(), task: input.value.trim(), status: 'active', done: false },
-                    ]);
-                    input.value = '';
-                },
-                'todo/toggle': e => {
-                    const id = Number(e.detail.delegateTarget?.value);
-                    app.put('todos', prev => (prev || []).map(t =>
-                        t.id === id
-                            ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' }
-                            : t
-                    ));
-                },
-                'todo/remove': e => {
-                    const id = Number(e.detail.delegateTarget?.value);
-                    app.put('todos', prev => (prev || []).filter(t => t.id !== id));
-                },
-                'filter/set': e => {
-                    app.put('filter', e.detail.delegateTarget?.dataset.val);
-                },
-            });
-
-            app.addEventListener('data:sync', e => {
-                if (['todos', 'filter'].includes(e.detail.key)) compute();
-            });
-
-            app.put('todos', [
-                { id: 1, task: 'Master the DOM', status: 'done', done: true },
-                { id: 2, task: 'Ship data-wrapper', status: 'active', done: false },
-            ]);
-
+        // --- Counter ---
+        const counter = document.getElementById('counter');
+        counter.register({
+            'count/inc': () => counter.put('count', n => Number(n) + 1),
+            'count/dec': () => counter.put('count', n => Number(n) - 1),
         });
-    </script>
+
+        // --- Toggle ---
+        const toggle = document.getElementById('toggle');
+        toggle.register({
+            'toggle': () => toggle.put('on', v => !v),
+        });
+
+        // --- Controlled input ---
+        const controlled = document.getElementById('controlled');
+        controlled.register({
+            'input/update': e => controlled.put('message', e.detail.target.value),
+        });
+
+        // --- Two-way binding ---
+        const twoway = document.getElementById('twoway');
+        twoway.register({
+            'val/update': e => twoway.put('val', e.detail.target.value),
+        });
+
+        // --- Computed state demo ---
+        const computedDemo = document.getElementById('computed-demo');
+        computedDemo.register({
+            'first/set': e => computedDemo.put('firstName', e.detail.target.value),
+            'last/set':  e => computedDemo.put('lastName',  e.detail.target.value),
+        });
+        computedDemo.addEventListener('data:sync', () => {
+            computedDemo.put('fullName',
+                `${computedDemo.state.firstName} ${computedDemo.state.lastName}`);
+        });
+        computedDemo.put('fullName',
+            `${computedDemo.state.firstName} ${computedDemo.state.lastName}`);
+
+        // --- Todo app ---
+        const app = document.getElementById('app');
+
+        const compute = () => {
+            const todos  = app.state.todos  || [];
+            const filter = app.state.filter || 'all';
+            app.put('active', todos.filter(t => !t.done));
+            app.put('view', todos.filter(t =>
+                filter === 'all'    ? true :
+                filter === 'active' ? !t.done :
+                                       t.done
+            ));
+        };
+
+        app.register({
+            'todo/add': e => {
+                e.detail.preventDefault();
+                const input = e.detail.target.querySelector('input[name="task"]');
+                if (!input?.value.trim()) return;
+                app.push('todos', {
+                    id:     Date.now(),
+                    task:   input.value.trim(),
+                    status: 'active',
+                    done:   false,
+                });
+                input.value = '';
+            },
+            'todo/toggle': e => {
+                const id = Number(e.detail.delegateTarget?.value);
+                app.put('todos', prev => (prev || []).map(t =>
+                    t.id === id
+                        ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' }
+                        : t
+                ));
+            },
+            'todo/remove': e => {
+                const id = Number(e.detail.delegateTarget?.value);
+                app.put('todos', prev => (prev || []).filter(t => t.id !== id));
+            },
+            'filter/set': e => {
+                app.put('filter', e.detail.delegateTarget?.dataset.val);
+            },
+        });
+
+        app.addEventListener('data:sync', e => {
+            if (['todos', 'filter'].includes(e.detail.key)) compute();
+        });
+
+        app.put('todos', [
+            { id: 1, task: 'Master the DOM',    status: 'done',   done: true  },
+            { id: 2, task: 'Ship data-wrapper', status: 'active', done: false },
+            { id: 3, task: 'Write the docs',    status: 'active', done: false },
+        ]);
+
+    });
+</script>
 
 </body>
-
 </html>
