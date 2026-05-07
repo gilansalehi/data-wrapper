@@ -1,7 +1,6 @@
 import { VP_TEMPLATES, sync } from './registry.ts';
 import type { UpdateConfig } from './types.ts';
 
-// Internal augmented element types
 type VNode       = Element & { _vBase?: Set<string>; _vState?: { dynamic: string; additive: string } };
 type ItemElement = Element & { _vItem?: Record<string, unknown>; _vItemConfigs?: UpdateConfig[] };
 
@@ -13,20 +12,10 @@ export const applyBinding = (el: Element, prop: string, val: unknown) => {
     if (val === undefined || val === null) return;
 
     if (prop === 'class') {
-        const v     = el as VNode;
-        v._vBase    = v._vBase ?? new Set([...el.classList]);
-        const s     = v._vState = v._vState ?? { dynamic: '', additive: '' };
-        s.dynamic   = String(val);
-        el.className = ([...v._vBase].join(' ') + ' ' + s.dynamic + ' ' + s.additive)
-            .replace(/\s+/g, ' ').trim();
-        return;
-    }
-
-    if (prop === 'additive') {
-        const v     = el as VNode;
-        v._vBase    = v._vBase ?? new Set([...el.classList]);
-        const s     = v._vState = v._vState ?? { dynamic: '', additive: '' };
-        s.additive  = String(val);
+        const v   = el as VNode;
+        v._vBase  = v._vBase ?? new Set([...el.classList]);
+        const s   = v._vState = v._vState ?? { dynamic: '', additive: '' };
+        s.dynamic = String(val);
         el.className = ([...v._vBase].join(' ') + ' ' + s.dynamic + ' ' + s.additive)
             .replace(/\s+/g, ' ').trim();
         return;
@@ -60,7 +49,6 @@ export const reconcile = (
     tpl: HTMLTemplateElement,
     hydrate: (node: Element, itemNode: Element) => void,
 ) => {
-    // Empty state
     if (!data || data.length === 0) {
         cache.forEach(node => node.remove());
         cache.clear();
@@ -90,7 +78,7 @@ export const reconcile = (
     const fragment  = document.createDocumentFragment();
 
     data.forEach(item => {
-        const id    = item.id ?? JSON.stringify(item);
+        const id   = item.id ?? JSON.stringify(item);
         activeIds.add(id);
 
         let node  = cache.get(id);
@@ -105,15 +93,14 @@ export const reconcile = (
         (node as ItemElement)._vItem = item;
 
         if (isNew) {
-            hydrate(node, node);        // wake subtree; item-scoped bindings register + fire
+            hydrate(node, node);           // wake subtree; item-scoped bindings register + render
         } else {
-            applyItemBindings(node, item); // re-apply local bindings with updated item data
+            applyItemBindings(node, item); // re-apply local bindings with fresh item data
         }
 
         fragment.appendChild(node);
     });
 
-    // Remove stale nodes
     cache.forEach((node, id) => {
         if (!activeIds.has(id)) { node.remove(); cache.delete(id); }
     });

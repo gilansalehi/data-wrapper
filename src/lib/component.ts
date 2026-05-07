@@ -67,28 +67,19 @@ export class DataWrapper extends HTMLElement {
         this.observer.disconnect();
     }
 
-    // -----------------------------------------------------------------------
-    // _notify — broadcasts a state change to all wrapper-scoped subscribers
-    // -----------------------------------------------------------------------
-
+    // Broadcasts a state change to all wrapper-scoped DOM subscribers for `key`.
     _notify(key: string, val: unknown) {
         for (const config of this.subs[key] || []) {
             if (!config.el.isConnected) continue;
             let v = val;
             for (const pipe of config.pipes) v = pipe(v);
-
-            if (RENDER_DIRECTIVES.has(config.prop)) {
-                this._runDirective(config, v);
-            } else {
-                applyBinding(config.el, config.prop, v);
-            }
+            RENDER_DIRECTIVES.has(config.prop)
+                ? this._runDirective(config, v)
+                : applyBinding(config.el, config.prop, v);
         }
     }
 
-    // -----------------------------------------------------------------------
-    // _runDirective — executes a RENDER_DIRECTIVE for a given config + value
-    // -----------------------------------------------------------------------
-
+    // Executes a render directive (list, and future: match, if).
     _runDirective(config: UpdateConfig, val: unknown) {
         if (config.prop === 'list') {
             const tpl = Array.from(config.el.children)
@@ -96,32 +87,21 @@ export class DataWrapper extends HTMLElement {
             if (!tpl) return;
             let cache = this._listCache.get(config.el);
             if (!cache) { cache = new Map(); this._listCache.set(config.el, cache); }
-            reconcile(config.el, val as Array<Record<string, unknown>> || [], cache, tpl, wake);
+            reconcile(config.el, (val as Array<Record<string, unknown>>) || [], cache, tpl, wake);
         }
-        // future: 'match', 'if', ...
     }
 
-    // -----------------------------------------------------------------------
-    // _register — internal: adds a DOM subscription and fires initial sync
-    // -----------------------------------------------------------------------
-
+    // Internal: registers a DOM subscription and fires initial sync.
     _register(path: string, config: UpdateConfig) {
         (this.subs[path] = this.subs[path] || []).push(config);
         const val = this.state[path];
         if (val !== undefined) this._notify(path, val);
     }
 
-    // -----------------------------------------------------------------------
-    // Public API: register action handlers
-    // -----------------------------------------------------------------------
-
+    // Public: maps action:// path strings to handler functions.
     register(actions: Record<string, EventListener>) {
         Object.assign(this._actions, actions);
     }
-
-    // -----------------------------------------------------------------------
-    // State mutation API
-    // -----------------------------------------------------------------------
 
     put(key: string, val: unknown | ((prev: unknown) => unknown)) {
         const next = typeof val === 'function'
@@ -146,16 +126,6 @@ export class DataWrapper extends HTMLElement {
             ? predicate as (i: unknown) => boolean
             : (i: unknown) => (i as Record<string, unknown>).id !== predicate;
         this.put(key, current.filter(fn));
-    }
-
-    parseDWRL(input: string, base?: string) {
-        const url = new URL(input, base || 'dwrl://localhost/');
-        return {
-            authority: url.host,
-            segments:  url.pathname.split('/').filter(Boolean),
-            property:  url.hash.slice(1),
-            params:    Object.fromEntries([...url.searchParams]),
-        };
     }
 }
 

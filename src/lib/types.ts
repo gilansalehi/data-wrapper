@@ -1,23 +1,21 @@
 export type Formatter = (v: unknown) => unknown;
-export type Unsubscribe = () => void;
-export type SubscribeMode = 'dynamic' | 'additive';
-export type SyncType = 'dynamic' | 'additive';
 
 export interface UpdateConfig {
-    el: Element;
-    path: string;
-    prop: string;
-    pipes: Formatter[];
+    el:       Element;
+    path:     string;
+    prop:     string;
+    pipes:    Formatter[];
     itemNode: Element | null;
+    // TODO: add `mode: 'dynamic' | 'additive'` when _ token class behaviour is implemented
 }
 
 export interface Tokens {
-    BIND: string;
-    ADD: string;
-    EVT: string;
+    BIND: string; // $ — state → DOM
+    ADD:  string; // _ — additive class binding (TODO: fully implement)
+    EVT:  string; // @ — DOM event → action
 }
 
 export interface Config {
-    TOKENS: Tokens;
+    TOKENS:  Tokens;
     NO_WAKE: string[];
 }
