@@ -21,7 +21,12 @@
   "keywords": ["web-components", "data-binding", "reactivity", "no-build", "html-first", "framework"],
   "license": "MIT",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@axe-core/playwright": "^4.11.3",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@types/bun": "latest",
+    "happy-dom": "^20.9.0",
+    "playwright": "^1.59.1"
   },
   "peerDependencies": {
     "typescript": "^5"
