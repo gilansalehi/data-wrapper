@@ -1,3 +1,2 @@
 [test]
-environment = "happy-dom"
-preload     = ["./tests/setup.ts"]
+preload = ["./tests/setup.ts", "./happydom.ts"]

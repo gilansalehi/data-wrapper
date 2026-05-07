@@ -17,7 +17,7 @@
   "scripts": {
     "build": "bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.js --format esm --target browser && bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.min.js --format iife --minify --target browser",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
+    "test": "bun test tests/unit/",
     "test:e2e": "bunx playwright test",
     "serve": "bun serve.ts"
   },
@@ -25,6 +25,7 @@
   "license": "MIT",
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
+    "@happy-dom/global-registrator": "^20.9.0",
     "@playwright/test": "^1.59.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",

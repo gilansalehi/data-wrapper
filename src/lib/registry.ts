@@ -4,10 +4,10 @@ export type Formatter = (v: unknown) => unknown;
 export interface Tokens { BIND: string; ADD: string; EVT: string; }
 export interface Config { TOKENS: Tokens; NO_WAKE: string[]; }
 
-export const CONFIG: Config & Record<string, unknown> = Object.assign({
+export const CONFIG: Config & Record<string, unknown> = {
     TOKENS: { BIND: '$', ADD: '_', EVT: '@' },
     NO_WAKE: ['DATA-WRAPPER', 'TEMPLATE', 'SVG'],
-}, (window as Window & { VP_CUSTOM_CONFIG?: Partial<Config> }).VP_CUSTOM_CONFIG || {});
+};
 
 // CODE SMELL -- let's add some sensible, minimal defaults as fallbacks, just in case.
 export const VP_TEMPLATES = new Map<string, HTMLTemplateElement>();
