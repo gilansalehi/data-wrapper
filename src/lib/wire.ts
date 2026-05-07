@@ -2,10 +2,9 @@ import { CONFIG, VP_FORMATTERS } from './registry.ts';
 import { applyBinding } from './engine.ts';
 import type { UpdateConfig, Formatter } from './types.ts';
 
-type ItemNode  = Element & { _vItem?: Record<string, unknown>; _vItemConfigs?: UpdateConfig[] };
-type WokeNode  = Element & { _vWoke?: boolean };
+type ItemNode = Element & { _vItem?: Record<string, unknown>; _vItemConfigs?: UpdateConfig[] };
+type WokeNode = Element & { _vWoke?: boolean };
 
-// Public interface for component.ts to depend on without importing the class
 export interface WrapperNode extends HTMLElement {
     state:        Record<string, unknown>;
     subs:         Record<string, UpdateConfig[]>;
@@ -23,16 +22,14 @@ const parsePath = (attrValue: string) => {
     const qIdx     = attrValue.indexOf('?');
     const rawPath  = qIdx >= 0 ? attrValue.slice(0, qIdx) : attrValue;
     const queryStr = qIdx >= 0 ? attrValue.slice(qIdx + 1) : '';
-    const params   = new URLSearchParams(queryStr);
-    const pipes    = params.getAll('format')
+    const pipes    = new URLSearchParams(queryStr).getAll('format')
         .map(n => VP_FORMATTERS.get(n))
         .filter((f): f is Formatter => !!f);
 
     return {
-        rawPath,
         pipes,
-        isItemScoped:    rawPath.startsWith('./'),
-        isCrossWrapper:  rawPath.startsWith('//'),
+        isItemScoped:   rawPath.startsWith('./'),
+        isCrossWrapper: rawPath.startsWith('//'),
         path: rawPath.replace(/^\.\//, '').replace(/^\/+/, ''),
     };
 };
@@ -42,28 +39,26 @@ const parsePath = (attrValue: string) => {
 // ---------------------------------------------------------------------------
 
 const _dispatchTopic = (wrapper: WrapperNode, e: Event, topic: string) => {
-    const colonIdx = topic.indexOf(':');
-    if (colonIdx > 0) {
-        const scheme = topic.slice(0, colonIdx);
-        const path   = topic.slice(colonIdx + 1).replace(/^\/\/[^/]*/, '').replace(/^\//, '');
-
+    const sep = topic.indexOf(':');
+    if (sep > 0) {
+        const scheme = topic.slice(0, sep);
+        const path   = topic.slice(sep + 1).replace(/^\/\/[^/]*/, '').replace(/^\//, '');
         if (scheme === 'action') {
-            const handler = wrapper._actions[path];
-            if (handler) handler(e);
+            wrapper._actions[path]?.(e);
             return;
         }
     }
     wrapper.dispatchEvent(new CustomEvent(topic, { detail: e, bubbles: true }));
 };
 
-const _ensureDelegation = (wrapper: WrapperNode, eventName: string) => {
+// Exported so _runDirective can pre-register events found inside <template> content.
+export const ensureDelegation = (wrapper: WrapperNode, eventName: string) => {
     if (wrapper._boundEvents.has(eventName)) return;
     wrapper._boundEvents.add(eventName);
 
     const attrName = `${CONFIG.TOKENS.EVT}${eventName}`;
 
     wrapper.addEventListener(eventName, (e: Event) => {
-        // Walk up from target to find the element carrying @eventName
         let delegate: Element | null = null;
         let node: Element | null     = e.target as Element;
         while (node) {
@@ -75,7 +70,6 @@ const _ensureDelegation = (wrapper: WrapperNode, eventName: string) => {
 
         (e as Event & { delegateTarget?: Element }).delegateTarget = delegate;
 
-        // Walk up to find item context
         let scan: Element | null = delegate;
         while (scan) {
             if ((scan as ItemNode)._vItem) {
@@ -101,48 +95,48 @@ export const subscribe = (
     attrValue: string,
     itemNode: Element | null = null,
 ) => {
-    const wrapper = el.closest('data-wrapper') as WrapperNode | null;
-    if (!wrapper) return;
-
-    const prefix            = mode === 'dynamic' ? CONFIG.TOKENS.BIND : CONFIG.TOKENS.ADD;
-    const prop              = attrName.slice(prefix.length);
-    const { rawPath, path, pipes, isItemScoped, isCrossWrapper } = parsePath(attrValue);
+    const prefix = mode === 'dynamic' ? CONFIG.TOKENS.BIND : CONFIG.TOKENS.ADD;
+    const prop   = attrName.slice(prefix.length);
+    const { path, pipes, isItemScoped, isCrossWrapper } = parsePath(attrValue);
 
     if (isCrossWrapper) return; // TODO: cross-wrapper mesh
 
     const config: UpdateConfig = { el, path, prop, pipes, itemNode };
 
     if (isItemScoped && itemNode) {
-        // Item-scoped: never enters wrapper subs.
-        // Store on itemNode so reconciler can re-apply when _vItem changes.
+        // Never enters wrapper subs. Store on itemNode so reconciler can re-apply on update.
         ((itemNode as ItemNode)._vItemConfigs ??= []).push(config);
-        // Initial render directly from _vItem
         let val: unknown = (itemNode as ItemNode)._vItem?.[path];
         for (const pipe of pipes) val = pipe(val);
         applyBinding(el, prop, val);
         return;
     }
 
+    // Wrapper-root binding — requires DOM ancestry to find the wrapper.
+    const wrapper = el.closest('data-wrapper') as WrapperNode | null;
+    if (!wrapper) return;
     wrapper._register(path, config);
 };
 
 // ---------------------------------------------------------------------------
-// wake — wires one element then walks its subtree (replaces wakeElement + wakeTree)
+// wake — wires one element then walks its subtree
 // ---------------------------------------------------------------------------
 
 const _wireElement = (el: Element, itemNode: Element | null) => {
     if ((el as WokeNode)._vWoke) return;
     (el as WokeNode)._vWoke = true;
 
-    const wrapper = el.closest('data-wrapper') as WrapperNode | null;
-    if (!wrapper) return;
-
     const { BIND, ADD, EVT } = CONFIG.TOKENS;
 
     for (const { name, value } of [...el.attributes]) {
         if      (name.startsWith(BIND)) subscribe(el, 'dynamic',  name, value, itemNode);
         else if (name.startsWith(ADD))  subscribe(el, 'additive', name, value, itemNode);
-        else if (name.startsWith(EVT))  _ensureDelegation(wrapper, name.slice(EVT.length));
+        else if (name.startsWith(EVT)) {
+            // Wrapper lookup deferred to here — el may be detached (list item pre-append).
+            // Event types from templates are pre-registered via ensureDelegation in _runDirective.
+            const wrapper = el.closest('data-wrapper') as WrapperNode | null;
+            if (wrapper) ensureDelegation(wrapper, name.slice(EVT.length));
+        }
     }
 };
 
@@ -155,6 +149,6 @@ export const wake = (root: Element, itemNode: Element | null = null) => {
             : NodeFilter.FILTER_ACCEPT,
     });
 
-    let el: Node | null;
-    while ((el = walker.nextNode())) _wireElement(el as Element, itemNode);
+    let node: Node | null;
+    while ((node = walker.nextNode())) _wireElement(node as Element, itemNode);
 };

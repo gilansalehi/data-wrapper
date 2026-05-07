@@ -1,7 +1,7 @@
 import { emit } from './utils.ts';
-import { RENDER_DIRECTIVES } from './registry.ts';
+import { RENDER_DIRECTIVES, CONFIG } from './registry.ts';
 import { applyBinding, reconcile } from './engine.ts';
-import { wake } from './wire.ts';
+import { wake, ensureDelegation } from './wire.ts';
 import type { UpdateConfig } from './types.ts';
 
 export class DataWrapper extends HTMLElement {
@@ -67,7 +67,6 @@ export class DataWrapper extends HTMLElement {
         this.observer.disconnect();
     }
 
-    // Broadcasts a state change to all wrapper-scoped DOM subscribers for `key`.
     _notify(key: string, val: unknown) {
         for (const config of this.subs[key] || []) {
             if (!config.el.isConnected) continue;
@@ -79,26 +78,32 @@ export class DataWrapper extends HTMLElement {
         }
     }
 
-    // Executes a render directive (list, and future: match, if).
     _runDirective(config: UpdateConfig, val: unknown) {
         if (config.prop === 'list') {
-            const tpl = Array.from(config.el.children)
-                .find(c => c.tagName === 'TEMPLATE') as HTMLTemplateElement | undefined;
+            const tpl = config.el.querySelector(':scope > template') as HTMLTemplateElement | null;
             if (!tpl) return;
+
+            // Pre-register event types from template content so delegation works
+            // even when items are woken while still detached from the DOM.
+            const { EVT } = CONFIG.TOKENS;
+            for (const el of tpl.content.querySelectorAll('*')) {
+                for (const { name } of [...el.attributes]) {
+                    if (name.startsWith(EVT)) ensureDelegation(this, name.slice(EVT.length));
+                }
+            }
+
             let cache = this._listCache.get(config.el);
             if (!cache) { cache = new Map(); this._listCache.set(config.el, cache); }
             reconcile(config.el, (val as Array<Record<string, unknown>>) || [], cache, tpl, wake);
         }
     }
 
-    // Internal: registers a DOM subscription and fires initial sync.
     _register(path: string, config: UpdateConfig) {
         (this.subs[path] = this.subs[path] || []).push(config);
         const val = this.state[path];
         if (val !== undefined) this._notify(path, val);
     }
 
-    // Public: maps action:// path strings to handler functions.
     register(actions: Record<string, EventListener>) {
         Object.assign(this._actions, actions);
     }
@@ -109,7 +114,7 @@ export class DataWrapper extends HTMLElement {
             : val;
         if (this.state[key] === next) return;
         this.state[key] = next;
-        this.dispatchEvent(new CustomEvent('data:sync', { detail: { key }, bubbles: true }));
+        emit('data:sync', { key }, this);
     }
 
     patch(key: string, obj: Record<string, unknown>) {
