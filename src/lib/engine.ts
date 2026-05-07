@@ -8,6 +8,7 @@ export interface UpdateConfig {
     prop:     string;
     pipes:    Formatter[];
     itemNode: Element | null;
+    key?:     string; // identity key for $list reconciler (default: 'id')
 }
 
 type VNode       = Element & { _vBase?: Set<string>; _vState?: { dynamic: string; additive: string } };
@@ -16,6 +17,7 @@ type ItemElement = Element & { _vItem?: Record<string, unknown>; _vItemConfigs?:
 export const applyBinding = (el: Element, prop: string, val: unknown) => {
     if (val === undefined || val === null) return;
 
+    // CODE SMELL -- why special case?  Isn't this just sync?
     if (prop === 'class') {
         const v   = el as VNode;
         v._vBase  = v._vBase ?? new Set([...el.classList]);
@@ -32,7 +34,7 @@ export const applyBinding = (el: Element, prop: string, val: unknown) => {
 export const applyItemBindings = (node: Element, item: Record<string, unknown>) => {
     for (const config of (node as ItemElement)._vItemConfigs || []) {
         let val: unknown = item[config.path];
-        for (const pipe of config.pipes) val = pipe(val);
+        for (const pipe of config.pipes) val = pipe(val); // pipes vs computed props... very similar.
         applyBinding(config.el, config.prop, val);
     }
 };
@@ -45,6 +47,7 @@ export const reconcile = (
     cache: Map<unknown, Element>,
     tpl: HTMLTemplateElement,
     hydrate: (node: Element, itemNode: Element) => void,
+    keyProp = 'id',
 ) => {
     if (!data || data.length === 0) {
         cache.forEach(node => node.remove());
@@ -75,7 +78,7 @@ export const reconcile = (
     const fragment  = document.createDocumentFragment();
 
     for (const item of data) {
-        const id  = item.id ?? JSON.stringify(item);
+        const id  = item[keyProp] ?? JSON.stringify(item);
         activeIds.add(id);
 
         let node  = cache.get(id);

@@ -1,25 +1,23 @@
-import { emit, q } from './utils.ts';
+import { emit, on, q } from './utils.ts';
 import { RENDER_DIRECTIVES, CONFIG } from './registry.ts';
 import { applyBinding, reconcile } from './engine.ts';
 import { wake, ensureDelegation } from './wire.ts';
 import type { UpdateConfig } from './engine.ts';
 
 export class DataWrapper extends HTMLElement {
-    declare state:      Record<string, unknown>;
-    declare _subs:      Record<string, UpdateConfig[]>;
-    declare _actions:   Record<string, EventListener>;
-    declare _listeners: Map<string, () => void>;
-    declare _isSyncing: boolean;
-    declare _listCache: Map<Element, Map<unknown, Element>>;
-    declare _observer:  MutationObserver;
+    declare state:        Record<string, unknown>;
+    declare _subs:        Record<string, UpdateConfig[]>;
+    declare _boundEvents: Set<string>;
+    declare _isSyncing:   boolean;
+    declare _listCache:   Map<Element, Map<unknown, Element>>;
+    declare _observer:    MutationObserver;
 
     constructor() {
         super();
         const self = this;
 
-        self._subs      = {};
-        self._actions   = {};
-        self._listeners = new Map();
+        self._subs        = {};
+        self._boundEvents = new Set();
         self._isSyncing = false;
         self._listCache = new Map();
 
@@ -60,13 +58,12 @@ export class DataWrapper extends HTMLElement {
         this._observer.observe(this, { attributes: true });
         wake(this, null);
         for (const key of Object.keys(this.dataset)) this._broadcast(key, this.state[key]);
-        emit('data-wrapper:load', this);
+        emit('load', this, this);          // triggers onload="" attribute on the element
+        emit('data-wrapper:load', this);   // document-level notification for external scripts
     }
 
     disconnectedCallback() {
         this._observer.disconnect();
-        this._listeners.forEach(unsub => unsub());
-        this._listeners.clear();
     }
 
     _broadcast(key: string, val: unknown) {
@@ -75,12 +72,13 @@ export class DataWrapper extends HTMLElement {
             let v = val;
             for (const pipe of config.pipes) v = pipe(v);
             RENDER_DIRECTIVES.has(config.prop)
-                ? this._directive(config, v)
+                ? this._directive(config, v) // hm, seems odd.
                 : applyBinding(config.el, config.prop, v);
         }
     }
 
     _directive(config: UpdateConfig, val: unknown) {
+        // CODE SMELL -- these should be in the registry like the TOKENS, imo
         if (config.prop === 'list') {
             const tpl = config.el.querySelector(':scope > template') as HTMLTemplateElement | null;
             if (!tpl) return;
@@ -96,7 +94,7 @@ export class DataWrapper extends HTMLElement {
 
             let cache = this._listCache.get(config.el);
             if (!cache) { cache = new Map(); this._listCache.set(config.el, cache); }
-            reconcile(config.el, (val as Array<Record<string, unknown>>) || [], cache, tpl, wake);
+            reconcile(config.el, (val as Array<Record<string, unknown>>) || [], cache, tpl, wake, config.key);
         }
     }
 
@@ -107,7 +105,7 @@ export class DataWrapper extends HTMLElement {
     }
 
     register(actions: Record<string, EventListener>) {
-        Object.assign(this._actions, actions);
+        for (const [type, fn] of Object.entries(actions)) on(type, fn, '', this);
     }
 
     put(key: string, val: unknown | ((prev: unknown) => unknown)) {

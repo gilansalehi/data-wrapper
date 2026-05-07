@@ -9,6 +9,7 @@ export const CONFIG: Config & Record<string, unknown> = Object.assign({
     NO_WAKE: ['DATA-WRAPPER', 'TEMPLATE', 'SVG'],
 }, (window as Window & { VP_CUSTOM_CONFIG?: Partial<Config> }).VP_CUSTOM_CONFIG || {});
 
+// CODE SMELL -- let's add some sensible, minimal defaults as fallbacks, just in case.
 export const VP_TEMPLATES = new Map<string, HTMLTemplateElement>();
 
 export const VP_FORMATTERS = new Map<string, Formatter>([
@@ -25,6 +26,7 @@ export const VP_FORMATTERS = new Map<string, Formatter>([
     ['yesno',    v => v ? 'yes' : 'no'],
 ]);
 
+// CODE SMELL -- we can supply a better type here, the mapping is for props & custom props to attrs.
 export const PROP_ALIASES: Record<string, string> = {
     text:            'textContent',
     html:            'innerHTML',
@@ -42,6 +44,7 @@ export const resolveAlias = (key: string) => PROP_ALIASES[key] || key;
 
 export const RENDER_DIRECTIVES = new Set(['list']);
 
+// CODE SMELL -- is this actually be used to update the DOM?
 export const sync = (el: Element, prop: string, val: unknown) => {
     const alias = resolveAlias(prop);
     if (alias in el) {

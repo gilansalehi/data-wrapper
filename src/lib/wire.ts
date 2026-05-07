@@ -1,6 +1,6 @@
 import { CONFIG, VP_FORMATTERS } from './registry.ts';
-import { on } from './utils.ts';
 import { applyBinding } from './engine.ts';
+import { on, emit } from './utils.ts';
 import type { UpdateConfig } from './engine.ts';
 import type { Formatter } from './registry.ts';
 
@@ -8,31 +8,37 @@ type ItemNode = Element & { _vItem?: Record<string, unknown>; _vItemConfigs?: Up
 type WokeNode = Element & { _vWoke?: boolean };
 
 export interface WrapperNode extends HTMLElement {
-    state:      Record<string, unknown>;
-    _subs:      Record<string, UpdateConfig[]>;
-    _actions:   Record<string, EventListener>;
-    _listeners: Map<string, () => void>;
-    _listCache: Map<Element, Map<unknown, Element>>;
+    state:        Record<string, unknown>;
+    _subs:        Record<string, UpdateConfig[]>;
+    _boundEvents: Set<string>;
+    _listCache:   Map<Element, Map<unknown, Element>>;
     _sub(path: string, config: UpdateConfig): void;
 }
 
 // ---------------------------------------------------------------------------
-// DWRL parsing
+// DWRL parsing — native new URL() is the entire parser
 // ---------------------------------------------------------------------------
 
+const DWRL_BASE = 'dwrl://x/';
+
 const parsePath = (attrValue: string) => {
-    const qIdx     = attrValue.indexOf('?');
-    const rawPath  = qIdx >= 0 ? attrValue.slice(0, qIdx) : attrValue;
-    const queryStr = qIdx >= 0 ? attrValue.slice(qIdx + 1) : '';
-    const pipes    = new URLSearchParams(queryStr).getAll('format')
+    const isItemScoped   = attrValue.startsWith('./');
+    const isCrossWrapper = attrValue.startsWith('//');
+
+    // ./foo → /foo: strip leading dot so URL parser treats it as an absolute path.
+    // The isItemScoped flag above captures the original intent.
+    const url   = new URL(isItemScoped ? attrValue.slice(1) : attrValue, DWRL_BASE);
+    const pipes = url.searchParams.getAll('format')
         .map(n => VP_FORMATTERS.get(n))
         .filter((f): f is Formatter => !!f);
 
     return {
         pipes,
-        isItemScoped:   rawPath.startsWith('./'),
-        isCrossWrapper: rawPath.startsWith('//'),
-        path: rawPath.replace(/^\.\//, '').replace(/^\/+/, ''),
+        isItemScoped,
+        isCrossWrapper,
+        key:       url.searchParams.get('key') ?? undefined,
+        wrapperId: isCrossWrapper ? url.hostname : undefined,
+        path:      url.pathname.slice(1), // URL always produces leading /; strip it
     };
 };
 
@@ -40,50 +46,18 @@ const parsePath = (attrValue: string) => {
 // Event delegation
 // ---------------------------------------------------------------------------
 
-const _dispatchTopic = (wrapper: WrapperNode, e: Event, topic: string) => {
-    const sep = topic.indexOf(':');
-    if (sep > 0) {
-        const scheme = topic.slice(0, sep);
-        const path   = topic.slice(sep + 1).replace(/^\/\/[^/]*/, '').replace(/^\//, '');
-        if (scheme === 'action') {
-            wrapper._actions[path]?.(e);
-            return;
-        }
-    }
-    wrapper.dispatchEvent(new CustomEvent(topic, { detail: e, bubbles: true }));
-};
-
 export const ensureDelegation = (wrapper: WrapperNode, eventName: string) => {
-    if (wrapper._listeners.has(eventName)) return;
+    if (wrapper._boundEvents.has(eventName)) return;
+    wrapper._boundEvents.add(eventName);
 
     const attrName = `${CONFIG.TOKENS.EVT}${eventName}`;
 
-    const unsub = on(eventName, (e: Event) => {
-        let delegate: Element | null = null;
-        let node: Element | null     = e.target as Element;
-        while (node) {
-            if (node.hasAttribute(attrName)) { delegate = node; break; }
-            if (node === (wrapper as unknown as Element)) break;
-            node = node.parentElement;
-        }
+    // Listeners intentionally persist — no unsub. A delegate can always be added to the DOM later.
+    on(eventName, (e: Event) => {
+        const delegate = (e as Event & { delegateTarget?: Element }).delegateTarget;
         if (!delegate) return;
-
-        (e as Event & { delegateTarget?: Element }).delegateTarget = delegate;
-
-        let scan: Element | null = delegate;
-        while (scan) {
-            if ((scan as ItemNode)._vItem) {
-                (e as Event & { item?: unknown }).item = (scan as ItemNode)._vItem;
-                break;
-            }
-            if (scan === (wrapper as unknown as Element)) break;
-            scan = scan.parentElement;
-        }
-
-        _dispatchTopic(wrapper, e, delegate.getAttribute(attrName)!);
-    }, '', wrapper as unknown as Element);
-
-    wrapper._listeners.set(eventName, unsub);
+        emit(delegate.getAttribute(attrName)!, e, wrapper);
+    }, `[${CSS.escape(attrName)}]`, wrapper);
 };
 
 // ---------------------------------------------------------------------------
@@ -99,11 +73,11 @@ export const subscribe = (
 ) => {
     const prefix = mode === 'dynamic' ? CONFIG.TOKENS.BIND : CONFIG.TOKENS.ADD;
     const prop   = attrName.slice(prefix.length);
-    const { path, pipes, isItemScoped, isCrossWrapper } = parsePath(attrValue);
+    const { path, pipes, key, isItemScoped, isCrossWrapper } = parsePath(attrValue);
 
     if (isCrossWrapper) return; // TODO: cross-wrapper mesh
 
-    const config: UpdateConfig = { el, path, prop, pipes, itemNode };
+    const config: UpdateConfig = { el, path, prop, pipes, itemNode, key };
 
     if (isItemScoped && itemNode) {
         // Never enters wrapper _subs. Stored on itemNode so reconciler can re-apply on update.
@@ -134,7 +108,7 @@ const _wireElement = (el: Element, itemNode: Element | null) => {
         if      (name.startsWith(BIND)) subscribe(el, 'dynamic',  name, value, itemNode);
         else if (name.startsWith(ADD))  subscribe(el, 'additive', name, value, itemNode);
         else if (name.startsWith(EVT)) {
-            // Wrapper lookup is deferred here — el may be detached during list hydration.
+            // Wrapper lookup deferred — el may be detached during list hydration.
             // Template event types are pre-registered by _directive before reconcile runs.
             const wrapper = el.closest('data-wrapper') as WrapperNode | null;
             if (wrapper) ensureDelegation(wrapper, name.slice(EVT.length));
