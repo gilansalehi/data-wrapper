@@ -1,4 +1,4 @@
-import type { Config, Formatter } from '../../types.d.ts';
+import type { Config, Formatter } from './types.ts';
 
 export const CONFIG: Config & Record<string, unknown> = Object.assign({
     TOKENS: { BIND: '$', ADD: '_', EVT: '@' },
@@ -37,7 +37,7 @@ export const resolveAlias = (key: string) => PROP_ALIASES[key] || key;
 export const sync = (el: Element, prop: string, val: unknown) => {
     const alias = resolveAlias(prop);
     if (alias in el) {
-        (el as Record<string, unknown>)[alias] = val;
+        (el as unknown as Record<string, unknown>)[alias] = val;
     } else {
         el.setAttribute(alias, String(val));
     }

@@ -1,13 +1,16 @@
 import { q, qcb, emit, on } from './utils.ts';
 import { wakeTree } from './wire.ts';
-import type { UpdateConfig } from './types.d.ts';
+import type { UpdateConfig } from './types.ts';
+
+type ItemNode = Element & { _vItem?: Record<string, unknown> };
+type VNode = Element & { _vBase?: Set<string>; _vState?: { dynamic: string; additive: string } };
 
 export class DataWrapper extends HTMLElement {
-    state: Record<string, unknown>;
-    subs: Record<string, UpdateConfig[]>;
-    _isSyncing: boolean;
-    _listCache: Map<Element, Map<unknown, Element>>;
-    observer: MutationObserver;
+    declare state: Record<string, unknown>;
+    declare subs: Record<string, UpdateConfig[]>;
+    declare _isSyncing: boolean;
+    declare _listCache: Map<Element, Map<unknown, Element>>;
+    declare observer: MutationObserver;
 
     constructor() {
         super();
@@ -34,6 +37,7 @@ export class DataWrapper extends HTMLElement {
             },
             get(target, key: string) {
                 const val = (target as DOMStringMap)[key];
+                if (val === undefined) return undefined;
                 try { return JSON.parse(val); } catch { return val; }
             },
         });
@@ -71,18 +75,18 @@ export class DataWrapper extends HTMLElement {
             let val = value;
             for (const pipe of config.pipes) val = pipe(val);
             const { el, prop, itemNode } = config;
-            if (itemNode) {
-                val = (itemNode as Element & { _vItem?: Record<string, unknown> })._vItem?.[key] ?? val;
-            }
+            if (itemNode) val = (itemNode as ItemNode)._vItem?.[key] ?? val;
+
             if (prop === 'class') {
-                (el as Element & { _vBase?: Set<string>; _vState?: { dynamic: string; additive: string } })._vBase = (el as Element & { _vBase?: Set<string> })._vBase ?? new Set(el.classList);
-                const s = (el as Element & { _vState?: { dynamic: string; additive: string } })._vState = (el as Element & { _vState?: { dynamic: string; additive: string } })._vState ?? { dynamic: '', additive: '' };
+                const v = el as VNode;
+                v._vBase = v._vBase ?? new Set([...el.classList]);
+                const s = v._vState = v._vState ?? { dynamic: '', additive: '' };
                 s.dynamic = String(val ?? '');
-                el.className = (Array.from((el as Element & { _vBase: Set<string> })._vBase).join(' ') + ` ${s.dynamic} ${s.additive}`).replace(/\s+/g, ' ').trim();
+                el.className = ([...v._vBase].join(' ') + ` ${s.dynamic} ${s.additive}`).replace(/\s+/g, ' ').trim();
+            } else if (prop in el) {
+                (el as unknown as Record<string, unknown>)[prop] = val;
             } else {
-                const alias = prop in el ? prop : null;
-                if (alias) (el as Record<string, unknown>)[alias] = val;
-                else el.setAttribute(prop, String(val));
+                el.setAttribute(prop, String(val));
             }
         }
     }
@@ -104,12 +108,14 @@ export class DataWrapper extends HTMLElement {
     }
 
     push(key: string, item: unknown) {
-        this.put(key, [...((this.state[key] as unknown[] || []))  , item]);
+        this.put(key, [...(this.state[key] as unknown[] || []), item]);
     }
 
     pull(key: string, predicate: ((item: unknown) => boolean) | unknown) {
-        const current = (this.state[key] as unknown[] || []);
-        const fn = typeof predicate === 'function' ? predicate as (i: unknown) => boolean : (i: unknown) => (i as Record<string, unknown>).id !== predicate;
+        const current = this.state[key] as unknown[] || [];
+        const fn = typeof predicate === 'function'
+            ? predicate as (i: unknown) => boolean
+            : (i: unknown) => (i as Record<string, unknown>).id !== predicate;
         this.put(key, current.filter(fn));
     }
 
@@ -123,7 +129,6 @@ export class DataWrapper extends HTMLElement {
         };
     }
 
-    // Bridged utils — ctx defaults to this element
     q(selector: string) { return q(selector, this); }
     qcb(selector: string, cb?: (el: Element) => unknown) { return qcb(selector, cb, this); }
     on(eventName: string, cb: EventListener, delegate = '') { return on(eventName, cb, delegate, this); }

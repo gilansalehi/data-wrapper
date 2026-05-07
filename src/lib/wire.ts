@@ -1,14 +1,15 @@
 import { CONFIG, VP_FORMATTERS } from './registry.ts';
-import { sync, syncClass } from './registry.ts';
-import { applyPipes, reconcile } from './engine.ts';
-import type { UpdateConfig } from '../../types.d.ts';
+import { syncClass } from './engine.ts';
+import { sync } from './registry.ts';
+import type { UpdateConfig } from './types.ts';
 
-// Minimal interface to avoid circular import with component.ts
+type ItemNode = Element & { _vItem?: Record<string, unknown> };
+type WokeNode = Element & { _vWoke?: boolean };
+
 interface WrapperNode extends HTMLElement {
     state: Record<string, unknown>;
     subs: Record<string, UpdateConfig[]>;
     register(path: string, updater: UpdateConfig): void;
-    _listCache: Map<Element, Map<unknown, Element>>;
 }
 
 export const update = (wrapper: WrapperNode, config: UpdateConfig, manualVal?: unknown): boolean => {
@@ -17,11 +18,9 @@ export const update = (wrapper: WrapperNode, config: UpdateConfig, manualVal?: u
 
     let val = manualVal !== undefined
         ? manualVal
-        : ((itemNode as Element & { _vItem?: Record<string, unknown> })?._vItem?.[path] ?? wrapper.state[path]);
+        : ((itemNode as ItemNode)?._vItem?.[path] ?? wrapper.state[path]);
 
-    for (let i = 0; i < pipes.length; i++) {
-        val = pipes[i](val);
-    }
+    for (const pipe of pipes) val = pipe(val);
 
     if (prop === 'class') syncClass(el, String(val ?? ''), 'dynamic');
     else sync(el, prop, val);
@@ -34,7 +33,7 @@ export const subscribe = (el: Element, mode: 'dynamic' | 'additive', attrName: s
     if (!wrapper) return;
 
     const prefix = mode === 'dynamic' ? CONFIG.TOKENS.BIND : CONFIG.TOKENS.ADD;
-    const [path, ...pipeNames] = attrValue.split('|').map((s: string) => s.trim());
+    const [path, ...pipeNames] = attrValue.split('|').map(s => s.trim());
 
     const config: UpdateConfig = {
         el,
@@ -48,17 +47,15 @@ export const subscribe = (el: Element, mode: 'dynamic' | 'additive', attrName: s
 };
 
 export const wakeElement = (el: Element, itemNode: Element | null = null) => {
-    if ((el as Element & { _vWoke?: boolean })._vWoke) return;
-    (el as Element & { _vWoke?: boolean })._vWoke = true;
+    if ((el as WokeNode)._vWoke) return;
+    (el as WokeNode)._vWoke = true;
 
     const wrapper = el.closest('data-wrapper') as WrapperNode | null;
     if (!wrapper) return;
 
     const { BIND, ADD, EVT } = CONFIG.TOKENS;
 
-    [...el.attributes].forEach(attr => {
-        const { name, value } = attr;
-
+    for (const { name, value } of [...el.attributes]) {
         if (name.startsWith(BIND)) subscribe(el, 'dynamic', name, value, itemNode);
         else if (name.startsWith(ADD)) subscribe(el, 'additive', name, value, itemNode);
         else if (name.startsWith(EVT)) {
@@ -67,11 +64,11 @@ export const wakeElement = (el: Element, itemNode: Element | null = null) => {
                 const ev = e as Event & { delegateTarget?: Element | null };
                 const topic = ev.delegateTarget?.getAttribute(name);
                 if (!topic) return;
-                const detail = itemNode ? { item: (itemNode as Element & { _vItem?: unknown })._vItem, event: e } : e;
+                const detail = itemNode ? { item: (itemNode as ItemNode)._vItem, event: e } : e;
                 wrapper.dispatchEvent(new CustomEvent(topic, { detail, bubbles: true }));
             });
         }
-    });
+    }
 };
 
 export const wakeTree = (root: Element, _wrapper: WrapperNode, itemNode: Element | null = null) => {
