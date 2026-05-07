@@ -9,7 +9,14 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
-    "types": [],
+    "types": ["bun-types"],
+
+    // Path aliases — Bun resolves these at runtime; tsc uses them for type checking
+    "baseUrl": ".",
+    "paths": {
+      "@lib/*":   ["./src/lib/*"],
+      "@tests/*": ["./tests/*"]
+    },
 
     // Strictness
     "strict": true,
@@ -23,5 +30,5 @@
     "noUncheckedIndexedAccess": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["src/lib/**/*.ts", "types.d.ts"]
+  "include": ["src/lib/**/*.ts", "tests/**/*.ts", "*.ts", "types.d.ts"]
 }
