@@ -68,8 +68,8 @@
         ]);
 
         const compute = () => {
-            const todos = app.state.get('todos') || [];
-            const filter = app.state.get('filter') || 'all';
+            const todos = app.state.todos || [];
+            const filter = app.state.filter || 'all';
             app.put('active', todos.filter(t => !t.done));
             app.put('view', todos.filter(t => filter === 'all' || (filter === 'active' && !t.done) || (filter === 'done' && t.done)));
         };
