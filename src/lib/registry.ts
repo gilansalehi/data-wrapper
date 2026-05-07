@@ -44,7 +44,7 @@ export const resolveAlias = (key: string) => PROP_ALIASES[key] || key;
 
 export const RENDER_DIRECTIVES = new Set(['list']);
 
-// CODE SMELL -- is this actually be used to update the DOM?
+// CODE SMELL -- is this actually being used to update the DOM?
 export const sync = (el: Element, prop: string, val: unknown) => {
     const alias = resolveAlias(prop);
     if (alias in el) {

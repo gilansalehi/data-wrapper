@@ -1,12 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>data-wrapper — HTML-first reactivity</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="manifest" href="/site.webmanifest">
-    <link rel="stylesheet" href="/src/styles.css">
+    <link rel="stylesheet" href="/src/theme.css">
+    <link rel="stylesheet" href="/src/reset.css">
+    <link rel="stylesheet" href="/src/atoms.css">
+    <link rel="stylesheet" href="/src/app.css">
     <script src="/dist/data-wrapper.js" type="module"></script>
 </head>
 <body>
@@ -23,11 +26,17 @@
      ===================================================================== -->
 <data-wrapper id="nav" data-nav-open="false"
     onload="this.register({
-        'nav/toggle': () => this.put('navOpen', v => !v),
-        'nav/close':  () => this.put('navOpen', false),
+        'nav/toggle':   () => this.put('navOpen', v => !v),
+        'nav/close':    () => this.put('navOpen', false),
+        'theme/toggle': () => {
+            const h = document.documentElement;
+            h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
+        },
     })">
 
-    <button @click="nav/toggle" class="nav-hamburger" aria-label="Open navigation">☰</button>
+    <button @click="nav/toggle" class="nav-hamburger" aria-label="Toggle navigation">
+        <hr><hr><hr>
+    </button>
     <div class="nav-backdrop" @click="nav/close" aria-hidden="true"></div>
 
     <dialog $open="/navOpen" aria-label="Site navigation">
@@ -49,19 +58,22 @@
             <a href="#dwrl"       @click="nav/close">DWRL</a>
             <a href="#config"     @click="nav/close">Configuration</a>
         </nav>
+        <footer class="nav-footer">
+            <button @click="theme/toggle" class="theme-toggle">◐ Toggle theme</button>
+        </footer>
     </dialog>
 
 </data-wrapper>
 
 
-<header>
+<header class="container">
     <h1>data-wrapper</h1>
     <p class="tagline">HTML-first reactivity. State lives in <code>data-*</code> attributes. Three tokens wire everything else.</p>
     <pre class="install">&lt;script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"&gt;&lt;/script&gt;
 &lt;!-- or: npm install data-wrapper --&gt;</pre>
 </header>
 
-<main>
+<main class="container">
 
 <!-- =====================================================================
      § TODOS — flagship demo
