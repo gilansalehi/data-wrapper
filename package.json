@@ -1,6 +1,27 @@
 {
-  "name": "datacomponents",
-  "private": true,
+  "name": "data-wrapper",
+  "version": "0.1.0",
+  "description": "Zero-dependency HTML-first reactivity engine built on native Web Components",
+  "type": "module",
+  "main": "./dist/data-wrapper.js",
+  "module": "./dist/data-wrapper.js",
+  "types": "./types.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/data-wrapper.js",
+      "default": "./dist/data-wrapper.js"
+    }
+  },
+  "files": [
+    "dist",
+    "types.d.ts"
+  ],
+  "scripts": {
+    "build": "bun build ./data-wrapper.ts --outfile ./dist/data-wrapper.js --format esm --target browser && bun build ./data-wrapper.ts --outfile ./dist/data-wrapper.min.js --format iife --minify --target browser",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["web-components", "data-binding", "reactivity", "no-build", "html-first", "framework"],
+  "license": "MIT",
   "devDependencies": {
     "@types/bun": "latest"
   },
