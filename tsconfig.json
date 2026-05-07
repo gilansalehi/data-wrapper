@@ -23,5 +23,5 @@
     "noUncheckedIndexedAccess": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["data-wrapper.ts", "types.d.ts"]
+  "include": ["src/lib/**/*.ts", "types.d.ts"]
 }

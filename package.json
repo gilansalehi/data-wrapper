@@ -17,7 +17,7 @@
     "types.d.ts"
   ],
   "scripts": {
-    "build": "bun build ./data-wrapper.ts --outfile ./dist/data-wrapper.js --format esm --target browser && bun build ./data-wrapper.ts --outfile ./dist/data-wrapper.min.js --format iife --minify --target browser",
+    "build": "bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.js --format esm --target browser && bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.min.js --format iife --minify --target browser",
     "typecheck": "tsc --noEmit"
   },
   "keywords": ["web-components", "data-binding", "reactivity", "no-build", "html-first", "framework"],
