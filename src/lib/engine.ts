@@ -55,7 +55,8 @@ export const reconcile = (
 
         if (!container._vEmptyNode) {
             const emptyName = container.getAttribute('data-empty') || 'vp-empty';
-            const emptyTpl  = VP_TEMPLATES.get(emptyName);
+            const emptyTpl  = VP_TEMPLATES.get(emptyName)
+                           ?? (document.getElementById(emptyName) as HTMLTemplateElement | null);
             const frag      = emptyTpl
                 ? (emptyTpl.content.cloneNode(true) as DocumentFragment)
                 : (() => {

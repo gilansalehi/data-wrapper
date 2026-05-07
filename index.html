@@ -8,7 +8,7 @@
         *, *::before, *::after { box-sizing: border-box; }
 
         body {
-            max-width: 900px;
+            max-width: 860px;
             margin: 0 auto;
             font-family: system-ui, sans-serif;
             padding: 2rem 1.25rem 4rem;
@@ -16,15 +16,14 @@
             line-height: 1.6;
         }
 
-        /* ---- Typography ---- */
-        h1 { font-size: 2rem; margin: 0 0 .25rem; }
-        h2 { font-size: 1.2rem; margin: 3rem 0 .75rem; padding-bottom: .4rem; border-bottom: 2px solid #eee; }
-        h3 { font-size: .95rem; color: #444; margin: 1.75rem 0 .5rem; }
-        p  { font-size: .9rem; margin: .4rem 0 .75rem; }
+        /* ── Typography ── */
+        h1  { font-size: 2rem; margin: 0 0 .2rem; }
+        h2  { font-size: 1.2rem; margin: 3rem 0 .75rem; padding-bottom: .4rem; border-bottom: 2px solid #eee; }
+        h3  { font-size: .95rem; color: #444; margin: 1.75rem 0 .5rem; }
+        p   { font-size: .9rem; margin: .4rem 0 .75rem; }
+        a   { color: #0066cc; }
 
-        a { color: #0066cc; }
-
-        .tagline { font-size: 1.05rem; color: #555; margin: .25rem 0 2rem; }
+        .tagline { font-size: 1.05rem; color: #555; margin: .25rem 0 1.5rem; }
 
         code {
             font-size: .82rem;
@@ -34,79 +33,74 @@
             font-family: ui-monospace, monospace;
         }
 
-        /* ---- Install snippet ---- */
+        /* ── Install snippet ── */
         .install {
             background: #1e1e1e;
-            color: #d4d4d4;
-            padding: .85rem 1.1rem;
+            color: #9cdcfe;
+            padding: .8rem 1.1rem;
             border-radius: 6px;
             font-family: ui-monospace, monospace;
-            font-size: .85rem;
-            margin: 0 0 1rem;
+            font-size: .82rem;
+            margin: 0 0 1.25rem;
             overflow-x: auto;
         }
 
-        /* ---- Demo box ---- */
+        /* ── Demo box ── */
         .demo {
             border: 1px solid #ddd;
             border-radius: 8px;
             padding: 1.25rem;
-            margin-bottom: .5rem;
-            background: #fff;
+            margin-bottom: .4rem;
+            background: #fefefe;
         }
 
-        .note {
-            font-size: .78rem;
-            color: #888;
-            margin: 0 0 1.5rem;
-        }
+        .note { font-size: .78rem; color: #999; margin: .2rem 0 1.5rem; }
 
-        /* ---- Collapsible source ---- */
+        /* ── Collapsible source ── */
         details {
-            border: 1px solid #e0e0e0;
+            border: 1px solid #e4e4e4;
             border-radius: 6px;
-            margin: .4rem 0 1.25rem;
+            margin: .4rem 0 1.5rem;
         }
         details summary {
-            padding: .45rem .85rem;
+            padding: .4rem .85rem;
             cursor: pointer;
-            font-size: .78rem;
+            font-size: .75rem;
             font-family: ui-monospace, monospace;
-            color: #555;
+            color: #666;
             background: #f8f8f8;
             border-radius: 6px;
             user-select: none;
             list-style: none;
         }
-        details summary::before { content: '▶  '; font-size: .65rem; }
+        details summary::before { content: '▶  '; font-size: .6rem; }
         details[open] summary::before { content: '▼  '; }
-        details[open] summary { border-radius: 6px 6px 0 0; border-bottom: 1px solid #e0e0e0; }
+        details[open] summary { border-radius: 6px 6px 0 0; border-bottom: 1px solid #e4e4e4; }
         details pre {
             margin: 0;
             padding: 1rem 1.1rem;
             background: #fafafa;
             border-radius: 0 0 6px 6px;
-            font-size: .8rem;
+            font-size: .78rem;
             font-family: ui-monospace, monospace;
-            line-height: 1.7;
+            line-height: 1.75;
             overflow-x: auto;
             white-space: pre;
         }
 
-        /* ---- Reference tables ---- */
+        /* ── Reference tables ── */
         table { width: 100%; border-collapse: collapse; font-size: .85rem; margin: .5rem 0 1.25rem; }
         th { text-align: left; padding: .45rem .75rem; background: #f4f4f4; border-bottom: 2px solid #ddd; }
         td { padding: .4rem .75rem; border-bottom: 1px solid #eee; vertical-align: top; }
         tr:last-child td { border-bottom: none; }
-        td code { background: none; padding: 0; font-size: .82rem; }
+        td code { background: none; padding: 0; }
 
-        /* ---- Demo-specific ---- */
+        /* ── Inputs / buttons ── */
         label { display: block; font-size: .85rem; color: #555; margin-bottom: .25rem; }
 
         input[type="text"],
-        input[type="number"],
-        input[type="date"] {
-            padding: .4rem .6rem;
+        input[type="number"] {
+            padding: .4rem .65rem;
             font-size: .9rem;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -116,7 +110,7 @@
 
         button {
             padding: .4rem .9rem;
-            font-size: .9rem;
+            font-size: .88rem;
             cursor: pointer;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -124,13 +118,7 @@
         }
         button:hover { background: #f4f4f4; }
 
-        .row {
-            display: flex;
-            gap: .5rem;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: .5rem;
-        }
+        .row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: .5rem; }
 
         .badge {
             display: inline-block;
@@ -143,432 +131,202 @@
         .badge.on  { background: #d4edda; color: #155724; }
         .badge.off { background: #f8d7da; color: #721c24; }
 
-        .count-display {
-            font-size: 2rem;
-            font-weight: 700;
-            min-width: 3rem;
-            text-align: center;
-        }
+        .count-display { font-size: 2rem; font-weight: 700; min-width: 3rem; text-align: center; }
 
-        /* ---- Formatters table ---- */
-        .fmt-output { font-weight: 600; color: #0066cc; }
+        /* ── Formatter table output ── */
+        .fmt-output { font-weight: 600; color: #0066cc; font-family: ui-monospace, monospace; }
 
-        /* ---- Profile card ---- */
-        .profile { display: flex; align-items: center; gap: 1rem; }
-        .avatar {
-            width: 48px; height: 48px;
-            border-radius: 50%;
-            background: #ddd;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.4rem;
-        }
-
-        /* ---- Todo list ---- */
+        /* ── Todo list ── */
         .todo-list { list-style: none; padding: 0; margin: .75rem 0; }
-        .todo-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            border-bottom: 1px solid #f0f0f0;
-        }
+        .todo-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #f0f0f0; }
         .todo-item.done span { text-decoration: line-through; opacity: .45; }
-        .delete-btn {
-            margin-left: auto;
-            color: #c00;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            padding: .15rem .4rem;
-        }
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: .75rem;
-            font-size: .88rem;
-            flex-wrap: wrap;
-            gap: .5rem;
-        }
+        .delete-btn { margin-left: auto; color: #c00; background: none; border: none; cursor: pointer; padding: .15rem .4rem; font-size: 1rem; }
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-top: .75rem; font-size: .88rem; flex-wrap: wrap; gap: .5rem; }
         .filter-btns button { margin-left: .2rem; }
-        .vp-empty-msg {
-            text-align: center;
-            padding: 2rem;
-            color: #999;
-            font-style: italic;
-        }
+        .vp-empty-msg { text-align: center; padding: 2rem; color: #999; font-style: italic; }
         data-wrapper[data-filter="all"]    button[data-val="all"],
         data-wrapper[data-filter="active"] button[data-val="active"],
-        data-wrapper[data-filter="done"]   button[data-val="done"] {
-            font-weight: 700;
-            text-decoration: underline;
-        }
+        data-wrapper[data-filter="done"]   button[data-val="done"] { font-weight: 700; text-decoration: underline; }
 
-        /* ---- State inspector ---- */
+        /* ── State inspector ── */
         .state-pre {
             background: #1e1e1e;
             color: #9cdcfe;
             border-radius: 6px;
             padding: .75rem 1rem;
-            font-size: .75rem;
+            font-size: .72rem;
             font-family: ui-monospace, monospace;
-            max-height: 180px;
+            max-height: 200px;
             overflow: auto;
             white-space: pre;
-            margin: .5rem 0;
+            margin: .5rem 0 0;
         }
 
-        /* ---- Computed demo ---- */
-        .computed-output {
-            font-size: 1.15rem;
-            font-weight: 600;
-            margin: .5rem 0;
+        /* ── Profile card ── */
+        .profile { display: flex; align-items: center; gap: 1rem; }
+        .avatar { width: 44px; height: 44px; border-radius: 50%; background: #e8e8e8; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+
+        /* ── Computed demo ── */
+        .computed-output { font-size: 1.1rem; font-weight: 600; margin: .5rem 0 0; }
+
+        /* ──────────────────────────────────────────
+           NAV SIDEBAR
+        ────────────────────────────────────────── */
+
+        /* Hamburger — fixed, always visible */
+        .nav-hamburger {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 30;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: .35rem .7rem;
+            cursor: pointer;
+            font-size: .9rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,.08);
+        }
+
+        /* Backdrop — CSS-driven by data-wrapper state */
+        .nav-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.3);
+            z-index: 20;
+            cursor: pointer;
+        }
+        #nav[data-nav-open="true"] .nav-backdrop { display: block; }
+
+        /* Dialog sidebar — CSS-driven by data-nav-open attribute */
+        #nav dialog {
+            position: fixed;
+            right: 0;
+            top: 0;
+            height: 100vh;
+            width: 240px;
+            margin: 0;
+            max-height: none;
+            border: none;
+            border-left: 1px solid #e8e8e8;
+            padding: 0;
+            z-index: 25;
+            box-shadow: -2px 0 16px rgba(0,0,0,.08);
+            background: #fff;
+            overflow-y: auto;
+        }
+
+        .nav-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.1rem .9rem;
+            border-bottom: 1px solid #eee;
+        }
+        .nav-header strong { font-size: .95rem; }
+
+        .nav-close {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            color: #888;
+            padding: .15rem .35rem;
+            border-radius: 4px;
+        }
+        .nav-close:hover { background: #f0f0f0; color: #333; }
+
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            padding: .5rem 0 1rem;
+        }
+        .nav-links a {
+            padding: .5rem 1.1rem;
+            text-decoration: none;
             color: #333;
+            font-size: .88rem;
+            line-height: 1.3;
         }
+        .nav-links a:hover { background: #f5f5f5; color: #0066cc; }
 
-        /* ---- Dividers ---- */
-        hr { border: none; border-top: 1px solid #eee; margin: 2.5rem 0; }
+        .nav-section-label {
+            padding: .6rem 1.1rem .2rem;
+            font-size: .7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: #aaa;
+        }
     </style>
     <script src="/dist/data-wrapper.js" type="module"></script>
 </head>
 <body>
 
+<!-- empty-state template (referenced by id — no registration needed) -->
+<template id="vp-empty">
+    <li class="vp-empty-msg">No tasks yet. Add one above.</li>
+</template>
+
+<!-- =====================================================================
+     NAV SIDEBAR — wired entirely via data-wrapper + CSS attribute selectors
+     $open binds dialog.open to state. Backdrop visibility is pure CSS.
+     All @click events delegate to the wrapper via a single listener.
+     ===================================================================== -->
+<data-wrapper id="nav" data-nav-open="false"
+    onload="this.register({'nav/toggle':()=>this.put('navOpen',v=>!v),'nav/close':()=>this.put('navOpen',false)})">
+
+    <button @click="nav/toggle" class="nav-hamburger">☰</button>
+    <div class="nav-backdrop" @click="nav/close"></div>
+
+    <dialog $open="/navOpen">
+        <div class="nav-header">
+            <strong>data-wrapper</strong>
+            <button @click="nav/close" class="nav-close">✕</button>
+        </div>
+        <nav class="nav-links">
+            <span class="nav-section-label">Demos</span>
+            <a href="#todos"      @click="nav/close">Todos app</a>
+            <a href="#start"      @click="nav/close">Counter</a>
+            <a href="#events"     @click="nav/close">Events</a>
+            <a href="#patterns"   @click="nav/close">Patterns</a>
+            <span class="nav-section-label">Reference</span>
+            <a href="#tokens"     @click="nav/close">Tokens</a>
+            <a href="#bindings"   @click="nav/close">Bindings ($)</a>
+            <a href="#formatters" @click="nav/close">Formatters</a>
+            <a href="#state-api"  @click="nav/close">State API</a>
+            <a href="#dwrl"       @click="nav/close">DWRL</a>
+            <a href="#config"     @click="nav/close">Configuration</a>
+        </nav>
+    </dialog>
+
+</data-wrapper>
+
+
 <h1>data-wrapper</h1>
-<p class="tagline">Zero-dependency HTML-first reactivity. A framework of the browser, for the browser.</p>
+<p class="tagline">HTML-first reactivity. State lives in <code>data-*</code> attributes. Three tokens wire everything else.</p>
 
 <pre class="install">&lt;script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"&gt;&lt;/script&gt;
 &lt;!-- or: npm install data-wrapper --&gt;</pre>
 
-<p>State lives in <code>data-*</code> attributes — inspect it live in DevTools. Three token prefixes
-(<code>$</code>&thinsp;<code>_</code>&thinsp;<code>@</code>) are the entire API. No build step, no virtual DOM,
-no proprietary template language.</p>
-
 <main>
 
 <!-- =====================================================================
-     § GETTING STARTED
+     § TODOS — the flagship demo, up front
      ===================================================================== -->
 
-<h2 id="start">Getting Started</h2>
-<p>A counter. State starts in HTML. One script block wires the button.</p>
-
-<div class="demo">
-    <data-wrapper id="counter" data-count="0">
-        <div class="row">
-            <button @click="count/dec">−</button>
-            <span class="count-display" $text="/count"></span>
-            <button @click="count/inc">+</button>
-        </div>
-        <p style="margin:0;font-size:.85rem;color:#888">
-            Open DevTools → Elements and watch <code>data-count</code> update live.
-        </p>
-    </data-wrapper>
-</div>
-<details>
-    <summary>HTML + JS</summary>
-    <pre>&lt;data-wrapper id="counter" data-count="0"&gt;
-  &lt;button @click="count/dec"&gt;−&lt;/button&gt;
-  &lt;span $text="/count"&gt;&lt;/span&gt;
-  &lt;button @click="count/inc"&gt;+&lt;/button&gt;
-&lt;/data-wrapper&gt;
-
-&lt;script&gt;
-  customElements.whenDefined('data-wrapper').then(() =&gt; {
-    const counter = document.getElementById('counter');
-    counter.register({
-      'count/inc': () =&gt; counter.put('count', n =&gt; Number(n) + 1),
-      'count/dec': () =&gt; counter.put('count', n =&gt; Number(n) - 1),
-    });
-  });
-&lt;/script&gt;</pre>
-</details>
-
-<!-- =====================================================================
-     § STATE
-     ===================================================================== -->
-
-<h2 id="state">State</h2>
-<p>The <code>data-*</code> attributes <em>are</em> the state store. No separate store object, no serialisation step.
-   Setting <code>app.state.name = 'Ali'</code> writes <code>data-name="Ali"</code> to the element.
-   Reading <code>app.state.todos</code> parses JSON from <code>data-todos</code>.</p>
-
-<h3>Static binding — no JavaScript required</h3>
-<p>Initial state declared in HTML. Bindings render immediately on connect.</p>
-
-<div class="demo">
-    <data-wrapper data-greeting="Hello" data-name="World" data-version="0.1.0">
-        <p style="margin:0">
-            <span $text="/greeting"></span>,&nbsp;<strong $text="/name"></strong>!
-            &nbsp;·&nbsp; v<span $text="/version"></span>
-        </p>
-    </data-wrapper>
-</div>
-<details>
-    <summary>HTML — no script needed</summary>
-    <pre>&lt;data-wrapper data-greeting="Hello" data-name="World" data-version="0.1.0"&gt;
-  &lt;p&gt;
-    &lt;span $text="/greeting"&gt;&lt;/span&gt;, &lt;strong $text="/name"&gt;&lt;/strong&gt;!
-    v&lt;span $text="/version"&gt;&lt;/span&gt;
-  &lt;/p&gt;
-&lt;/data-wrapper&gt;</pre>
-</details>
-
-<h3>Bidirectional sync</h3>
-<p>Attribute mutations from any source — DevTools, external scripts, form libraries — propagate
-   automatically via MutationObserver. Try editing <code>data-name</code> directly in DevTools.</p>
-
-<!-- =====================================================================
-     § TOKENS
-     ===================================================================== -->
-
-<h2 id="tokens">Tokens</h2>
-
-<table>
-    <thead><tr><th>Token</th><th>Direction</th><th>What it does</th><th>Example</th></tr></thead>
-    <tbody>
-        <tr>
-            <td><code>$</code></td>
-            <td>State → DOM</td>
-            <td>Binds a state path to a DOM property. <code>$text</code>, <code>$value</code>, <code>$checked</code>, <code>$href</code>, … any property works.</td>
-            <td><code>$text="/username"</code></td>
-        </tr>
-        <tr>
-            <td><code>_</code></td>
-            <td>State → DOM attr</td>
-            <td>Binds to an HTML attribute rather than a JS property. Useful for CSS hooks via attribute selectors. <em>(In progress.)</em></td>
-            <td><code>_data-active="/isActive"</code></td>
-        </tr>
-        <tr>
-            <td><code>@</code></td>
-            <td>DOM event → handler</td>
-            <td>Delegates a native event type to a registered handler. One listener per event type on the wrapper — zero per-element listeners.</td>
-            <td><code>@click="todo/remove"</code></td>
-        </tr>
-    </tbody>
-</table>
-
-<!-- =====================================================================
-     § BINDINGS
-     ===================================================================== -->
-
-<h2 id="bindings">Bindings (<code>$</code>)</h2>
-<p><code>$prop="/path"</code> maps to <code>el[prop] = value</code>. A handful of aliases handle the common case
-   where HTML and JS names differ.</p>
-
-<table>
-    <thead><tr><th>Shorthand</th><th>Maps to</th><th>Use for</th></tr></thead>
-    <tbody>
-        <tr><td><code>$text</code></td><td><code>textContent</code></td><td>Safe text output</td></tr>
-        <tr><td><code>$html</code></td><td><code>innerHTML</code></td><td>Rich HTML — <strong>trusted sources only</strong>, XSS risk</td></tr>
-        <tr><td><code>$class</code></td><td><code>className</code></td><td>Dynamic class string, merged with static classes</td></tr>
-        <tr><td><code>$for</code></td><td><code>htmlFor</code></td><td><code>&lt;label&gt;</code> association</td></tr>
-        <tr><td><code>$readonly</code></td><td><code>readOnly</code></td><td>Input read-only state</td></tr>
-    </tbody>
-</table>
-<p>Any unlisted property falls through to <code>el[prop]</code> — so <code>$value</code>, <code>$checked</code>,
-   <code>$disabled</code>, <code>$href</code>, <code>$src</code>, <code>$placeholder</code> all work as-is.</p>
-
-<h3>Live binding gallery</h3>
-<div class="demo">
-    <data-wrapper id="bindings-demo"
-        data-name="Jane Doe"
-        data-role="Senior Engineer"
-        data-active="true"
-        data-url="https://example.com"
-        data-score="9500">
-
-        <div class="profile">
-            <div class="avatar">👤</div>
-            <div>
-                <strong $text="/name"></strong><br>
-                <span style="color:#666;font-size:.9rem" $text="/role"></span>
-            </div>
-            <span class="badge" $class="/active?format=onoff"></span>
-        </div>
-
-        <div class="row" style="margin-top:.75rem">
-            <a $href="/url" target="_blank" rel="noopener">External link →</a>
-            &nbsp;·&nbsp; Score: <strong $text="/score?format=currency"></strong>
-        </div>
-    </data-wrapper>
-</div>
-<details>
-    <summary>HTML</summary>
-    <pre>&lt;data-wrapper data-name="Jane Doe" data-role="Senior Engineer"
-              data-active="true" data-url="https://example.com" data-score="9500"&gt;
-
-  &lt;strong $text="/name"&gt;&lt;/strong&gt;
-  &lt;span   $text="/role"&gt;&lt;/span&gt;
-  &lt;span class="badge" $class="/active?format=onoff"&gt;&lt;/span&gt;
-
-  &lt;a $href="/url"&gt;External link&lt;/a&gt;
-  &lt;strong $text="/score?format=currency"&gt;&lt;/strong&gt;
-
-&lt;/data-wrapper&gt;</pre>
-</details>
-
-<!-- =====================================================================
-     § FORMATTERS
-     ===================================================================== -->
-
-<h2 id="formatters">Formatters</h2>
-<p>Appended as <code>?format=name</code> query params. Chained left-to-right.
-   No JavaScript required to use them — they run inside the binding pipeline.</p>
-
-<div class="demo">
-    <data-wrapper id="fmt-demo"
-        data-amount="9.99"
-        data-label="  hello world  "
-        data-flag="true"
-        data-ts="2024-06-15"
-        data-items='[1,2,3,4,5]'>
-        <table>
-            <thead><tr><th>Formatter</th><th>Input</th><th>Output</th></tr></thead>
-            <tbody>
-                <tr><td><code>currency</code></td><td><code>9.99</code></td><td class="fmt-output" $text="/amount?format=currency"></td></tr>
-                <tr><td><code>upper</code></td><td><code>"  hello world  "</code></td><td class="fmt-output" $text="/label?format=upper"></td></tr>
-                <tr><td><code>lower</code></td><td><code>"  HELLO WORLD  "</code></td><td class="fmt-output" $text="/label?format=lower"></td></tr>
-                <tr><td><code>trim</code></td><td><code>"  hello world  "</code></td><td class="fmt-output" $text="/label?format=trim"></td></tr>
-                <tr><td><code>trim + upper</code></td><td><code>"  hello world  "</code></td><td class="fmt-output" $text="/label?format=trim&format=upper"></td></tr>
-                <tr><td><code>count</code></td><td><code>[1,2,3,4,5]</code></td><td class="fmt-output" $text="/items?format=count"></td></tr>
-                <tr><td><code>bool</code></td><td><code>true</code></td><td class="fmt-output" $text="/flag?format=bool"></td></tr>
-                <tr><td><code>yesno</code></td><td><code>true</code></td><td class="fmt-output" $text="/flag?format=yesno"></td></tr>
-                <tr><td><code>onoff</code></td><td><code>true</code></td><td class="fmt-output" $text="/flag?format=onoff"></td></tr>
-                <tr><td><code>date</code></td><td><code>2024-06-15</code></td><td class="fmt-output" $text="/ts?format=date"></td></tr>
-                <tr><td><code>json</code></td><td><code>[1,2,3,4,5]</code></td><td class="fmt-output" $text="/items?format=json"></td></tr>
-                <tr><td><code>fallback</code></td><td><em>undefined key</em></td><td class="fmt-output" $text="/missing?format=fallback"></td></tr>
-            </tbody>
-        </table>
-    </data-wrapper>
-</div>
-<p class="note">All output above is rendered live by <code>data-wrapper</code> with no JavaScript. Change the <code>data-*</code> values in DevTools to see the formatters re-run.</p>
-<details>
-    <summary>Registering a custom formatter</summary>
-    <pre>import { VP_FORMATTERS } from 'data-wrapper';
-
-// Register before mount
-VP_FORMATTERS.set('initials', v =&gt;
-  String(v).split(' ').map(w =&gt; w[0].toUpperCase()).join('')
-);
-
-VP_FORMATTERS.set('pluralise', v =&gt;
-  `${v} ${Number(v) === 1 ? 'item' : 'items'}`
-);</pre>
-</details>
-
-<!-- =====================================================================
-     § EVENTS
-     ===================================================================== -->
-
-<h2 id="events">Events (<code>@</code>)</h2>
-<p><code>@event="topic/name"</code> delegates the native event to a handler registered on the wrapper.
-   One listener per event type on the wrapper — never per-element. Works across dynamically added children.</p>
-
-<p>Handlers receive a <strong>CustomEvent</strong>. The original browser event is in <code>e.detail</code>:</p>
-
-<table>
-    <thead><tr><th>Property</th><th>Value</th></tr></thead>
-    <tbody>
-        <tr><td><code>e.detail</code></td><td>Original browser event (click, input, submit, …)</td></tr>
-        <tr><td><code>e.detail.target</code></td><td>Native event target — useful for <code>input.value</code></td></tr>
-        <tr><td><code>e.detail.delegateTarget</code></td><td>Element carrying the <code>@</code> attribute</td></tr>
-    </tbody>
-</table>
-
-<h3>Controlled input</h3>
-<div class="demo">
-    <data-wrapper id="controlled" data-message="">
-        <label>Type something:</label>
-        <input type="text" @input="input/update" placeholder="…">
-        <p style="margin:.5rem 0 0">Echo: <strong $text="/message"></strong></p>
-    </data-wrapper>
-</div>
-<details>
-    <summary>HTML + JS</summary>
-    <pre>&lt;data-wrapper id="controlled" data-message=""&gt;
-  &lt;input type="text" @input="input/update" placeholder="…"&gt;
-  &lt;strong $text="/message"&gt;&lt;/strong&gt;
-&lt;/data-wrapper&gt;
-
-&lt;script&gt;
-  controlled.register({
-    'input/update': e =&gt; controlled.put('message', e.detail.target.value),
-  });
-&lt;/script&gt;</pre>
-</details>
-
-<h3>Two-way binding</h3>
-<p>Multiple elements bound to the same state key stay in sync automatically.</p>
-<div class="demo">
-    <data-wrapper id="twoway" data-val="">
-        <label>Both inputs share the same state key:</label>
-        <div class="row">
-            <input type="text" $value="/val" @input="val/update" placeholder="Input A…" style="flex:1">
-            <input type="text" $value="/val" @input="val/update" placeholder="Input B…" style="flex:1">
-        </div>
-        <p style="margin:.25rem 0 0;font-size:.85rem">State: <code $text="/val"></code></p>
-    </data-wrapper>
-</div>
-<details>
-    <summary>HTML + JS</summary>
-    <pre>&lt;data-wrapper id="twoway" data-val=""&gt;
-  &lt;input type="text" $value="/val" @input="val/update" placeholder="A"&gt;
-  &lt;input type="text" $value="/val" @input="val/update" placeholder="B"&gt;
-&lt;/data-wrapper&gt;
-
-&lt;script&gt;
-  twoway.register({
-    'val/update': e =&gt; twoway.put('val', e.detail.target.value),
-  });
-&lt;/script&gt;</pre>
-</details>
-
-<h3>Toggle</h3>
-<div class="demo">
-    <data-wrapper id="toggle" data-on="false">
-        <div class="row">
-            <button @click="toggle">Toggle</button>
-            <span class="badge" $class="/on?format=onoff">●</span>
-            <code $text="/on"></code>
-        </div>
-    </data-wrapper>
-</div>
-<details>
-    <summary>HTML + JS</summary>
-    <pre>&lt;data-wrapper id="toggle" data-on="false"&gt;
-  &lt;button @click="toggle"&gt;Toggle&lt;/button&gt;
-  &lt;span class="badge" $class="/on?format=onoff"&gt;●&lt;/span&gt;
-  &lt;code $text="/on"&gt;&lt;/code&gt;
-&lt;/data-wrapper&gt;
-
-&lt;script&gt;
-  const t = document.getElementById('toggle');
-  t.register({
-    'toggle': () =&gt; t.put('on', v =&gt; !v),
-  });
-&lt;/script&gt;</pre>
-</details>
-
-<!-- =====================================================================
-     § LIST RENDERING
-     ===================================================================== -->
-
-<h2 id="lists">List Rendering (<code>$list</code>)</h2>
-<p>Bind an array to a container. The <code>&lt;template&gt;</code> child is the row definition.
-   The reconciler diffs by <code>item.id</code> — only changed rows are touched.
-   Inside the template, <code>./path</code> reads from the row's item object.</p>
-
-<template id="vp-empty">
-    <li class="vp-empty-msg">No tasks yet. Add one above.</li>
-</template>
+<h2 id="todos">Todos app</h2>
+<p>A complete CRUD app. State in <code>data-*</code> attributes, actions registered in JS,
+   list rendered via <code>$list</code>. Open DevTools → Elements and watch the attributes update live.</p>
 
 <div class="demo">
     <data-wrapper id="app" data-filter="all">
 
         <form @submit="todo/add" style="display:flex;gap:.5rem;margin-bottom:.75rem">
-            <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off" style="flex:1;margin:0">
-            <button type="submit" style="white-space:nowrap">Add task</button>
+            <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off"
+                   style="flex:1;margin:0">
+            <button type="submit" style="white-space:nowrap">Add</button>
         </form>
 
         <ul class="todo-list" $list="/view" data-empty="vp-empty">
@@ -591,27 +349,461 @@ VP_FORMATTERS.set('pluralise', v =&gt;
         </div>
 
         <details style="margin-top:1rem">
-            <summary>Live state — todos array</summary>
+            <summary>Live state — inspect data-todos in DevTools or expand here</summary>
             <pre class="state-pre" $text="/todos?format=json"></pre>
         </details>
 
     </data-wrapper>
 </div>
 <details>
-    <summary>HTML</summary>
-    <pre>&lt;ul class="todo-list" $list="/view" data-empty="vp-empty"&gt;
-  &lt;template&gt;
-    &lt;li class="todo-item" $class="./status"&gt;
-      &lt;input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id"&gt;
-      &lt;span $text="./task"&gt;&lt;/span&gt;
-      &lt;button @click="todo/remove" $value="./id"&gt;✕&lt;/button&gt;
-    &lt;/li&gt;
-  &lt;/template&gt;
-&lt;/ul&gt;
+    <summary>Full HTML</summary>
+    <pre>&lt;data-wrapper id="app" data-filter="all"&gt;
 
-&lt;!-- Override identity key: $list="/users?key=uuid" --&gt;</pre>
+  &lt;form @submit="todo/add"&gt;
+    &lt;input type="text" name="task" placeholder="What needs doing?" required&gt;
+    &lt;button type="submit"&gt;Add&lt;/button&gt;
+  &lt;/form&gt;
+
+  &lt;ul $list="/view" data-empty="vp-empty"&gt;
+    &lt;template&gt;
+      &lt;li class="todo-item" $class="./status"&gt;
+        &lt;input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id"&gt;
+        &lt;span $text="./task"&gt;&lt;/span&gt;
+        &lt;button @click="todo/remove" $value="./id"&gt;✕&lt;/button&gt;
+      &lt;/li&gt;
+    &lt;/template&gt;
+  &lt;/ul&gt;
+
+  &lt;span $text="/active?format=count"&gt;&lt;/span&gt; active
+  &lt;button @click="filter/set" data-val="all"&gt;All&lt;/button&gt;
+  &lt;button @click="filter/set" data-val="active"&gt;Active&lt;/button&gt;
+  &lt;button @click="filter/set" data-val="done"&gt;Done&lt;/button&gt;
+
+&lt;/data-wrapper&gt;</pre>
 </details>
-<p class="note">Try inspecting <code>#app</code> in DevTools — <code>data-todos</code> and <code>data-view</code> update with every action.</p>
+<details>
+    <summary>JS — register + compute</summary>
+    <pre>const app = document.getElementById('app');
+
+const compute = () => {
+  const todos  = app.state.todos  || [];
+  const filter = app.state.filter || 'all';
+  app.put('active', todos.filter(t => !t.done));
+  app.put('view', todos.filter(t =>
+    filter === 'all' ? true : filter === 'active' ? !t.done : t.done
+  ));
+};
+
+app.register({
+  'todo/add': e => {
+    e.detail.preventDefault();
+    const input = e.detail.target.querySelector('input[name="task"]');
+    if (!input?.value.trim()) return;
+    app.push('todos', { id: Date.now(), task: input.value.trim(), status: 'active', done: false });
+    input.value = '';
+  },
+  'todo/toggle': e => {
+    const id = Number(e.detail.delegateTarget?.value);
+    app.put('todos', prev => (prev || []).map(t =>
+      t.id === id ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' } : t
+    ));
+  },
+  'todo/remove': e => {
+    const id = Number(e.detail.delegateTarget?.value);
+    app.put('todos', prev => (prev || []).filter(t => t.id !== id));
+  },
+  'filter/set': e => app.put('filter', e.detail.delegateTarget?.dataset.val),
+});
+
+app.addEventListener('data:sync', e => {
+  if (['todos', 'filter'].includes(e.detail.key)) compute();
+});
+
+app.put('todos', [
+  { id: 1, task: 'Master the DOM',    status: 'done',   done: true  },
+  { id: 2, task: 'Ship data-wrapper', status: 'active', done: false },
+]);</pre>
+</details>
+<p class="note">
+    The filter buttons are styled by a plain CSS attribute selector on the wrapper:
+    <code>data-wrapper[data-filter="done"] button[data-val="done"] { font-weight: bold }</code> — no JS.
+</p>
+
+
+<!-- =====================================================================
+     § GETTING STARTED — counter
+     ===================================================================== -->
+
+<h2 id="start">Getting Started</h2>
+<p>State starts in <code>data-*</code> attributes. <code>$text="/count"</code> binds the value to the DOM.
+   <code>@click="topic"</code> delegates the event to a registered handler.</p>
+
+<div class="demo">
+    <data-wrapper id="counter" data-count="0">
+        <div class="row">
+            <button @click="count/dec">−</button>
+            <span class="count-display" $text="/count"></span>
+            <button @click="count/inc">+</button>
+        </div>
+        <p style="margin:.5rem 0 0;font-size:.82rem;color:#aaa">
+            Inspect <code>#counter</code> in DevTools — watch <code>data-count</code> update.
+        </p>
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML + JS</summary>
+    <pre>&lt;data-wrapper id="counter" data-count="0"&gt;
+  &lt;button @click="count/dec"&gt;−&lt;/button&gt;
+  &lt;span $text="/count"&gt;&lt;/span&gt;
+  &lt;button @click="count/inc"&gt;+&lt;/button&gt;
+&lt;/data-wrapper&gt;
+
+&lt;script&gt;
+  customElements.whenDefined('data-wrapper').then(() => {
+    const counter = document.getElementById('counter');
+    counter.register({
+      'count/inc': () => counter.put('count', n => Number(n) + 1),
+      'count/dec': () => counter.put('count', n => Number(n) - 1),
+    });
+  });
+&lt;/script&gt;</pre>
+</details>
+
+<h3>Static binding — zero JavaScript</h3>
+<p>Initial state declared in HTML. Bindings render immediately on connect with no script.</p>
+<div class="demo">
+    <data-wrapper data-greeting="Hello" data-name="World" data-version="0.1.0">
+        <p style="margin:0">
+            <span $text="/greeting"></span>,&nbsp;<strong $text="/name"></strong>!
+            &nbsp;·&nbsp; v<span $text="/version"></span>
+        </p>
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML — no script</summary>
+    <pre>&lt;data-wrapper data-greeting="Hello" data-name="World" data-version="0.1.0"&gt;
+  &lt;p&gt;
+    &lt;span $text="/greeting"&gt;&lt;/span&gt;,
+    &lt;strong $text="/name"&gt;&lt;/strong&gt;!
+    v&lt;span $text="/version"&gt;&lt;/span&gt;
+  &lt;/p&gt;
+&lt;/data-wrapper&gt;</pre>
+</details>
+<p class="note">Try editing <code>data-greeting</code> or <code>data-name</code> directly in DevTools. MutationObserver catches external changes and propagates them.</p>
+
+
+<!-- =====================================================================
+     § EVENTS
+     ===================================================================== -->
+
+<h2 id="events">Events (<code>@</code>)</h2>
+<p><code>@event="topic/name"</code> delegates the native event to a registered handler.
+   One listener per event type on the wrapper — zero per-element listeners, even for dynamic lists.</p>
+
+<table>
+    <thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody>
+        <tr><td><code>e.detail</code></td><td>Original browser event</td></tr>
+        <tr><td><code>e.detail.target</code></td><td>Native event target — useful for <code>input.value</code></td></tr>
+        <tr><td><code>e.detail.delegateTarget</code></td><td>Element carrying the <code>@</code> attribute</td></tr>
+    </tbody>
+</table>
+
+<h3>Controlled input</h3>
+<div class="demo">
+    <data-wrapper id="controlled" data-message="">
+        <input type="text" @input="msg/update" placeholder="Type something…" style="margin-bottom:.5rem">
+        <p style="margin:0">Echo: <strong $text="/message"></strong></p>
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML + JS</summary>
+    <pre>&lt;data-wrapper id="controlled" data-message=""&gt;
+  &lt;input type="text" @input="msg/update" placeholder="Type…"&gt;
+  &lt;strong $text="/message"&gt;&lt;/strong&gt;
+&lt;/data-wrapper&gt;
+
+controlled.register({
+  'msg/update': e => controlled.put('message', e.detail.target.value),
+});</pre>
+</details>
+
+<h3>Two-way binding</h3>
+<p>Multiple elements bound to the same key stay in sync automatically.</p>
+<div class="demo">
+    <data-wrapper id="twoway" data-val="">
+        <div class="row" style="align-items:flex-start">
+            <input type="text" $value="/val" @input="val/update" placeholder="Input A…" style="flex:1;margin:0">
+            <input type="text" $value="/val" @input="val/update" placeholder="Input B…" style="flex:1;margin:0">
+        </div>
+        <p style="margin:.25rem 0 0;font-size:.85rem">State: <code $text="/val"></code></p>
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML + JS</summary>
+    <pre>&lt;data-wrapper id="twoway" data-val=""&gt;
+  &lt;input $value="/val" @input="val/update" placeholder="A"&gt;
+  &lt;input $value="/val" @input="val/update" placeholder="B"&gt;
+&lt;/data-wrapper&gt;
+
+twoway.register({
+  'val/update': e => twoway.put('val', e.detail.target.value),
+});</pre>
+</details>
+
+<h3>Toggle</h3>
+<div class="demo">
+    <data-wrapper id="toggle" data-on="false">
+        <div class="row">
+            <button @click="toggle">Toggle</button>
+            <span class="badge" $class="/on?format=onoff">●</span>
+            <code $text="/on"></code>
+        </div>
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML + JS</summary>
+    <pre>&lt;data-wrapper id="toggle" data-on="false"&gt;
+  &lt;button @click="toggle"&gt;Toggle&lt;/button&gt;
+  &lt;span class="badge" $class="/on?format=onoff"&gt;●&lt;/span&gt;
+  &lt;code $text="/on"&gt;&lt;/code&gt;
+&lt;/data-wrapper&gt;
+
+toggle.register({ 'toggle': () => toggle.put('on', v => !v) });</pre>
+</details>
+
+
+<!-- =====================================================================
+     § PATTERNS
+     ===================================================================== -->
+
+<h2 id="patterns">Patterns</h2>
+
+<h3>Computed state via <code>data:sync</code></h3>
+<p>Listen for state changes with <code>data:sync</code> and derive new values with <code>put</code>.
+   No dependency tracking required — recompute whenever dependencies change.
+   The wrapper is the server; DWRL addresses the result.</p>
+
+<div class="demo">
+    <data-wrapper id="computed-demo" data-first-name="Jane" data-last-name="Doe">
+        <div class="row">
+            <input type="text" $value="/firstName" @input="first/set"
+                   placeholder="First name" style="flex:1;margin:0">
+            <input type="text" $value="/lastName"  @input="last/set"
+                   placeholder="Last name"  style="flex:1;margin:0">
+        </div>
+        <p class="computed-output">Full name: <span $text="/fullName"></span></p>
+    </data-wrapper>
+</div>
+<details>
+    <summary>JS — computed state</summary>
+    <pre>const demo = document.getElementById('computed-demo');
+
+demo.register({
+  'first/set': e => demo.put('firstName', e.detail.target.value),
+  'last/set':  e => demo.put('lastName',  e.detail.target.value),
+});
+
+demo.addEventListener('data:sync', () => {
+  demo.put('fullName', `${demo.state.firstName} ${demo.state.lastName}`);
+});</pre>
+</details>
+
+<h3>Inline init via <code>onload</code></h3>
+<p>The <code>onload</code> attribute fires when the wrapper connects — before any external script.
+   <code>this</code> is the wrapper element.</p>
+<div class="demo">
+    <data-wrapper data-count="10"
+        onload="this.register({'dec':()=>this.put('count',n=>Number(n)-1),'inc':()=>this.put('count',n=>Number(n)+1)})">
+        <div class="row">
+            <button @click="dec">−1</button>
+            <span class="count-display" $text="/count"></span>
+            <button @click="inc">+1</button>
+        </div>
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML — no external script</summary>
+    <pre>&lt;data-wrapper data-count="10"
+  onload="this.register({
+    'dec': () =&gt; this.put('count', n =&gt; Number(n) - 1),
+    'inc': () =&gt; this.put('count', n =&gt; Number(n) + 1),
+  })"&gt;
+  &lt;button @click="dec"&gt;−1&lt;/button&gt;
+  &lt;span $text="/count"&gt;&lt;/span&gt;
+  &lt;button @click="inc"&gt;+1&lt;/button&gt;
+&lt;/data-wrapper&gt;</pre>
+</details>
+
+<h3>CSS as the view layer</h3>
+<p>Because state IS <code>data-*</code> attributes, CSS attribute selectors react to state changes without any binding.
+   The filter buttons in the Todos demo above use this pattern:</p>
+<details>
+    <summary>CSS — no JS, no $ binding needed</summary>
+    <pre>/* Active filter button — pure CSS, reacts to data-filter attribute */
+data-wrapper[data-filter="all"]    button[data-val="all"],
+data-wrapper[data-filter="active"] button[data-val="active"],
+data-wrapper[data-filter="done"]   button[data-val="done"] {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+/* The nav sidebar above uses the same pattern for open/close:
+   #nav[data-nav-open="true"] dialog { ... }
+   #nav[data-nav-open="true"] .nav-backdrop { display: block } */</pre>
+</details>
+
+
+<!-- =====================================================================
+     § TOKENS REFERENCE
+     ===================================================================== -->
+
+<h2 id="tokens">Tokens</h2>
+<table>
+    <thead><tr><th>Token</th><th>Direction</th><th>What it does</th><th>Example</th></tr></thead>
+    <tbody>
+        <tr>
+            <td><code>$</code></td>
+            <td>State → DOM</td>
+            <td>Binds a state path to a DOM property. Works on any property the element exposes.</td>
+            <td><code>$text="/username"</code></td>
+        </tr>
+        <tr>
+            <td><code>_</code></td>
+            <td>State → attr</td>
+            <td>Binds to an HTML attribute rather than a JS property. CSS hooks via attribute selectors. <em>(In progress.)</em></td>
+            <td><code>_data-active="/isActive"</code></td>
+        </tr>
+        <tr>
+            <td><code>@</code></td>
+            <td>Event → handler</td>
+            <td>Delegates a native DOM event to a registered handler topic. One listener per event type on the wrapper.</td>
+            <td><code>@click="todo/remove"</code></td>
+        </tr>
+    </tbody>
+</table>
+
+
+<!-- =====================================================================
+     § BINDINGS
+     ===================================================================== -->
+
+<h2 id="bindings">Bindings (<code>$</code>)</h2>
+<p><code>$prop="/path"</code> sets <code>el[prop] = value</code>. A handful of aliases cover the HTML/JS naming gap.</p>
+
+<table>
+    <thead><tr><th>Shorthand</th><th>Maps to</th><th>Notes</th></tr></thead>
+    <tbody>
+        <tr><td><code>$text</code></td><td><code>textContent</code></td><td>Safe text output</td></tr>
+        <tr><td><code>$html</code></td><td><code>innerHTML</code></td><td>⚠ XSS risk — trusted sources only</td></tr>
+        <tr><td><code>$class</code></td><td><code>className</code></td><td>Dynamic class string</td></tr>
+        <tr><td><code>$for</code></td><td><code>htmlFor</code></td><td><code>&lt;label&gt;</code> association</td></tr>
+        <tr><td><code>$readonly</code></td><td><code>readOnly</code></td><td></td></tr>
+        <tr><td><code>$tabindex</code></td><td><code>tabIndex</code></td><td></td></tr>
+        <tr><td><code>$maxlength</code></td><td><code>maxLength</code></td><td></td></tr>
+    </tbody>
+</table>
+<p>Any unlisted name maps directly: <code>$value</code>, <code>$checked</code>, <code>$disabled</code>,
+   <code>$href</code>, <code>$src</code>, <code>$open</code>, <code>$placeholder</code> all work as-is.
+   The nav sidebar above uses <code>$open="/navOpen"</code> to control the <code>&lt;dialog&gt;</code> element.</p>
+
+<div class="demo">
+    <data-wrapper data-name="Jane Doe" data-role="Senior Engineer" data-active="true"
+                  data-url="https://example.com" data-score="9500">
+        <div class="profile">
+            <div class="avatar">👤</div>
+            <div>
+                <strong $text="/name"></strong><br>
+                <span style="color:#666;font-size:.88rem" $text="/role"></span>
+            </div>
+            <span class="badge" $class="/active?format=onoff"></span>
+        </div>
+        <div class="row" style="margin-top:.75rem">
+            <a $href="/url" target="_blank" rel="noopener">Visit link →</a>
+            &nbsp;·&nbsp; Score: <strong $text="/score?format=currency"></strong>
+        </div>
+    </data-wrapper>
+</div>
+<details>
+    <summary>HTML — no script</summary>
+    <pre>&lt;data-wrapper data-name="Jane Doe" data-role="Senior Engineer"
+              data-active="true" data-url="https://example.com" data-score="9500"&gt;
+
+  &lt;strong $text="/name"&gt;&lt;/strong&gt;
+  &lt;span   $text="/role"&gt;&lt;/span&gt;
+  &lt;span class="badge" $class="/active?format=onoff"&gt;&lt;/span&gt;
+
+  &lt;a $href="/url"&gt;Visit link&lt;/a&gt;
+  &lt;strong $text="/score?format=currency"&gt;&lt;/strong&gt;
+
+&lt;/data-wrapper&gt;</pre>
+</details>
+
+
+<!-- =====================================================================
+     § FORMATTERS
+     ===================================================================== -->
+
+<h2 id="formatters">Formatters</h2>
+<p>Appended as <code>?format=name</code> query params on any binding. Chained left-to-right.
+   No JavaScript required — they run inside the binding pipeline.</p>
+
+<div class="demo">
+    <data-wrapper id="fmt-demo"
+        data-amount="9.99"
+        data-label="  hello world  "
+        data-flag="true"
+        data-ts="2024-06-15"
+        data-items='[1,2,3,4,5]'>
+        <table>
+            <thead><tr><th>Formatter</th><th>Input</th><th>Output</th></tr></thead>
+            <tbody>
+                <tr><td><code>currency</code></td><td><code>9.99</code></td>
+                    <td class="fmt-output" $text="/amount?format=currency"></td></tr>
+                <tr><td><code>upper</code></td><td><code>"&nbsp;&nbsp;hello world&nbsp;&nbsp;"</code></td>
+                    <td class="fmt-output" $text="/label?format=upper"></td></tr>
+                <tr><td><code>lower</code></td><td><code>"&nbsp;&nbsp;HELLO WORLD&nbsp;&nbsp;"</code></td>
+                    <td class="fmt-output" $text="/label?format=lower"></td></tr>
+                <tr><td><code>trim</code></td><td><code>"&nbsp;&nbsp;hello world&nbsp;&nbsp;"</code></td>
+                    <td class="fmt-output" $text="/label?format=trim"></td></tr>
+                <tr><td><code>trim + upper</code></td><td><code>"&nbsp;&nbsp;hello world&nbsp;&nbsp;"</code></td>
+                    <td class="fmt-output" $text="/label?format=trim&format=upper"></td></tr>
+                <tr><td><code>count</code></td><td><code>[1,2,3,4,5]</code></td>
+                    <td class="fmt-output" $text="/items?format=count"></td></tr>
+                <tr><td><code>bool</code></td><td><code>true</code></td>
+                    <td class="fmt-output" $text="/flag?format=bool"></td></tr>
+                <tr><td><code>yesno</code></td><td><code>true</code></td>
+                    <td class="fmt-output" $text="/flag?format=yesno"></td></tr>
+                <tr><td><code>onoff</code></td><td><code>true</code></td>
+                    <td class="fmt-output" $text="/flag?format=onoff"></td></tr>
+                <tr><td><code>date</code></td><td><code>2024-06-15</code></td>
+                    <td class="fmt-output" $text="/ts?format=date"></td></tr>
+                <tr><td><code>json</code></td><td><code>[1,2,3,4,5]</code></td>
+                    <td class="fmt-output" $text="/items?format=json"></td></tr>
+                <tr><td><code>fallback</code></td><td><em>undefined key</em></td>
+                    <td class="fmt-output" $text="/missing?format=fallback"></td></tr>
+            </tbody>
+        </table>
+    </data-wrapper>
+</div>
+<p class="note">Entirely static — change any <code>data-*</code> value in DevTools to see the formatters re-run instantly.</p>
+<details>
+    <summary>Custom formatter registration</summary>
+    <pre>import { VP_FORMATTERS } from 'data-wrapper';
+
+VP_FORMATTERS.set('initials', v =>
+  String(v).split(' ').map(w => w[0].toUpperCase()).join('')
+);
+
+VP_FORMATTERS.set('ago', v => {
+  const diff = Date.now() - new Date(v).getTime();
+  const mins = Math.floor(diff / 60000);
+  return mins < 1 ? 'just now' : `${mins}m ago`;
+});
+
+// Use: &lt;span $text="/author?format=initials"&gt;&lt;/span&gt;</pre>
+</details>
+
 
 <!-- =====================================================================
      § STATE API
@@ -624,12 +816,12 @@ VP_FORMATTERS.set('pluralise', v =&gt;
     <tbody>
         <tr>
             <td><code>put(key, val)</code></td>
-            <td>Set a state key. Accepts a value or an updater function.</td>
-            <td><code>app.put('count', n =&gt; n + 1)</code></td>
+            <td>Set a state key. Pass a value or an updater function.</td>
+            <td><code>app.put('count', n => n + 1)</code></td>
         </tr>
         <tr>
             <td><code>patch(key, obj)</code></td>
-            <td>Shallow-merge an object into an existing state key.</td>
+            <td>Shallow-merge into an existing object state key.</td>
             <td><code>app.patch('user', { name: 'Ali' })</code></td>
         </tr>
         <tr>
@@ -640,110 +832,43 @@ VP_FORMATTERS.set('pluralise', v =&gt;
         <tr>
             <td><code>pull(key, pred)</code></td>
             <td>Remove items from an array by id or predicate.</td>
-            <td><code>app.pull('todos', t =&gt; t.done)</code></td>
+            <td><code>app.pull('todos', t => t.done)</code></td>
         </tr>
         <tr>
             <td><code>register(map)</code></td>
-            <td>Register event topic handlers on the wrapper.</td>
-            <td><code>app.register({ 'todo/add': e =&gt; … })</code></td>
+            <td>Wire event topic strings to handler functions.</td>
+            <td><code>app.register({ 'add': e => … })</code></td>
         </tr>
     </tbody>
 </table>
 
 <h3>System events</h3>
 <table>
-    <thead><tr><th>Event</th><th>Target</th><th>Detail</th></tr></thead>
+    <thead><tr><th>Event</th><th>Target</th><th>When</th></tr></thead>
     <tbody>
-        <tr>
-            <td><code>data:sync</code></td>
-            <td>The wrapper element</td>
-            <td><code>{ key }</code> — the state key that changed</td>
-        </tr>
-        <tr>
-            <td><code>data-wrapper:load</code></td>
-            <td><code>document</code></td>
-            <td>The wrapper element that just connected</td>
-        </tr>
-        <tr>
-            <td><code>load</code></td>
-            <td>The wrapper element</td>
-            <td>The wrapper element — triggers <code>onload=""</code> attribute</td>
-        </tr>
+        <tr><td><code>data:sync</code></td><td>Wrapper element</td><td>Any <code>put/patch/push/pull</code>. <code>e.detail.key</code> = changed key.</td></tr>
+        <tr><td><code>data-wrapper:load</code></td><td><code>document</code></td><td>Wrapper connected. <code>e.detail</code> = the element.</td></tr>
+        <tr><td><code>load</code></td><td>Wrapper element</td><td>Wrapper connected — triggers <code>onload=""</code> attribute.</td></tr>
     </tbody>
 </table>
 
-<!-- =====================================================================
-     § PATTERNS
-     ===================================================================== -->
-
-<h2 id="patterns">Patterns</h2>
-
-<h3>Computed state via <code>data:sync</code></h3>
-<p>Listen for state changes and derive new values with <code>put</code>. No dependency tracking —
-   recompute whenever dependencies change.</p>
-
-<div class="demo">
-    <data-wrapper id="computed-demo" data-first-name="Jane" data-last-name="Doe">
-        <div class="row">
-            <input type="text" $value="/firstName" @input="first/set" placeholder="First name" style="flex:1;margin:0">
-            <input type="text" $value="/lastName"  @input="last/set"  placeholder="Last name"  style="flex:1;margin:0">
-        </div>
-        <p class="computed-output">Full name: <span $text="/fullName"></span></p>
-    </data-wrapper>
-</div>
-<details>
-    <summary>JS — computed state</summary>
-    <pre>const demo = document.getElementById('computed-demo');
-
-demo.register({
-  'first/set': e =&gt; demo.put('firstName', e.detail.target.value),
-  'last/set':  e =&gt; demo.put('lastName',  e.detail.target.value),
-});
-
-demo.addEventListener('data:sync', () =&gt; {
-  demo.put('fullName', `${demo.state.firstName} ${demo.state.lastName}`);
-});</pre>
-</details>
-
-<h3>Inline init via <code>onload</code></h3>
-<p>The <code>onload</code> attribute fires when the wrapper connects — before any external script runs.
-   Useful for self-contained components.</p>
-
-<div class="demo">
-    <data-wrapper data-count="10"
-        onload="this.register({ 'dec': () => this.put('count', n => Number(n) - 1) })">
-        <div class="row">
-            <button @click="dec">−1</button>
-            <strong class="count-display" $text="/count"></strong>
-        </div>
-    </data-wrapper>
-</div>
-<details>
-    <summary>HTML — no external script</summary>
-    <pre>&lt;data-wrapper data-count="10"
-  onload="this.register({ 'dec': () =&gt; this.put('count', n =&gt; Number(n) - 1) })"&gt;
-  &lt;button @click="dec"&gt;−1&lt;/button&gt;
-  &lt;strong $text="/count"&gt;&lt;/strong&gt;
-&lt;/data-wrapper&gt;</pre>
-</details>
 
 <!-- =====================================================================
      § DWRL REFERENCE
      ===================================================================== -->
 
 <h2 id="dwrl">DWRL Reference</h2>
-<p>Data Wrapper Resource Locator. A URL-shaped addressing scheme. Parsed by the browser's native
-   <code>new URL()</code> — no custom parser. The token (<code>$</code> / <code>_</code> / <code>@</code>)
-   determines intent; DWRL names the resource.</p>
+<p>Data Wrapper Resource Locator. A URL-shaped addressing scheme parsed entirely by
+   the browser's native <code>new URL()</code>. The token determines intent; DWRL names the resource.</p>
 
-<h3>Path resolution</h3>
+<h3>Path syntax</h3>
 <table>
     <thead><tr><th>Syntax</th><th>Resolves to</th></tr></thead>
     <tbody>
         <tr><td><code>/key</code></td><td>Wrapper-root state key</td></tr>
         <tr><td><code>/user/name</code></td><td>Nested: <code>state.user.name</code></td></tr>
         <tr><td><code>./key</code></td><td>Item-scoped (inside <code>$list</code> template only)</td></tr>
-        <tr><td><code>//other-id/key</code></td><td>Cross-wrapper by element id <em>(in progress)</em></td></tr>
+        <tr><td><code>//other-id/key</code></td><td>Cross-wrapper by id <em>(in progress)</em></td></tr>
     </tbody>
 </table>
 
@@ -753,33 +878,21 @@ demo.addEventListener('data:sync', () =&gt; {
     <tbody>
         <tr>
             <td><code>?format=name</code></td>
-            <td>Apply named formatter. Chain multiple: applied left to right.</td>
+            <td>Apply a named formatter. Chain multiple — applied left to right.</td>
             <td><code>$text="/price?format=currency"</code></td>
         </tr>
         <tr>
             <td><code>?key=field</code></td>
-            <td>Override identity key for <code>$list</code> reconciler (default: <code>id</code>).</td>
+            <td>Override the identity key for <code>$list</code> reconciliation (default: <code>id</code>).</td>
             <td><code>$list="/users?key=uuid"</code></td>
         </tr>
     </tbody>
 </table>
 
 <h3>Event topics</h3>
-<p>The <code>@event</code> attribute value is the topic name. Use slash-separated paths as a
-   lightweight namespace: <code>todo/add</code>, <code>filter/set</code>, <code>modal/open</code>.</p>
+<p>The <code>@event</code> value is the topic name emitted as a CustomEvent on the wrapper.
+   Use slash paths as namespaces: <code>todo/add</code>, <code>filter/set</code>, <code>modal/close</code>.</p>
 
-<pre style="background:#f8f8f8;border:1px solid #e0e0e0;border-radius:6px;padding:1rem;font-size:.82rem;font-family:ui-monospace,monospace;line-height:1.7">
-&lt;button @click="todo/remove" $value="./id"&gt;Delete&lt;/button&gt;
-&lt;form   @submit="todo/add"&gt;…&lt;/form&gt;
-&lt;input  @input="search/update"&gt;
-&lt;button @click="filter/set" data-val="active"&gt;Active&lt;/button&gt;
-
-&lt;!-- All handlers receive a CustomEvent; original event is in e.detail --&gt;
-wrapper.register({
-  'todo/add':    e =&gt; { e.detail.preventDefault(); … },
-  'filter/set':  e =&gt; { app.put('filter', e.detail.delegateTarget.dataset.val); },
-  'search/update': e =&gt; { app.put('query', e.detail.target.value); },
-});</pre>
 
 <!-- =====================================================================
      § CONFIGURATION
@@ -788,55 +901,49 @@ wrapper.register({
 <h2 id="config">Configuration</h2>
 
 <h3>Custom tokens</h3>
-<p>Override <code>window.VP_CUSTOM_CONFIG</code> before the script loads:</p>
 <details>
-    <summary>Custom token config</summary>
+    <summary>window.VP_CUSTOM_CONFIG</summary>
     <pre>&lt;script&gt;
   window.VP_CUSTOM_CONFIG = {
     TOKENS: { BIND: ':', ADD: '+', EVT: '#' },
-    NO_WAKE: ['DATA-WRAPPER', 'TEMPLATE', 'SVG'],
   };
 &lt;/script&gt;
 &lt;script src="/dist/data-wrapper.js" type="module"&gt;&lt;/script&gt;
 
-&lt;!-- Now use the custom tokens --&gt;
+&lt;!-- Then use your custom tokens --&gt;
 &lt;span :text="/username"&gt;&lt;/span&gt;
 &lt;button #click="count/inc"&gt;+1&lt;/button&gt;</pre>
 </details>
 
 <h3>Custom formatters</h3>
 <details>
-    <summary>Registering formatters</summary>
+    <summary>VP_FORMATTERS.set()</summary>
     <pre>import { VP_FORMATTERS } from 'data-wrapper';
 
-VP_FORMATTERS.set('initials', v =&gt;
-  String(v).split(' ').map(w =&gt; w[0].toUpperCase()).join('')
+VP_FORMATTERS.set('initials', v =>
+  String(v).split(' ').map(w => w[0].toUpperCase()).join('')
 );
 
-VP_FORMATTERS.set('pluralise', v =&gt;
+VP_FORMATTERS.set('pluralise', v =>
   `${v} ${Number(v) === 1 ? 'item' : 'items'}`
-);
-
-VP_FORMATTERS.set('ago', v =&gt; {
-  const diff = Date.now() - new Date(v as string).getTime();
-  const mins = Math.floor(diff / 60000);
-  return mins &lt; 1 ? 'just now' : `${mins}m ago`;
-});</pre>
+);</pre>
 </details>
 
-<h3>Named empty-state templates</h3>
+<h3>Empty-state templates</h3>
 <details>
-    <summary>VP_TEMPLATES</summary>
-    <pre>import { VP_TEMPLATES } from 'data-wrapper';
+    <summary>data-empty + &lt;template id&gt;</summary>
+    <pre>&lt;!-- Declare anywhere in the document --&gt;
+&lt;template id="no-results"&gt;
+  &lt;li class="empty"&gt;Nothing matches.&lt;/li&gt;
+&lt;/template&gt;
 
-// Or declare in HTML:
-// &lt;template id="my-empty"&gt;&lt;li class="empty"&gt;Nothing here.&lt;/li&gt;&lt;/template&gt;
-// &lt;ul $list="/items" data-empty="my-empty"&gt;…&lt;/ul&gt;
-
-VP_TEMPLATES.set('my-empty', document.getElementById('my-empty'));</pre>
+&lt;!-- Reference by id --&gt;
+&lt;ul $list="/results" data-empty="no-results"&gt;
+  &lt;template&gt;&lt;li $text="./label"&gt;&lt;/li&gt;&lt;/template&gt;
+&lt;/ul&gt;</pre>
 </details>
 
-</main><!-- end main -->
+</main>
 
 
 <!-- =====================================================================
@@ -845,45 +952,37 @@ VP_TEMPLATES.set('my-empty', document.getElementById('my-empty'));</pre>
 <script>
     customElements.whenDefined('data-wrapper').then(() => {
 
-        // --- Counter ---
+        // Counter
         const counter = document.getElementById('counter');
         counter.register({
             'count/inc': () => counter.put('count', n => Number(n) + 1),
             'count/dec': () => counter.put('count', n => Number(n) - 1),
         });
 
-        // --- Toggle ---
+        // Toggle
         const toggle = document.getElementById('toggle');
-        toggle.register({
-            'toggle': () => toggle.put('on', v => !v),
-        });
+        toggle.register({ 'toggle': () => toggle.put('on', v => !v) });
 
-        // --- Controlled input ---
+        // Controlled input
         const controlled = document.getElementById('controlled');
-        controlled.register({
-            'input/update': e => controlled.put('message', e.detail.target.value),
-        });
+        controlled.register({ 'msg/update': e => controlled.put('message', e.detail.target.value) });
 
-        // --- Two-way binding ---
+        // Two-way binding
         const twoway = document.getElementById('twoway');
-        twoway.register({
-            'val/update': e => twoway.put('val', e.detail.target.value),
-        });
+        twoway.register({ 'val/update': e => twoway.put('val', e.detail.target.value) });
 
-        // --- Computed state demo ---
-        const computedDemo = document.getElementById('computed-demo');
-        computedDemo.register({
-            'first/set': e => computedDemo.put('firstName', e.detail.target.value),
-            'last/set':  e => computedDemo.put('lastName',  e.detail.target.value),
+        // Computed state demo
+        const demo = document.getElementById('computed-demo');
+        demo.register({
+            'first/set': e => demo.put('firstName', e.detail.target.value),
+            'last/set':  e => demo.put('lastName',  e.detail.target.value),
         });
-        computedDemo.addEventListener('data:sync', () => {
-            computedDemo.put('fullName',
-                `${computedDemo.state.firstName} ${computedDemo.state.lastName}`);
-        });
-        computedDemo.put('fullName',
-            `${computedDemo.state.firstName} ${computedDemo.state.lastName}`);
+        demo.addEventListener('data:sync', () =>
+            demo.put('fullName', `${demo.state.firstName} ${demo.state.lastName}`)
+        );
+        demo.put('fullName', `${demo.state.firstName} ${demo.state.lastName}`);
 
-        // --- Todo app ---
+        // Todos app
         const app = document.getElementById('app');
 
         const compute = () => {
@@ -891,9 +990,7 @@ VP_TEMPLATES.set('my-empty', document.getElementById('my-empty'));</pre>
             const filter = app.state.filter || 'all';
             app.put('active', todos.filter(t => !t.done));
             app.put('view', todos.filter(t =>
-                filter === 'all'    ? true :
-                filter === 'active' ? !t.done :
-                                       t.done
+                filter === 'all' ? true : filter === 'active' ? !t.done : t.done
             ));
         };
 
@@ -902,29 +999,20 @@ VP_TEMPLATES.set('my-empty', document.getElementById('my-empty'));</pre>
                 e.detail.preventDefault();
                 const input = e.detail.target.querySelector('input[name="task"]');
                 if (!input?.value.trim()) return;
-                app.push('todos', {
-                    id:     Date.now(),
-                    task:   input.value.trim(),
-                    status: 'active',
-                    done:   false,
-                });
+                app.push('todos', { id: Date.now(), task: input.value.trim(), status: 'active', done: false });
                 input.value = '';
             },
             'todo/toggle': e => {
                 const id = Number(e.detail.delegateTarget?.value);
                 app.put('todos', prev => (prev || []).map(t =>
-                    t.id === id
-                        ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' }
-                        : t
+                    t.id === id ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' } : t
                 ));
             },
             'todo/remove': e => {
                 const id = Number(e.detail.delegateTarget?.value);
                 app.put('todos', prev => (prev || []).filter(t => t.id !== id));
             },
-            'filter/set': e => {
-                app.put('filter', e.detail.delegateTarget?.dataset.val);
-            },
+            'filter/set': e => app.put('filter', e.detail.delegateTarget?.dataset.val),
         });
 
         app.addEventListener('data:sync', e => {
