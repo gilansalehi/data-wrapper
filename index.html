@@ -203,7 +203,7 @@
         <h3>2. Toggle</h3>
         <div class="demo">
             <data-wrapper id="toggle" data-on="false">
-                <button @click="action:toggle">Toggle</button>
+                <button @click="toggle">Toggle</button>
                 <span class="badge" $class="/on?format=onoff">●</span>
                 <p>State: <code $text="/on"></code></p>
             </data-wrapper>
@@ -216,7 +216,7 @@
         <div class="demo">
             <data-wrapper id="controlled" data-message="">
                 <label>Type something:</label>
-                <input type="text" @input="action:input/update" placeholder="…">
+                <input type="text" @input="input/update" placeholder="…">
                 <p>Echo: <strong $text="/message"></strong></p>
             </data-wrapper>
         </div>
@@ -228,8 +228,8 @@
             <data-wrapper id="twoway" data-val="">
                 <label>Both inputs are controlled by the same state key:</label>
                 <div class="row">
-                    <input type="text" $value="/val" @input="action:val/update" placeholder="Input A…">
-                    <input type="text" $value="/val" @input="action:val/update" placeholder="Input B…">
+                    <input type="text" $value="/val" @input="val/update" placeholder="Input A…">
+                    <input type="text" $value="/val" @input="val/update" placeholder="Input B…">
                 </div>
                 <p>State: <code $text="/val"></code></p>
             </data-wrapper>
@@ -251,7 +251,7 @@
         <div class="demo">
             <data-wrapper id="app" data-filter="all">
 
-                <form @submit="action:todo/add">
+                <form @submit="todo/add">
                     <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off"
                         style="margin-bottom:.5rem">
                 </form>
@@ -259,9 +259,9 @@
                 <ul class="todo-list" $list="view" data-empty="vp-empty">
                     <template>
                         <li class="todo-item" $class="./status">
-                            <input type="checkbox" $checked="./done" @change="action:todo/toggle" $value="./id">
+                            <input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id">
                             <span $text="./task"></span>
-                            <button class="delete-btn" @click="action:todo/remove" $value="./id">✕</button>
+                            <button class="delete-btn" @click="todo/remove" $value="./id">✕</button>
                         </li>
                     </template>
                 </ul>
@@ -269,9 +269,9 @@
                 <div class="controls">
                     <span><strong $text="active?format=count">0</strong> items left</span>
                     <div class="filter-btns">
-                        <button @click="action:filter/set" data-val="all">All</button>
-                        <button @click="action:filter/set" data-val="active">Active</button>
-                        <button @click="action:filter/set" data-val="done">Done</button>
+                        <button @click="filter/set" data-val="all">All</button>
+                        <button @click="filter/set" data-val="active">Active</button>
+                        <button @click="filter/set" data-val="done">Done</button>
                     </div>
                 </div>
 
@@ -356,15 +356,20 @@
 &lt;!-- true → class="badge on", false → class="badge off" --&gt;
 </pre>
 
-        <h3>Event Wiring (<code>@</code> + <code>action:</code>)</h3>
+        <h3>Event Wiring (<code>@</code>)</h3>
         <pre>
-&lt;button @click="action:todo/remove" $value="./id"&gt;Delete&lt;/button&gt;
-&lt;form   @submit="action:todo/add"&gt;...&lt;/form&gt;
-&lt;input  @input="action:search/update"&gt;
-&lt;button @click="action:filter/set" data-val="active"&gt;Active&lt;/button&gt;
+&lt;button @click="todo/remove" $value="./id"&gt;Delete&lt;/button&gt;
+&lt;form   @submit="todo/add"&gt;...&lt;/form&gt;
+&lt;input  @input="search/update"&gt;
+&lt;button @click="filter/set" data-val="active"&gt;Active&lt;/button&gt;
 
-&lt;!-- Cross-wrapper action (proposed) --&gt;
-&lt;button @click="action://modal/open"&gt;Open Modal&lt;/button&gt;
+&lt;!-- Handler receives CustomEvent; original event is in e.detail --&gt;
+&lt;script&gt;
+wrapper.register({
+    'todo/add': e =&gt; { e.detail.preventDefault(); ... },
+    'filter/set': e =&gt; { app.put('filter', e.detail.delegateTarget.dataset.val); },
+});
+&lt;/script&gt;
 </pre>
 
         <h3>List Rendering (<code>$list</code>)</h3>
@@ -457,12 +462,12 @@
 
             const controlled = document.getElementById('controlled');
             controlled.register({
-                'input/update': e => controlled.put('message', e.target.value),
+                'input/update': e => controlled.put('message', e.detail.target.value),
             });
 
             const twoway = document.getElementById('twoway');
             twoway.register({
-                'val/update': e => twoway.put('val', e.target.value),
+                'val/update': e => twoway.put('val', e.detail.target.value),
             });
 
             // --- Todos app ---
@@ -482,8 +487,8 @@
 
             app.register({
                 'todo/add': e => {
-                    e.preventDefault();
-                    const input = e.target.querySelector('input[name="task"]');
+                    e.detail.preventDefault();
+                    const input = e.detail.target.querySelector('input[name="task"]');
                     if (!input?.value.trim()) return;
                     app.put('todos', prev => [
                         ...(prev || []),
@@ -492,17 +497,19 @@
                     input.value = '';
                 },
                 'todo/toggle': e => {
+                    const id = Number(e.detail.delegateTarget?.value);
                     app.put('todos', prev => (prev || []).map(t =>
-                        t.id === e.item?.id
+                        t.id === id
                             ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' }
                             : t
                     ));
                 },
                 'todo/remove': e => {
-                    app.put('todos', prev => (prev || []).filter(t => t.id !== e.item?.id));
+                    const id = Number(e.detail.delegateTarget?.value);
+                    app.put('todos', prev => (prev || []).filter(t => t.id !== id));
                 },
                 'filter/set': e => {
-                    app.put('filter', e.delegateTarget?.dataset.val);
+                    app.put('filter', e.detail.delegateTarget?.dataset.val);
                 },
             });
 
