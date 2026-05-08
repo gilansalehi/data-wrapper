@@ -41,7 +41,7 @@ describe('parsePath (via subscribe behaviour)', () => {
         const wrapper = appendWrapper('<span></span>');
         const el = wrapper.querySelector('span')!;
 
-        subscribe(el, 'dynamic', '$text', '/key');
+        subscribe(el, 'binding', '$text', '/key');
 
         const config = firstSub(wrapper, 'key');
         expect(config.path).toBe('key');
@@ -56,7 +56,7 @@ describe('parsePath (via subscribe behaviour)', () => {
         itemNode.innerHTML = '<span></span>';
         const el = itemNode.querySelector('span')!;
 
-        subscribe(el, 'dynamic', '$text', './key', itemNode);
+        subscribe(el, 'binding', '$text', './key', itemNode);
 
         const [config] = itemConfigs(itemNode);
         expect(config.path).toBe('key');
@@ -68,7 +68,7 @@ describe('parsePath (via subscribe behaviour)', () => {
         const wrapper = appendWrapper('<span></span>');
         const el = wrapper.querySelector('span')!;
 
-        subscribe(el, 'dynamic', '$text', '/user/name');
+        subscribe(el, 'binding', '$text', '/user/name');
 
         expect(firstSub(wrapper, 'user/name').path).toBe('user/name');
     });
@@ -77,7 +77,7 @@ describe('parsePath (via subscribe behaviour)', () => {
         const wrapper = appendWrapper('<span></span>');
         const el = wrapper.querySelector('span')!;
 
-        subscribe(el, 'dynamic', '$text', '/name?format=upper');
+        subscribe(el, 'binding', '$text', '/name?format=upper');
 
         const config = firstSub(wrapper, 'name');
         expect(config.pipes).toHaveLength(1);
@@ -88,7 +88,7 @@ describe('parsePath (via subscribe behaviour)', () => {
         const wrapper = appendWrapper('<span></span>');
         const el = wrapper.querySelector('span')!;
 
-        subscribe(el, 'dynamic', '$text', '/name?format=trim&format=upper');
+        subscribe(el, 'binding', '$text', '/name?format=trim&format=upper');
 
         const config = firstSub(wrapper, 'name');
         let formatted: unknown = '  ali  ';
@@ -101,16 +101,17 @@ describe('parsePath (via subscribe behaviour)', () => {
         const wrapper = appendWrapper('<ul></ul>');
         const el = wrapper.querySelector('ul')!;
 
-        subscribe(el, 'dynamic', '$list', '/users?key=uuid');
+        subscribe(el, 'directive', '*list', '/users?key=uuid');
 
         expect(firstSub(wrapper, 'users').key).toBe('uuid');
+        expect(firstSub(wrapper, 'users').directive).toBe(true);
     });
 
     it('//other/key → isCrossWrapper=true, skipped', () => {
         const wrapper = appendWrapper('<span></span>');
         const el = wrapper.querySelector('span')!;
 
-        subscribe(el, 'dynamic', '$text', '//other/key');
+        subscribe(el, 'binding', '$text', '//other/key');
 
         expect(wrapper._subs).toEqual({});
     });
@@ -133,14 +134,24 @@ describe('wake', () => {
         expect(config.el).toBe(wrapper.querySelector('span')!);
     });
 
-    it.skip('wires _data-active as state-to-attribute binding when additive tokens graduate from todo', () => {
+    it('registers *list structural directive in wrapper._subs', () => {
+        wrapper.innerHTML = '<ul><template><li></li></template></ul>';
+        wrapper.querySelector('ul')!.setAttribute('*list', '/items');
+
+        wake(wrapper);
+
+        const config = firstSub(wrapper, 'items');
+        expect(config.prop).toBe('list');
+        expect(config.directive).toBe(true);
+        expect(config.el).toBe(wrapper.querySelector('ul')!);
+    });
+
+    it('does not treat _data-active as a token while attribute reflection is undecided', () => {
         wrapper.innerHTML = '<span _data-active="/active"></span>';
 
         wake(wrapper);
 
-        const config = firstSub(wrapper, 'active');
-        expect(config.prop).toBe('data-active');
-        expect(config.el).toBe(wrapper.querySelector('span')!);
+        expect(wrapper._subs.active).toBeUndefined();
     });
 
     it('wires @click event via ensureDelegation', () => {

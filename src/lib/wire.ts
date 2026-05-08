@@ -61,30 +61,31 @@ export const ensureDelegation = (wrapper: WrapperNode, eventName: string) => {
 };
 
 // ---------------------------------------------------------------------------
-// subscribe — wires one $ or _ attribute on an element
+// subscribe — wires one $ binding or * structural directive on an element
 // ---------------------------------------------------------------------------
 
 export const subscribe = (
     el: Element,
-    mode: 'dynamic' | 'additive',
+    mode: 'binding' | 'directive',
     attrName: string,
     attrValue: string,
     itemNode: Element | null = null,
 ) => {
-    const prefix = mode === 'dynamic' ? CONFIG.TOKENS.BIND : CONFIG.TOKENS.ADD;
+    const isDirective = mode === 'directive';
+    const prefix = isDirective ? CONFIG.TOKENS.DIR : CONFIG.TOKENS.BIND;
     const prop   = attrName.slice(prefix.length);
     const { path, pipes, key, isItemScoped, isCrossWrapper } = parsePath(attrValue);
 
     if (isCrossWrapper) return; // TODO: cross-wrapper mesh
 
-    const config: UpdateConfig = { el, path, prop, pipes, itemNode, key };
+    const config: UpdateConfig = { el, path, prop, pipes, itemNode, key, directive: isDirective };
 
     if (isItemScoped && itemNode) {
         // Never enters wrapper _subs. Stored on itemNode so reconciler can re-apply on update.
         ((itemNode as ItemNode)._vItemConfigs ??= []).push(config);
         let val: unknown = (itemNode as ItemNode)._vItem?.[path];
         for (const pipe of pipes) val = pipe(val);
-        applyBinding(el, prop, val);
+        if (!isDirective) applyBinding(el, prop, val);
         return;
     }
 
@@ -102,14 +103,14 @@ const _wireElement = (el: Element, itemNode: Element | null) => {
     if ((el as WokeNode)._vWoke) return;
     (el as WokeNode)._vWoke = true;
 
-    const { BIND, ADD, EVT } = CONFIG.TOKENS;
+    const { BIND, DIR, EVT } = CONFIG.TOKENS;
 
     for (const { name, value } of [...el.attributes]) {
-        if      (name.startsWith(BIND)) subscribe(el, 'dynamic',  name, value, itemNode);
-        else if (name.startsWith(ADD))  subscribe(el, 'additive', name, value, itemNode);
+        if      (name.startsWith(BIND)) subscribe(el, 'binding',   name, value, itemNode);
+        else if (name.startsWith(DIR))  subscribe(el, 'directive', name, value, itemNode);
         else if (name.startsWith(EVT)) {
             // Wrapper lookup deferred — el may be detached during list hydration.
-            // Template event types are pre-registered by _directive before reconcile runs.
+            // Template event types are pre-registered before reconcile runs.
             const wrapper = el.closest('data-wrapper') as WrapperNode | null;
             if (wrapper) ensureDelegation(wrapper, name.slice(EVT.length));
         }

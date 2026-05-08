@@ -71,8 +71,9 @@ export class DataWrapper extends HTMLElement {
             if (!config.el.isConnected) continue;
             let v = val;
             for (const pipe of config.pipes) v = pipe(v);
-            const directive = resolveDirective(config.prop);
-            if (directive) {
+            if (config.directive) {
+                const directive = resolveDirective(config.prop);
+                if (!directive) continue;
                 directive({
                     wrapper: this,
                     config,

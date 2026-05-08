@@ -220,8 +220,11 @@ describe('register', () => {
 describe('_broadcast', () => {
     it('routes registered directives through DW_DIRECTIVES', () => {
         const original = DW_DIRECTIVES.get('probe');
-        const el = make('<span $probe="/name"></span>');
-        const target = el.querySelector('span')!;
+        const el = document.createElement('data-wrapper') as TestWrapper;
+        const target = document.createElement('span');
+        target.setAttribute('*probe', '/name');
+        el.appendChild(target);
+        document.body.appendChild(el);
         let seen: unknown;
 
         DW_DIRECTIVES.set('probe', ({ wrapper, config, value }) => {
@@ -233,6 +236,25 @@ describe('_broadcast', () => {
 
             expect(seen).toEqual({ wrapper: el, el: target, value: 'Ali' });
             expect(target.getAttribute('probe')).toBeNull();
+        } finally {
+            if (original) DW_DIRECTIVES.set('probe', original);
+            else DW_DIRECTIVES.delete('probe');
+        }
+    });
+
+    it('does not route $ bindings through DW_DIRECTIVES', () => {
+        const original = DW_DIRECTIVES.get('probe');
+        const el = make('<span $probe="/name"></span>');
+        const target = el.querySelector('span')!;
+        let calls = 0;
+
+        DW_DIRECTIVES.set('probe', () => { calls += 1; });
+
+        try {
+            el.put('name', 'Ali');
+
+            expect(calls).toBe(0);
+            expect(target.getAttribute('probe')).toBe('Ali');
         } finally {
             if (original) DW_DIRECTIVES.set('probe', original);
             else DW_DIRECTIVES.delete('probe');

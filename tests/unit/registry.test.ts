@@ -2,17 +2,17 @@ import { describe, it, expect } from '@tests/helpers.ts';
 import { DW_FORMATTERS, CONFIG, sync, PROP_ALIASES } from '@lib/registry.ts';
 
 describe('CONFIG', () => {
-    it('defaults to $ / _ / @ tokens', () => {
-        expect(CONFIG.TOKENS).toEqual({ BIND: '$', ADD: '_', EVT: '@' });
+    it('defaults to $ / * / @ tokens', () => {
+        expect(CONFIG.TOKENS).toEqual({ BIND: '$', DIR: '*', EVT: '@' });
     });
 
     it('merges window.DW_CUSTOM_CONFIG.TOKENS when present', async () => {
         const original = window.DW_CUSTOM_CONFIG;
-        window.DW_CUSTOM_CONFIG = { TOKENS: { BIND: ':', ADD: '+', EVT: '#' } };
+        window.DW_CUSTOM_CONFIG = { TOKENS: { BIND: ':', DIR: '+', EVT: '#' } };
 
         const mod = await import(`../../src/lib/registry.ts?custom=${Date.now()}`) as typeof import('@lib/registry.ts');
 
-        expect(mod.CONFIG.TOKENS).toEqual({ BIND: ':', ADD: '+', EVT: '#' });
+        expect(mod.CONFIG.TOKENS).toEqual({ BIND: ':', DIR: '+', EVT: '#' });
         if (original) window.DW_CUSTOM_CONFIG = original;
         else delete window.DW_CUSTOM_CONFIG;
     });

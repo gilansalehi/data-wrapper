@@ -8,10 +8,11 @@ export interface UpdateConfig {
     prop:     string;
     pipes:    Formatter[];
     itemNode: Element | null;
-    key?:     string; // identity key for $list reconciler (default: 'id')
+    directive?: boolean;
+    key?:     string; // identity key for *list reconciler (default: 'id')
 }
 
-type VNode       = Element & { _vBase?: Set<string>; _vState?: { dynamic: string; additive: string } };
+type VNode       = Element & { _vBase?: Set<string>; _vState?: { dynamic: string } };
 type ItemElement = Element & { _vItem?: Record<string, unknown>; _vItemConfigs?: UpdateConfig[] };
 
 export const applyBinding = (el: Element, prop: string, val: unknown) => {
@@ -21,9 +22,9 @@ export const applyBinding = (el: Element, prop: string, val: unknown) => {
     if (prop === 'class') {
         const v   = el as VNode;
         v._vBase  = v._vBase ?? new Set([...el.classList]);
-        const s   = v._vState = v._vState ?? { dynamic: '', additive: '' };
+        const s   = v._vState = v._vState ?? { dynamic: '' };
         s.dynamic = String(val);
-        el.className = ([...v._vBase].join(' ') + ' ' + s.dynamic + ' ' + s.additive)
+        el.className = ([...v._vBase].join(' ') + ' ' + s.dynamic)
             .replace(/\s+/g, ' ').trim();
         return;
     }
@@ -35,7 +36,7 @@ export const applyItemBindings = (node: Element, item: Record<string, unknown>) 
     for (const config of (node as ItemElement)._vItemConfigs || []) {
         let val: unknown = item[config.path];
         for (const pipe of config.pipes) val = pipe(val); // pipes vs computed props... very similar.
-        applyBinding(config.el, config.prop, val);
+        if (!config.directive) applyBinding(config.el, config.prop, val);
     }
 };
 

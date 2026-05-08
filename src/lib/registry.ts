@@ -1,7 +1,7 @@
 // Types owned here — used across registry, engine, wire.
 export type Formatter = (v: unknown) => unknown;
 
-export interface Tokens { BIND: string; ADD: string; EVT: string; }
+export interface Tokens { BIND: string; DIR: string; EVT: string; }
 export interface Config { TOKENS: Tokens; NO_WAKE: string[]; }
 export interface CustomConfig { TOKENS?: Partial<Tokens>; NO_WAKE?: string[]; }
 
@@ -12,7 +12,7 @@ declare global {
 }
 
 const DEFAULT_CONFIG: Config = {
-    TOKENS: { BIND: '$', ADD: '_', EVT: '@' },
+    TOKENS: { BIND: '$', DIR: '*', EVT: '@' },
     NO_WAKE: ['DATA-WRAPPER', 'TEMPLATE', 'SVG'],
 };
 

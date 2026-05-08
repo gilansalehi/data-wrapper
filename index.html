@@ -78,7 +78,7 @@
 <section id="todos">
 <h2>Todos app</h2>
 <p>A complete CRUD app. State in <code>data-*</code> attributes, actions registered in JS,
-   list rendered via <code>$list</code>. Open DevTools → Elements and watch the attributes update live.</p>
+   list rendered via <code>*list</code>. Open DevTools → Elements and watch the attributes update live.</p>
 
 <article class="demo">
     <data-wrapper id="app" data-filter="all">
@@ -88,7 +88,7 @@
             <button type="submit">Add</button>
         </form>
 
-        <ul class="todo-list" $list="/view" data-empty="dw-empty">
+        <ul class="todo-list" *list="/view" data-empty="dw-empty">
             <template>
                 <li class="todo-item" $class="./status">
                     <input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id" aria-label="Toggle todo completion">
@@ -124,7 +124,7 @@
     &lt;button type="submit"&gt;Add&lt;/button&gt;
   &lt;/form&gt;
 
-  &lt;ul $list="/view" data-empty="dw-empty"&gt;
+  &lt;ul *list="/view" data-empty="dw-empty"&gt;
     &lt;template&gt;
       &lt;li class="todo-item" $class="./status"&gt;
         &lt;input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id" aria-label="Toggle todo completion"&gt;
@@ -433,10 +433,10 @@ data-wrapper[data-filter="done"]   button[data-val="done"] {
             <td><code>$text="/username"</code></td>
         </tr>
         <tr>
-            <td><code>_</code></td>
-            <td>State → attr</td>
-            <td>Binds to an HTML attribute rather than a JS property. CSS hooks via attribute selectors. <em>(In progress.)</em></td>
-            <td><code>_data-active="/isActive"</code></td>
+            <td><code>*</code></td>
+            <td>State → DOM structure</td>
+            <td>Runs a structural directive. Use this only when data-wrapper owns the shape of the DOM.</td>
+            <td><code>*list="/items"</code></td>
         </tr>
         <tr>
             <td><code>@</code></td>
@@ -639,7 +639,7 @@ DW_FORMATTERS.set('ago', v => {
     <tbody>
         <tr><td><code>/key</code></td><td>Wrapper-root state key</td></tr>
         <tr><td><code>/user/name</code></td><td>Nested: <code>state.user.name</code></td></tr>
-        <tr><td><code>./key</code></td><td>Item-scoped (inside <code>$list</code> template only)</td></tr>
+        <tr><td><code>./key</code></td><td>Item-scoped (inside <code>*list</code> template only)</td></tr>
         <tr><td><code>//other-id/key</code></td><td>Cross-wrapper by id <em>(in progress)</em></td></tr>
     </tbody>
 </table>
@@ -655,8 +655,8 @@ DW_FORMATTERS.set('ago', v => {
         </tr>
         <tr>
             <td><code>?key=field</code></td>
-            <td>Override the identity key for <code>$list</code> reconciliation (default: <code>id</code>).</td>
-            <td><code>$list="/users?key=uuid"</code></td>
+            <td>Override the identity key for <code>*list</code> reconciliation (default: <code>id</code>).</td>
+            <td><code>*list="/users?key=uuid"</code></td>
         </tr>
     </tbody>
 </table>
@@ -679,7 +679,7 @@ DW_FORMATTERS.set('ago', v => {
     <summary>window.DW_CUSTOM_CONFIG</summary>
     <pre>&lt;script&gt;
   window.DW_CUSTOM_CONFIG = {
-    TOKENS: { BIND: ':', ADD: '+', EVT: '#' },
+    TOKENS: { BIND: ':', DIR: '+', EVT: '#' },
   };
 &lt;/script&gt;
 &lt;script src="/dist/data-wrapper.js" type="module"&gt;&lt;/script&gt;
@@ -712,7 +712,7 @@ DW_FORMATTERS.set('pluralise', v =>
 &lt;/template&gt;
 
 &lt;!-- Reference by id --&gt;
-&lt;ul $list="/results" data-empty="no-results"&gt;
+&lt;ul *list="/results" data-empty="no-results"&gt;
   &lt;template&gt;&lt;li $text="./label"&gt;&lt;/li&gt;&lt;/template&gt;
 &lt;/ul&gt;
 

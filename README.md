@@ -68,8 +68,8 @@ Three attribute prefixes are the entire declarative API:
 | Token | Direction | Example |
 |-------|-----------|---------|
 | `$`   | State → DOM property | `$text="/username"` |
-| `_`   | State → DOM attribute *(in progress)* | `_data-active="/isActive"` |
 | `@`   | DOM event → registered handler | `@click="todo/remove"` |
+| `*`   | State → DOM structure | `*list="/items"` |
 
 ### DWRL — Data Wrapper Resource Locator
 
@@ -79,7 +79,7 @@ Binding values are URL-shaped addresses parsed by `new URL()`. The token determi
 |--------|-------------|
 | `/key` | Wrapper-root state key |
 | `/user/name` | Nested: `state.user.name` |
-| `./key` | Item-scoped (inside `$list` only) |
+| `./key` | Item-scoped (inside `*list` only) |
 | `//other-id/key` | Cross-wrapper *(in progress)* |
 
 **Formatters** via query params, applied left to right:
@@ -160,7 +160,7 @@ app.register({
 ### List rendering
 
 ```html
-<ul $list="/todos" data-empty="empty-tpl-id">
+<ul *list="/todos" data-empty="empty-tpl-id">
   <template>
     <li class="item" $class="./status">
       <input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id">
@@ -171,7 +171,7 @@ app.register({
 </ul>
 ```
 
-The reconciler diffs by `item.id`. Override with `?key=`: `$list="/users?key=uuid"`.
+The reconciler diffs by `item.id`. Override with `?key=`: `*list="/users?key=uuid"`.
 
 Inside `<template>`, `./path` is item-scoped — reads from the row's data object, not wrapper state.
 
@@ -252,7 +252,7 @@ Override defaults before the script loads:
 ```html
 <script>
   window.DW_CUSTOM_CONFIG = {
-    TOKENS: { BIND: ':', ADD: '+', EVT: '#' }
+    TOKENS: { BIND: ':', DIR: '+', EVT: '#' }
   };
 </script>
 <script src="/dist/data-wrapper.js" type="module"></script>
@@ -271,7 +271,7 @@ src/lib/
 └── component.ts  — DataWrapper class
 ```
 
-**Wiring (O(N), once at mount):** `wake()` walks the subtree, reads `$`/`_`/`@` attributes, builds `_subs` — a flat map of `{ stateKey → UpdateConfig[] }`.
+**Wiring (O(N), once at mount):** `wake()` walks the subtree, reads `$`/`@`/`*` attributes, builds `_subs` — a flat map of `{ stateKey → UpdateConfig[] }`.
 
 **Reaction (O(1) per key):** `_broadcast(key, val)` looks up `_subs[key]` and writes only to subscribed nodes.
 
@@ -286,12 +286,12 @@ src/lib/
 | `$` bindings (text, props, attrs) | ✅ |
 | `@` event delegation | ✅ |
 | `register()` + `put/patch/push/pull` | ✅ |
-| `$list` reconciler with identity diffing | ✅ |
+| `*list` reconciler with identity diffing | ✅ |
 | `./` item-scoped paths | ✅ |
 | `?format=` pipe chain | ✅ |
 | `?key=` identity override | ✅ |
 | `data:sync` computed state pattern | ✅ |
 | Cross-wrapper `//id/key` | 🚧 In progress |
-| `_` additive token | 🚧 In progress |
-| `$match` / `$if` directives | 🚧 Planned |
+| Attribute reflection token | 🚧 Unassigned |
+| `*match` / `*if` directives | 🚧 Planned |
 | `api://` remote fetch | 🚧 Planned |
