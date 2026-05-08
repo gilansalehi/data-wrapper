@@ -291,3 +291,45 @@ data-wrapper[data-filter="done"]   button[data-val="done"] {
 
     &:hover:not(:disabled) { background: var(--surface); color: var(--text); }
 }
+
+/* ── Password meter ── */
+.pw-row {
+    display: flex; align-items: center; gap: .5rem;
+    border: var(--border); border-radius: 6px;
+    padding: .15rem .15rem .15rem .5rem;
+    transition: border-color .15s, background-color .15s, color .15s;
+}
+.pw-row input {
+    flex: 1; border: 0; background: transparent; outline: 0;
+    padding: .55rem .25rem; color: inherit; font: inherit;
+}
+.pw-row.weak   { border-color: var(--ng-text); background: var(--ng-bg); color: var(--ng-text); }
+.pw-row.fair   { border-color: color-mix(in srgb, currentColor 30%, transparent); }
+.pw-row.good   { border-color: color-mix(in srgb, var(--ok-text) 60%, transparent); }
+.pw-row.strong { border-color: var(--ok-text); background: var(--ok-bg); color: var(--ok-text); }
+
+.pw-strength {
+    font-size: .72rem; text-transform: uppercase; letter-spacing: .08em;
+    padding: 0 .6rem; color: var(--muted); min-width: 4rem; text-align: right;
+}
+.pw-row.weak   .pw-strength,
+.pw-row.strong .pw-strength { color: inherit; }
+
+.pw-constraints {
+    list-style: none; padding: 0; margin: .75rem 0 0;
+    display: grid; gap: .15rem;
+}
+.pw-constraints li {
+    display: flex; gap: .6rem; align-items: center;
+    padding: .15rem .25rem; border-radius: 4px;
+    transition: color .15s;
+}
+.pw-constraints li.off { color: var(--faint); }
+.pw-constraints li.on  { color: var(--ok-text); }
+
+.pw-check {
+    display: inline-block; width: 1rem; text-align: center; font-weight: bold;
+    transition: opacity .15s;
+}
+.pw-constraints li.off .pw-check { opacity: .25; }
+.pw-constraints li.on  .pw-check { opacity: 1; }

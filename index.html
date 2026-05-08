@@ -10,25 +10,20 @@
     <script src="/dist/data-wrapper.js" type="module"></script>
 </head>
 <body>
-
-<!-- empty-state template (referenced by id — no DW_TEMPLATES registration needed) -->
 <template id="dw-empty">
     <li class="dw-empty-msg">No tasks yet. Add one above.</li>
 </template>
 
-<!-- =====================================================================
-     NAV SIDEBAR — markup loaded from /partials/nav.html via src=""
-     The wrapper carries state + handlers; the partial supplies the view.
-     ===================================================================== -->
 <data-wrapper id="nav" src="/partials/nav.html" data-nav-open="false"
     onload="this.register({
-        'nav/toggle':   () => this.put('navOpen', v => !v),
-        'nav/close':    () => this.put('navOpen', false),
+        'nav/toggle':   () => nav.put('navOpen', v => !v),
+        'nav/close':    () => nav.put('navOpen', false),
         'theme/toggle': () => {
             const h = document.documentElement;
             h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
         },
-    })"></data-wrapper>
+    })">
+</data-wrapper>
 
 
 <header class="container">
@@ -389,6 +384,89 @@ data-wrapper[data-filter="done"]   button[data-val="done"] {
      § LOADING — section markup loaded from /partials/section-loading.html
      ===================================================================== -->
 <data-wrapper src="/partials/section-loading.html"></data-wrapper>
+
+
+<!-- =====================================================================
+     § PASSWORD METER — JS module demo
+     ===================================================================== -->
+<section id="password-meter">
+<h2>Password meter — module demo</h2>
+<p>Inline markup; handlers, validation rules, and derived state come from
+   <code>/controllers/password-meter.js</code> via <code>src=""</code>. As you type, each rule
+   lights up when satisfied, and the input frame's strength class drives the colour.</p>
+
+<article class="demo">
+    <data-wrapper id="pwm" src="/controllers/password-meter.js" data-password="">
+        <div class="pw-row" $class="/strength">
+            <input type="password" @input="pw/update" placeholder="Type a password…"
+                   autocomplete="new-password" aria-label="Password">
+            <span class="pw-strength" $text="/strength" aria-live="polite"></span>
+        </div>
+        <ul class="pw-constraints" *list="/constraints">
+            <template>
+                <li $class="./met?format=onoff">
+                    <span class="pw-check" aria-hidden="true">✓</span>
+                    <span $text="./label"></span>
+                </li>
+            </template>
+        </ul>
+    </data-wrapper>
+</article>
+
+<details>
+    <summary>HTML — inline view</summary>
+    <pre>&lt;data-wrapper id="pwm" src="/controllers/password-meter.js" data-password=""&gt;
+  &lt;div class="pw-row" $class="/strength"&gt;
+    &lt;input type="password" @input="pw/update" placeholder="Type a password…"&gt;
+    &lt;span class="pw-strength" $text="/strength"&gt;&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;ul class="pw-constraints" *list="/constraints"&gt;
+    &lt;template&gt;
+      &lt;li $class="./met?format=onoff"&gt;
+        &lt;span aria-hidden="true"&gt;✓&lt;/span&gt;
+        &lt;span $text="./label"&gt;&lt;/span&gt;
+      &lt;/li&gt;
+    &lt;/template&gt;
+  &lt;/ul&gt;
+&lt;/data-wrapper&gt;</pre>
+</details>
+<details>
+    <summary>JS — /controllers/password-meter.js</summary>
+    <pre>const RULES = [
+  { id: 'len',    label: 'At least 8 characters', test: p =&gt; p.length &gt;= 8 },
+  { id: 'upper',  label: 'An uppercase letter',   test: p =&gt; /[A-Z]/.test(p) },
+  { id: 'lower',  label: 'A lowercase letter',    test: p =&gt; /[a-z]/.test(p) },
+  { id: 'digit',  label: 'A number',              test: p =&gt; /\d/.test(p) },
+  { id: 'symbol', label: 'A symbol',              test: p =&gt; /[^A-Za-z0-9]/.test(p) },
+];
+
+const STRENGTHS = ['', 'weak', 'weak', 'fair', 'good', 'strong'];
+
+export default function init(wrapper) {
+  const compute = (pw) =&gt; {
+    const constraints = RULES.map(r =&gt; ({ id: r.id, label: r.label, met: r.test(pw) }));
+    const score       = constraints.filter(c =&gt; c.met).length;
+    wrapper.put('constraints', constraints);
+    wrapper.put('strength',    pw ? STRENGTHS[score] : '');
+  };
+
+  wrapper.register({
+    'pw/update': e =&gt; wrapper.put('password', e.detail.target.value),
+  });
+
+  wrapper.addEventListener('data:sync', e =&gt; {
+    if (e.detail.key === 'password') compute(wrapper.state.password ?? '');
+  });
+
+  compute('');
+}</pre>
+</details>
+<p class="note">
+    The module demonstrates three things at once: <strong>handlers from a file</strong> (the <code>register</code> call),
+    <strong>derived state</strong> (the <code>data:sync</code> listener recomputes <code>constraints</code> and <code>strength</code>),
+    and <strong><code>*list</code> + <code>$class</code></strong> rendering each rule's met/unmet state without per-item listeners.
+</p>
+</section>
 
 
 <!-- =====================================================================
