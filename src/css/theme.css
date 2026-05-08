@@ -1,52 +1,65 @@
 /* ── Light theme (default) ── */
 
 :root, [data-theme="light"] {
-    --bg:      #ffffff;
-    --surface: #f6f8fa;
-    --text:    #1a1a1a;
-    --muted:   #5d5d5d;
-    --faint:   #999;
-    --link:    #0066cc;
+    color-scheme: light;
 
-    --measure: 768px;
-    --pad:     2rem 1.25rem 4rem;
+    --bg:        #ffffff;
+    --surface:   #f6f8fa;
+    --ink:       #1e1e1e;
+    --ink-text:  #9cdcfe;
+
+    --text:      #1a1a1a;
+    --muted:     #5d5d5d;
+    --faint:     #999;
+
+    --link:      #0066cc;
+    --ok:        #2da44e;
+    --ng:        #cf222e;
+    --warn:      #bf8700;
+    --info:      #0969da;
+
+    --measure:   768px;
+    --pad:       2rem 1.25rem 4rem;
+
+    --sans:      system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono:      ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+    --radius:    6px;
+    --shadow:    0 1px 2px rgb(0 0 0 / .04), 0 4px 16px rgb(0 0 0 / .06);
+    --ring:      0 0 0 2px color-mix(in srgb, var(--link) 45%, transparent);
 
     --border:        1px solid color-mix(in srgb, currentColor 18%, transparent);
     --border-strong: 1px solid color-mix(in srgb, currentColor 32%, transparent);
 
-    --mono: ui-monospace, monospace;
-
-    --control-bg:     #fff;
-    --control-hover:  color-mix(in srgb, var(--surface) 60%, #fff);
-    --control-border: color-mix(in srgb, currentColor 28%, var(--surface));
-
-    --ink:      #1e1e1e;
-    --ink-text: #9cdcfe;
-
-    --ok-bg: #d4edda; --ok-text: #155724;
-    --ng-bg: #f8d7da; --ng-text: #721c24;
+    --control-bg:    #fff;
+    --control-hover: color-mix(in srgb, var(--surface) 60%, #fff);
 }
 
 /* ── Dark theme ── */
 
 [data-theme="dark"] {
-    --bg:      #0e0e16;
-    --surface: #171923;
-    --text:    #dde1e9;
-    --muted:   #a0a6b4;
-    --faint:   #555;
-    --link:    #79c0ff;
+    color-scheme: dark;
+
+    --bg:       #0e0e16;
+    --surface:  #171923;
+    --ink:      #0d1117;
+    --ink-text: #79c0ff;
+
+    --text:     #dde1e9;
+    --muted:    #a0a6b4;
+    --faint:    #555;
+
+    --link:     #79c0ff;
+    --ok:       #7ee787;
+    --ng:       #f85149;
+    --warn:     #d29922;
+    --info:     #58a6ff;
+
+    --shadow:   0 1px 2px rgb(0 0 0 / .3), 0 4px 16px rgb(0 0 0 / .45);
 
     --border:        1px solid color-mix(in srgb, currentColor 20%, transparent);
     --border-strong: 1px solid color-mix(in srgb, currentColor 40%, transparent);
 
-    --control-bg:     var(--surface);
-    --control-hover:  color-mix(in srgb, var(--surface) 80%, currentColor);
-    --control-border: color-mix(in srgb, currentColor 36%, var(--surface));
-
-    --ink:      #0d1117;
-    --ink-text: #79c0ff;
-
-    --ok-bg: #1a3326; --ok-text: #7ee787;
-    --ng-bg: #3a1414; --ng-text: #f85149;
+    --control-bg:    var(--surface);
+    --control-hover: color-mix(in srgb, var(--surface) 80%, currentColor);
 }
