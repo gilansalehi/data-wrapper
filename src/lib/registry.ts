@@ -1,8 +1,17 @@
 export type Sub<T = unknown> = (value: T) => void;
+export type Subs<T = unknown> = Sub<T>[];
 export type Formatter = (v: unknown) => unknown;
 export type Item = Record<string, unknown>;
-export type Row = { node: Element; item: Item; subs: Sub<Item>[] };
+export type Row = { node: Element; item: Item; subs: Subs<Item> };
 export type ListCache = Map<Element, Map<unknown, Row>>;
+export type Wrapper = HTMLElement & {
+    state:        Record<string, unknown>;
+    _subs:        Record<string, Subs>;
+    _boundEvents: Set<string>;
+    _listCache:   ListCache;
+    _watch(path: string, sub: Sub): void;
+    _routeEvent(eventName: string): void;
+};
 
 const htmlTemplate = (html: string) => {
     const tpl = document.createElement('template');
@@ -51,15 +60,11 @@ export const PROP_ALIASES: Record<string, string> = {
     crossorigin:     'crossOrigin',
 };
 
-export type DirectiveWrapper = HTMLElement & {
-    _listCache: ListCache;
-};
-
 export interface DirectiveContext {
-    wrapper: DirectiveWrapper;
+    wrapper: Wrapper;
     el: Element;
     key?: string;
-    hydrate: (node: Element, row: Row) => void;
+    wake: (node: Element, row: Row | null) => void;
 }
 
 export type DirectiveHandler = (ctx: DirectiveContext) => Sub;

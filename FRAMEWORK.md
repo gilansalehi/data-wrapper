@@ -44,6 +44,7 @@ For `*` directives:
 2. The directive is called once at wake time.
 3. The directive returns a subscriber closure.
 4. `wrapper._watch(path, sub)` stores that closure by state key.
+5. Item-scoped directives inside rows store their subscriber in `row.subs`.
 
 For `@` events:
 
@@ -59,12 +60,13 @@ The framework has one update primitive: a subscriber.
 
 ```ts
 type Sub<T = unknown> = (value: T) => void;
+type Subs<T = unknown> = Sub<T>[];
 ```
 
 Wrapper state subscriptions are keyed by state path:
 
 ```ts
-_subs: Record<string, Sub[]>
+_subs: Record<string, Subs>
 ```
 
 List row subscriptions are keyed by row identity inside wrapper-owned list
@@ -73,6 +75,12 @@ caches:
 ```ts
 _listCache: Map<Element, Map<unknown, Row>>
 Row = { node, item, subs }
+```
+
+The shared wrapper shape owns both subscription systems:
+
+```ts
+Wrapper = HTMLElement & { state, _subs, _listCache, _watch, _routeEvent }
 ```
 
 `watch(subs, sub, value)` stores a subscriber and immediately runs it for
@@ -105,21 +113,26 @@ At wake time the directive captures:
 1. The list element.
 2. The direct child `<template>`.
 3. The wrapper-owned cache for that list element.
-4. The hydrate function used for new rows.
+4. The `wake()` function used for inserted DOM.
 5. The row identity key.
 6. The current empty-state node reference, if any.
 
-At update time the list subscriber calls `reconcile()`.
+At update time the list subscriber owns list-level state:
+
+1. Empty lists clear row DOM and row cache.
+2. Empty lists render the configured `data-empty` template once.
+3. Generated empty-state nodes are tagged with `_empty`.
+4. Generated empty-state nodes are woken with no row.
+5. Non-empty lists remove the empty-state node and call `reconcile()`.
 
 `reconcile()`:
 
-1. Removes stale rows from the DOM and cache.
-2. Reuses existing rows by identity.
-3. Creates new rows as `{ node, item, subs: [] }`.
-4. Appends rows through a `DocumentFragment`.
-5. Broadcasts updated item values to existing row subscribers.
-6. Hydrates new row nodes after insertion so `wake()` can use DOM ancestry.
-7. Tags generated empty-state nodes with `_empty`.
+1. Reuses existing rows by identity.
+2. Creates new rows as `{ node, item, subs: [] }`.
+3. Broadcasts updated item values to existing row subscribers.
+4. Removes stale rows from the DOM and cache.
+5. Appends rows through a `DocumentFragment`.
+6. Wakes new row nodes after insertion so `wake()` can use DOM ancestry.
 
 This keeps row logic inside the wrapper-owned cache. The DOM node is rendered
 output; the row record is the framework state.

@@ -1,11 +1,11 @@
 import { emit, on } from './utils.ts';
 import { wake } from './wire.ts';
 import { broadcast, watch } from './engine.ts';
-import type { ListCache, Sub } from './engine.ts';
+import type { ListCache, Sub, Subs } from './engine.ts';
 
 export class DataWrapper extends HTMLElement {
     declare state:        Record<string, unknown>;
-    declare _subs:        Record<string, Sub[]>;
+    declare _subs:        Record<string, Subs>;
     declare _boundEvents: Set<string>;
     declare _isSyncing:   boolean;
     declare _listCache:   ListCache;
@@ -129,6 +129,7 @@ export class DataWrapper extends HTMLElement {
             this.innerHTML = await res.text();
             this._subs = {};
             this._listCache = new Map();
+            this.removeAttribute('_live');
             wake(this);
         }
         emit('data:load', { src: url.href }, this);

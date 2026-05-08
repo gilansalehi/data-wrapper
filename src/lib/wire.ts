@@ -1,17 +1,10 @@
 import { DW_DIRECTIVES, DW_FORMATTERS } from './registry.ts';
 import { bind, watch } from './engine.ts';
-import type { ListCache, Row, Sub } from './engine.ts';
+import type { Row, Wrapper } from './engine.ts';
 
 type Format = (value: unknown) => unknown;
 
-export interface WrapperNode extends HTMLElement {
-    state:        Record<string, unknown>;
-    _subs:        Record<string, Sub[]>;
-    _boundEvents: Set<string>;
-    _listCache:   ListCache;
-    _watch(path: string, sub: Sub): void;
-    _routeEvent(eventName: string): void;
-}
+export type WrapperNode = Wrapper;
 
 // ---------------------------------------------------------------------------
 // DWRL parsing — native new URL() is the entire parser
@@ -56,6 +49,18 @@ const wireItemBinding = (el: Element, prop: string, path: string, format: Format
     watch(row.subs, item => update(format(item?.[path])), row.item);
 };
 
+const wireItemDirective = (el: Element, prop: string, path: string, format: Format, key: string | undefined, row: Row) => {
+    const directive = DW_DIRECTIVES.get(prop);
+    if (!directive) return;
+    const update = directive({
+        wrapper: owner(el)!,
+        el,
+        key,
+        wake,
+    });
+    watch(row.subs, item => update(format(item?.[path])), row.item);
+};
+
 const wireBinding = (wrapper: WrapperNode, el: Element, prop: string, path: string, format: Format) => {
     const update = bind(el, prop);
     wrapper._watch(path, value => {
@@ -71,7 +76,7 @@ const wireDirective = (wrapper: WrapperNode, el: Element, prop: string, path: st
         wrapper,
         el,
         key,
-        hydrate: (node, row) => wake(node, row),
+        wake,
     });
 
     wrapper._watch(path, value => {
@@ -105,7 +110,10 @@ export const wire = (
     if (url.hostname !== 'x') return; // TODO: cross-wrapper mesh
 
     if (isItemScoped && row) {
-        if (token === '*') return;
+        if (token === '*') {
+            wireItemDirective(el, prop, path, format, key, row);
+            return;
+        }
         wireItemBinding(el, prop, path, format, row);
         return;
     }
