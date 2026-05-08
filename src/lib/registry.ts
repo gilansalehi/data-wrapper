@@ -64,7 +64,6 @@ export const DW_FORMATTERS = new Map<string, Formatter>([
     ['yesno',    v => v ? 'yes' : 'no'],
 ]);
 
-// CODE SMELL -- we can supply a better type here, the mapping is for props & custom props to attrs.
 export const PROP_ALIASES: Record<string, string> = {
     text:            'textContent',
     html:            'innerHTML',
@@ -122,7 +121,6 @@ export const DW_DIRECTIVES = new Map<string, DirectiveHandler>([
 
 export const resolveDirective = (key: string) => DW_DIRECTIVES.get(key);
 
-// CODE SMELL -- is this actually being used to update the DOM?
 export const sync = (el: Element, prop: string, val: unknown) => {
     const alias = resolveAlias(prop);
     if (alias in el) {

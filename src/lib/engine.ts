@@ -18,7 +18,6 @@ type ItemElement = Element & { _vItem?: Record<string, unknown>; _vItemConfigs?:
 export const applyBinding = (el: Element, prop: string, val: unknown) => {
     if (val === undefined || val === null) return;
 
-    // CODE SMELL -- why special case?  Isn't this just sync?
     if (prop === 'class') {
         const v   = el as VNode;
         v._vBase  = v._vBase ?? new Set([...el.classList]);

@@ -27,14 +27,10 @@ const tick = () => new Promise(resolve => setTimeout(resolve, 0));
 const DEFAULT_TOKENS = { BIND: '$', DIR: '*', EVT: '@' } as const;
 
 const resetTestConfig = () => {
-    delete window.DW_CUSTOM_CONFIG;
     CONFIG.TOKENS = { ...DEFAULT_TOKENS };
 };
 
 const setDirectiveToken = (token: string) => {
-    window.DW_CUSTOM_CONFIG = {
-        TOKENS: { ...DEFAULT_TOKENS, DIR: token },
-    };
     CONFIG.TOKENS = { ...DEFAULT_TOKENS, DIR: token };
 };
 

@@ -255,7 +255,7 @@ describe('ensureDelegation', () => {
         ensureDelegation(wrapper, 'click');
         wrapper.querySelector('button')!.click();
 
-        expect(wrapper._boundEvents).toHaveLength(1);
+        expect(wrapper._boundEvents.size).toBe(1);
         expect(calls).toBe(1);
     });
 
