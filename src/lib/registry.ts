@@ -3,10 +3,24 @@ export type Formatter = (v: unknown) => unknown;
 
 export interface Tokens { BIND: string; ADD: string; EVT: string; }
 export interface Config { TOKENS: Tokens; NO_WAKE: string[]; }
+export interface CustomConfig { TOKENS?: Partial<Tokens>; NO_WAKE?: string[]; }
 
-export const CONFIG: Config & Record<string, unknown> = {
+declare global {
+    interface Window {
+        VP_CUSTOM_CONFIG?: CustomConfig;
+    }
+}
+
+const DEFAULT_CONFIG: Config = {
     TOKENS: { BIND: '$', ADD: '_', EVT: '@' },
     NO_WAKE: ['DATA-WRAPPER', 'TEMPLATE', 'SVG'],
+};
+
+const customConfig = typeof window === 'undefined' ? undefined : window.VP_CUSTOM_CONFIG;
+
+export const CONFIG: Config & Record<string, unknown> = {
+    TOKENS: { ...DEFAULT_CONFIG.TOKENS, ...customConfig?.TOKENS },
+    NO_WAKE: customConfig?.NO_WAKE ?? DEFAULT_CONFIG.NO_WAKE,
 };
 
 // CODE SMELL -- let's add some sensible, minimal defaults as fallbacks, just in case.

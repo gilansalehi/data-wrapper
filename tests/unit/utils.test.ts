@@ -66,13 +66,69 @@ describe('emit', () => {
         expect(fired).toBe(true);
     });
 
-    it.todo('dispatches on the provided element ctx');
+    it('dispatches on the provided element ctx', () => {
+        const el = document.createElement('div');
+        let fired = false;
+        el.addEventListener('emit:ctx-check', () => { fired = true; });
+
+        emit('emit:ctx-check', undefined, el);
+
+        expect(fired).toBe(true);
+    });
 });
 
 describe('on', () => {
-    it.todo('calls callback when the event fires');
-    it.todo('returns an unsubscribe function that stops the listener');
-    it.todo('with delegate selector: fires only when a matching child is the target');
-    it.todo('with delegate selector: sets e.delegateTarget to the matching element');
-    it.todo('with delegate selector: does not fire when no matching ancestor');
+    beforeEach(() => { document.body.innerHTML = ''; });
+
+    it('calls callback when the event fires', () => {
+        let calls = 0;
+        on('utils:plain', () => { calls += 1; });
+
+        document.dispatchEvent(new Event('utils:plain'));
+
+        expect(calls).toBe(1);
+    });
+
+    it('returns an unsubscribe function that stops the listener', () => {
+        let calls = 0;
+        const off = on('utils:unsubscribe', () => { calls += 1; });
+
+        off();
+        document.dispatchEvent(new Event('utils:unsubscribe'));
+
+        expect(calls).toBe(0);
+    });
+
+    it('with delegate selector: fires only when a matching child is the target', () => {
+        document.body.innerHTML = '<button class="match"></button><button class="miss"></button>';
+        let calls = 0;
+        on('click', () => { calls += 1; }, '.match', document.body);
+
+        document.querySelector('.match')!.dispatchEvent(new Event('click', { bubbles: true }));
+        document.querySelector('.miss')!.dispatchEvent(new Event('click', { bubbles: true }));
+
+        expect(calls).toBe(1);
+    });
+
+    it('with delegate selector: sets e.delegateTarget to the matching element', () => {
+        document.body.innerHTML = '<button class="match"><span>Label</span></button>';
+        let delegate: Element | null | undefined;
+        on('click', e => {
+            delegate = (e as Event & { delegateTarget?: Element | null }).delegateTarget;
+        }, '.match', document.body);
+
+        document.querySelector('span')!.dispatchEvent(new Event('click', { bubbles: true }));
+
+        expect(delegate).toBe(document.querySelector('.match'));
+    });
+
+    it('with delegate selector: does not fire when no matching ancestor', () => {
+        document.body.innerHTML = '<button class="miss"></button>';
+        let calls = 0;
+        on('click', () => { calls += 1; }, '.match', document.body);
+
+        document.querySelector('.miss')!.dispatchEvent(new Event('click', { bubbles: true }));
+
+        expect(calls).toBe(0);
+    });
 });

@@ -246,5 +246,15 @@ describe('ensureDelegation', () => {
 
         expect(detail).toBe(event);
     });
-    it.todo('sets delegateTarget on the event detail');
+
+    it('sets delegateTarget on the event detail', () => {
+        wrapper.innerHTML = '<button @click="topic"><span>Click</span></button>';
+        let detail: (Event & { delegateTarget?: Element | null }) | undefined;
+        wrapper.addEventListener('topic', e => { detail = (e as CustomEvent).detail; });
+
+        ensureDelegation(wrapper, 'click');
+        wrapper.querySelector('span')!.dispatchEvent(new Event('click', { bubbles: true }));
+
+        expect(detail?.delegateTarget).toBe(wrapper.querySelector('button'));
+    });
 });

@@ -128,7 +128,7 @@ export class DataWrapper extends HTMLElement {
     pull(key: string, predicate: ((item: unknown) => boolean) | unknown) {
         const current = this.state[key] as unknown[] || [];
         const fn      = typeof predicate === 'function'
-            ? predicate as (i: unknown) => boolean
+            ? (i: unknown) => !(predicate as (i: unknown) => boolean)(i)
             : (i: unknown) => (i as Record<string, unknown>).id !== predicate;
         this.put(key, current.filter(fn));
     }
