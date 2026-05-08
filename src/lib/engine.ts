@@ -1,4 +1,4 @@
-import { DW_DIRECTIVES, resolveAlias, resolveTemplate } from './registry.ts';
+import { DW_DIRECTIVES, PROP_ALIASES, resolveTemplate } from './registry.ts';
 import type { DirectiveHandler, Item, Row, Sub } from './registry.ts';
 
 export type { Item, ListCache, Row, Sub } from './registry.ts';
@@ -21,7 +21,7 @@ export const bind = (el: Element, prop: string): Sub => {
         };
     }
 
-    const alias = resolveAlias(prop);
+    const alias = PROP_ALIASES[prop] || prop;
     return val => set(el, alias, val);
 };
 
@@ -34,35 +34,33 @@ export const broadcast = <T>(subs: Sub<T>[] = [], value: T) => {
     for (const sub of subs) sub(value);
 };
 
-type ContainerNode = Element & { _vEmptyNode?: Element | null };
-
 export const reconcile = (
-    container: ContainerNode,
+    container: Element,
     data: Item[],
     cache: Map<unknown, Row>,
     tpl: HTMLTemplateElement,
     hydrate: (node: Element, row: Row) => void,
     keyProp = 'id',
+    emptyNode: Element | null = null,
 ) => {
     if (!data || data.length === 0) {
         cache.forEach(row => row.node.remove());
         cache.clear();
 
-        if (!container._vEmptyNode) {
+        if (!emptyNode) {
             const emptyName = container.getAttribute('data-empty') || 'dw-empty';
             const emptyTpl  = resolveTemplate(emptyName);
-            if (!emptyTpl) return;
+            if (!emptyTpl) return emptyNode;
             const frag = emptyTpl.content.cloneNode(true) as DocumentFragment;
-            container._vEmptyNode = frag.firstElementChild ?? null;
-            if (container._vEmptyNode) container.appendChild(container._vEmptyNode);
+            emptyNode = frag.firstElementChild ?? null;
+            emptyNode?.setAttribute('_empty', '');
+            if (emptyNode) container.appendChild(emptyNode);
         }
-        return;
+        return emptyNode;
     }
 
-    if (container._vEmptyNode) {
-        container._vEmptyNode.remove();
-        container._vEmptyNode = null;
-    }
+    emptyNode?.remove();
+    emptyNode = null;
 
     const activeIds = new Set<unknown>();
     const fragment  = document.createDocumentFragment();
@@ -97,6 +95,7 @@ export const reconcile = (
 
     container.appendChild(fragment);
     for (const row of newRows) hydrate(row.node, row);
+    return emptyNode;
 };
 
 const listDirective: DirectiveHandler = ({ wrapper, el, key, hydrate }) => {
@@ -109,7 +108,8 @@ const listDirective: DirectiveHandler = ({ wrapper, el, key, hydrate }) => {
         wrapper._listCache.set(el, cache);
     }
 
-    return value => reconcile(el, (value as Item[]) || [], cache, tpl, hydrate, key);
+    let emptyNode: Element | null = null;
+    return value => { emptyNode = reconcile(el, (value as Item[]) || [], cache, tpl, hydrate, key, emptyNode); };
 };
 
 DW_DIRECTIVES.set('list', listDirective);

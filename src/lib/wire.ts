@@ -1,8 +1,7 @@
-import { DW_FORMATTERS, resolveDirective } from './registry.ts';
+import { DW_DIRECTIVES, DW_FORMATTERS } from './registry.ts';
 import { bind, watch } from './engine.ts';
 import type { ListCache, Row, Sub } from './engine.ts';
 
-type WokeNode = Element & { _vWoke?: boolean };
 type Format = (value: unknown) => unknown;
 
 export interface WrapperNode extends HTMLElement {
@@ -20,6 +19,7 @@ export interface WrapperNode extends HTMLElement {
 
 const DWRL_BASE = 'dwrl://x/';
 const NO_WAKE   = ['DATA-WRAPPER', 'TEMPLATE', 'SVG'];
+const LIVE      = '_live';
 
 const formatter = (url: URL): Format => {
     const pipes = url.searchParams.getAll('format')
@@ -65,7 +65,7 @@ const wireBinding = (wrapper: WrapperNode, el: Element, prop: string, path: stri
 };
 
 const wireDirective = (wrapper: WrapperNode, el: Element, prop: string, path: string, format: Format, key?: string) => {
-    const directive = resolveDirective(prop);
+    const directive = DW_DIRECTIVES.get(prop);
     if (!directive) return;
     const update = directive({
         wrapper,
@@ -90,23 +90,22 @@ export const wire = (
     row: Row | null = null,
 ) => {
     const { name } = attr;
+    const token = name[0];
+    const prop  = name.slice(1);
 
-    if (name.startsWith('@')) {
+    if (token === '@') {
         wireEvent(el, name);
         return;
     }
 
-    const isBinding   = name.startsWith('$');
-    const isDirective = name.startsWith('*');
-    if (!isBinding && !isDirective) return;
+    if (token !== '$' && token !== '*') return;
 
-    const prop = name.slice(1);
     const { path, format, key, url, isItemScoped } = parsePath(attr.value);
 
     if (url.hostname !== 'x') return; // TODO: cross-wrapper mesh
 
     if (isItemScoped && row) {
-        if (isDirective) return;
+        if (token === '*') return;
         wireItemBinding(el, prop, path, format, row);
         return;
     }
@@ -115,7 +114,7 @@ export const wire = (
     const wrapper = owner(el);
     if (!wrapper) return;
 
-    if (isDirective) {
+    if (token === '*') {
         wireDirective(wrapper, el, prop, path, format, key);
         return;
     }
@@ -128,8 +127,8 @@ export const wire = (
 // ---------------------------------------------------------------------------
 
 const _wireElement = (el: Element, row: Row | null) => {
-    if ((el as WokeNode)._vWoke) return;
-    (el as WokeNode)._vWoke = true;
+    if (el.hasAttribute(LIVE)) return;
+    el.setAttribute(LIVE, '');
 
     for (const attr of [...el.attributes]) wire(el, attr, row);
 };

@@ -51,8 +51,6 @@ export const PROP_ALIASES: Record<string, string> = {
     crossorigin:     'crossOrigin',
 };
 
-export const resolveAlias = (key: string) => PROP_ALIASES[key] || key;
-
 export type DirectiveWrapper = HTMLElement & {
     _listCache: ListCache;
 };
@@ -67,5 +65,3 @@ export interface DirectiveContext {
 export type DirectiveHandler = (ctx: DirectiveContext) => Sub;
 
 export const DW_DIRECTIVES = new Map<string, DirectiveHandler>();
-
-export const resolveDirective = (key: string) => DW_DIRECTIVES.get(key);
