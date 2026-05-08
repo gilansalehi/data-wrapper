@@ -71,7 +71,6 @@
 </header>
 
 <main class="container">
-
 <!-- =====================================================================
      § TODOS — flagship demo
      ===================================================================== -->
@@ -715,7 +714,10 @@ VP_FORMATTERS.set('pluralise', v =>
 &lt;!-- Reference by id --&gt;
 &lt;ul $list="/results" data-empty="no-results"&gt;
   &lt;template&gt;&lt;li $text="./label"&gt;&lt;/li&gt;&lt;/template&gt;
-&lt;/ul&gt;</pre>
+&lt;/ul&gt;
+
+&lt;!-- Omit data-empty to use built-in vp-empty. Built-ins include:
+     vp-empty, vp-missing, vp-loading, vp-error. --&gt;</pre>
 </details>
 </section>
 

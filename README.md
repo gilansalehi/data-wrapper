@@ -175,6 +175,10 @@ The reconciler diffs by `item.id`. Override with `?key=`: `$list="/users?key=uui
 
 Inside `<template>`, `./path` is item-scoped — reads from the row's data object, not wrapper state.
 
+If a list is empty, `data-empty` selects a named empty-state template. When omitted,
+`vp-empty` is used. Template lookup prefers `VP_TEMPLATES`, then a page-level
+`<template id="...">`, then the small built-in defaults.
+
 ---
 
 ## Component API
@@ -232,7 +236,7 @@ app.addEventListener('data:sync', () => {
 ### Utility exports
 
 ```js
-import { q, qcb, on, emit, VP_FORMATTERS, VP_TEMPLATES, CONFIG } from 'data-wrapper';
+import { q, qcb, on, emit, VP_FORMATTERS, VP_TEMPLATES, VP_DEFAULT_TEMPLATES, CONFIG } from 'data-wrapper';
 
 q('.item');                           // [...querySelectorAll('.item')]
 qcb('.item', el => el.textContent);   // query + map

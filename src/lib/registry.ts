@@ -23,8 +23,32 @@ export const CONFIG: Config & Record<string, unknown> = {
     NO_WAKE: customConfig?.NO_WAKE ?? DEFAULT_CONFIG.NO_WAKE,
 };
 
-// CODE SMELL -- let's add some sensible, minimal defaults as fallbacks, just in case.
 export const VP_TEMPLATES = new Map<string, HTMLTemplateElement>();
+
+export const VP_DEFAULT_TEMPLATES = new Map<string, string>([
+    ['vp-empty',   '<li data-vp-template="empty">No items</li>'],
+    ['vp-missing', '<span data-vp-template="missing">—</span>'],
+    ['vp-loading', '<span data-vp-template="loading">Loading...</span>'],
+    ['vp-error',   '<span data-vp-template="error">Something went wrong</span>'],
+]);
+
+const htmlTemplate = (html: string): HTMLTemplateElement => {
+    const tpl = document.createElement('template');
+    tpl.innerHTML = html;
+    return tpl;
+};
+
+export const resolveTemplate = (name: string): HTMLTemplateElement | null => {
+    const registered = VP_TEMPLATES.get(name);
+    if (registered) return registered;
+    if (typeof document === 'undefined') return null;
+
+    const declared = document.getElementById(name);
+    if (declared?.tagName === 'TEMPLATE') return declared as HTMLTemplateElement;
+
+    const fallback = VP_DEFAULT_TEMPLATES.get(name);
+    return fallback ? htmlTemplate(fallback) : null;
+};
 
 export const VP_FORMATTERS = new Map<string, Formatter>([
     ['count',    v => (Array.isArray(v) || typeof v === 'string') ? v.length : 0],

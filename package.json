@@ -19,7 +19,7 @@
     "typecheck": "tsc --noEmit",
     "test:all": "bun test:unit && bun test:e2e",
     "test:unit": "bun test tests/unit/",
-    "test:e2e": "bunx playwright test",
+    "test:e2e": "bun run build && bunx playwright test",
     "serve": "bun serve.ts"
   },
   "keywords": ["web-components", "data-binding", "reactivity", "no-build", "html-first", "framework"],

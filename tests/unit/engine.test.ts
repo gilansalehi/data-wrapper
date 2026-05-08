@@ -1,9 +1,11 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
 import { applyBinding, applyItemBindings, reconcile } from '@lib/engine.ts';
+import { VP_TEMPLATES } from '@lib/registry.ts';
 import type { UpdateConfig } from '@lib/engine.ts';
 
 beforeEach(() => {
     document.body.innerHTML = '';
+    VP_TEMPLATES.clear();
 });
 
 describe('applyBinding', () => {
@@ -190,6 +192,50 @@ describe('reconcile', () => {
         reconcile(container, [], cache, tpl, hydrateText);
 
         expect(container.querySelector('.empty')?.textContent).toBe('Nothing here');
+    });
+
+    it('uses default vp-empty template when no data-empty is provided', () => {
+        reconcile(container, [], cache, tpl, hydrateText);
+
+        expect(container.querySelector('[data-vp-template="empty"]')?.textContent).toBe('No items');
+    });
+
+    it('page-declared vp-empty template overrides the default template', () => {
+        const empty = document.createElement('template');
+        empty.id = 'vp-empty';
+        empty.innerHTML = '<li class="empty">Page empty</li>';
+        document.body.appendChild(empty);
+
+        reconcile(container, [], cache, tpl, hydrateText);
+
+        expect(container.querySelector('.empty')?.textContent).toBe('Page empty');
+        expect(container.querySelector('[data-vp-template="empty"]')).toBeNull();
+    });
+
+    it('VP_TEMPLATES registration overrides page-declared and default templates', () => {
+        const pageEmpty = document.createElement('template');
+        pageEmpty.id = 'vp-empty';
+        pageEmpty.innerHTML = '<li class="empty">Page empty</li>';
+        document.body.appendChild(pageEmpty);
+
+        const registered = document.createElement('template');
+        registered.innerHTML = '<li class="registered-empty">Registered empty</li>';
+        VP_TEMPLATES.set('vp-empty', registered);
+
+        reconcile(container, [], cache, tpl, hydrateText);
+
+        expect(container.querySelector('.registered-empty')?.textContent).toBe('Registered empty');
+        expect(container.querySelector('.empty')).toBeNull();
+    });
+
+    it('falls back to a blank node when template name is unknown', () => {
+        container.dataset.empty = 'unknown-template';
+
+        reconcile(container, [], cache, tpl, hydrateText);
+
+        expect(container.children).toHaveLength(1);
+        expect(container.firstElementChild?.tagName).toBe('SPAN');
+        expect(container.firstElementChild?.textContent).toBe('');
     });
 
     it('removes empty-state node when data becomes non-empty', () => {

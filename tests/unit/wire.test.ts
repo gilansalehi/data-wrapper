@@ -133,6 +133,16 @@ describe('wake', () => {
         expect(config.el).toBe(wrapper.querySelector('span')!);
     });
 
+    it.skip('wires _data-active as state-to-attribute binding when additive tokens graduate from todo', () => {
+        wrapper.innerHTML = '<span _data-active="/active"></span>';
+
+        wake(wrapper);
+
+        const config = firstSub(wrapper, 'active');
+        expect(config.prop).toBe('data-active');
+        expect(config.el).toBe(wrapper.querySelector('span')!);
+    });
+
     it('wires @click event via ensureDelegation', () => {
         wrapper.innerHTML = '<button @click="topic"></button>';
 

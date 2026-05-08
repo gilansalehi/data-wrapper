@@ -1,4 +1,4 @@
-import { VP_TEMPLATES, sync } from './registry.ts';
+import { resolveTemplate, sync } from './registry.ts';
 import type { Formatter } from './registry.ts';
 
 // UpdateConfig owned here — used by engine, wire, and component.
@@ -55,8 +55,7 @@ export const reconcile = (
 
         if (!container._vEmptyNode) {
             const emptyName = container.getAttribute('data-empty') || 'vp-empty';
-            const emptyTpl  = VP_TEMPLATES.get(emptyName)
-                           ?? (document.getElementById(emptyName) as HTMLTemplateElement | null);
+            const emptyTpl  = resolveTemplate(emptyName);
             const frag      = emptyTpl
                 ? (emptyTpl.content.cloneNode(true) as DocumentFragment)
                 : (() => {
