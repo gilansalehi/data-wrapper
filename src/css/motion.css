@@ -1,0 +1,49 @@
+/* ============================================================
+   Motion — generic enter/exit primitives.
+
+   Opt in: data-enter="slide from-right"   data-enter="fade"   data-enter="pop"
+   Triggers: [open] (dialog/details), :popover-open, .on (set via $class)
+   Tweak: class="fast" / "slow" / "snap" / "spring" / "ease-in" / "linear"
+   ============================================================ */
+
+@layer motion {
+    :root {
+        --speed: 250ms;
+        --ease:  cubic-bezier(.2, .8, .2, 1);
+    }
+
+    @media (prefers-reduced-motion: reduce) { :root { --speed: 0ms; } }
+
+    /* Speed atoms — set --speed; descendants inherit */
+    .fast { --speed: 150ms; }
+    .slow { --speed: 400ms; }
+    .snap { --speed: 0ms;   }
+
+    /* Ease atoms */
+    .spring  { --ease: cubic-bezier(.5, 1.6, .5, 1); }
+    .ease-in { --ease: cubic-bezier(.6, 0, 1, .4); }
+    .linear  { --ease: linear; }
+
+    /* Universal transition opt-in */
+    [data-enter] { transition: var(--speed) var(--ease); }
+
+    /* Primitives — closed states */
+    [data-enter~="slide"] { transform: var(--from, none); visibility: hidden; }
+    [data-enter~="fade"]  { opacity: 0;                   visibility: hidden; }
+    [data-enter~="pop"]   { transform: scale(.95); opacity: 0; visibility: hidden; }
+
+    /* Direction tokens — set --from for any slide-capable element */
+    [data-enter~="from-right"]  { --from: translateX(100%);  }
+    [data-enter~="from-left"]   { --from: translateX(-100%); }
+    [data-enter~="from-top"]    { --from: translateY(-100%); }
+    [data-enter~="from-bottom"] { --from: translateY(100%);  }
+
+    /* Open state — native attrs first, .on as escape hatch */
+    [data-enter][open],
+    [data-enter]:popover-open,
+    [data-enter].on {
+        transform: none;
+        opacity: 1;
+        visibility: visible;
+    }
+}

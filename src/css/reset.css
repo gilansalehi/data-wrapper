@@ -6,11 +6,11 @@
 
 html {
     scroll-behavior: smooth;
-    color-scheme: light dark;
 }
 
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
+    *, *::before, *::after { transition: none !important; animation: none !important; }
 }
 
 /* ── Base ── */
@@ -19,18 +19,21 @@ body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: system-ui, sans-serif;
+    font-family: var(--sans);
     line-height: 1.6;
+    accent-color: var(--link);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
 
 img { display: block; max-width: 100%; }
 
 /* ── Typography ── */
 
-h1 { font-size: 2rem;   margin: 0 0 .2rem; }
-h2 { font-size: 1.2rem; margin: 3rem 0 .75rem; padding-bottom: .4rem; border-bottom: var(--border-strong); }
-h3 { font-size: .95rem; color: var(--muted); margin: 1.75rem 0 .5rem; }
-p  { font-size: .9rem;  margin: .4rem 0 .75rem; }
+h1 { font-size: 2rem;   margin: 0 0 .2rem; text-wrap: balance; }
+h2 { font-size: 1.2rem; margin: 3rem 0 .75rem; padding-bottom: .4rem; border-bottom: var(--border-strong); text-wrap: balance; }
+h3 { font-size: .95rem; color: var(--muted); margin: 1.75rem 0 .5rem; text-wrap: balance; }
+p  { font-size: .9rem;  margin: .4rem 0 .75rem; text-wrap: pretty; }
 
 a {
     color: var(--link);
@@ -50,7 +53,7 @@ code {
 
 details {
     border: var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius);
     margin: .4rem 0 1.5rem;
 }
 
@@ -60,7 +63,7 @@ details summary {
     font-family: var(--mono);
     color: var(--muted);
     background: var(--surface);
-    border-radius: 6px;
+    border-radius: var(--radius);
     cursor: pointer;
     user-select: none;
     list-style: none;
@@ -72,7 +75,7 @@ details summary::marker       { content: '+ '; }
 details[open] summary::marker { content: '− '; }
 
 details[open] summary {
-    border-radius: 6px 6px 0 0;
+    border-radius: var(--radius) var(--radius) 0 0;
     border-bottom: var(--border);
 }
 
@@ -81,7 +84,7 @@ details pre {
     padding: 1rem 1.1rem;
     background: var(--bg);
     color: var(--text);
-    border-radius: 0 0 6px 6px;
+    border-radius: 0 0 var(--radius) var(--radius);
     font-size: .78rem;
     font-family: var(--mono);
     line-height: 1.75;
@@ -120,15 +123,28 @@ label {
 }
 
 input[type="text"],
-input[type="number"] {
+input[type="number"],
+input[type="password"],
+input[type="email"],
+input[type="search"],
+input[type="url"],
+textarea {
     padding: .4rem .65rem;
     font-size: .9rem;
     border: var(--border-strong);
-    border-radius: 4px;
+    border-radius: var(--radius);
     width: 100%;
     margin-bottom: .5rem;
     background: var(--bg);
     color: var(--text);
+    font-family: inherit;
+    transition: border-color .15s, box-shadow .15s;
+
+    &:focus-visible {
+        outline: 0;
+        border-color: var(--link);
+        box-shadow: var(--ring);
+    }
 }
 
 button {
@@ -140,15 +156,16 @@ button {
     font: inherit;
     cursor: pointer;
     border: var(--border-strong);
-    border-radius: 4px;
+    border-radius: var(--radius);
     background: var(--control-bg);
     color: var(--text);
+    transition: background-color .15s, border-color .15s, box-shadow .15s;
 
     &:hover:not(:disabled) { background: var(--control-hover); }
 
     &:focus-visible {
-        outline: 2px solid var(--link);
-        outline-offset: 2px;
+        outline: 0;
+        box-shadow: var(--ring);
     }
 
     &:disabled { opacity: .55; cursor: not-allowed; }

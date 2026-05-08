@@ -1,9 +1,9 @@
 <button @click="nav/toggle" class="nav-hamburger" aria-label="Toggle navigation">
     <hr><hr><hr>
 </button>
-<div class="nav-backdrop" @click="nav/close" aria-hidden="true"></div>
+<div class="nav-backdrop" $class="/navOpen?format=onoff" data-enter="fade" @click="nav/close" aria-hidden="true"></div>
 
-<dialog $open="/navOpen?format=bool" aria-label="Site navigation">
+<dialog $open="/navOpen?format=bool" data-enter="slide from-right" aria-label="Site navigation">
     <header class="nav-header">
         <strong>data-wrapper</strong>
         <button @click="nav/close" class="nav-close" aria-label="Close navigation">✕</button>

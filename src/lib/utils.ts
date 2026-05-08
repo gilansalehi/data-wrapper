@@ -1,4 +1,5 @@
 // ctx broadened to DocumentFragment so q() works on template.content
+export const notNullish = (x: any): boolean => x ?? false;
 export const q = (s: string, ctx: Element | Document | DocumentFragment = document) => [...ctx.querySelectorAll(s)] as Element[];
 
 export const emit = (eventName: string, payload?: unknown, ctx: Element | Document = document) => {
