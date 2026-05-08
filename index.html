@@ -35,6 +35,7 @@
 </header>
 
 <main class="container">
+<data-wrapper id="docs">
 <!-- =====================================================================
      § TODOS — flagship demo
      ===================================================================== -->
@@ -44,7 +45,7 @@
 <p>A complete CRUD app. State in <code>data-*</code> attributes, actions registered in JS,
    list rendered via <code>*list</code>. Open DevTools → Elements and watch the attributes update live.</p>
 
-<article class="demo">
+<article class="demo" data-to="todosCode" @reflect="demo/reflect">
     <data-wrapper id="app" data-filter="all">
 
         <form @submit="todo/add">
@@ -81,29 +82,7 @@
 
 <details>
     <summary>Full HTML</summary>
-    <pre>&lt;data-wrapper id="app" data-filter="all"&gt;
-
-  &lt;form @submit="todo/add"&gt;
-    &lt;input type="text" name="task" placeholder="What needs doing?" required&gt;
-    &lt;button type="submit"&gt;Add&lt;/button&gt;
-  &lt;/form&gt;
-
-  &lt;ul *list="/view" data-empty="dw-empty"&gt;
-    &lt;template&gt;
-      &lt;li class="todo-item" $class="./status"&gt;
-        &lt;input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id" aria-label="Toggle todo completion"&gt;
-        &lt;span $text="./task"&gt;&lt;/span&gt;
-        &lt;button @click="todo/remove" $value="./id"&gt;✕&lt;/button&gt;
-      &lt;/li&gt;
-    &lt;/template&gt;
-  &lt;/ul&gt;
-
-  &lt;span $text="/active?format=count"&gt;&lt;/span&gt; active
-  &lt;button @click="filter/set" data-val="all"&gt;All&lt;/button&gt;
-  &lt;button @click="filter/set" data-val="active"&gt;Active&lt;/button&gt;
-  &lt;button @click="filter/set" data-val="done"&gt;Done&lt;/button&gt;
-
-&lt;/data-wrapper&gt;</pre>
+    <pre><code $text="/todosCode"></code></pre>
 </details>
 <details>
     <summary>JS — register + compute</summary>
@@ -164,7 +143,7 @@ app.put('todos', [
 <p>State starts in <code>data-*</code> attributes. <code>$text="/count"</code> binds the value to the DOM.
    <code>@click="topic"</code> delegates the event to a registered handler.</p>
 
-<article class="demo">
+<article class="demo" data-to="counterCode" @reflect="demo/reflect">
     <data-wrapper id="counter" data-count="0">
         <div class="row">
             <button @click="count/dec">−</button>
@@ -177,27 +156,23 @@ app.put('todos', [
     </data-wrapper>
 </article>
 <details>
-    <summary>HTML + JS</summary>
-    <pre>&lt;data-wrapper id="counter" data-count="0"&gt;
-  &lt;button @click="count/dec"&gt;−&lt;/button&gt;
-  &lt;output $text="/count"&gt;&lt;/output&gt;
-  &lt;button @click="count/inc"&gt;+&lt;/button&gt;
-&lt;/data-wrapper&gt;
-
-&lt;script&gt;
-  customElements.whenDefined('data-wrapper').then(() => {
-    const counter = document.getElementById('counter');
-    counter.register({
-      'count/inc': () => counter.put('count', n => Number(n) + 1),
-      'count/dec': () => counter.put('count', n => Number(n) - 1),
-    });
+    <summary>HTML</summary>
+    <pre><code $text="/counterCode"></code></pre>
+</details>
+<details>
+    <summary>JS</summary>
+    <pre>customElements.whenDefined('data-wrapper').then(() => {
+  const counter = document.getElementById('counter');
+  counter.register({
+    'count/inc': () => counter.put('count', n => Number(n) + 1),
+    'count/dec': () => counter.put('count', n => Number(n) - 1),
   });
-&lt;/script&gt;</pre>
+});</pre>
 </details>
 
 <h3>Static binding — zero JavaScript</h3>
 <p>Initial state declared in HTML. Bindings render immediately on connect with no script.</p>
-<article class="demo">
+<article class="demo" data-to="staticCode" @reflect="demo/reflect">
     <data-wrapper data-greeting="Hello" data-name="World" data-version="0.1.0">
         <p><span $text="/greeting"></span>,&nbsp;<strong $text="/name"></strong>!
         &nbsp;·&nbsp; v<span $text="/version"></span></p>
@@ -205,13 +180,7 @@ app.put('todos', [
 </article>
 <details>
     <summary>HTML — no script</summary>
-    <pre>&lt;data-wrapper data-greeting="Hello" data-name="World" data-version="0.1.0"&gt;
-  &lt;p&gt;
-    &lt;span $text="/greeting"&gt;&lt;/span&gt;,
-    &lt;strong $text="/name"&gt;&lt;/strong&gt;!
-    v&lt;span $text="/version"&gt;&lt;/span&gt;
-  &lt;/p&gt;
-&lt;/data-wrapper&gt;</pre>
+    <pre><code $text="/staticCode"></code></pre>
 </details>
 <p class="note">Try editing <code>data-greeting</code> or <code>data-name</code> directly in DevTools. MutationObserver catches external changes and propagates them.</p>
 </section>
@@ -236,7 +205,7 @@ app.put('todos', [
 </table>
 
 <h3>Controlled input</h3>
-<article class="demo">
+<article class="demo" data-to="controlledCode" @reflect="demo/reflect">
     <data-wrapper id="controlled" data-message="">
         <label for="ctrl-input">Type something</label>
         <input id="ctrl-input" type="text" @input="msg/update" placeholder="Type something…">
@@ -244,20 +213,19 @@ app.put('todos', [
     </data-wrapper>
 </article>
 <details>
-    <summary>HTML + JS</summary>
-    <pre>&lt;data-wrapper id="controlled" data-message=""&gt;
-  &lt;input type="text" @input="msg/update" placeholder="Type…"&gt;
-  &lt;strong $text="/message"&gt;&lt;/strong&gt;
-&lt;/data-wrapper&gt;
-
-controlled.register({
+    <summary>HTML</summary>
+    <pre><code $text="/controlledCode"></code></pre>
+</details>
+<details>
+    <summary>JS</summary>
+    <pre>controlled.register({
   'msg/update': e => controlled.put('message', e.detail.target.value),
 });</pre>
 </details>
 
 <h3>Two-way binding</h3>
 <p>Multiple elements bound to the same key stay in sync automatically.</p>
-<article class="demo">
+<article class="demo" data-to="twowayCode" @reflect="demo/reflect">
     <data-wrapper id="twoway" data-val="">
         <div class="row">
             <input type="text" $value="/val" @input="val/update" placeholder="Input A…">
@@ -267,19 +235,18 @@ controlled.register({
     </data-wrapper>
 </article>
 <details>
-    <summary>HTML + JS</summary>
-    <pre>&lt;data-wrapper id="twoway" data-val=""&gt;
-  &lt;input $value="/val" @input="val/update" placeholder="A"&gt;
-  &lt;input $value="/val" @input="val/update" placeholder="B"&gt;
-&lt;/data-wrapper&gt;
-
-twoway.register({
+    <summary>HTML</summary>
+    <pre><code $text="/twowayCode"></code></pre>
+</details>
+<details>
+    <summary>JS</summary>
+    <pre>twoway.register({
   'val/update': e => twoway.put('val', e.detail.target.value),
 });</pre>
 </details>
 
 <h3>Toggle</h3>
-<article class="demo">
+<article class="demo" data-to="toggleCode" @reflect="demo/reflect">
     <data-wrapper id="toggle" data-on="false">
         <div class="row">
             <button @click="toggle">Toggle</button>
@@ -289,14 +256,12 @@ twoway.register({
     </data-wrapper>
 </article>
 <details>
-    <summary>HTML + JS</summary>
-    <pre>&lt;data-wrapper id="toggle" data-on="false"&gt;
-  &lt;button @click="toggle"&gt;Toggle&lt;/button&gt;
-  &lt;span class="badge" $class="/on?format=onoff"&gt;●&lt;/span&gt;
-  &lt;code $text="/on"&gt;&lt;/code&gt;
-&lt;/data-wrapper&gt;
-
-toggle.register({ 'toggle': () => toggle.put('on', v => !v) });</pre>
+    <summary>HTML</summary>
+    <pre><code $text="/toggleCode"></code></pre>
+</details>
+<details>
+    <summary>JS</summary>
+    <pre>toggle.register({ 'toggle': () => toggle.put('on', v => !v) });</pre>
 </details>
 </section>
 
@@ -338,7 +303,7 @@ demo.addEventListener('data:sync', () => {
 <h3>Inline init via <code>onload</code></h3>
 <p>The <code>onload</code> attribute fires when the wrapper connects.
    <code>this</code> is the wrapper element — no external script needed.</p>
-<article class="demo">
+<article class="demo" data-to="inlineCode" @reflect="demo/reflect">
     <data-wrapper data-count="10"
         onload="this.register({'dec':()=>this.put('count',n=>Number(n)-1),'inc':()=>this.put('count',n=>Number(n)+1)})">
         <div class="row">
@@ -350,15 +315,7 @@ demo.addEventListener('data:sync', () => {
 </article>
 <details>
     <summary>HTML — no external script</summary>
-    <pre>&lt;data-wrapper data-count="10"
-  onload="this.register({
-    'dec': () =&gt; this.put('count', n =&gt; Number(n) - 1),
-    'inc': () =&gt; this.put('count', n =&gt; Number(n) + 1),
-  })"&gt;
-  &lt;button @click="dec"&gt;−1&lt;/button&gt;
-  &lt;output $text="/count"&gt;&lt;/output&gt;
-  &lt;button @click="inc"&gt;+1&lt;/button&gt;
-&lt;/data-wrapper&gt;</pre>
+    <pre><code $text="/inlineCode"></code></pre>
 </details>
 
 <h3>CSS as the view layer</h3>
@@ -396,7 +353,7 @@ data-wrapper[data-filter="done"]   button[data-val="done"] {
    <code>/controllers/password-meter.js</code> via <code>src=""</code>. As you type, each rule
    lights up when satisfied, and the input frame's strength class drives the colour.</p>
 
-<article class="demo">
+<article class="demo" data-to="pwmCode" @reflect="demo/reflect">
     <data-wrapper id="pwm" src="/controllers/password-meter.js" data-password="">
         <div class="pw-row" $class="/strength">
             <input type="password" @input="pw/update" placeholder="Type a password…"
@@ -416,20 +373,7 @@ data-wrapper[data-filter="done"]   button[data-val="done"] {
 
 <details>
     <summary>HTML — inline view</summary>
-    <pre>&lt;data-wrapper id="pwm" src="/controllers/password-meter.js" data-password=""&gt;
-  &lt;div class="pw-row" $class="/strength"&gt;
-    &lt;input type="password" @input="pw/update" placeholder="Type a password…"&gt;
-    &lt;span class="pw-strength" $text="/strength"&gt;&lt;/span&gt;
-  &lt;/div&gt;
-  &lt;ul class="pw-constraints" *list="/constraints"&gt;
-    &lt;template&gt;
-      &lt;li $class="./met?format=onoff"&gt;
-        &lt;span aria-hidden="true"&gt;✓&lt;/span&gt;
-        &lt;span $text="./label"&gt;&lt;/span&gt;
-      &lt;/li&gt;
-    &lt;/template&gt;
-  &lt;/ul&gt;
-&lt;/data-wrapper&gt;</pre>
+    <pre><code $text="/pwmCode"></code></pre>
 </details>
 <details>
     <summary>JS — /controllers/password-meter.js</summary>
@@ -526,7 +470,7 @@ export default function init(wrapper) {
    <code>$href</code>, <code>$src</code>, <code>$open</code>, <code>$placeholder</code> all work as-is.
    The nav sidebar uses <code>$open="/navOpen"</code> to control the <code>&lt;dialog&gt;</code> element.</p>
 
-<article class="demo">
+<article class="demo" data-to="profileCode" @reflect="demo/reflect">
     <data-wrapper data-name="Jane Doe" data-role="Senior Engineer" data-active="true"
                   data-url="https://example.com" data-score="9500">
         <div class="profile">
@@ -545,17 +489,7 @@ export default function init(wrapper) {
 </article>
 <details>
     <summary>HTML — no script</summary>
-    <pre>&lt;data-wrapper data-name="Jane Doe" data-role="Senior Engineer"
-              data-active="true" data-url="https://example.com" data-score="9500"&gt;
-
-  &lt;strong $text="/name"&gt;&lt;/strong&gt;
-  &lt;span   $text="/role"&gt;&lt;/span&gt;
-  &lt;span class="badge" $class="/active?format=onoff"&gt;&lt;/span&gt;
-
-  &lt;a $href="/url"&gt;Visit link&lt;/a&gt;
-  &lt;strong $text="/score?format=currency"&gt;&lt;/strong&gt;
-
-&lt;/data-wrapper&gt;</pre>
+    <pre><code $text="/profileCode"></code></pre>
 </details>
 </section>
 
@@ -774,14 +708,29 @@ DW_FORMATTERS.set('pluralise', v =>
 </details>
 </section>
 
+</data-wrapper>
 </main>
 
 
 <!-- =====================================================================
      APP LOGIC
      ===================================================================== -->
-<script>
+<script type="module">
+    import { emit } from '/dist/data-wrapper.js';
+
     customElements.whenDefined('data-wrapper').then(() => {
+
+        // Reflect: copy each [data-to] element's innerHTML into docs state under its
+        // dataset.to key. <code $text="/key"> displays it. textContent escapes naturally.
+        const docs = document.getElementById('docs');
+        docs.register({
+            'demo/reflect': e => {
+                const el = e.detail.delegateTarget;
+                docs.put(el.dataset.to, el.innerHTML.trim());
+            },
+        });
+        docs.querySelectorAll('[data-to]').forEach(el => emit('reflect', null, el));
+
 
         // Counter
         const counter = document.getElementById('counter');
