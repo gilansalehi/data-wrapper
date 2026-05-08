@@ -1,4 +1,8 @@
+export type Effect<T = unknown> = (value: T) => void;
 export type Formatter = (v: unknown) => unknown;
+export type Item = Record<string, unknown>;
+export type Row = { node: Element; item: Item; effects: Effect<Item>[] };
+export type ListCache = Map<Element, Map<unknown, Row>>;
 
 const htmlTemplate = (html: string) => {
     const tpl = document.createElement('template');
@@ -50,7 +54,7 @@ export const PROP_ALIASES: Record<string, string> = {
 export const resolveAlias = (key: string) => PROP_ALIASES[key] || key;
 
 export type DirectiveWrapper = HTMLElement & {
-    _listCache: Map<Element, Map<unknown, Element>>;
+    _listCache: ListCache;
 };
 
 export interface DirectiveContext {
@@ -58,7 +62,7 @@ export interface DirectiveContext {
     el: Element;
     value: unknown;
     key?: string;
-    hydrate: (node: Element, itemNode: Element) => void;
+    hydrate: (node: Element, row: Row) => void;
 }
 
 export type DirectiveHandler = (ctx: DirectiveContext) => void;
@@ -66,12 +70,3 @@ export type DirectiveHandler = (ctx: DirectiveContext) => void;
 export const DW_DIRECTIVES = new Map<string, DirectiveHandler>();
 
 export const resolveDirective = (key: string) => DW_DIRECTIVES.get(key);
-
-export const sync = (el: Element, prop: string, val: unknown) => {
-    const alias = resolveAlias(prop);
-    if (alias in el) {
-        (el as unknown as Record<string, unknown>)[alias] = val;
-    } else {
-        el.setAttribute(alias, String(val));
-    }
-};

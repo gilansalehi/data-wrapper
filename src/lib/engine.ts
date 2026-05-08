@@ -1,62 +1,57 @@
-import { DW_DIRECTIVES, resolveTemplate, sync } from './registry.ts';
-import type { DirectiveHandler } from './registry.ts';
+import { DW_DIRECTIVES, resolveAlias, resolveTemplate } from './registry.ts';
+import type { DirectiveHandler, Effect, Item, Row } from './registry.ts';
 
-export type Effect<T = unknown> = (value: T) => void;
-export type Item = Record<string, unknown>;
-export type ItemNode = Element & { _vItem?: Item; _vItemEffects?: Effect<Item>[] };
+export type { Effect, Item, ListCache, Row } from './registry.ts';
 
-type VNode       = Element & { _vBase?: Set<string>; _vState?: { dynamic: string } };
-
-export const applyBinding = (el: Element, prop: string, val: unknown) => {
+const set = (el: Element, prop: string, val: unknown) => {
     if (val === undefined || val === null) return;
+    if (prop in el) {
+        (el as unknown as Record<string, unknown>)[prop] = val;
+    } else {
+        el.setAttribute(prop, String(val));
+    }
+};
 
+export const bind = (el: Element, prop: string): Effect => {
     if (prop === 'class') {
-        const v   = el as VNode;
-        v._vBase  = v._vBase ?? new Set([...el.classList]);
-        const s   = v._vState = v._vState ?? { dynamic: '' };
-        s.dynamic = String(val);
-        el.className = ([...v._vBase].join(' ') + ' ' + s.dynamic)
-            .replace(/\s+/g, ' ').trim();
-        return;
+        const base = el.className;
+        return val => set(el, 'className', (base + ' ' + String(val ?? '')).replace(/\s+/g, ' ').trim());
     }
 
-    sync(el, prop, val);
+    const alias = resolveAlias(prop);
+    return val => set(el, alias, val);
 };
 
-export const watchItem = (node: Element, effect: Effect<Item>) => {
-    const itemNode = node as ItemNode;
-    (itemNode._vItemEffects ??= []).push(effect);
-    effect(itemNode._vItem || {});
+export const watch = <T>(effects: Effect<T>[], effect: Effect<T>, value: T) => {
+    effects.push(effect);
+    effect(value);
 };
 
-export const applyItemBindings = (node: Element, item: Item) => {
-    for (const effect of (node as ItemNode)._vItemEffects || []) effect(item);
+export const broadcast = <T>(effects: Effect<T>[] = [], value: T) => {
+    for (const effect of effects) effect(value);
 };
+
+export const watchRow = (row: Row, effect: Effect<Item>) => watch(row.effects, effect, row.item);
 
 type ContainerNode = Element & { _vEmptyNode?: Element | null };
 
 export const reconcile = (
     container: ContainerNode,
     data: Item[],
-    cache: Map<unknown, Element>,
+    cache: Map<unknown, Row>,
     tpl: HTMLTemplateElement,
-    hydrate: (node: Element, itemNode: Element) => void,
+    hydrate: (node: Element, row: Row) => void,
     keyProp = 'id',
 ) => {
     if (!data || data.length === 0) {
-        cache.forEach(node => node.remove());
+        cache.forEach(row => row.node.remove());
         cache.clear();
 
         if (!container._vEmptyNode) {
             const emptyName = container.getAttribute('data-empty') || 'dw-empty';
             const emptyTpl  = resolveTemplate(emptyName);
-            const frag      = emptyTpl
-                ? (emptyTpl.content.cloneNode(true) as DocumentFragment)
-                : (() => {
-                    const t = document.createElement('template');
-                    t.innerHTML = '<span></span>';
-                    return t.content.cloneNode(true) as DocumentFragment;
-                })();
+            if (!emptyTpl) return;
+            const frag = emptyTpl.content.cloneNode(true) as DocumentFragment;
             container._vEmptyNode = frag.firstElementChild ?? null;
             if (container._vEmptyNode) container.appendChild(container._vEmptyNode);
         }
@@ -70,33 +65,37 @@ export const reconcile = (
 
     const activeIds = new Set<unknown>();
     const fragment  = document.createDocumentFragment();
-    const newNodes: Element[] = [];
+    const newRows: Row[] = [];
 
     for (const item of data) {
         const id  = item[keyProp] ?? JSON.stringify(item);
         activeIds.add(id);
 
-        let node  = cache.get(id);
+        let row   = cache.get(id);
         let isNew = false;
 
-        if (!node) {
-            node  = (tpl.content.cloneNode(true) as DocumentFragment).firstElementChild!;
-            cache.set(id, node);
+        if (!row) {
+            row = {
+                node: (tpl.content.cloneNode(true) as DocumentFragment).firstElementChild!,
+                item,
+                effects: [],
+            };
+            cache.set(id, row);
             isNew = true;
-            newNodes.push(node);
+            newRows.push(row);
         }
 
-        (node as ItemNode)._vItem = item;
-        if (!isNew) applyItemBindings(node, item);
-        fragment.appendChild(node);
+        row.item = item;
+        if (!isNew) broadcast(row.effects, item);
+        fragment.appendChild(row.node);
     }
 
-    cache.forEach((node, id) => {
-        if (!activeIds.has(id)) { node.remove(); cache.delete(id); }
+    cache.forEach((row, id) => {
+        if (!activeIds.has(id)) { row.node.remove(); cache.delete(id); }
     });
 
     container.appendChild(fragment);
-    for (const node of newNodes) hydrate(node, node);
+    for (const row of newRows) hydrate(row.node, row);
 };
 
 const listDirective: DirectiveHandler = ({ wrapper, el, value, key, hydrate }) => {

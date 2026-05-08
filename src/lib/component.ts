@@ -1,13 +1,14 @@
 import { emit, on } from './utils.ts';
 import { wake } from './wire.ts';
-import type { Effect } from './engine.ts';
+import { broadcast, watch } from './engine.ts';
+import type { Effect, ListCache } from './engine.ts';
 
 export class DataWrapper extends HTMLElement {
     declare state:        Record<string, unknown>;
     declare _subs:        Record<string, Effect[]>;
     declare _boundEvents: Set<string>;
     declare _isSyncing:   boolean;
-    declare _listCache:   Map<Element, Map<unknown, Element>>;
+    declare _listCache:   ListCache;
     declare _observer:    MutationObserver;
 
     constructor() {
@@ -65,12 +66,11 @@ export class DataWrapper extends HTMLElement {
     }
 
     _broadcast(key: string, val: unknown) {
-        for (const effect of this._subs[key] || []) effect(val);
+        broadcast(this._subs[key], val);
     }
 
     _watch(path: string, effect: Effect) {
-        (this._subs[path] = this._subs[path] || []).push(effect);
-        effect(this.state[path]);
+        watch((this._subs[path] = this._subs[path] || []), effect, this.state[path]);
     }
 
     _routeEvent(eventName: string) {

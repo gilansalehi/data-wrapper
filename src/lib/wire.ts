@@ -1,15 +1,15 @@
 import { DW_FORMATTERS, resolveDirective } from './registry.ts';
-import { applyBinding, watchItem } from './engine.ts';
-import type { Effect } from './engine.ts';
-import type { Formatter } from './registry.ts';
+import { bind, watchRow } from './engine.ts';
+import type { Effect, ListCache, Row } from './engine.ts';
 
 type WokeNode = Element & { _vWoke?: boolean };
+type Format = (value: unknown) => unknown;
 
 export interface WrapperNode extends HTMLElement {
     state:        Record<string, unknown>;
     _subs:        Record<string, Effect[]>;
     _boundEvents: Set<string>;
-    _listCache:   Map<Element, Map<unknown, Element>>;
+    _listCache:   ListCache;
     _watch(path: string, effect: Effect): void;
     _routeEvent(eventName: string): void;
 }
@@ -21,30 +21,28 @@ export interface WrapperNode extends HTMLElement {
 const DWRL_BASE = 'dwrl://x/';
 const NO_WAKE   = ['DATA-WRAPPER', 'TEMPLATE', 'SVG'];
 
+const formatter = (url: URL): Format => {
+    const pipes = url.searchParams.getAll('format')
+        .map(n => DW_FORMATTERS.get(n))
+        .filter((f): f is NonNullable<typeof f> => !!f);
+
+    return value => pipes.reduce((v, pipe) => pipe(v), value);
+};
+
 const parsePath = (attrValue: string) => {
-    const isItemScoped   = attrValue.startsWith('./');
-    const isCrossWrapper = attrValue.startsWith('//');
+    const isItemScoped = attrValue.startsWith('./');
 
     // ./foo → /foo: strip leading dot so URL parser treats it as an absolute path.
     // The isItemScoped flag above captures the original intent.
-    const url   = new URL(isItemScoped ? attrValue.slice(1) : attrValue, DWRL_BASE);
-    const pipes = url.searchParams.getAll('format')
-        .map(n => DW_FORMATTERS.get(n))
-        .filter((f): f is Formatter => !!f);
+    const url = new URL(isItemScoped ? attrValue.slice(1) : attrValue, DWRL_BASE);
 
     return {
-        pipes,
+        url,
+        format: formatter(url),
         isItemScoped,
-        isCrossWrapper,
         key:       url.searchParams.get('key') ?? undefined,
-        wrapperId: isCrossWrapper ? url.hostname : undefined,
         path:      url.pathname.slice(1), // URL always produces leading /; strip it
     };
-};
-
-const format = (value: unknown, pipes: Formatter[]) => {
-    for (const pipe of pipes) value = pipe(value);
-    return value;
 };
 
 const owner = (el: Element) => el.closest('data-wrapper') as WrapperNode | null;
@@ -53,18 +51,20 @@ const wireEvent = (el: Element, name: string) => {
     owner(el)?._routeEvent(name.slice(1));
 };
 
-const wireItemBinding = (el: Element, prop: string, path: string, pipes: Formatter[], itemNode: Element) => {
-    watchItem(itemNode, item => applyBinding(el, prop, format(item?.[path], pipes)));
+const wireItemBinding = (el: Element, prop: string, path: string, format: Format, row: Row) => {
+    const update = bind(el, prop);
+    watchRow(row, item => update(format(item?.[path])));
 };
 
-const wireBinding = (wrapper: WrapperNode, el: Element, prop: string, path: string, pipes: Formatter[]) => {
+const wireBinding = (wrapper: WrapperNode, el: Element, prop: string, path: string, format: Format) => {
+    const update = bind(el, prop);
     wrapper._watch(path, value => {
         if (!el.isConnected) return;
-        applyBinding(el, prop, format(value, pipes));
+        update(format(value));
     });
 };
 
-const wireDirective = (wrapper: WrapperNode, el: Element, prop: string, path: string, pipes: Formatter[], key?: string) => {
+const wireDirective = (wrapper: WrapperNode, el: Element, prop: string, path: string, format: Format, key?: string) => {
     const directive = resolveDirective(prop);
     if (!directive) return;
 
@@ -73,9 +73,9 @@ const wireDirective = (wrapper: WrapperNode, el: Element, prop: string, path: st
         directive({
             wrapper,
             el,
-            value: format(value, pipes),
+            value: format(value),
             key,
-            hydrate: (node, item) => wake(node, item),
+            hydrate: (node, row) => wake(node, row),
         });
     });
 };
@@ -87,7 +87,7 @@ const wireDirective = (wrapper: WrapperNode, el: Element, prop: string, path: st
 export const wire = (
     el: Element,
     attr: Attr,
-    itemNode: Element | null = null,
+    row: Row | null = null,
 ) => {
     const { name } = attr;
 
@@ -101,13 +101,13 @@ export const wire = (
     if (!isBinding && !isDirective) return;
 
     const prop = name.slice(1);
-    const { path, pipes, key, isItemScoped, isCrossWrapper } = parsePath(attr.value);
+    const { path, format, key, url, isItemScoped } = parsePath(attr.value);
 
-    if (isCrossWrapper) return; // TODO: cross-wrapper mesh
+    if (url.hostname !== 'x') return; // TODO: cross-wrapper mesh
 
-    if (isItemScoped && itemNode) {
+    if (isItemScoped && row) {
         if (isDirective) return;
-        wireItemBinding(el, prop, path, pipes, itemNode);
+        wireItemBinding(el, prop, path, format, row);
         return;
     }
 
@@ -116,26 +116,26 @@ export const wire = (
     if (!wrapper) return;
 
     if (isDirective) {
-        wireDirective(wrapper, el, prop, path, pipes, key);
+        wireDirective(wrapper, el, prop, path, format, key);
         return;
     }
 
-    wireBinding(wrapper, el, prop, path, pipes);
+    wireBinding(wrapper, el, prop, path, format);
 };
 
 // ---------------------------------------------------------------------------
 // wake — wires one element then walks its subtree
 // ---------------------------------------------------------------------------
 
-const _wireElement = (el: Element, itemNode: Element | null) => {
+const _wireElement = (el: Element, row: Row | null) => {
     if ((el as WokeNode)._vWoke) return;
     (el as WokeNode)._vWoke = true;
 
-    for (const attr of [...el.attributes]) wire(el, attr, itemNode);
+    for (const attr of [...el.attributes]) wire(el, attr, row);
 };
 
-export const wake = (root: Element, itemNode: Element | null = null) => {
-    _wireElement(root, itemNode);
+export const wake = (root: Element, row: Row | null = null) => {
+    _wireElement(root, row);
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
         acceptNode: (n: Node) => NO_WAKE.includes((n as Element).tagName)
@@ -144,5 +144,5 @@ export const wake = (root: Element, itemNode: Element | null = null) => {
     });
 
     let node: Node | null;
-    while ((node = walker.nextNode())) _wireElement(node as Element, itemNode);
+    while ((node = walker.nextNode())) _wireElement(node as Element, row);
 };

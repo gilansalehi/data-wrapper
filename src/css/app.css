@@ -7,7 +7,6 @@ body > header { padding-bottom: 0; }
 .tagline { font-size: 1.05rem; color: var(--muted); margin: .25rem 0 1.5rem; text-wrap: pretty; }
 
 /* ── Install snippet ── */
-
 .install {
     background: var(--ink);
     color: var(--ink-text);
@@ -18,6 +17,10 @@ body > header { padding-bottom: 0; }
     margin: 0 0 1.25rem;
     overflow-x: auto;
     box-shadow: var(--shadow);
+}
+.install code {
+    background: var(--ink);
+    color: var(--ink-text);
 }
 
 /* ── Demo box ── */
