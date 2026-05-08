@@ -27,12 +27,58 @@ test.describe('Nav sidebar', () => {
             page.locator('.nav-hamburger hr').first().evaluate(el => getComputedStyle(el).transform)
         ).not.toBe('none');
     });
-    test.skip('clicking backdrop closes the nav', async () => {});
-    test.skip('clicking ✕ button closes the nav', async () => {});
-    test.skip('clicking a nav link closes the nav', async () => {});
-    test.skip('clicking a nav link scrolls to the correct section', async () => {});
-    test.skip('theme toggle switches data-theme between light and dark', async () => {});
-    test.skip('dark theme applies --bg variable change to body', async () => {});
+
+    test('clicking backdrop closes the nav', async ({ page }) => {
+        await page.locator('.nav-hamburger').click();
+        await page.locator('.nav-backdrop').click();
+
+        await expect(page.locator('#nav')).toHaveAttribute('data-nav-open', 'false');
+        await expect(page.locator('#nav dialog')).not.toHaveAttribute('open');
+    });
+
+    test('clicking ✕ button closes the nav', async ({ page }) => {
+        await page.locator('.nav-hamburger').click();
+        await page.locator('.nav-close').click();
+
+        await expect(page.locator('#nav')).toHaveAttribute('data-nav-open', 'false');
+        await expect(page.locator('#nav dialog')).not.toHaveAttribute('open');
+    });
+
+    test('clicking a nav link closes the nav', async ({ page }) => {
+        await page.locator('.nav-hamburger').click();
+        await page.locator('#nav a[href="#start"]').click();
+
+        await expect(page.locator('#nav')).toHaveAttribute('data-nav-open', 'false');
+        await expect(page.locator('#nav dialog')).not.toHaveAttribute('open');
+    });
+
+    test('clicking a nav link scrolls to the correct section', async ({ page }) => {
+        await page.locator('.nav-hamburger').click();
+        await page.locator('#nav a[href="#formatters"]').click();
+
+        await expect(page).toHaveURL(/#formatters$/);
+        await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    });
+
+    test('theme toggle switches data-theme between light and dark', async ({ page }) => {
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
+        await page.locator('.nav-hamburger').click();
+        await page.locator('.theme-toggle').click();
+
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    });
+
+    test('dark theme applies --bg variable change to body', async ({ page }) => {
+        const lightBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+
+        await page.locator('.nav-hamburger').click();
+        await page.locator('.theme-toggle').click();
+
+        await expect.poll(async () =>
+            page.evaluate(() => getComputedStyle(document.body).backgroundColor)
+        ).not.toBe(lightBg);
+    });
 
     test('has no critical a11y violations when open', async ({ page }) => {
         await page.click('.nav-hamburger');

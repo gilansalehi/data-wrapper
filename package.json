@@ -17,7 +17,8 @@
   "scripts": {
     "build": "bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.js --format esm --target browser && bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.min.js --format iife --minify --target browser",
     "typecheck": "tsc --noEmit",
-    "test": "bun test tests/unit/",
+    "test:all": "bun test:unit && bun test:e2e",
+    "test:unit": "bun test tests/unit/",
     "test:e2e": "bunx playwright test",
     "serve": "bun serve.ts"
   },
