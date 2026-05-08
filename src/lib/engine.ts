@@ -1,9 +1,11 @@
-import { resolveTemplate, sync } from './registry.ts';
+import { DW_DIRECTIVES, resolveTemplate, sync } from './registry.ts';
+import type { DirectiveHandler } from './registry.ts';
 
 export type Effect<T = unknown> = (value: T) => void;
+export type Item = Record<string, unknown>;
+export type ItemNode = Element & { _vItem?: Item; _vItemEffects?: Effect<Item>[] };
 
 type VNode       = Element & { _vBase?: Set<string>; _vState?: { dynamic: string } };
-type ItemElement = Element & { _vItem?: Record<string, unknown>; _vItemEffects?: Effect<Record<string, unknown>>[] };
 
 export const applyBinding = (el: Element, prop: string, val: unknown) => {
     if (val === undefined || val === null) return;
@@ -21,15 +23,21 @@ export const applyBinding = (el: Element, prop: string, val: unknown) => {
     sync(el, prop, val);
 };
 
-export const applyItemBindings = (node: Element, item: Record<string, unknown>) => {
-    for (const effect of (node as ItemElement)._vItemEffects || []) effect(item);
+export const watchItem = (node: Element, effect: Effect<Item>) => {
+    const itemNode = node as ItemNode;
+    (itemNode._vItemEffects ??= []).push(effect);
+    effect(itemNode._vItem || {});
+};
+
+export const applyItemBindings = (node: Element, item: Item) => {
+    for (const effect of (node as ItemNode)._vItemEffects || []) effect(item);
 };
 
 type ContainerNode = Element & { _vEmptyNode?: Element | null };
 
 export const reconcile = (
     container: ContainerNode,
-    data: Array<Record<string, unknown>>,
+    data: Item[],
     cache: Map<unknown, Element>,
     tpl: HTMLTemplateElement,
     hydrate: (node: Element, itemNode: Element) => void,
@@ -62,6 +70,7 @@ export const reconcile = (
 
     const activeIds = new Set<unknown>();
     const fragment  = document.createDocumentFragment();
+    const newNodes: Element[] = [];
 
     for (const item of data) {
         const id  = item[keyProp] ?? JSON.stringify(item);
@@ -74,10 +83,11 @@ export const reconcile = (
             node  = (tpl.content.cloneNode(true) as DocumentFragment).firstElementChild!;
             cache.set(id, node);
             isNew = true;
+            newNodes.push(node);
         }
 
-        (node as ItemElement)._vItem = item;
-        isNew ? hydrate(node, node) : applyItemBindings(node, item);
+        (node as ItemNode)._vItem = item;
+        if (!isNew) applyItemBindings(node, item);
         fragment.appendChild(node);
     }
 
@@ -86,4 +96,20 @@ export const reconcile = (
     });
 
     container.appendChild(fragment);
+    for (const node of newNodes) hydrate(node, node);
 };
+
+const listDirective: DirectiveHandler = ({ wrapper, el, value, key, hydrate }) => {
+    const tpl = el.querySelector(':scope > template') as HTMLTemplateElement | null;
+    if (!tpl) return;
+
+    let cache = wrapper._listCache.get(el);
+    if (!cache) {
+        cache = new Map();
+        wrapper._listCache.set(el, cache);
+    }
+
+    reconcile(el, (value as Item[]) || [], cache, tpl, hydrate, key);
+};
+
+DW_DIRECTIVES.set('list', listDirective);

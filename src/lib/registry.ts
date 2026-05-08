@@ -1,29 +1,19 @@
-// Types owned here — used across registry, engine, wire.
 export type Formatter = (v: unknown) => unknown;
+export type TemplateSource = HTMLTemplateElement | string;
 
-export interface Tokens { BIND: string; DIR: string; EVT: string; }
-export interface Config { TOKENS: Tokens; NO_WAKE: string[]; }
-export interface CustomConfig { TOKENS?: Partial<Tokens>; NO_WAKE?: string[]; }
-
-declare global {
-    interface Window {
-        DW_CUSTOM_CONFIG?: CustomConfig;
-    }
-}
-
-const DEFAULT_CONFIG: Config = {
-    TOKENS: { BIND: '$', DIR: '*', EVT: '@' },
-    NO_WAKE: ['DATA-WRAPPER', 'TEMPLATE', 'SVG'],
+const htmlTemplate = (html: string) => {
+    const tpl = document.createElement('template');
+    tpl.innerHTML = html;
+    return tpl;
 };
 
-const customConfig = typeof window === 'undefined' ? undefined : window.DW_CUSTOM_CONFIG;
-
-export const CONFIG: Config & Record<string, unknown> = {
-    TOKENS: { ...DEFAULT_CONFIG.TOKENS, ...customConfig?.TOKENS },
-    NO_WAKE: customConfig?.NO_WAKE ?? DEFAULT_CONFIG.NO_WAKE,
+const toTemplate = (source: TemplateSource): HTMLTemplateElement | null => {
+    if (typeof source !== 'string') return source;
+    if (typeof document === 'undefined') return null;
+    return htmlTemplate(source);
 };
 
-export const DW_TEMPLATES = new Map<string, HTMLTemplateElement>();
+export const DW_TEMPLATES = new Map<string, TemplateSource>();
 
 export const DW_DEFAULT_TEMPLATES = new Map<string, string>([
     ['dw-empty',   '<li data-dw-template="empty">No items</li>'],
@@ -32,15 +22,10 @@ export const DW_DEFAULT_TEMPLATES = new Map<string, string>([
     ['dw-error',   '<span data-dw-template="error">Something went wrong</span>'],
 ]);
 
-const htmlTemplate = (html: string): HTMLTemplateElement => {
-    const tpl = document.createElement('template');
-    tpl.innerHTML = html;
-    return tpl;
-};
-
 export const resolveTemplate = (name: string): HTMLTemplateElement | null => {
     const registered = DW_TEMPLATES.get(name);
-    if (registered) return registered;
+    const custom = registered ? toTemplate(registered) : null;
+    if (custom) return custom;
     if (typeof document === 'undefined') return null;
 
     const declared = document.getElementById(name);
@@ -79,40 +64,21 @@ export const PROP_ALIASES: Record<string, string> = {
 
 export const resolveAlias = (key: string) => PROP_ALIASES[key] || key;
 
+export type DirectiveWrapper = HTMLElement & {
+    _listCache: Map<Element, Map<unknown, Element>>;
+};
+
 export interface DirectiveContext {
-    wrapper: {
-        _listCache: Map<Element, Map<unknown, Element>>;
-    };
+    wrapper: DirectiveWrapper;
     el: Element;
     value: unknown;
     key?: string;
-    renderList: (
-        container: Element,
-        data: Array<Record<string, unknown>>,
-        cache: Map<unknown, Element>,
-        tpl: HTMLTemplateElement,
-        key?: string,
-    ) => void;
+    hydrate: (node: Element, itemNode: Element) => void;
 }
 
 export type DirectiveHandler = (ctx: DirectiveContext) => void;
 
-const listDirective: DirectiveHandler = ({ wrapper, el, value, key, renderList }) => {
-    const tpl = el.querySelector(':scope > template') as HTMLTemplateElement | null;
-    if (!tpl) return;
-
-    let cache = wrapper._listCache.get(el);
-    if (!cache) {
-        cache = new Map();
-        wrapper._listCache.set(el, cache);
-    }
-
-    renderList(el, (value as Array<Record<string, unknown>>) || [], cache, tpl, key);
-};
-
-export const DW_DIRECTIVES = new Map<string, DirectiveHandler>([
-    ['list', listDirective],
-]);
+export const DW_DIRECTIVES = new Map<string, DirectiveHandler>();
 
 export const resolveDirective = (key: string) => DW_DIRECTIVES.get(key);
 

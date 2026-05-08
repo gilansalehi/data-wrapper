@@ -1,5 +1,4 @@
 import { emit, on } from './utils.ts';
-import { CONFIG } from './registry.ts';
 import { wake } from './wire.ts';
 import type { Effect } from './engine.ts';
 
@@ -55,7 +54,7 @@ export class DataWrapper extends HTMLElement {
 
     connectedCallback() {
         this._observer.observe(this, { attributes: true });
-        wake(this, null);
+        wake(this);
         emit('load', this, this);          // triggers onload="" attribute on the element
         emit('data-wrapper:load', this);   // document-level notification for external scripts
         if (this.hasAttribute('src')) queueMicrotask(() => this.load());
@@ -78,7 +77,7 @@ export class DataWrapper extends HTMLElement {
         if (this._boundEvents.has(eventName)) return;
         this._boundEvents.add(eventName);
 
-        const attrName = `${CONFIG.TOKENS.EVT}${eventName}`;
+        const attrName = `@${eventName}`;
 
         // Listeners intentionally persist — a delegate can always be woken into the DOM later.
         on(eventName, (e: Event) => {
@@ -130,7 +129,7 @@ export class DataWrapper extends HTMLElement {
             this.innerHTML = await res.text();
             this._subs = {};
             this._listCache = new Map();
-            wake(this, null);
+            wake(this);
         }
         emit('data:load', { src: url.href }, this);
     }

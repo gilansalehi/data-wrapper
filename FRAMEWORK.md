@@ -20,9 +20,9 @@ When a `<data-wrapper>` connects:
 
 1. It starts observing its own `data-*` attributes.
 2. It calls `wake(this)`.
-3. `wake()` walks the subtree, skipping nested wrappers, templates, and SVG.
+3. `wake()` walks the subtree, hard-skipping nested wrappers, templates, and SVG.
 4. Each tokenized attribute is passed to `wire()`.
-5. Existing `data-*` state keys are broadcast once for initial render.
+5. `_watch()` runs each compiled effect once with current state for initial render.
 6. Native `load` and `data-wrapper:load` events are emitted.
 7. If `src` is present, HTML or module loading runs after connection.
 
@@ -66,9 +66,8 @@ The wrapper ownership check only prevents a parent wrapper from routing an
 ## Lists
 
 The list directive reconciles keyed DOM nodes from a native `<template>`.
-New nodes are woken with their item node and owning wrapper. That keeps all
-tokenized attribute wiring under `wake()`/`wire()` instead of requiring a second
-template-only event scan.
+New nodes are inserted before they are woken, so `wire()` can use normal DOM
+ancestry (`closest('data-wrapper')`) instead of a separate owner argument.
 Item updates re-run the compiled item effects stored on the keyed node.
 
 ## Design pressure
@@ -81,3 +80,6 @@ Keep the helper surface small:
 4. Keep event delegation as an implementation detail of `_routeEvent()`.
 5. Keep tokenized attribute wiring centralized in `wire()`.
 6. Let `wire()` infer token kind from the attribute name.
+7. Keep `$`, `*`, and `@` as fixed syntax; use Maps for behavior extension.
+8. Avoid custom config paths for core syntax; extensibility belongs in behavior
+   Maps, not in the wake/render loop.

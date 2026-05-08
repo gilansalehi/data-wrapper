@@ -236,7 +236,7 @@ app.addEventListener('data:sync', () => {
 ### Utility exports
 
 ```js
-import { q, on, emit, DW_FORMATTERS, DW_TEMPLATES, DW_DEFAULT_TEMPLATES, CONFIG } from 'data-wrapper';
+import { q, on, emit, DW_FORMATTERS, DW_TEMPLATES, DW_DEFAULT_TEMPLATES } from 'data-wrapper';
 
 q('.item');                           // [...querySelectorAll('.item')]
 on('click', handler, '.btn');         // delegated listener, returns unsubscribe fn
@@ -245,17 +245,16 @@ emit('my:event', payload, el);        // CustomEvent dispatch
 
 ---
 
-## Configuration
+## Extension Points
 
-Override defaults before the script loads:
+The core syntax is fixed: `$`, `@`, and `*`. Behavior is extended with Maps:
 
-```html
-<script>
-  window.DW_CUSTOM_CONFIG = {
-    TOKENS: { BIND: ':', DIR: '+', EVT: '#' }
-  };
-</script>
-<script src="/dist/data-wrapper.js" type="module"></script>
+```js
+import { DW_FORMATTERS, DW_TEMPLATES, DW_DIRECTIVES } from 'data-wrapper';
+
+DW_FORMATTERS.set('initials', v => String(v).split(' ').map(w => w[0]).join(''));
+DW_TEMPLATES.set('empty-card', '#empty-card markup can also go here');
+DW_DIRECTIVES.set('show', ({ el, value }) => { el.hidden = !value; });
 ```
 
 ---
@@ -265,17 +264,17 @@ Override defaults before the script loads:
 ```
 src/lib/
 ├── utils.ts      — q, emit, on
-├── registry.ts   — CONFIG, DW_FORMATTERS, DW_TEMPLATES, DW_DIRECTIVES, PROP_ALIASES, sync
-├── engine.ts     — applyBinding, applyItemBindings, reconcile
-├── wire.ts       — parsePath, wake, subscribe, ensureDelegation
+├── registry.ts   — DW_FORMATTERS, DW_TEMPLATES, DW_DIRECTIVES, PROP_ALIASES, sync
+├── engine.ts     — applyBinding, watchItem, applyItemBindings, reconcile
+├── wire.ts       — parsePath, wire, wake
 └── component.ts  — DataWrapper class
 ```
 
-**Wiring (O(N), once at mount):** `wake()` walks the subtree, reads `$`/`@`/`*` attributes, builds `_subs` — a flat map of `{ stateKey → UpdateConfig[] }`.
+**Wiring (O(N), once at mount):** `wake()` walks the subtree and lets `wire()` compile `$`/`*` attributes into effect closures stored by state key.
 
 **Reaction (O(1) per key):** `_broadcast(key, val)` looks up `_subs[key]` and writes only to subscribed nodes.
 
-**Delegation:** One `addEventListener` per event type on the wrapper. `@event="topic"` dispatches a CustomEvent named `topic` on the wrapper when the native event bubbles up.
+**Delegation:** One `addEventListener` per event type on the wrapper. `@event="topic"` emits a bubbling CustomEvent named `topic` from the element carrying the `@` attribute.
 
 ---
 
