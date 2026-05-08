@@ -10,12 +10,12 @@
 <h3>HTML partial</h3>
 <details open>
     <summary>How the nav is loaded</summary>
-    <pre>&lt;data-wrapper id="nav" src="/partials/nav.html" data-nav-open="false"
+    <pre><code>&lt;data-wrapper id="nav" src="/partials/nav.html" data-nav-open="false"
     onload="this.register({
       'nav/toggle': () =&gt; this.put('navOpen', v =&gt; !v),
       'nav/close':  () =&gt; this.put('navOpen', false),
       /* … */
-    })"&gt;&lt;/data-wrapper&gt;</pre>
+    })"&gt;&lt;/data-wrapper&gt;</code></pre>
 </details>
 <p class="note">
     State (<code>data-nav-open</code>) and handlers (registered via <code>onload</code>) live with the wrapper.
@@ -26,11 +26,11 @@
 <h3>JS module</h3>
 <details>
     <summary>Module shape — <code>src="/controllers/widget.js"</code></summary>
-    <pre>export default function init(wrapper) {
+    <pre><code>export default function init(wrapper) {
   wrapper.register({
     'thing/do': () =&gt; wrapper.put('count', n =&gt; Number(n) + 1),
   });
-}</pre>
+}</code></pre>
 </details>
 <p>Loaded with native dynamic <code>import()</code> — never <code>eval</code>, never <code>new Function()</code>.
    Async initializers are awaited.</p>
