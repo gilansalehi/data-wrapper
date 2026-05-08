@@ -100,8 +100,7 @@ export class DataWrapper extends HTMLElement {
 
     _sub(path: string, config: UpdateConfig) {
         (this._subs[path] = this._subs[path] || []).push(config);
-        const val = this.state[path];
-        if (val !== undefined) this._broadcast(path, val);
+        this._broadcast(path, this.state[path]);
     }
 
     register(actions: Record<string, EventListener>) {

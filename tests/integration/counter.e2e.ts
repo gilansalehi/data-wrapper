@@ -7,11 +7,35 @@ test.describe('Counter demo', () => {
         await page.waitForFunction(() => customElements.get('data-wrapper'));
     });
 
-    test.skip('displays initial count of 0', async () => {});
-    test.skip('increments count when + is clicked', async () => {});
-    test.skip('decrements count when − is clicked', async () => {});
-    test.skip('updates data-count attribute on the wrapper', async () => {});
-    test.skip('output element reflects state in real-time', async () => {});
+    test('displays initial count of 0', async ({ page }) => {
+        await expect(page.locator('#counter .count-display')).toHaveText('0');
+    });
+
+    test('increments count when + is clicked', async ({ page }) => {
+        await page.locator('#counter button').filter({ hasText: '+' }).click();
+
+        await expect(page.locator('#counter .count-display')).toHaveText('1');
+    });
+
+    test('decrements count when − is clicked', async ({ page }) => {
+        await page.locator('#counter button').filter({ hasText: '−' }).click();
+
+        await expect(page.locator('#counter .count-display')).toHaveText('-1');
+    });
+
+    test('updates data-count attribute on the wrapper', async ({ page }) => {
+        await page.locator('#counter button').filter({ hasText: '+' }).click();
+
+        await expect(page.locator('#counter')).toHaveAttribute('data-count', '1');
+    });
+
+    test('output element reflects state in real-time', async ({ page }) => {
+        await page.locator('#counter').evaluate(el => {
+            (el as HTMLElement & { put(key: string, val: unknown): void }).put('count', 7);
+        });
+
+        await expect(page.locator('#counter output')).toHaveText('7');
+    });
 
     test('has no critical a11y violations', async ({ page }) => {
         const results = await new AxeBuilder({ page })

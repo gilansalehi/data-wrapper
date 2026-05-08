@@ -92,7 +92,7 @@
         <ul class="todo-list" $list="/view" data-empty="vp-empty">
             <template>
                 <li class="todo-item" $class="./status">
-                    <input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id">
+                    <input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id" aria-label="Toggle todo completion">
                     <span $text="./task"></span>
                     <button class="delete-btn" @click="todo/remove" $value="./id" aria-label="Remove">✕</button>
                 </li>
@@ -128,7 +128,7 @@
   &lt;ul $list="/view" data-empty="vp-empty"&gt;
     &lt;template&gt;
       &lt;li class="todo-item" $class="./status"&gt;
-        &lt;input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id"&gt;
+        &lt;input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id" aria-label="Toggle todo completion"&gt;
         &lt;span $text="./task"&gt;&lt;/span&gt;
         &lt;button @click="todo/remove" $value="./id"&gt;✕&lt;/button&gt;
       &lt;/li&gt;

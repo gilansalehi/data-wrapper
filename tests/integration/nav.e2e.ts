@@ -7,9 +7,26 @@ test.describe('Nav sidebar', () => {
         await page.waitForFunction(() => customElements.get('data-wrapper'));
     });
 
-    test.skip('dialog is closed on load (data-nav-open="false")', async () => {});
-    test.skip('clicking hamburger sets data-nav-open="true"', async () => {});
-    test.skip('hamburger lines animate to X when open', async () => {});
+    test('dialog is closed on load (data-nav-open="false")', async ({ page }) => {
+        await expect(page.locator('#nav')).toHaveAttribute('data-nav-open', 'false');
+        await expect(page.locator('#nav dialog')).not.toHaveAttribute('open');
+    });
+
+    test('clicking hamburger sets data-nav-open="true"', async ({ page }) => {
+        await page.locator('.nav-hamburger').click();
+
+        await expect(page.locator('#nav')).toHaveAttribute('data-nav-open', 'true');
+        await expect(page.locator('#nav dialog')).toHaveAttribute('open', '');
+    });
+
+    test('hamburger lines animate to X when open', async ({ page }) => {
+        await page.locator('.nav-hamburger').click();
+
+        await expect(page.locator('.nav-hamburger hr').nth(1)).toHaveCSS('opacity', '0');
+        await expect.poll(async () =>
+            page.locator('.nav-hamburger hr').first().evaluate(el => getComputedStyle(el).transform)
+        ).not.toBe('none');
+    });
     test.skip('clicking backdrop closes the nav', async () => {});
     test.skip('clicking ✕ button closes the nav', async () => {});
     test.skip('clicking a nav link closes the nav', async () => {});
