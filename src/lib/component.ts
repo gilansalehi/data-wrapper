@@ -60,6 +60,7 @@ export class DataWrapper extends HTMLElement {
         for (const key of Object.keys(this.dataset)) this._broadcast(key, this.state[key]);
         emit('load', this, this);          // triggers onload="" attribute on the element
         emit('data-wrapper:load', this);   // document-level notification for external scripts
+        if (this.hasAttribute('src')) queueMicrotask(() => this.load());
     }
 
     disconnectedCallback() {
@@ -130,6 +131,25 @@ export class DataWrapper extends HTMLElement {
             ? (i: unknown) => !(predicate as (i: unknown) => boolean)(i)
             : (i: unknown) => (i as Record<string, unknown>).id !== predicate;
         this.put(key, current.filter(fn));
+    }
+
+    async load(src: string | null = this.getAttribute('src')) {
+        if (!src) return;
+        const url = new URL(src, document.baseURI);
+
+        if (/\.m?js$/.test(url.pathname)) {
+            const mod = await import(url.href);
+            await mod.default?.(this);
+        } else {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`load ${url.href}: ${res.status}`);
+            this.innerHTML = await res.text();
+            this._subs = {};
+            this._listCache = new Map();
+            wake(this, null);
+            for (const key of Object.keys(this.dataset)) this._broadcast(key, this.state[key]);
+        }
+        emit('data:load', { src: url.href }, this);
     }
 }
 

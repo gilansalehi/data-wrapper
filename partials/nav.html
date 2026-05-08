@@ -1,0 +1,28 @@
+<button @click="nav/toggle" class="nav-hamburger" aria-label="Toggle navigation">
+    <hr><hr><hr>
+</button>
+<div class="nav-backdrop" @click="nav/close" aria-hidden="true"></div>
+
+<dialog $open="/navOpen?format=bool" aria-label="Site navigation">
+    <header class="nav-header">
+        <strong>data-wrapper</strong>
+        <button @click="nav/close" class="nav-close" aria-label="Close navigation">✕</button>
+    </header>
+    <nav class="nav-links" aria-label="Page sections">
+        <span class="nav-section-label">Demos</span>
+        <a href="#todos"      @click="nav/close">Todos app</a>
+        <a href="#start"      @click="nav/close">Counter</a>
+        <a href="#events"     @click="nav/close">Events</a>
+        <a href="#patterns"   @click="nav/close">Patterns</a>
+        <span class="nav-section-label">Reference</span>
+        <a href="#tokens"     @click="nav/close">Tokens</a>
+        <a href="#bindings"   @click="nav/close">Bindings ($)</a>
+        <a href="#formatters" @click="nav/close">Formatters</a>
+        <a href="#state-api"  @click="nav/close">State API</a>
+        <a href="#dwrl"       @click="nav/close">DWRL</a>
+        <a href="#config"     @click="nav/close">Configuration</a>
+    </nav>
+    <footer class="nav-footer">
+        <button @click="theme/toggle" class="theme-toggle">◐ Toggle theme</button>
+    </footer>
+</dialog>
