@@ -28,10 +28,8 @@
 <header class="container">
     <h1>data-wrapper</h1>
     <p class="tagline">HTML-first reactivity. State lives in <code>data-*</code> attributes. Three tokens wire everything else.</p>
-    <pre class="install">
-        &lt;script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"&gt;&lt;/script&gt;
-        &lt;!-- or: npm install data-wrapper --&gt;
-    </pre>
+    <pre class="install"><code>&lt;script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"&gt;&lt;/script&gt;
+&lt;!-- or: npm install data-wrapper --&gt;</code></pre>
 </header>
 
 <main class="container">
@@ -74,7 +72,7 @@
 
         <details>
             <summary>Live state — inspect data-todos in DevTools or expand here</summary>
-            <pre class="state-pre" $text="/todos?format=json"></pre>
+            <pre class="state-pre"><code $text="/todos?format=json"></code></pre>
         </details>
 
     </data-wrapper>
@@ -83,10 +81,7 @@
 <details>
     <summary>Full HTML</summary>
     <pre><code $text="/todosCode"></code></pre>
-</details>
-<details>
-    <summary>JS — register + compute</summary>
-    <pre>const app = document.getElementById('app');
+    <pre><code>const app = document.getElementById('app');
 
 const compute = () => {
   const todos  = app.state.todos  || [];
@@ -125,7 +120,7 @@ app.addEventListener('data:sync', e => {
 app.put('todos', [
   { id: 1, task: 'Master the DOM',    status: 'done',   done: true  },
   { id: 2, task: 'Ship data-wrapper', status: 'active', done: false },
-]);</pre>
+]);</code></pre>
 </details>
 <p class="note">
     The filter buttons are styled by a plain CSS attribute selector:
@@ -156,18 +151,16 @@ app.put('todos', [
     </data-wrapper>
 </article>
 <details>
-    <summary>HTML</summary>
+    <summary>HTML + JS</summary>
     <pre><code $text="/counterCode"></code></pre>
-</details>
-<details>
-    <summary>JS</summary>
-    <pre>customElements.whenDefined('data-wrapper').then(() => {
+
+    <pre><code>customElements.whenDefined('data-wrapper').then(() => {
   const counter = document.getElementById('counter');
   counter.register({
     'count/inc': () => counter.put('count', n => Number(n) + 1),
     'count/dec': () => counter.put('count', n => Number(n) - 1),
   });
-});</pre>
+});</code></pre>
 </details>
 
 <h3>Static binding — zero JavaScript</h3>
@@ -213,14 +206,12 @@ app.put('todos', [
     </data-wrapper>
 </article>
 <details>
-    <summary>HTML</summary>
+    <summary>HTML + JS</summary>
     <pre><code $text="/controlledCode"></code></pre>
-</details>
-<details>
-    <summary>JS</summary>
-    <pre>controlled.register({
+
+    <pre><code>controlled.register({
   'msg/update': e => controlled.put('message', e.detail.target.value),
-});</pre>
+});</code></pre>
 </details>
 
 <h3>Two-way binding</h3>
@@ -235,14 +226,12 @@ app.put('todos', [
     </data-wrapper>
 </article>
 <details>
-    <summary>HTML</summary>
+    <summary>HTML + JS</summary>
     <pre><code $text="/twowayCode"></code></pre>
-</details>
-<details>
-    <summary>JS</summary>
-    <pre>twoway.register({
+
+    <pre><code>twoway.register({
   'val/update': e => twoway.put('val', e.detail.target.value),
-});</pre>
+});</code></pre>
 </details>
 
 <h3>Toggle</h3>
@@ -256,12 +245,10 @@ app.put('todos', [
     </data-wrapper>
 </article>
 <details>
-    <summary>HTML</summary>
+    <summary>HTML + JS</summary>
     <pre><code $text="/toggleCode"></code></pre>
-</details>
-<details>
-    <summary>JS</summary>
-    <pre>toggle.register({ 'toggle': () => toggle.put('on', v => !v) });</pre>
+
+    <pre><code>toggle.register({ 'toggle': () => toggle.put('on', v => !v) });</code></pre>
 </details>
 </section>
 
@@ -288,7 +275,7 @@ app.put('todos', [
 </article>
 <details>
     <summary>JS — computed state</summary>
-    <pre>const demo = document.getElementById('computed-demo');
+    <pre><code>const demo = document.getElementById('computed-demo');
 
 demo.register({
   'first/set': e => demo.put('firstName', e.detail.target.value),
@@ -297,7 +284,7 @@ demo.register({
 
 demo.addEventListener('data:sync', () => {
   demo.put('fullName', `${demo.state.firstName} ${demo.state.lastName}`);
-});</pre>
+});</code></pre>
 </details>
 
 <h3>Inline init via <code>onload</code></h3>
@@ -305,7 +292,7 @@ demo.addEventListener('data:sync', () => {
    <code>this</code> is the wrapper element — no external script needed.</p>
 <article class="demo" data-to="inlineCode" @reflect="demo/reflect">
     <data-wrapper data-count="10"
-        onload="this.register({'dec':()=>this.put('count',n=>Number(n)-1),'inc':()=>this.put('count',n=>Number(n)+1)})">
+        onload="this.register({'dec':()=>this.put('count',n=>-1+n),'inc':()=>this.put('count',n=>1+n)})">
         <div class="row">
             <button @click="dec">−1</button>
             <output class="count-display" $text="/count"></output>
@@ -323,7 +310,7 @@ demo.addEventListener('data:sync', () => {
    without any binding. The filter buttons above and the nav sidebar both use this pattern.</p>
 <details>
     <summary>CSS — no JS, no $ binding needed</summary>
-    <pre>/* Active filter button — pure CSS, reacts to data-filter attribute */
+    <pre><code>/* Active filter button — pure CSS, reacts to data-filter attribute */
 data-wrapper[data-filter="all"]    button[data-val="all"],
 data-wrapper[data-filter="active"] button[data-val="active"],
 data-wrapper[data-filter="done"]   button[data-val="done"] {
@@ -333,7 +320,7 @@ data-wrapper[data-filter="done"]   button[data-val="done"] {
 
 /* Nav sidebar open state — no JS, data-nav-open attribute drives both
    backdrop visibility and dialog.open via $open binding */
-#nav[data-nav-open="true"] .nav-backdrop { display: block; }</pre>
+#nav[data-nav-open="true"] .nav-backdrop { display: block; }</code></pre>
 </details>
 </section>
 
@@ -372,12 +359,10 @@ data-wrapper[data-filter="done"]   button[data-val="done"] {
 </article>
 
 <details>
-    <summary>HTML — inline view</summary>
+    <summary>HTML inline + JS from src</summary>
     <pre><code $text="/pwmCode"></code></pre>
-</details>
-<details>
-    <summary>JS — /controllers/password-meter.js</summary>
-    <pre>const RULES = [
+
+    <pre><code>const RULES = [
   { id: 'len',    label: 'At least 8 characters', test: p =&gt; p.length &gt;= 8 },
   { id: 'upper',  label: 'An uppercase letter',   test: p =&gt; /[A-Z]/.test(p) },
   { id: 'lower',  label: 'A lowercase letter',    test: p =&gt; /[a-z]/.test(p) },
@@ -404,7 +389,7 @@ export default function init(wrapper) {
   });
 
   compute('');
-}</pre>
+}</code></pre>
 </details>
 <p class="note">
     The module demonstrates three things at once: <strong>handlers from a file</strong> (the <code>register</code> call),
@@ -544,7 +529,7 @@ export default function init(wrapper) {
 <p class="note">Entirely static — change any <code>data-*</code> value in DevTools to see the formatters re-run instantly.</p>
 <details>
     <summary>Custom formatter registration</summary>
-    <pre>import { DW_FORMATTERS } from 'data-wrapper';
+    <pre><code>import { DW_FORMATTERS } from 'data-wrapper';
 
 DW_FORMATTERS.set('initials', v =>
   String(v).split(' ').map(w => w[0].toUpperCase()).join('')
@@ -556,7 +541,7 @@ DW_FORMATTERS.set('ago', v => {
   return mins &lt; 1 ? 'just now' : `${mins}m ago`;
 });
 
-// Use: &lt;span $text="/author?format=initials"&gt;&lt;/span&gt;</pre>
+// Use: &lt;span $text="/author?format=initials"&gt;&lt;/span&gt;</code></pre>
 </details>
 </section>
 
@@ -664,7 +649,7 @@ DW_FORMATTERS.set('ago', v => {
 <h3>Custom tokens</h3>
 <details>
     <summary>window.DW_CUSTOM_CONFIG</summary>
-    <pre>&lt;script&gt;
+    <pre><code>&lt;script&gt;
   window.DW_CUSTOM_CONFIG = {
     TOKENS: { BIND: ':', DIR: '+', EVT: '#' },
   };
@@ -673,13 +658,13 @@ DW_FORMATTERS.set('ago', v => {
 
 &lt;!-- Then use your custom tokens --&gt;
 &lt;span :text="/username"&gt;&lt;/span&gt;
-&lt;button #click="count/inc"&gt;+1&lt;/button&gt;</pre>
+&lt;button #click="count/inc"&gt;+1&lt;/button&gt;</code></pre>
 </details>
 
 <h3>Custom formatters</h3>
 <details>
     <summary>DW_FORMATTERS.set()</summary>
-    <pre>import { DW_FORMATTERS } from 'data-wrapper';
+    <pre><code>import { DW_FORMATTERS } from 'data-wrapper';
 
 DW_FORMATTERS.set('initials', v =>
   String(v).split(' ').map(w => w[0].toUpperCase()).join('')
@@ -687,7 +672,7 @@ DW_FORMATTERS.set('initials', v =>
 
 DW_FORMATTERS.set('pluralise', v =>
   `${v} ${Number(v) === 1 ? 'item' : 'items'}`
-);</pre>
+);</code></pre>
 </details>
 
 <h3>Empty-state templates</h3>
