@@ -292,4 +292,26 @@ describe('ensureDelegation', () => {
 
         expect(detail?.delegateTarget).toBe(wrapper.querySelector('button'));
     });
+
+    it('does not route events owned by nested wrappers', () => {
+        wrapper.innerHTML = `
+            <data-wrapper>
+                <button @click="topic"></button>
+            </data-wrapper>
+        `;
+        const inner = wrapper.querySelector('data-wrapper') as WrapperNode;
+        inner._boundEvents = new Set();
+
+        let outerCalls = 0;
+        let innerCalls = 0;
+        wrapper.addEventListener('topic', () => { outerCalls += 1; });
+        inner.addEventListener('topic', () => { innerCalls += 1; });
+
+        ensureDelegation(wrapper, 'click');
+        ensureDelegation(inner, 'click');
+        inner.querySelector('button')!.click();
+
+        expect(innerCalls).toBe(1);
+        expect(outerCalls).toBe(0);
+    });
 });

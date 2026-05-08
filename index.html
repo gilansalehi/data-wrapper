@@ -43,7 +43,7 @@
 <p>A complete CRUD app. State in <code>data-*</code> attributes, actions registered in JS,
    list rendered via <code>*list</code>. Open DevTools → Elements and watch the attributes update live.</p>
 
-<article class="demo" data-to="todosCode">
+<article class="demo" data-to="todosCode" @reflect="demo/reflect">
     <data-wrapper id="app" data-filter="all">
 
         <form @submit="todo/add">
@@ -138,7 +138,7 @@ app.put('todos', [
 <p>State starts in <code>data-*</code> attributes. <code>$text="/count"</code> binds the value to the DOM.
    <code>@click="topic"</code> delegates the event to a registered handler.</p>
 
-<article class="demo" data-to="counterCode">
+<article class="demo" data-to="counterCode" @reflect="demo/reflect">
     <data-wrapper id="counter" data-count="0">
         <div class="row">
             <button @click="count/dec">−</button>
@@ -165,7 +165,7 @@ app.put('todos', [
 
 <h3>Static binding — zero JavaScript</h3>
 <p>Initial state declared in HTML. Bindings render immediately on connect with no script.</p>
-<article class="demo" data-to="staticCode">
+<article class="demo" data-to="staticCode" @reflect="demo/reflect">
     <data-wrapper data-greeting="Hello" data-name="World" data-version="0.1.0">
         <p><span $text="/greeting"></span>,&nbsp;<strong $text="/name"></strong>!
         &nbsp;·&nbsp; v<span $text="/version"></span></p>
@@ -198,7 +198,7 @@ app.put('todos', [
 </table>
 
 <h3>Controlled input</h3>
-<article class="demo" data-to="controlledCode">
+<article class="demo" data-to="controlledCode" @reflect="demo/reflect">
     <data-wrapper id="controlled" data-message="">
         <label for="ctrl-input">Type something</label>
         <input id="ctrl-input" type="text" @input="msg/update" placeholder="Type something…">
@@ -216,7 +216,7 @@ app.put('todos', [
 
 <h3>Two-way binding</h3>
 <p>Multiple elements bound to the same key stay in sync automatically.</p>
-<article class="demo" data-to="twowayCode">
+<article class="demo" data-to="twowayCode" @reflect="demo/reflect">
     <data-wrapper id="twoway" data-val="">
         <div class="row">
             <input type="text" $value="/val" @input="val/update" placeholder="Input A…">
@@ -235,7 +235,7 @@ app.put('todos', [
 </details>
 
 <h3>Toggle</h3>
-<article class="demo" data-to="toggleCode">
+<article class="demo" data-to="toggleCode" @reflect="demo/reflect">
     <data-wrapper id="toggle" data-on="false">
         <div class="row">
             <button @click="toggle">Toggle</button>
@@ -290,7 +290,7 @@ demo.addEventListener('data:sync', () => {
 <h3>Inline init via <code>onload</code></h3>
 <p>The <code>onload</code> attribute fires when the wrapper connects.
    <code>this</code> is the wrapper element — no external script needed.</p>
-<article class="demo" data-to="inlineCode">
+<article class="demo" data-to="inlineCode" @reflect="demo/reflect">
     <data-wrapper data-count="10"
         onload="this.register({'dec':()=>this.put('count',n=>-1+n),'inc':()=>this.put('count',n=>1+n)})">
         <div class="row">
@@ -340,7 +340,7 @@ data-wrapper[data-filter="done"]   button[data-val="done"] {
    <code>/controllers/password-meter.js</code> via <code>src=""</code>. As you type, each rule
    lights up when satisfied, and the input frame's strength class drives the colour.</p>
 
-<article class="demo" data-to="pwmCode">
+<article class="demo" data-to="pwmCode" @reflect="demo/reflect">
     <data-wrapper id="pwm" src="/controllers/password-meter.js" data-password="">
         <div class="pw-row" $class="/strength">
             <input type="password" @input="pw/update" placeholder="Type a password…"
@@ -455,7 +455,7 @@ export default function init(wrapper) {
    <code>$href</code>, <code>$src</code>, <code>$open</code>, <code>$placeholder</code> all work as-is.
    The nav sidebar uses <code>$open="/navOpen"</code> to control the <code>&lt;dialog&gt;</code> element.</p>
 
-<article class="demo" data-to="profileCode">
+<article class="demo" data-to="profileCode" @reflect="demo/reflect">
     <data-wrapper data-name="Jane Doe" data-role="Senior Engineer" data-active="true"
                   data-url="https://example.com" data-score="9500">
         <div class="profile">
@@ -701,14 +701,20 @@ DW_FORMATTERS.set('pluralise', v =>
      APP LOGIC
      ===================================================================== -->
 <script type="module">
+    import { emit, q } from '/dist/data-wrapper.js';
+
     customElements.whenDefined('data-wrapper').then(() => {
 
         // Reflect: copy each [data-to] element's innerHTML into docs state under its
         // dataset.to key. <code $text="/key"> displays it. textContent escapes naturally.
         const docs = document.getElementById('docs');
-        docs.querySelectorAll('[data-to]').forEach(el => {
-            docs.put(el.dataset.to, el.innerHTML.trim());
+        docs.register({
+            'demo/reflect': e => {
+                const el = e.detail.delegateTarget;
+                docs.put(el.dataset.to, el.innerHTML.trim());
+            },
         });
+        q('[data-to]', docs).forEach(el => emit('reflect', null, el));
 
 
         // Counter

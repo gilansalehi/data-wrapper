@@ -59,6 +59,15 @@ describe('emit', () => {
         expect(bubbled).toBe(true);
     });
 
+    it('can dispatch without bubbling', () => {
+        document.body.innerHTML = '<div id="bubble-source"></div>';
+        const inner = document.getElementById('bubble-source') as Element;
+        let bubbled = false;
+        document.addEventListener('emit:no-bubble-check', () => { bubbled = true; }, { once: true });
+        emit('emit:no-bubble-check', undefined, inner, { bubbles: false });
+        expect(bubbled).toBe(false);
+    });
+
     it('defaults to document when no ctx given', () => {
         let fired = false;
         document.addEventListener('emit:default-ctx', () => { fired = true; }, { once: true });

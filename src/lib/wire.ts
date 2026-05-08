@@ -55,8 +55,8 @@ export const ensureDelegation = (wrapper: WrapperNode, eventName: string) => {
     // Listeners intentionally persist — no unsub. A delegate can always be added to the DOM later.
     on(eventName, (e: Event) => {
         const delegate = (e as Event & { delegateTarget?: Element }).delegateTarget;
-        if (!delegate) return;
-        emit(delegate.getAttribute(attrName)!, e, wrapper);
+        if (!delegate || delegate.closest('data-wrapper') !== wrapper) return;
+        emit(delegate.getAttribute(attrName)!, e, wrapper, { bubbles: false });
     }, `[${CSS.escape(attrName)}]`, wrapper);
 };
 
