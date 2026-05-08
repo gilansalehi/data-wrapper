@@ -236,10 +236,9 @@ app.addEventListener('data:sync', () => {
 ### Utility exports
 
 ```js
-import { q, qcb, on, emit, VP_FORMATTERS, VP_TEMPLATES, VP_DEFAULT_TEMPLATES, CONFIG } from 'data-wrapper';
+import { q, on, emit, VP_FORMATTERS, VP_TEMPLATES, VP_DEFAULT_TEMPLATES, CONFIG } from 'data-wrapper';
 
 q('.item');                           // [...querySelectorAll('.item')]
-qcb('.item', el => el.textContent);   // query + map
 on('click', handler, '.btn');         // delegated listener, returns unsubscribe fn
 emit('my:event', payload, el);        // CustomEvent dispatch
 ```
@@ -265,7 +264,7 @@ Override defaults before the script loads:
 
 ```
 src/lib/
-├── utils.ts      — q, qcb, emit, on
+├── utils.ts      — q, emit, on
 ├── registry.ts   — CONFIG, VP_FORMATTERS, VP_TEMPLATES, PROP_ALIASES, sync
 ├── engine.ts     — applyBinding, applyItemBindings, reconcile
 ├── wire.ts       — parsePath, wake, subscribe, ensureDelegation
