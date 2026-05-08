@@ -1,7 +1,7 @@
-export type Effect<T = unknown> = (value: T) => void;
+export type Sub<T = unknown> = (value: T) => void;
 export type Formatter = (v: unknown) => unknown;
 export type Item = Record<string, unknown>;
-export type Row = { node: Element; item: Item; effects: Effect<Item>[] };
+export type Row = { node: Element; item: Item; subs: Sub<Item>[] };
 export type ListCache = Map<Element, Map<unknown, Row>>;
 
 const htmlTemplate = (html: string) => {
@@ -60,12 +60,11 @@ export type DirectiveWrapper = HTMLElement & {
 export interface DirectiveContext {
     wrapper: DirectiveWrapper;
     el: Element;
-    value: unknown;
     key?: string;
     hydrate: (node: Element, row: Row) => void;
 }
 
-export type DirectiveHandler = (ctx: DirectiveContext) => void;
+export type DirectiveHandler = (ctx: DirectiveContext) => Sub;
 
 export const DW_DIRECTIVES = new Map<string, DirectiveHandler>();
 

@@ -1,16 +1,16 @@
 import { DW_FORMATTERS, resolveDirective } from './registry.ts';
-import { bind, watchRow } from './engine.ts';
-import type { Effect, ListCache, Row } from './engine.ts';
+import { bind, watch } from './engine.ts';
+import type { ListCache, Row, Sub } from './engine.ts';
 
 type WokeNode = Element & { _vWoke?: boolean };
 type Format = (value: unknown) => unknown;
 
 export interface WrapperNode extends HTMLElement {
     state:        Record<string, unknown>;
-    _subs:        Record<string, Effect[]>;
+    _subs:        Record<string, Sub[]>;
     _boundEvents: Set<string>;
     _listCache:   ListCache;
-    _watch(path: string, effect: Effect): void;
+    _watch(path: string, sub: Sub): void;
     _routeEvent(eventName: string): void;
 }
 
@@ -53,7 +53,7 @@ const wireEvent = (el: Element, name: string) => {
 
 const wireItemBinding = (el: Element, prop: string, path: string, format: Format, row: Row) => {
     const update = bind(el, prop);
-    watchRow(row, item => update(format(item?.[path])));
+    watch(row.subs, item => update(format(item?.[path])), row.item);
 };
 
 const wireBinding = (wrapper: WrapperNode, el: Element, prop: string, path: string, format: Format) => {
@@ -67,16 +67,16 @@ const wireBinding = (wrapper: WrapperNode, el: Element, prop: string, path: stri
 const wireDirective = (wrapper: WrapperNode, el: Element, prop: string, path: string, format: Format, key?: string) => {
     const directive = resolveDirective(prop);
     if (!directive) return;
+    const update = directive({
+        wrapper,
+        el,
+        key,
+        hydrate: (node, row) => wake(node, row),
+    });
 
     wrapper._watch(path, value => {
         if (!el.isConnected) return;
-        directive({
-            wrapper,
-            el,
-            value: format(value),
-            key,
-            hydrate: (node, row) => wake(node, row),
-        });
+        update(format(value));
     });
 };
 

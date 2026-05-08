@@ -1,11 +1,11 @@
 import { emit, on } from './utils.ts';
 import { wake } from './wire.ts';
 import { broadcast, watch } from './engine.ts';
-import type { Effect, ListCache } from './engine.ts';
+import type { ListCache, Sub } from './engine.ts';
 
 export class DataWrapper extends HTMLElement {
     declare state:        Record<string, unknown>;
-    declare _subs:        Record<string, Effect[]>;
+    declare _subs:        Record<string, Sub[]>;
     declare _boundEvents: Set<string>;
     declare _isSyncing:   boolean;
     declare _listCache:   ListCache;
@@ -69,8 +69,8 @@ export class DataWrapper extends HTMLElement {
         broadcast(this._subs[key], val);
     }
 
-    _watch(path: string, effect: Effect) {
-        watch((this._subs[path] = this._subs[path] || []), effect, this.state[path]);
+    _watch(path: string, sub: Sub) {
+        watch((this._subs[path] = this._subs[path] || []), sub, this.state[path]);
     }
 
     _routeEvent(eventName: string) {

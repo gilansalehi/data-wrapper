@@ -1,7 +1,7 @@
 import { DW_DIRECTIVES, resolveAlias, resolveTemplate } from './registry.ts';
-import type { DirectiveHandler, Effect, Item, Row } from './registry.ts';
+import type { DirectiveHandler, Item, Row, Sub } from './registry.ts';
 
-export type { Effect, Item, ListCache, Row } from './registry.ts';
+export type { Item, ListCache, Row, Sub } from './registry.ts';
 
 const set = (el: Element, prop: string, val: unknown) => {
     if (val === undefined || val === null) return;
@@ -12,26 +12,27 @@ const set = (el: Element, prop: string, val: unknown) => {
     }
 };
 
-export const bind = (el: Element, prop: string): Effect => {
+export const bind = (el: Element, prop: string): Sub => {
     if (prop === 'class') {
         const base = el.className;
-        return val => set(el, 'className', (base + ' ' + String(val ?? '')).replace(/\s+/g, ' ').trim());
+        return val => {
+            if (val === undefined || val === null) return;
+            set(el, 'className', (base + ' ' + String(val)).replace(/\s+/g, ' ').trim());
+        };
     }
 
     const alias = resolveAlias(prop);
     return val => set(el, alias, val);
 };
 
-export const watch = <T>(effects: Effect<T>[], effect: Effect<T>, value: T) => {
-    effects.push(effect);
-    effect(value);
+export const watch = <T>(subs: Sub<T>[], sub: Sub<T>, value: T) => {
+    subs.push(sub);
+    sub(value);
 };
 
-export const broadcast = <T>(effects: Effect<T>[] = [], value: T) => {
-    for (const effect of effects) effect(value);
+export const broadcast = <T>(subs: Sub<T>[] = [], value: T) => {
+    for (const sub of subs) sub(value);
 };
-
-export const watchRow = (row: Row, effect: Effect<Item>) => watch(row.effects, effect, row.item);
 
 type ContainerNode = Element & { _vEmptyNode?: Element | null };
 
@@ -78,7 +79,7 @@ export const reconcile = (
             row = {
                 node: (tpl.content.cloneNode(true) as DocumentFragment).firstElementChild!,
                 item,
-                effects: [],
+                subs: [],
             };
             cache.set(id, row);
             isNew = true;
@@ -86,7 +87,7 @@ export const reconcile = (
         }
 
         row.item = item;
-        if (!isNew) broadcast(row.effects, item);
+        if (!isNew) broadcast(row.subs, item);
         fragment.appendChild(row.node);
     }
 
@@ -98,9 +99,9 @@ export const reconcile = (
     for (const row of newRows) hydrate(row.node, row);
 };
 
-const listDirective: DirectiveHandler = ({ wrapper, el, value, key, hydrate }) => {
+const listDirective: DirectiveHandler = ({ wrapper, el, key, hydrate }) => {
     const tpl = el.querySelector(':scope > template') as HTMLTemplateElement | null;
-    if (!tpl) return;
+    if (!tpl) return () => {};
 
     let cache = wrapper._listCache.get(el);
     if (!cache) {
@@ -108,7 +109,7 @@ const listDirective: DirectiveHandler = ({ wrapper, el, value, key, hydrate }) =
         wrapper._listCache.set(el, cache);
     }
 
-    reconcile(el, (value as Item[]) || [], cache, tpl, hydrate, key);
+    return value => reconcile(el, (value as Item[]) || [], cache, tpl, hydrate, key);
 };
 
 DW_DIRECTIVES.set('list', listDirective);
