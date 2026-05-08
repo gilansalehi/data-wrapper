@@ -10,6 +10,7 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
     "types": ["bun"],
+    "ignoreDeprecations": "6.0",
     // Path aliases — Bun resolves these at runtime; tsc uses them for type checking
     "baseUrl": ".",
     "paths": {
