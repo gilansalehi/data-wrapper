@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
-import { DW_DIRECTIVES } from '@lib/registry.ts';
+import { CONFIG, DW_DIRECTIVES } from '@lib/registry.ts';
 import type { UpdateConfig } from '@lib/engine.ts';
 // DataWrapper is registered as a side-effect of the import
 import '@lib/component.ts';
@@ -24,8 +24,23 @@ const make = (html = ''): TestWrapper => {
 
 const tick = () => new Promise(resolve => setTimeout(resolve, 0));
 
+const DEFAULT_TOKENS = { BIND: '$', DIR: '*', EVT: '@' } as const;
+
+const resetTestConfig = () => {
+    delete window.DW_CUSTOM_CONFIG;
+    CONFIG.TOKENS = { ...DEFAULT_TOKENS };
+};
+
+const setDirectiveToken = (token: string) => {
+    window.DW_CUSTOM_CONFIG = {
+        TOKENS: { ...DEFAULT_TOKENS, DIR: token },
+    };
+    CONFIG.TOKENS = { ...DEFAULT_TOKENS, DIR: token };
+};
+
 beforeEach(() => {
     document.body.innerHTML = '';
+    resetTestConfig();
 });
 
 describe('custom element registration', () => {
@@ -219,12 +234,10 @@ describe('register', () => {
 
 describe('_broadcast', () => {
     it('routes registered directives through DW_DIRECTIVES', () => {
+        setDirectiveToken(':');
         const original = DW_DIRECTIVES.get('probe');
-        const el = document.createElement('data-wrapper') as TestWrapper;
-        const target = document.createElement('span');
-        target.setAttribute('*probe', '/name');
-        el.appendChild(target);
-        document.body.appendChild(el);
+        const el = make('<span :probe="/name"></span>');
+        const target = el.querySelector('span')!;
         let seen: unknown;
 
         DW_DIRECTIVES.set('probe', ({ wrapper, config, value }) => {

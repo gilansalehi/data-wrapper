@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
+import { CONFIG } from '@lib/registry.ts';
 import { subscribe, wake, ensureDelegation } from '@lib/wire.ts';
 import type { UpdateConfig } from '@lib/engine.ts';
 import type { WrapperNode } from '@lib/wire.ts';
@@ -32,8 +33,19 @@ const firstSub = (wrapper: WrapperNode, path: string): UpdateConfig => {
 const itemConfigs = (el: Element): UpdateConfig[] =>
     (el as Element & { _vItemConfigs?: UpdateConfig[] })._vItemConfigs ?? [];
 
+const DEFAULT_TOKENS = { BIND: '$', DIR: '*', EVT: '@' } as const;
+
+const resetTestConfig = () => {
+    CONFIG.TOKENS = { ...DEFAULT_TOKENS };
+};
+
+const setDirectiveToken = (token: string) => {
+    CONFIG.TOKENS = { ...DEFAULT_TOKENS, DIR: token };
+};
+
 beforeEach(() => {
     document.body.innerHTML = '';
+    resetTestConfig();
 });
 
 describe('parsePath (via subscribe behaviour)', () => {
@@ -98,10 +110,12 @@ describe('parsePath (via subscribe behaviour)', () => {
     });
 
     it('?key=uuid → key="uuid"', () => {
+        setDirectiveToken(':');
+
         const wrapper = appendWrapper('<ul></ul>');
         const el = wrapper.querySelector('ul')!;
 
-        subscribe(el, 'directive', '*list', '/users?key=uuid');
+        subscribe(el, 'directive', ':list', '/users?key=uuid');
 
         expect(firstSub(wrapper, 'users').key).toBe('uuid');
         expect(firstSub(wrapper, 'users').directive).toBe(true);
@@ -134,9 +148,9 @@ describe('wake', () => {
         expect(config.el).toBe(wrapper.querySelector('span')!);
     });
 
-    it('registers *list structural directive in wrapper._subs', () => {
-        wrapper.innerHTML = '<ul><template><li></li></template></ul>';
-        wrapper.querySelector('ul')!.setAttribute('*list', '/items');
+    it('registers configured structural directive token in wrapper._subs', () => {
+        setDirectiveToken(':');
+        wrapper.innerHTML = '<ul :list="/items"><template><li></li></template></ul>';
 
         wake(wrapper);
 

@@ -16,6 +16,7 @@
   ],
   "scripts": {
     "build": "bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.js --format esm --target browser && bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.min.js --format iife --minify --target browser",
+    "review": "bun typecheck && bun test:all",
     "typecheck": "tsc --noEmit",
     "test:all": "bun test:unit && bun test:e2e",
     "test:unit": "bun test tests/unit/",
