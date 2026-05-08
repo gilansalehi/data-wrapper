@@ -1,5 +1,5 @@
 import { emit, on, q } from './utils.ts';
-import { RENDER_DIRECTIVES, CONFIG } from './registry.ts';
+import { CONFIG, resolveDirective } from './registry.ts';
 import { applyBinding, reconcile } from './engine.ts';
 import { wake, ensureDelegation } from './wire.ts';
 import type { UpdateConfig } from './engine.ts';
@@ -71,30 +71,29 @@ export class DataWrapper extends HTMLElement {
             if (!config.el.isConnected) continue;
             let v = val;
             for (const pipe of config.pipes) v = pipe(v);
-            RENDER_DIRECTIVES.has(config.prop)
-                ? this._directive(config, v) // hm, seems odd.
-                : applyBinding(config.el, config.prop, v);
+            const directive = resolveDirective(config.prop);
+            if (directive) {
+                directive({
+                    wrapper: this,
+                    config,
+                    value: v,
+                    bindTemplateEvents: tpl => this._bindTemplateEvents(tpl),
+                    renderList: (container, data, cache, tpl, itemKey) => reconcile(container, data, cache, tpl, wake, itemKey),
+                });
+            } else {
+                applyBinding(config.el, config.prop, v);
+            }
         }
     }
 
-    _directive(config: UpdateConfig, val: unknown) {
-        // CODE SMELL -- these should be in the registry like the TOKENS, imo
-        if (config.prop === 'list') {
-            const tpl = config.el.querySelector(':scope > template') as HTMLTemplateElement | null;
-            if (!tpl) return;
-
-            // Pre-register event types from template content so delegation works
-            // even when items are woken while still detached from the DOM.
-            const { EVT } = CONFIG.TOKENS;
-            for (const el of q('*', tpl.content)) {
-                for (const { name } of [...el.attributes]) {
-                    if (name.startsWith(EVT)) ensureDelegation(this, name.slice(EVT.length));
-                }
+    _bindTemplateEvents(tpl: HTMLTemplateElement) {
+        // Pre-register event types from template content so delegation works
+        // even when items are woken while still detached from the DOM.
+        const { EVT } = CONFIG.TOKENS;
+        for (const el of q('*', tpl.content)) {
+            for (const { name } of [...el.attributes]) {
+                if (name.startsWith(EVT)) ensureDelegation(this, name.slice(EVT.length));
             }
-
-            let cache = this._listCache.get(config.el);
-            if (!cache) { cache = new Map(); this._listCache.set(config.el, cache); }
-            reconcile(config.el, (val as Array<Record<string, unknown>>) || [], cache, tpl, wake, config.key);
         }
     }
 
@@ -133,4 +132,6 @@ export class DataWrapper extends HTMLElement {
     }
 }
 
-customElements.define('data-wrapper', DataWrapper);
+if (typeof customElements !== 'undefined' && !customElements.get('data-wrapper')) {
+    customElements.define('data-wrapper', DataWrapper);
+}

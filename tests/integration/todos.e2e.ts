@@ -65,7 +65,7 @@ test.describe('Todos demo', () => {
             await page.locator('#app .delete-btn').first().click();
         }
 
-        await expect(page.locator('#app .vp-empty-msg')).toHaveText('No tasks yet. Add one above.');
+        await expect(page.locator('#app .dw-empty-msg')).toHaveText('No tasks yet. Add one above.');
     });
 
     test('All filter shows all todos', async ({ page }) => {

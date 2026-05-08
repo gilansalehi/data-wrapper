@@ -54,7 +54,7 @@ export const reconcile = (
         cache.clear();
 
         if (!container._vEmptyNode) {
-            const emptyName = container.getAttribute('data-empty') || 'vp-empty';
+            const emptyName = container.getAttribute('data-empty') || 'dw-empty';
             const emptyTpl  = resolveTemplate(emptyName);
             const frag      = emptyTpl
                 ? (emptyTpl.content.cloneNode(true) as DocumentFragment)

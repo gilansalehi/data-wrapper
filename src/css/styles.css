@@ -338,7 +338,7 @@ button {
 
 .filter-btns button { margin-left: .2rem; }
 
-.vp-empty-msg { text-align: center; padding: 2rem; color: var(--faint); font-style: italic; }
+.dw-empty-msg { text-align: center; padding: 2rem; color: var(--faint); font-style: italic; }
 
 /* Two-way binding inputs */
 #twoway .row input { flex: 1; margin: 0; }

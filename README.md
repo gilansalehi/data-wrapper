@@ -95,8 +95,8 @@ Built-in: `count`, `fallback`, `json`, `upper`, `lower`, `currency`, `date`, `tr
 Register custom formatters:
 
 ```js
-import { VP_FORMATTERS } from 'data-wrapper';
-VP_FORMATTERS.set('initials', v => String(v).split(' ').map(w => w[0]).join(''));
+import { DW_FORMATTERS } from 'data-wrapper';
+DW_FORMATTERS.set('initials', v => String(v).split(' ').map(w => w[0]).join(''));
 ```
 
 ---
@@ -176,7 +176,7 @@ The reconciler diffs by `item.id`. Override with `?key=`: `$list="/users?key=uui
 Inside `<template>`, `./path` is item-scoped — reads from the row's data object, not wrapper state.
 
 If a list is empty, `data-empty` selects a named empty-state template. When omitted,
-`vp-empty` is used. Template lookup prefers `VP_TEMPLATES`, then a page-level
+`dw-empty` is used. Template lookup prefers `DW_TEMPLATES`, then a page-level
 `<template id="...">`, then the small built-in defaults.
 
 ---
@@ -236,7 +236,7 @@ app.addEventListener('data:sync', () => {
 ### Utility exports
 
 ```js
-import { q, on, emit, VP_FORMATTERS, VP_TEMPLATES, VP_DEFAULT_TEMPLATES, CONFIG } from 'data-wrapper';
+import { q, on, emit, DW_FORMATTERS, DW_TEMPLATES, DW_DEFAULT_TEMPLATES, CONFIG } from 'data-wrapper';
 
 q('.item');                           // [...querySelectorAll('.item')]
 on('click', handler, '.btn');         // delegated listener, returns unsubscribe fn
@@ -251,7 +251,7 @@ Override defaults before the script loads:
 
 ```html
 <script>
-  window.VP_CUSTOM_CONFIG = {
+  window.DW_CUSTOM_CONFIG = {
     TOKENS: { BIND: ':', ADD: '+', EVT: '#' }
   };
 </script>
@@ -265,7 +265,7 @@ Override defaults before the script loads:
 ```
 src/lib/
 ├── utils.ts      — q, emit, on
-├── registry.ts   — CONFIG, VP_FORMATTERS, VP_TEMPLATES, PROP_ALIASES, sync
+├── registry.ts   — CONFIG, DW_FORMATTERS, DW_TEMPLATES, DW_DIRECTIVES, PROP_ALIASES, sync
 ├── engine.ts     — applyBinding, applyItemBindings, reconcile
 ├── wire.ts       — parsePath, wake, subscribe, ensureDelegation
 └── component.ts  — DataWrapper class

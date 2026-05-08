@@ -1,4 +1,4 @@
-import { CONFIG, VP_FORMATTERS } from './registry.ts';
+import { CONFIG, DW_FORMATTERS } from './registry.ts';
 import { applyBinding } from './engine.ts';
 import { on, emit } from './utils.ts';
 import type { UpdateConfig } from './engine.ts';
@@ -29,7 +29,7 @@ const parsePath = (attrValue: string) => {
     // The isItemScoped flag above captures the original intent.
     const url   = new URL(isItemScoped ? attrValue.slice(1) : attrValue, DWRL_BASE);
     const pipes = url.searchParams.getAll('format')
-        .map(n => VP_FORMATTERS.get(n))
+        .map(n => DW_FORMATTERS.get(n))
         .filter((f): f is Formatter => !!f);
 
     return {

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
+import { DW_DIRECTIVES } from '@lib/registry.ts';
 import type { UpdateConfig } from '@lib/engine.ts';
 // DataWrapper is registered as a side-effect of the import
 import '@lib/component.ts';
@@ -25,6 +26,20 @@ const tick = () => new Promise(resolve => setTimeout(resolve, 0));
 
 beforeEach(() => {
     document.body.innerHTML = '';
+});
+
+describe('custom element registration', () => {
+    it('does not throw when component module is evaluated after data-wrapper is already defined', async () => {
+        let error: unknown;
+
+        try {
+            await import(`../../src/lib/component.ts?guard=${Date.now()}`);
+        } catch (e) {
+            error = e;
+        }
+
+        expect(error).toBeUndefined();
+    });
 });
 
 describe('state proxy', () => {
@@ -203,6 +218,27 @@ describe('register', () => {
 });
 
 describe('_broadcast', () => {
+    it('routes registered directives through DW_DIRECTIVES', () => {
+        const original = DW_DIRECTIVES.get('probe');
+        const el = make('<span $probe="/name"></span>');
+        const target = el.querySelector('span')!;
+        let seen: unknown;
+
+        DW_DIRECTIVES.set('probe', ({ wrapper, config, value }) => {
+            seen = { wrapper, el: config.el, value };
+        });
+
+        try {
+            el.put('name', 'Ali');
+
+            expect(seen).toEqual({ wrapper: el, el: target, value: 'Ali' });
+            expect(target.getAttribute('probe')).toBeNull();
+        } finally {
+            if (original) DW_DIRECTIVES.set('probe', original);
+            else DW_DIRECTIVES.delete('probe');
+        }
+    });
+
     it('calls applyBinding for each config subscribed to the key', () => {
         const el = make('<span $text="/name"></span><strong $text="/name"></strong>');
 

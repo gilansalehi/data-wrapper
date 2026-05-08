@@ -11,9 +11,9 @@
 </head>
 <body>
 
-<!-- empty-state template (referenced by id — no VP_TEMPLATES registration needed) -->
-<template id="vp-empty">
-    <li class="vp-empty-msg">No tasks yet. Add one above.</li>
+<!-- empty-state template (referenced by id — no DW_TEMPLATES registration needed) -->
+<template id="dw-empty">
+    <li class="dw-empty-msg">No tasks yet. Add one above.</li>
 </template>
 
 <!-- =====================================================================
@@ -88,7 +88,7 @@
             <button type="submit">Add</button>
         </form>
 
-        <ul class="todo-list" $list="/view" data-empty="vp-empty">
+        <ul class="todo-list" $list="/view" data-empty="dw-empty">
             <template>
                 <li class="todo-item" $class="./status">
                     <input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id" aria-label="Toggle todo completion">
@@ -124,7 +124,7 @@
     &lt;button type="submit"&gt;Add&lt;/button&gt;
   &lt;/form&gt;
 
-  &lt;ul $list="/view" data-empty="vp-empty"&gt;
+  &lt;ul $list="/view" data-empty="dw-empty"&gt;
     &lt;template&gt;
       &lt;li class="todo-item" $class="./status"&gt;
         &lt;input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id" aria-label="Toggle todo completion"&gt;
@@ -557,13 +557,13 @@ data-wrapper[data-filter="done"]   button[data-val="done"] {
 <p class="note">Entirely static — change any <code>data-*</code> value in DevTools to see the formatters re-run instantly.</p>
 <details>
     <summary>Custom formatter registration</summary>
-    <pre>import { VP_FORMATTERS } from 'data-wrapper';
+    <pre>import { DW_FORMATTERS } from 'data-wrapper';
 
-VP_FORMATTERS.set('initials', v =>
+DW_FORMATTERS.set('initials', v =>
   String(v).split(' ').map(w => w[0].toUpperCase()).join('')
 );
 
-VP_FORMATTERS.set('ago', v => {
+DW_FORMATTERS.set('ago', v => {
   const diff = Date.now() - new Date(v).getTime();
   const mins = Math.floor(diff / 60000);
   return mins &lt; 1 ? 'just now' : `${mins}m ago`;
@@ -676,9 +676,9 @@ VP_FORMATTERS.set('ago', v => {
 
 <h3>Custom tokens</h3>
 <details>
-    <summary>window.VP_CUSTOM_CONFIG</summary>
+    <summary>window.DW_CUSTOM_CONFIG</summary>
     <pre>&lt;script&gt;
-  window.VP_CUSTOM_CONFIG = {
+  window.DW_CUSTOM_CONFIG = {
     TOKENS: { BIND: ':', ADD: '+', EVT: '#' },
   };
 &lt;/script&gt;
@@ -691,14 +691,14 @@ VP_FORMATTERS.set('ago', v => {
 
 <h3>Custom formatters</h3>
 <details>
-    <summary>VP_FORMATTERS.set()</summary>
-    <pre>import { VP_FORMATTERS } from 'data-wrapper';
+    <summary>DW_FORMATTERS.set()</summary>
+    <pre>import { DW_FORMATTERS } from 'data-wrapper';
 
-VP_FORMATTERS.set('initials', v =>
+DW_FORMATTERS.set('initials', v =>
   String(v).split(' ').map(w => w[0].toUpperCase()).join('')
 );
 
-VP_FORMATTERS.set('pluralise', v =>
+DW_FORMATTERS.set('pluralise', v =>
   `${v} ${Number(v) === 1 ? 'item' : 'items'}`
 );</pre>
 </details>
@@ -716,8 +716,8 @@ VP_FORMATTERS.set('pluralise', v =>
   &lt;template&gt;&lt;li $text="./label"&gt;&lt;/li&gt;&lt;/template&gt;
 &lt;/ul&gt;
 
-&lt;!-- Omit data-empty to use built-in vp-empty. Built-ins include:
-     vp-empty, vp-missing, vp-loading, vp-error. --&gt;</pre>
+&lt;!-- Omit data-empty to use built-in dw-empty. Built-ins include:
+     dw-empty, dw-missing, dw-loading, dw-error. --&gt;</pre>
 </details>
 </section>
 

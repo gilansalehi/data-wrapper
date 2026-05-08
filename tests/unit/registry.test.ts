@@ -1,20 +1,20 @@
 import { describe, it, expect } from '@tests/helpers.ts';
-import { VP_FORMATTERS, CONFIG, sync, PROP_ALIASES } from '@lib/registry.ts';
+import { DW_FORMATTERS, CONFIG, sync, PROP_ALIASES } from '@lib/registry.ts';
 
 describe('CONFIG', () => {
     it('defaults to $ / _ / @ tokens', () => {
         expect(CONFIG.TOKENS).toEqual({ BIND: '$', ADD: '_', EVT: '@' });
     });
 
-    it('merges window.VP_CUSTOM_CONFIG.TOKENS when present', async () => {
-        const original = window.VP_CUSTOM_CONFIG;
-        window.VP_CUSTOM_CONFIG = { TOKENS: { BIND: ':', ADD: '+', EVT: '#' } };
+    it('merges window.DW_CUSTOM_CONFIG.TOKENS when present', async () => {
+        const original = window.DW_CUSTOM_CONFIG;
+        window.DW_CUSTOM_CONFIG = { TOKENS: { BIND: ':', ADD: '+', EVT: '#' } };
 
         const mod = await import(`../../src/lib/registry.ts?custom=${Date.now()}`) as typeof import('@lib/registry.ts');
 
         expect(mod.CONFIG.TOKENS).toEqual({ BIND: ':', ADD: '+', EVT: '#' });
-        if (original) window.VP_CUSTOM_CONFIG = original;
-        else delete window.VP_CUSTOM_CONFIG;
+        if (original) window.DW_CUSTOM_CONFIG = original;
+        else delete window.DW_CUSTOM_CONFIG;
     });
 
     it('NO_WAKE includes DATA-WRAPPER and TEMPLATE', () => {
@@ -69,8 +69,8 @@ describe('sync', () => {
     });
 });
 
-describe('VP_FORMATTERS — built-ins', () => {
-    const fmt = (name: string) => VP_FORMATTERS.get(name)!;
+describe('DW_FORMATTERS — built-ins', () => {
+    const fmt = (name: string) => DW_FORMATTERS.get(name)!;
 
     it('count: returns array.length', () => {
         expect(fmt('count')([1, 2, 3])).toBe(3);

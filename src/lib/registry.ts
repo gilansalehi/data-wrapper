@@ -7,7 +7,7 @@ export interface CustomConfig { TOKENS?: Partial<Tokens>; NO_WAKE?: string[]; }
 
 declare global {
     interface Window {
-        VP_CUSTOM_CONFIG?: CustomConfig;
+        DW_CUSTOM_CONFIG?: CustomConfig;
     }
 }
 
@@ -16,20 +16,20 @@ const DEFAULT_CONFIG: Config = {
     NO_WAKE: ['DATA-WRAPPER', 'TEMPLATE', 'SVG'],
 };
 
-const customConfig = typeof window === 'undefined' ? undefined : window.VP_CUSTOM_CONFIG;
+const customConfig = typeof window === 'undefined' ? undefined : window.DW_CUSTOM_CONFIG;
 
 export const CONFIG: Config & Record<string, unknown> = {
     TOKENS: { ...DEFAULT_CONFIG.TOKENS, ...customConfig?.TOKENS },
     NO_WAKE: customConfig?.NO_WAKE ?? DEFAULT_CONFIG.NO_WAKE,
 };
 
-export const VP_TEMPLATES = new Map<string, HTMLTemplateElement>();
+export const DW_TEMPLATES = new Map<string, HTMLTemplateElement>();
 
-export const VP_DEFAULT_TEMPLATES = new Map<string, string>([
-    ['vp-empty',   '<li data-vp-template="empty">No items</li>'],
-    ['vp-missing', '<span data-vp-template="missing">—</span>'],
-    ['vp-loading', '<span data-vp-template="loading">Loading...</span>'],
-    ['vp-error',   '<span data-vp-template="error">Something went wrong</span>'],
+export const DW_DEFAULT_TEMPLATES = new Map<string, string>([
+    ['dw-empty',   '<li data-dw-template="empty">No items</li>'],
+    ['dw-missing', '<span data-dw-template="missing">—</span>'],
+    ['dw-loading', '<span data-dw-template="loading">Loading...</span>'],
+    ['dw-error',   '<span data-dw-template="error">Something went wrong</span>'],
 ]);
 
 const htmlTemplate = (html: string): HTMLTemplateElement => {
@@ -39,18 +39,18 @@ const htmlTemplate = (html: string): HTMLTemplateElement => {
 };
 
 export const resolveTemplate = (name: string): HTMLTemplateElement | null => {
-    const registered = VP_TEMPLATES.get(name);
+    const registered = DW_TEMPLATES.get(name);
     if (registered) return registered;
     if (typeof document === 'undefined') return null;
 
     const declared = document.getElementById(name);
     if (declared?.tagName === 'TEMPLATE') return declared as HTMLTemplateElement;
 
-    const fallback = VP_DEFAULT_TEMPLATES.get(name);
+    const fallback = DW_DEFAULT_TEMPLATES.get(name);
     return fallback ? htmlTemplate(fallback) : null;
 };
 
-export const VP_FORMATTERS = new Map<string, Formatter>([
+export const DW_FORMATTERS = new Map<string, Formatter>([
     ['count',    v => (Array.isArray(v) || typeof v === 'string') ? v.length : 0],
     ['fallback', v => v ?? '—'],
     ['json',     v => JSON.stringify(v, null, 2)],
@@ -80,7 +80,47 @@ export const PROP_ALIASES: Record<string, string> = {
 
 export const resolveAlias = (key: string) => PROP_ALIASES[key] || key;
 
-export const RENDER_DIRECTIVES = new Set(['list']);
+export interface DirectiveContext {
+    wrapper: {
+        _listCache: Map<Element, Map<unknown, Element>>;
+    };
+    config: {
+        el: Element;
+        key?: string;
+    };
+    value: unknown;
+    bindTemplateEvents: (tpl: HTMLTemplateElement) => void;
+    renderList: (
+        container: Element,
+        data: Array<Record<string, unknown>>,
+        cache: Map<unknown, Element>,
+        tpl: HTMLTemplateElement,
+        key?: string,
+    ) => void;
+}
+
+export type DirectiveHandler = (ctx: DirectiveContext) => void;
+
+const listDirective: DirectiveHandler = ({ wrapper, config, value, bindTemplateEvents, renderList }) => {
+    const tpl = config.el.querySelector(':scope > template') as HTMLTemplateElement | null;
+    if (!tpl) return;
+
+    bindTemplateEvents(tpl);
+
+    let cache = wrapper._listCache.get(config.el);
+    if (!cache) {
+        cache = new Map();
+        wrapper._listCache.set(config.el, cache);
+    }
+
+    renderList(config.el, (value as Array<Record<string, unknown>>) || [], cache, tpl, config.key);
+};
+
+export const DW_DIRECTIVES = new Map<string, DirectiveHandler>([
+    ['list', listDirective],
+]);
+
+export const resolveDirective = (key: string) => DW_DIRECTIVES.get(key);
 
 // CODE SMELL -- is this actually being used to update the DOM?
 export const sync = (el: Element, prop: string, val: unknown) => {
