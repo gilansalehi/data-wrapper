@@ -151,9 +151,51 @@ describe('wake', () => {
         expect(el._vWoke).toBe(true);
         expect(wrapper._subs.name).toHaveLength(1);
     });
-    it.todo('does not descend into nested data-wrapper elements');
-    it.todo('does not descend into <template> elements');
-    it.todo('item-scoped ./path is stored on itemNode._vItemConfigs, not wrapper._subs');
+
+    it('does not descend into nested data-wrapper elements', () => {
+        wrapper.innerHTML = `
+            <span $text="/outer"></span>
+            <data-wrapper>
+                <span $text="/inner"></span>
+            </data-wrapper>
+        `;
+
+        wake(wrapper);
+
+        expect(firstSub(wrapper, 'outer').path).toBe('outer');
+        expect(wrapper._subs.inner).toBeUndefined();
+    });
+
+    it('does not descend into <template> elements', () => {
+        wrapper.innerHTML = `
+            <span $text="/outside"></span>
+            <template>
+                <span $text="/inside"></span>
+            </template>
+        `;
+
+        wake(wrapper);
+
+        expect(firstSub(wrapper, 'outside').path).toBe('outside');
+        expect(wrapper._subs.inside).toBeUndefined();
+    });
+
+    it('item-scoped ./path is stored on itemNode._vItemConfigs, not wrapper._subs', () => {
+        const itemNode = document.createElement('li') as Element & {
+            _vItem?: Record<string, unknown>;
+        };
+        itemNode._vItem = { task: 'Ship tests' };
+        itemNode.innerHTML = '<span $text="./task"></span>';
+        wrapper.appendChild(itemNode);
+
+        wake(itemNode, itemNode);
+
+        const [config] = itemConfigs(itemNode);
+        expect(config.path).toBe('task');
+        expect(config.el).toBe(itemNode.querySelector('span')!);
+        expect(wrapper._subs.task).toBeUndefined();
+        expect(itemNode.querySelector('span')!.textContent).toBe('Ship tests');
+    });
 });
 
 describe('ensureDelegation', () => {
@@ -163,9 +205,46 @@ describe('ensureDelegation', () => {
         document.body.appendChild(wrapper as unknown as HTMLElement);
     });
 
-    it.todo('adds event type to wrapper._boundEvents');
-    it.todo('does not add duplicate listeners for the same event type');
-    it.todo('fires registered handler when delegated element is clicked');
-    it.todo('passes original event in CustomEvent.detail');
+    it('adds event type to wrapper._boundEvents', () => {
+        ensureDelegation(wrapper, 'click');
+
+        expect(wrapper._boundEvents.has('click')).toBe(true);
+    });
+
+    it('does not add duplicate listeners for the same event type', () => {
+        wrapper.innerHTML = '<button @click="topic"></button>';
+        let calls = 0;
+        wrapper.addEventListener('topic', () => { calls += 1; });
+
+        ensureDelegation(wrapper, 'click');
+        ensureDelegation(wrapper, 'click');
+        wrapper.querySelector('button')!.click();
+
+        expect(wrapper._boundEvents).toHaveLength(1);
+        expect(calls).toBe(1);
+    });
+
+    it('fires registered handler when delegated element is clicked', () => {
+        wrapper.innerHTML = '<button @click="topic"></button>';
+        let fired = false;
+        wrapper.addEventListener('topic', () => { fired = true; });
+
+        ensureDelegation(wrapper, 'click');
+        wrapper.querySelector('button')!.click();
+
+        expect(fired).toBe(true);
+    });
+
+    it('passes original event in CustomEvent.detail', () => {
+        wrapper.innerHTML = '<button @click="topic"></button>';
+        let detail: unknown;
+        wrapper.addEventListener('topic', e => { detail = (e as CustomEvent).detail; });
+
+        ensureDelegation(wrapper, 'click');
+        const event = new Event('click', { bubbles: true });
+        wrapper.querySelector('button')!.dispatchEvent(event);
+
+        expect(detail).toBe(event);
+    });
     it.todo('sets delegateTarget on the event detail');
 });
