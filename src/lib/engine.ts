@@ -1,19 +1,9 @@
 import { resolveTemplate, sync } from './registry.ts';
-import type { Formatter } from './registry.ts';
 
-// UpdateConfig owned here — used by engine, wire, and component.
-export interface UpdateConfig {
-    el:       Element;
-    path:     string;
-    prop:     string;
-    pipes:    Formatter[];
-    itemNode: Element | null;
-    directive?: boolean;
-    key?:     string; // identity key for *list reconciler (default: 'id')
-}
+export type Effect<T = unknown> = (value: T) => void;
 
 type VNode       = Element & { _vBase?: Set<string>; _vState?: { dynamic: string } };
-type ItemElement = Element & { _vItem?: Record<string, unknown>; _vItemConfigs?: UpdateConfig[] };
+type ItemElement = Element & { _vItem?: Record<string, unknown>; _vItemEffects?: Effect<Record<string, unknown>>[] };
 
 export const applyBinding = (el: Element, prop: string, val: unknown) => {
     if (val === undefined || val === null) return;
@@ -32,11 +22,7 @@ export const applyBinding = (el: Element, prop: string, val: unknown) => {
 };
 
 export const applyItemBindings = (node: Element, item: Record<string, unknown>) => {
-    for (const config of (node as ItemElement)._vItemConfigs || []) {
-        let val: unknown = item[config.path];
-        for (const pipe of config.pipes) val = pipe(val); // pipes vs computed props... very similar.
-        if (!config.directive) applyBinding(config.el, config.prop, val);
-    }
+    for (const effect of (node as ItemElement)._vItemEffects || []) effect(item);
 };
 
 type ContainerNode = Element & { _vEmptyNode?: Element | null };

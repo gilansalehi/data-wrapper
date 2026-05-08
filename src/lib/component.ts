@@ -1,12 +1,11 @@
-import { emit, on, q } from './utils.ts';
-import { CONFIG, resolveDirective } from './registry.ts';
-import { applyBinding, reconcile } from './engine.ts';
-import { wake, ensureDelegation } from './wire.ts';
-import type { UpdateConfig } from './engine.ts';
+import { emit, on } from './utils.ts';
+import { CONFIG } from './registry.ts';
+import { wake } from './wire.ts';
+import type { Effect } from './engine.ts';
 
 export class DataWrapper extends HTMLElement {
     declare state:        Record<string, unknown>;
-    declare _subs:        Record<string, UpdateConfig[]>;
+    declare _subs:        Record<string, Effect[]>;
     declare _boundEvents: Set<string>;
     declare _isSyncing:   boolean;
     declare _listCache:   Map<Element, Map<unknown, Element>>;
@@ -57,7 +56,6 @@ export class DataWrapper extends HTMLElement {
     connectedCallback() {
         this._observer.observe(this, { attributes: true });
         wake(this, null);
-        for (const key of Object.keys(this.dataset)) this._broadcast(key, this.state[key]);
         emit('load', this, this);          // triggers onload="" attribute on the element
         emit('data-wrapper:load', this);   // document-level notification for external scripts
         if (this.hasAttribute('src')) queueMicrotask(() => this.load());
@@ -68,40 +66,26 @@ export class DataWrapper extends HTMLElement {
     }
 
     _broadcast(key: string, val: unknown) {
-        for (const config of this._subs[key] || []) {
-            if (!config.el.isConnected) continue;
-            let v = val;
-            for (const pipe of config.pipes) v = pipe(v);
-            if (config.directive) {
-                const directive = resolveDirective(config.prop);
-                if (!directive) continue;
-                directive({
-                    wrapper: this,
-                    config,
-                    value: v,
-                    bindTemplateEvents: tpl => this._bindTemplateEvents(tpl),
-                    renderList: (container, data, cache, tpl, itemKey) => reconcile(container, data, cache, tpl, wake, itemKey),
-                });
-            } else {
-                applyBinding(config.el, config.prop, v);
-            }
-        }
+        for (const effect of this._subs[key] || []) effect(val);
     }
 
-    _bindTemplateEvents(tpl: HTMLTemplateElement) {
-        // Pre-register event types from template content so delegation works
-        // even when items are woken while still detached from the DOM.
-        const { EVT } = CONFIG.TOKENS;
-        for (const el of q('*', tpl.content)) {
-            for (const { name } of [...el.attributes]) {
-                if (name.startsWith(EVT)) ensureDelegation(this, name.slice(EVT.length));
-            }
-        }
+    _watch(path: string, effect: Effect) {
+        (this._subs[path] = this._subs[path] || []).push(effect);
+        effect(this.state[path]);
     }
 
-    _sub(path: string, config: UpdateConfig) {
-        (this._subs[path] = this._subs[path] || []).push(config);
-        this._broadcast(path, this.state[path]);
+    _routeEvent(eventName: string) {
+        if (this._boundEvents.has(eventName)) return;
+        this._boundEvents.add(eventName);
+
+        const attrName = `${CONFIG.TOKENS.EVT}${eventName}`;
+
+        // Listeners intentionally persist — a delegate can always be woken into the DOM later.
+        on(eventName, (e: Event) => {
+            const delegate = (e as Event & { delegateTarget?: Element }).delegateTarget;
+            if (!delegate || delegate.closest('data-wrapper') !== this) return;
+            emit(delegate.getAttribute(attrName)!, e, delegate);
+        }, `[${CSS.escape(attrName)}]`, this);
     }
 
     register(actions: Record<string, EventListener>) {
@@ -147,7 +131,6 @@ export class DataWrapper extends HTMLElement {
             this._subs = {};
             this._listCache = new Map();
             wake(this, null);
-            for (const key of Object.keys(this.dataset)) this._broadcast(key, this.state[key]);
         }
         emit('data:load', { src: url.href }, this);
     }

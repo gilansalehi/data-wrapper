@@ -83,12 +83,9 @@ export interface DirectiveContext {
     wrapper: {
         _listCache: Map<Element, Map<unknown, Element>>;
     };
-    config: {
-        el: Element;
-        key?: string;
-    };
+    el: Element;
     value: unknown;
-    bindTemplateEvents: (tpl: HTMLTemplateElement) => void;
+    key?: string;
     renderList: (
         container: Element,
         data: Array<Record<string, unknown>>,
@@ -100,19 +97,17 @@ export interface DirectiveContext {
 
 export type DirectiveHandler = (ctx: DirectiveContext) => void;
 
-const listDirective: DirectiveHandler = ({ wrapper, config, value, bindTemplateEvents, renderList }) => {
-    const tpl = config.el.querySelector(':scope > template') as HTMLTemplateElement | null;
+const listDirective: DirectiveHandler = ({ wrapper, el, value, key, renderList }) => {
+    const tpl = el.querySelector(':scope > template') as HTMLTemplateElement | null;
     if (!tpl) return;
 
-    bindTemplateEvents(tpl);
-
-    let cache = wrapper._listCache.get(config.el);
+    let cache = wrapper._listCache.get(el);
     if (!cache) {
         cache = new Map();
-        wrapper._listCache.set(config.el, cache);
+        wrapper._listCache.set(el, cache);
     }
 
-    renderList(config.el, (value as Array<Record<string, unknown>>) || [], cache, tpl, config.key);
+    renderList(el, (value as Array<Record<string, unknown>>) || [], cache, tpl, key);
 };
 
 export const DW_DIRECTIVES = new Map<string, DirectiveHandler>([
