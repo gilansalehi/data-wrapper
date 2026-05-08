@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     // Target: browser Web Components, full DOM surface
-    "lib": ["ESNext", "DOM"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "target": "ESNext",
     "module": "ESNext",
     "moduleDetection": "force",
@@ -9,7 +9,7 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
-    "types": [],
+    "types": ["bun"],
     // Path aliases — Bun resolves these at runtime; tsc uses them for type checking
     "baseUrl": ".",
     "paths": {
@@ -30,5 +30,5 @@
     "noUncheckedIndexedAccess": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["src/data-wrapper.tssrc/lib/types.d.tsd.ts"]
+  "include": ["src/**/*.ts", "tests/**/*.ts", "*.ts"]
 }

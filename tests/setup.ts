@@ -5,7 +5,7 @@ const win = new Window({ url: 'http://localhost:3000/' });
 
 // Re-stamp the internal window→document link using the Symbol from this
 // module scope, so querySelectorAll can find it regardless of preload isolation.
-(win.document as Record<symbol, unknown>)[PropertySymbol.window] = win;
+(win.document as unknown as Record<symbol, unknown>)[PropertySymbol.window] = win;
 
 Object.assign(globalThis, {
     window:           win,

@@ -17,8 +17,9 @@ import {
 } from 'bun:test';
 
 type TodoFn = (label: string, fn?: () => void | Promise<void>) => void;
-type WithFlexTodo<T> = Omit<T, 'todo'> & { todo: TodoFn };
+type TestFn = (label: string, fn?: () => void | Promise<void>) => void;
+type WithFlexTodo<T> = TestFn & Omit<T, 'todo'> & { todo: TodoFn };
 
-export const test = _test as WithFlexTodo<typeof _test>;
-export const it   = _it   as WithFlexTodo<typeof _it>;
+export const test = _test as unknown as WithFlexTodo<typeof _test>;
+export const it   = _it   as unknown as WithFlexTodo<typeof _it>;
 export { describe, expect, beforeEach, afterEach, beforeAll, afterAll, mock, spyOn };

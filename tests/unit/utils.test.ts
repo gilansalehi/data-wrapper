@@ -39,7 +39,8 @@ describe('emit', () => {
         document.addEventListener('emit:name-check', e => { received = e; }, { once: true });
         emit('emit:name-check');
         expect(received).not.toBeNull();
-        expect(typeof received).toBe('emit:name-check')
+        const event = received as Event | null;
+        expect(event?.type).toBe('emit:name-check');
     });
 
     it('puts payload in event.detail', () => {

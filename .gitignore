@@ -14,7 +14,7 @@ coverage
 logs
 _.log
 report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
-playwright/report*
+playwright-report/*
 test-results/*
 
 # dotenv environment variable files
