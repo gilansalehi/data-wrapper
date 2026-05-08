@@ -1,6 +1,6 @@
 import { DW_DIRECTIVES, DW_FORMATTERS } from './registry.ts';
 import { bind, watch } from './engine.ts';
-import type { Row, Wrapper } from './engine.ts';
+import type { Row, Sub, Wrapper } from './engine.ts';
 
 type Format = (value: unknown) => unknown;
 
@@ -44,44 +44,24 @@ const wireEvent = (el: Element, name: string) => {
     owner(el)?._routeEvent(name.slice(1));
 };
 
-const wireItemBinding = (el: Element, prop: string, path: string, format: Format, row: Row) => {
-    const update = bind(el, prop);
-    watch(row.subs, item => update(format(item?.[path])), row.item);
+const subscribe = (wrapper: WrapperNode, row: Row | null, path: string, sub: Sub) => {
+    if (row) {
+        watch(row.subs, item => sub(item?.[path]), row.item);
+    } else {
+        wrapper._watch(path, sub);
+    }
 };
 
-const wireItemDirective = (el: Element, prop: string, path: string, format: Format, key: string | undefined, row: Row) => {
-    const directive = DW_DIRECTIVES.get(prop);
-    if (!directive) return;
-    const update = directive({
-        wrapper: owner(el)!,
-        el,
-        key,
-        wake,
-    });
-    watch(row.subs, item => update(format(item?.[path])), row.item);
-};
+const wireState = (wrapper: WrapperNode, el: Element, token: string, prop: string, p: ReturnType<typeof parsePath>, row: Row | null) => {
+    const update = token === '$'
+        ? bind(el, prop)
+        : DW_DIRECTIVES.get(prop)?.({ wrapper, el, key: p.key, wake });
 
-const wireBinding = (wrapper: WrapperNode, el: Element, prop: string, path: string, format: Format) => {
-    const update = bind(el, prop);
-    wrapper._watch(path, value => {
+    if (!update) return;
+
+    subscribe(wrapper, p.isItemScoped ? row : null, p.path, value => {
         if (!el.isConnected) return;
-        update(format(value));
-    });
-};
-
-const wireDirective = (wrapper: WrapperNode, el: Element, prop: string, path: string, format: Format, key?: string) => {
-    const directive = DW_DIRECTIVES.get(prop);
-    if (!directive) return;
-    const update = directive({
-        wrapper,
-        el,
-        key,
-        wake,
-    });
-
-    wrapper._watch(path, value => {
-        if (!el.isConnected) return;
-        update(format(value));
+        update(p.format(value));
     });
 };
 
@@ -105,29 +85,14 @@ export const wire = (
 
     if (token !== '$' && token !== '*') return;
 
-    const { path, format, key, url, isItemScoped } = parsePath(attr.value);
+    const p = parsePath(attr.value);
 
-    if (url.hostname !== 'x') return; // TODO: cross-wrapper mesh
+    if (p.url.hostname !== 'x') return; // TODO: cross-wrapper mesh
 
-    if (isItemScoped && row) {
-        if (token === '*') {
-            wireItemDirective(el, prop, path, format, key, row);
-            return;
-        }
-        wireItemBinding(el, prop, path, format, row);
-        return;
-    }
-
-    // Wrapper-root binding — requires DOM ancestry.
     const wrapper = owner(el);
     if (!wrapper) return;
 
-    if (token === '*') {
-        wireDirective(wrapper, el, prop, path, format, key);
-        return;
-    }
-
-    wireBinding(wrapper, el, prop, path, format);
+    wireState(wrapper, el, token, prop, p, row);
 };
 
 // ---------------------------------------------------------------------------
