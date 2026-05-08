@@ -1,5 +1,4 @@
 export type Formatter = (v: unknown) => unknown;
-export type TemplateSource = HTMLTemplateElement | string;
 
 const htmlTemplate = (html: string) => {
     const tpl = document.createElement('template');
@@ -7,32 +6,18 @@ const htmlTemplate = (html: string) => {
     return tpl;
 };
 
-const toTemplate = (source: TemplateSource): HTMLTemplateElement | null => {
-    if (typeof source !== 'string') return source;
-    if (typeof document === 'undefined') return null;
-    return htmlTemplate(source);
-};
-
-export const DW_TEMPLATES = new Map<string, TemplateSource>();
-
-export const DW_DEFAULT_TEMPLATES = new Map<string, string>([
-    ['dw-empty',   '<li data-dw-template="empty">No items</li>'],
-    ['dw-missing', '<span data-dw-template="missing">—</span>'],
-    ['dw-loading', '<span data-dw-template="loading">Loading...</span>'],
-    ['dw-error',   '<span data-dw-template="error">Something went wrong</span>'],
+export const DW_TEMPLATES = new Map<string, HTMLTemplateElement>([
+    ['dw-empty',   htmlTemplate('<li data-dw-template="empty">No items</li>')],
+    ['dw-missing', htmlTemplate('<span data-dw-template="missing">—</span>')],
+    ['dw-loading', htmlTemplate('<span data-dw-template="loading">Loading...</span>')],
+    ['dw-error',   htmlTemplate('<span data-dw-template="error">Something went wrong</span>')],
 ]);
 
 export const resolveTemplate = (name: string): HTMLTemplateElement | null => {
-    const registered = DW_TEMPLATES.get(name);
-    const custom = registered ? toTemplate(registered) : null;
-    if (custom) return custom;
-    if (typeof document === 'undefined') return null;
-
     const declared = document.getElementById(name);
     if (declared?.tagName === 'TEMPLATE') return declared as HTMLTemplateElement;
 
-    const fallback = DW_DEFAULT_TEMPLATES.get(name);
-    return fallback ? htmlTemplate(fallback) : null;
+    return DW_TEMPLATES.get(name) || null;
 };
 
 export const DW_FORMATTERS = new Map<string, Formatter>([
