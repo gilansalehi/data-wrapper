@@ -11,7 +11,7 @@
 </head>
 <body>
 
-<data-wrapper id="nav" src="/partials/nav-docs.html" data-nav-open="false"
+<data-wrapper id="nav" src="/views/nav-docs.html" data-nav-open="false"
     onload="this.register({
         'nav/toggle':   () => nav.put('navOpen', v => !v),
         'nav/close':    () => nav.put('navOpen', false),
@@ -41,7 +41,7 @@
         <code>*directive</code> invokes a registered structural directive;
         <code>@event</code> delegates a native DOM event to a registered topic.
     </p>
-    <data-wrapper src="/partials/docs/tokens.html"></data-wrapper>
+    <data-wrapper src="/views/docs/tokens.html"></data-wrapper>
 </section>
 
 <section id="state-api">
@@ -52,7 +52,7 @@
         <code>push</code> appends, <code>pull</code> filters.
         <code>register</code> wires event topics to handlers.
     </p>
-    <data-wrapper src="/partials/docs/state-api.html"></data-wrapper>
+    <data-wrapper src="/views/docs/state-api.html"></data-wrapper>
 </section>
 
 <section id="prop-aliases">
@@ -62,7 +62,7 @@
         Most names map directly; the table below covers the HTML-attribute /
         DOM-property naming gap.
     </p>
-    <data-wrapper src="/partials/docs/prop-aliases.html"></data-wrapper>
+    <data-wrapper src="/views/docs/prop-aliases.html"></data-wrapper>
 </section>
 
 <section id="list-directive">
@@ -74,7 +74,7 @@
         subscribers, and renders a <code>data-empty</code> template when the
         array is empty.
     </p>
-    <data-wrapper src="/partials/docs/list-directive.html"></data-wrapper>
+    <data-wrapper src="/views/docs/list-directive.html"></data-wrapper>
 </section>
 
 <section id="if-directive">
@@ -83,7 +83,7 @@
         Toggles an element's presence in the DOM. When false, the element is
         replaced with a comment anchor; when true, it returns and re-wakes.
     </p>
-    <data-wrapper src="/partials/docs/if-directive.html"></data-wrapper>
+    <data-wrapper src="/views/docs/if-directive.html"></data-wrapper>
 </section>
 
 <section id="formatters">
@@ -92,7 +92,7 @@
         Append <code>?format=name</code> to any path. Chain multiple — applied
         left to right. Built-ins:
     </p>
-    <data-wrapper src="/partials/docs/formatters.html"></data-wrapper>
+    <data-wrapper src="/views/docs/formatters.html"></data-wrapper>
     <p class="note">
         Add your own with <code>DW_FORMATTERS.set(name, fn)</code>.
     </p>
@@ -105,7 +105,7 @@
         <code>*list</code> element. Override by declaring a
         <code>&lt;template id&gt;</code> with the same name in your document.
     </p>
-    <data-wrapper src="/partials/docs/templates.html"></data-wrapper>
+    <data-wrapper src="/views/docs/templates.html"></data-wrapper>
 </section>
 
 </main>

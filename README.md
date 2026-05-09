@@ -78,7 +78,7 @@ state renders a referenced `<template>` or one of the built-ins (`dw-empty`,
 
 ```html
 <data-wrapper src="/controllers/widget.js" data-name=""></data-wrapper>
-<data-wrapper src="/partials/section.html"></data-wrapper>
+<data-wrapper src="/views/section.html"></data-wrapper>
 ```
 
 A `.js` / `.mjs` source is imported and its `default` export is called with

@@ -22,7 +22,7 @@
     "test:unit": "bun test tests/unit/",
     "test:e2e": "bun run build && bunx playwright test",
     "docs": "bun scripts/generate-docs.ts",
-    "docs:check": "bun docs && git diff --exit-code -- partials/docs/",
+    "docs:check": "bun docs && git diff --exit-code -- views/docs/",
     "serve": "bun serve.ts"
   },
   "keywords": ["web-components", "data-binding", "reactivity", "no-build", "html-first", "framework"],

@@ -24,6 +24,6 @@ const partial = (source: string, region: Region) =>
 for await (const path of new Bun.Glob('src/lib/*.ts').scan('.')) {
     const source = path.split('/').pop()!;
     for (const region of extract(await Bun.file(path).text())) {
-        await Bun.write(`partials/docs/${region.name}.html`, partial(source, region));
+        await Bun.write(`views/docs/${region.name}.html`, partial(source, region));
     }
 }

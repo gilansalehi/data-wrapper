@@ -14,7 +14,7 @@
     <li class="dw-empty-msg">No tasks yet. Add one above.</li>
 </template>
 
-<data-wrapper id="nav" src="/partials/nav.html" data-nav-open="false"
+<data-wrapper id="nav" src="/views/nav.html" data-nav-open="false"
     onload="this.register({
         'nav/toggle':   () => nav.put('navOpen', v => !v),
         'nav/close':    () => nav.put('navOpen', false),
@@ -350,9 +350,9 @@ data-wrapper[data-filter="done"]   button[data-val="done"] {
 
 
 <!-- =====================================================================
-     § LOADING — section markup loaded from /partials/section-loading.html
+     § LOADING — section markup loaded from /views/section-loading.html
      ===================================================================== -->
-<data-wrapper src="/partials/section-loading.html"></data-wrapper>
+<data-wrapper src="/views/section-loading.html"></data-wrapper>
 
 
 <!-- =====================================================================

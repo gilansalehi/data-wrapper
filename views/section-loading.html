@@ -1,16 +1,16 @@
 <section id="loading">
-<h2>Loading partials &amp; modules</h2>
+<h2>Loading views &amp; modules</h2>
 <p>A wrapper with a <code>src=""</code> attribute auto-loads on connect.
    File extension picks the loader: <code>.html</code> swaps the response into the wrapper and wakes its bindings;
    <code>.js</code> / <code>.mjs</code> are loaded with native <code>import()</code>.</p>
 
 <p class="note">The <strong>nav sidebar at the top of this page</strong> and <strong>this very section</strong>
-   are both loaded from <code>/partials/</code>. Open Network → Fetch/XHR in DevTools and refresh.</p>
+   are both loaded from <code>/views/</code>. Open Network → Fetch/XHR in DevTools and refresh.</p>
 
 <h3>HTML partial</h3>
 <details open>
     <summary>How the nav is loaded</summary>
-    <pre><code>&lt;data-wrapper id="nav" src="/partials/nav.html" data-nav-open="false"
+    <pre><code>&lt;data-wrapper id="nav" src="/views/nav.html" data-nav-open="false"
     onload="this.register({
       'nav/toggle': () =&gt; this.put('navOpen', v =&gt; !v),
       'nav/close':  () =&gt; this.put('navOpen', false),
