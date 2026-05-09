@@ -5,7 +5,7 @@ test.describe('Site pages', () => {
         await page.goto('/framework.html');
         await page.waitForFunction(() => customElements.get('data-wrapper'));
 
-        await expect(page.getByRole('heading', { name: 'Reactive HTML, no ceremony' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'NO.' })).toBeVisible();
         await expect(page.getByRole('heading', { name: 'Where it fits' })).toBeVisible();
 
         await page.locator('#nav .nav-hamburger').click();
