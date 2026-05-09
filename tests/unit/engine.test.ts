@@ -1,126 +1,88 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
-import { applyBinding, applyItemBindings, reconcile } from '@lib/engine.ts';
-import { DW_TEMPLATES } from '@lib/registry.ts';
-import type { UpdateConfig } from '@lib/engine.ts';
+import { bind, broadcast, reconcile, watch } from '@lib/engine.ts';
+import type { Item, Row, Subs } from '@lib/engine.ts';
 
 beforeEach(() => {
     document.body.innerHTML = '';
-    DW_TEMPLATES.clear();
 });
 
-describe('applyBinding', () => {
+describe('bind', () => {
     let el: HTMLElement;
     beforeEach(() => { el = document.createElement('span'); });
 
-    it('sets el.textContent when prop is "textContent"', () => {
-        applyBinding(el, 'textContent', 'Hello');
+    it('sets DOM properties', () => {
+        const update = bind(el, 'textContent');
+
+        update('Hello');
 
         expect(el.textContent).toBe('Hello');
     });
 
-    it('sets el[prop] for arbitrary props', () => {
-        const input = document.createElement('input');
+    it('sets attributes when no DOM property exists', () => {
+        const update = bind(el, 'data-state');
 
-        applyBinding(input, 'value', 'draft');
+        update('ready');
 
-        expect(input.value).toBe('draft');
+        expect(el.getAttribute('data-state')).toBe('ready');
     });
 
-    it('ignores null value (does not overwrite)', () => {
-        el.textContent = 'Existing';
+    it('uses property aliases', () => {
+        const update = bind(el, 'text');
 
-        applyBinding(el, 'textContent', null);
+        update('Ali');
+
+        expect(el.textContent).toBe('Ali');
+    });
+
+    it('ignores nullish values', () => {
+        el.textContent = 'Existing';
+        const update = bind(el, 'textContent');
+
+        update(null);
+        update(undefined);
 
         expect(el.textContent).toBe('Existing');
     });
 
-    it('ignores undefined value', () => {
-        el.textContent = 'Existing';
-
-        applyBinding(el, 'textContent', undefined);
-
-        expect(el.textContent).toBe('Existing');
-    });
-
-    it('class: appends dynamic class to existing base classes', () => {
-        el.className = 'base';
-
-        applyBinding(el, 'class', 'active');
-
-        expect(el.className).toBe('base active');
-    });
-
-    it('class: replaces previous dynamic class on repeated calls', () => {
-        el.className = 'base';
-
-        applyBinding(el, 'class', 'active');
-        applyBinding(el, 'class', 'done');
-
-        expect(el.className).toBe('base done');
-    });
-
-    it('class: preserves base classes across dynamic updates', () => {
+    it('class binding captures base class and replaces dynamic class', () => {
         el.className = 'base primary';
+        const update = bind(el, 'class');
 
-        applyBinding(el, 'class', 'active');
-        applyBinding(el, 'class', 'done');
+        update('active');
+        expect(el.className).toBe('base primary active');
 
+        update('done');
         expect(el.className).toBe('base primary done');
     });
 });
 
-describe('applyItemBindings', () => {
-    const withItemConfigs = (node: Element, configs: UpdateConfig[]) => {
-        (node as Element & { _vItemConfigs?: UpdateConfig[] })._vItemConfigs = configs;
-    };
+describe('watch/broadcast', () => {
+    it('watch stores subscriber and runs it immediately', () => {
+        const subs: Subs<string> = [];
+        let seen = '';
 
-    it('applies all configs stored on node._vItemConfigs', () => {
-        const node = document.createElement('li');
-        node.innerHTML = '<span></span><input>';
-        const span = node.querySelector('span')!;
-        const input = node.querySelector('input')!;
-        withItemConfigs(node, [
-            { el: span, path: 'task', prop: 'textContent', pipes: [], itemNode: node },
-            { el: input, path: 'id', prop: 'value', pipes: [], itemNode: node },
-        ]);
+        watch(subs, value => { seen = value; }, 'initial');
 
-        applyItemBindings(node, { id: 7, task: 'Ship tests' });
-
-        expect(span.textContent).toBe('Ship tests');
-        expect(input.value).toBe('7');
+        expect(subs).toHaveLength(1);
+        expect(seen).toBe('initial');
     });
 
-    it('pipes are applied left-to-right before binding', () => {
-        const node = document.createElement('li');
-        const span = document.createElement('span');
-        node.appendChild(span);
-        withItemConfigs(node, [{
-            el: span,
-            path: 'task',
-            prop: 'textContent',
-            pipes: [
-                v => String(v).trim(),
-                v => String(v).toUpperCase(),
-            ],
-            itemNode: node,
-        }]);
+    it('broadcast calls all subscribers', () => {
+        const seen: number[] = [];
+        const subs: Subs<number> = [
+            value => seen.push(value),
+            value => seen.push(value * 2),
+        ];
 
-        applyItemBindings(node, { task: '  ship tests  ' });
+        broadcast(subs, 3);
 
-        expect(span.textContent).toBe('SHIP TESTS');
-    });
-
-    it('does nothing when _vItemConfigs is absent', () => {
-        const node = document.createElement('li');
-
-        expect(() => applyItemBindings(node, { task: 'Ship tests' })).not.toThrow();
-        expect(node.textContent).toBe('');
+        expect(seen).toEqual([3, 6]);
     });
 });
 
 describe('reconcile', () => {
     let container: HTMLElement;
-    let cache: Map<unknown, Element>;
+    let cache: Map<unknown, Row>;
     let tpl: HTMLTemplateElement;
 
     beforeEach(() => {
@@ -131,37 +93,46 @@ describe('reconcile', () => {
         document.body.appendChild(container);
     });
 
-    const hydrateText = (node: Element, itemNode: Element) => {
-        const item = (itemNode as Element & { _vItem?: Record<string, unknown> })._vItem!;
-        node.textContent = String(item.label);
+    const wakeText = (node: Element, row: Row | null) => {
+        if (row) node.textContent = String(row.item.label);
     };
 
     it('appends one node per item', () => {
         reconcile(container, [
             { id: 1, label: 'One' },
             { id: 2, label: 'Two' },
-        ], cache, tpl, hydrateText);
+        ], cache, tpl, wakeText);
 
         expect(container.querySelectorAll('li')).toHaveLength(2);
         expect(container.textContent).toBe('OneTwo');
     });
 
-    it('reuses existing cache nodes on re-render', () => {
-        reconcile(container, [{ id: 1, label: 'One' }], cache, tpl, hydrateText);
+    it('reuses existing cache rows on re-render', () => {
+        reconcile(container, [{ id: 1, label: 'One' }], cache, tpl, wakeText);
         const firstNode = container.firstElementChild;
 
-        reconcile(container, [{ id: 1, label: 'Updated' }], cache, tpl, hydrateText);
+        reconcile(container, [{ id: 1, label: 'Updated' }], cache, tpl, wakeText);
 
         expect(container.firstElementChild).toBe(firstNode);
     });
 
-    it('removes nodes whose id is no longer in the data', () => {
+    it('broadcasts updated item values to existing row subs', () => {
+        reconcile(container, [{ id: 1, label: 'One' }], cache, tpl, wakeText);
+        const row = cache.get(1)!;
+        row.subs.push((item: Item) => { row.node.textContent = String(item.label); });
+
+        reconcile(container, [{ id: 1, label: 'Updated' }], cache, tpl, wakeText);
+
+        expect(container.textContent).toBe('Updated');
+    });
+
+    it('removes rows whose id is no longer in the data', () => {
         reconcile(container, [
             { id: 1, label: 'One' },
             { id: 2, label: 'Two' },
-        ], cache, tpl, hydrateText);
+        ], cache, tpl, wakeText);
 
-        reconcile(container, [{ id: 2, label: 'Two' }], cache, tpl, hydrateText);
+        reconcile(container, [{ id: 2, label: 'Two' }], cache, tpl, wakeText);
 
         expect(container.querySelectorAll('li')).toHaveLength(1);
         expect(cache.has(1)).toBe(false);
@@ -169,7 +140,7 @@ describe('reconcile', () => {
     });
 
     it('uses item[keyProp] as the cache key', () => {
-        reconcile(container, [{ uuid: 'a-1', label: 'One' }], cache, tpl, hydrateText, 'uuid');
+        reconcile(container, [{ uuid: 'a-1', label: 'One' }], cache, tpl, wakeText, 'uuid');
 
         expect(cache.has('a-1')).toBe(true);
     });
@@ -177,101 +148,15 @@ describe('reconcile', () => {
     it('falls back to JSON.stringify when key is missing', () => {
         const item = { label: 'No id' };
 
-        reconcile(container, [item], cache, tpl, hydrateText);
+        reconcile(container, [item], cache, tpl, wakeText);
 
         expect(cache.has(JSON.stringify(item))).toBe(true);
     });
 
-    it('shows empty-state node when data is empty', () => {
-        const empty = document.createElement('template');
-        empty.id = 'empty-state';
-        empty.innerHTML = '<li class="empty">Nothing here</li>';
-        document.body.appendChild(empty);
-        container.dataset.empty = 'empty-state';
+    it('does not manage empty-state DOM', () => {
+        reconcile(container, [], cache, tpl, wakeText);
 
-        reconcile(container, [], cache, tpl, hydrateText);
-
-        expect(container.querySelector('.empty')?.textContent).toBe('Nothing here');
-    });
-
-    it('uses default dw-empty template when no data-empty is provided', () => {
-        reconcile(container, [], cache, tpl, hydrateText);
-
-        expect(container.querySelector('[data-dw-template="empty"]')?.textContent).toBe('No items');
-    });
-
-    it('page-declared dw-empty template overrides the default template', () => {
-        const empty = document.createElement('template');
-        empty.id = 'dw-empty';
-        empty.innerHTML = '<li class="empty">Page empty</li>';
-        document.body.appendChild(empty);
-
-        reconcile(container, [], cache, tpl, hydrateText);
-
-        expect(container.querySelector('.empty')?.textContent).toBe('Page empty');
-        expect(container.querySelector('[data-dw-template="empty"]')).toBeNull();
-    });
-
-    it('DW_TEMPLATES registration overrides page-declared and default templates', () => {
-        const pageEmpty = document.createElement('template');
-        pageEmpty.id = 'dw-empty';
-        pageEmpty.innerHTML = '<li class="empty">Page empty</li>';
-        document.body.appendChild(pageEmpty);
-
-        const registered = document.createElement('template');
-        registered.innerHTML = '<li class="registered-empty">Registered empty</li>';
-        DW_TEMPLATES.set('dw-empty', registered);
-
-        reconcile(container, [], cache, tpl, hydrateText);
-
-        expect(container.querySelector('.registered-empty')?.textContent).toBe('Registered empty');
-        expect(container.querySelector('.empty')).toBeNull();
-    });
-
-    it('falls back to a blank node when template name is unknown', () => {
-        container.dataset.empty = 'unknown-template';
-
-        reconcile(container, [], cache, tpl, hydrateText);
-
-        expect(container.children).toHaveLength(1);
-        expect(container.firstElementChild?.tagName).toBe('SPAN');
-        expect(container.firstElementChild?.textContent).toBe('');
-    });
-
-    it('removes empty-state node when data becomes non-empty', () => {
-        const empty = document.createElement('template');
-        empty.id = 'empty-state';
-        empty.innerHTML = '<li class="empty">Nothing here</li>';
-        document.body.appendChild(empty);
-        container.dataset.empty = 'empty-state';
-
-        reconcile(container, [], cache, tpl, hydrateText);
-        reconcile(container, [{ id: 1, label: 'One' }], cache, tpl, hydrateText);
-
-        expect(container.querySelector('.empty')).toBeNull();
-        expect(container.querySelector('li')?.textContent).toBe('One');
-    });
-
-    it('calls hydrate for new nodes, applyItemBindings for updates', () => {
-        tpl.innerHTML = '<li><span></span></li>';
-        let hydrateCalls = 0;
-        const hydrate = (node: Element, itemNode: Element) => {
-            hydrateCalls += 1;
-            const span = node.querySelector('span')!;
-            (itemNode as Element & { _vItemConfigs?: UpdateConfig[] })._vItemConfigs = [{
-                el: span,
-                path: 'label',
-                prop: 'textContent',
-                pipes: [],
-                itemNode,
-            }];
-            applyItemBindings(itemNode, (itemNode as Element & { _vItem?: Record<string, unknown> })._vItem!);
-        };
-
-        reconcile(container, [{ id: 1, label: 'One' }], cache, tpl, hydrate);
-        reconcile(container, [{ id: 1, label: 'Updated' }], cache, tpl, hydrate);
-
-        expect(hydrateCalls).toBe(1);
-        expect(container.querySelector('span')?.textContent).toBe('Updated');
+        expect(container.children).toHaveLength(0);
+        expect(cache.size).toBe(0);
     });
 });

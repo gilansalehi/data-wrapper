@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
-import { CONFIG, DW_DIRECTIVES } from '@lib/registry.ts';
-import type { UpdateConfig } from '@lib/engine.ts';
+import { DW_DIRECTIVES } from '@lib/registry.ts';
+import type { Sub, Subs } from '@lib/engine.ts';
 // DataWrapper is registered as a side-effect of the import
 import '@lib/component.ts';
 
 interface TestWrapper extends HTMLElement {
     state: Record<string, unknown>;
-    _subs: Record<string, UpdateConfig[]>;
+    _subs: Record<string, Subs>;
     _broadcast(key: string, val: unknown): void;
     register(actions: Record<string, EventListener>): void;
     put(key: string, val: unknown | ((prev: unknown) => unknown)): void;
@@ -24,19 +24,9 @@ const make = (html = ''): TestWrapper => {
 
 const tick = () => new Promise(resolve => setTimeout(resolve, 0));
 
-const DEFAULT_TOKENS = { BIND: '$', DIR: '*', EVT: '@' } as const;
-
-const resetTestConfig = () => {
-    CONFIG.TOKENS = { ...DEFAULT_TOKENS };
-};
-
-const setDirectiveToken = (token: string) => {
-    CONFIG.TOKENS = { ...DEFAULT_TOKENS, DIR: token };
-};
-
 beforeEach(() => {
     document.body.innerHTML = '';
-    resetTestConfig();
+    DW_DIRECTIVES.clear();
 });
 
 describe('custom element registration', () => {
@@ -230,47 +220,41 @@ describe('register', () => {
 
 describe('_broadcast', () => {
     it('routes registered directives through DW_DIRECTIVES', () => {
-        setDirectiveToken(':');
-        const original = DW_DIRECTIVES.get('probe');
-        const el = make('<span :probe="/name"></span>');
-        const target = el.querySelector('span')!;
         let seen: unknown;
 
-        DW_DIRECTIVES.set('probe', ({ wrapper, config, value }) => {
-            seen = { wrapper, el: config.el, value };
+        DW_DIRECTIVES.set('probe', ({ wrapper, el }) => value => {
+            seen = { wrapper, el, value };
         });
 
-        try {
-            el.put('name', 'Ali');
+        const el = document.createElement('data-wrapper') as TestWrapper;
+        const target = document.createElement('span');
+        target.setAttribute('*probe', '/name');
+        el.appendChild(target);
+        document.body.appendChild(el);
 
-            expect(seen).toEqual({ wrapper: el, el: target, value: 'Ali' });
-            expect(target.getAttribute('probe')).toBeNull();
-        } finally {
-            if (original) DW_DIRECTIVES.set('probe', original);
-            else DW_DIRECTIVES.delete('probe');
-        }
+        el.put('name', 'Ali');
+
+        expect(seen).toEqual({ wrapper: el, el: target, value: 'Ali' });
+        expect(target.getAttribute('probe')).toBeNull();
     });
 
     it('does not route $ bindings through DW_DIRECTIVES', () => {
-        const original = DW_DIRECTIVES.get('probe');
         const el = make('<span $probe="/name"></span>');
         const target = el.querySelector('span')!;
         let calls = 0;
 
-        DW_DIRECTIVES.set('probe', () => { calls += 1; });
+        DW_DIRECTIVES.set('probe', () => {
+            calls += 1;
+            return () => {};
+        });
 
-        try {
-            el.put('name', 'Ali');
+        el.put('name', 'Ali');
 
-            expect(calls).toBe(0);
-            expect(target.getAttribute('probe')).toBe('Ali');
-        } finally {
-            if (original) DW_DIRECTIVES.set('probe', original);
-            else DW_DIRECTIVES.delete('probe');
-        }
+        expect(calls).toBe(0);
+        expect(target.getAttribute('probe')).toBe('Ali');
     });
 
-    it('calls applyBinding for each config subscribed to the key', () => {
+    it('calls each subscriber registered to the key', () => {
         const el = make('<span $text="/name"></span><strong $text="/name"></strong>');
 
         el.put('name', 'Ali');
@@ -290,7 +274,12 @@ describe('_broadcast', () => {
     it('skips configs whose el is disconnected from DOM', () => {
         const el = make();
         const target = document.createElement('span');
-        el._subs.name = [{ el: target, path: 'name', prop: 'textContent', pipes: [], itemNode: null }];
+        el._subs.name = [
+            ((value: unknown) => {
+                if (!target.isConnected) return;
+                target.textContent = String(value);
+            }) as Sub,
+        ];
 
         el._broadcast('name', 'Ali');
 
@@ -313,13 +302,12 @@ describe('MutationObserver', () => {
         const target = document.createElement('span');
         el.appendChild(target);
         let pipeCalls = 0;
-        el._subs.count = [{
-            el: target,
-            path: 'count',
-            prop: 'textContent',
-            pipes: [v => { pipeCalls += 1; return v; }],
-            itemNode: null,
-        }];
+        el._subs.count = [
+            ((value: unknown) => {
+                pipeCalls += 1;
+                target.textContent = String(value);
+            }) as Sub,
+        ];
 
         el.put('count', 1);
         await tick();
