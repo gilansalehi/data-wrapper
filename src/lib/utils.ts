@@ -1,4 +1,4 @@
-export const q = (s: string, ctx: Element | Document | DocumentFragment = document) => [...ctx.querySelectorAll(s)] as Element[];
+export const q = (s: string, ctx: Element | Document | DocumentFragment = document) => [...ctx.querySelectorAll(s)];
 
 export const emit = (eventName: string, payload?: unknown, ctx: Element | Document = document) => {
     ctx.dispatchEvent(new CustomEvent(eventName, { detail: payload, bubbles: true }));

@@ -1,4 +1,4 @@
-import { DW_DIRECTIVES, PROP_ALIASES, resolveTemplate } from './registry.ts';
+import { cloneTemplate, DW_DIRECTIVES, PROP_ALIASES, resolveTemplate } from './registry.ts';
 import type { DirectiveHandler, Item, Row, Sub, Subs } from './registry.ts';
 
 export type { Item, ListCache, Row, Sub, Subs, Wrapper } from './registry.ts';
@@ -55,7 +55,7 @@ export const reconcile = (
 
         if (!row) {
             row = {
-                node: (tpl.content.cloneNode(true) as DocumentFragment).firstElementChild!,
+                node: cloneTemplate(tpl)!,
                 item,
                 subs: [],
             };
@@ -100,8 +100,7 @@ const listDirective: DirectiveHandler = ({ wrapper, el, key, wake }) => {
 
         const emptyName = el.getAttribute('data-empty') || 'dw-empty';
         const emptyTpl  = resolveTemplate(emptyName);
-        const frag = emptyTpl?.content.cloneNode(true) as DocumentFragment;
-        emptyNode  = frag.firstElementChild ?? null;
+        emptyNode = cloneTemplate(emptyTpl);
         if (!emptyNode) return;
 
         emptyNode.setAttribute('_empty', '');

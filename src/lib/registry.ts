@@ -13,25 +13,30 @@ export type Wrapper = HTMLElement & {
     _routeEvent(eventName: string): void;
 };
 
-const htmlTemplate = (html: string) => {
+const tmpl = (html: string) => {
     const tpl = document.createElement('template');
     tpl.innerHTML = html;
     return tpl;
 };
 
-export const DW_TEMPLATES = new Map<string, HTMLTemplateElement>([
-    ['dw-empty',   htmlTemplate('<li data-dw-template="empty">No items</li>')],
-    ['dw-missing', htmlTemplate('<span data-dw-template="missing">—</span>')],
-    ['dw-loading', htmlTemplate('<span data-dw-template="loading">Loading...</span>')],
-    ['dw-error',   htmlTemplate('<span data-dw-template="error">Something went wrong</span>')],
-]);
+export const DW_TEMPLATES = [...document.querySelectorAll('template')].reduce((acc, item) => {
+    return acc.set(item.id, item as HTMLTemplateElement);
+}, new Map<string, HTMLTemplateElement>([
+    ['dw-empty',   tmpl('<li data-dw-template="empty">No items</li>')],
+    ['dw-missing', tmpl('<span data-dw-template="missing">—</span>')],
+    ['dw-loading', tmpl('<span data-dw-template="loading">Loading...</span>')],
+    ['dw-error',   tmpl('<span data-dw-template="error">Something went wrong</span>')],
+]));
 
-export const resolveTemplate = (name: string): HTMLTemplateElement | null => {
+export const resolveTemplate = (name: string): HTMLTemplateElement => {
     const declared = document.getElementById(name);
     if (declared?.tagName === 'TEMPLATE') return declared as HTMLTemplateElement;
 
-    return DW_TEMPLATES.get(name) || null;
+    return DW_TEMPLATES.get(name) ?? DW_TEMPLATES.get('dw-missing') as HTMLTemplateElement;
 };
+
+export const cloneTemplate = (tpl: HTMLTemplateElement) =>
+    (tpl.content.cloneNode(true) as DocumentFragment).firstElementChild as Element | null;
 
 export const DW_FORMATTERS = new Map<string, Formatter>([
     ['count',    v => (Array.isArray(v) || typeof v === 'string') ? v.length : 0],

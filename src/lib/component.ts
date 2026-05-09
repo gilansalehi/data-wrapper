@@ -57,7 +57,6 @@ export class DataWrapper extends HTMLElement {
         this._observer.observe(this, { attributes: true });
         wake(this);
         emit('load', this, this);          // triggers onload="" attribute on the element
-        emit('data-wrapper:load', this);   // document-level notification for external scripts
         if (this.hasAttribute('src')) queueMicrotask(() => this.load());
     }
 
@@ -88,7 +87,7 @@ export class DataWrapper extends HTMLElement {
     }
 
     register(actions: Record<string, EventListener>) {
-        for (const [type, fn] of Object.entries(actions)) on(type, fn, '', this);
+        for (const [eventType, cb] of Object.entries(actions)) on(eventType, cb, '', this);
     }
 
     put(key: string, val: unknown | ((prev: unknown) => unknown)) {
