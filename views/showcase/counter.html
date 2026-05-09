@@ -1,0 +1,18 @@
+<section id="start">
+<h2>Getting Started</h2>
+<p>State starts in <code>data-*</code> attributes. <code>$text="/count"</code> binds the value to the DOM.
+   <code>@click="topic"</code> delegates the event to a registered handler.</p>
+
+<article class="demo" data-to="counterCode" @reflect="demo/reflect">
+    <data-wrapper id="counter" data-count="0">
+        <div class="row">
+            <button @click="count/dec">-</button>
+            <output class="count-display" $text="/count" aria-live="polite"></output>
+            <button @click="count/inc">+</button>
+        </div>
+        <p class="note" style="margin:.5rem 0 0">
+            Inspect <code>#counter</code> in DevTools — watch <code>data-count</code> update.
+        </p>
+    </data-wrapper>
+</article>
+</section>

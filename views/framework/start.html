@@ -1,0 +1,27 @@
+<section id="start">
+    <h2>Start with one wrapper</h2>
+    <p>
+        Wrap a piece of HTML. Put state on the wrapper. Bind DOM properties
+        with <code>$</code>. Delegate events with <code>@</code>.
+    </p>
+
+    <pre><code>&lt;script type="module" src="/dist/data-wrapper.js"&gt;&lt;/script&gt;
+
+&lt;data-wrapper id="counter" data-count="0"&gt;
+  &lt;button @click="count/down"&gt;-&lt;/button&gt;
+  &lt;output $text="/count"&gt;&lt;/output&gt;
+  &lt;button @click="count/up"&gt;+&lt;/button&gt;
+&lt;/data-wrapper&gt;
+
+&lt;script type="module"&gt;
+  counter.register({
+    'count/down': () =&gt; counter.put('count', n =&gt; Number(n) - 1),
+    'count/up':   () =&gt; counter.put('count', n =&gt; Number(n) + 1),
+  });
+&lt;/script&gt;</code></pre>
+
+    <p>
+        That is the whole loop: HTML declares what it needs, JavaScript handles
+        what happened, and the wrapper keeps state reflected in the DOM.
+    </p>
+</section>

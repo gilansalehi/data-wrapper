@@ -1,0 +1,26 @@
+<section id="tokens">
+<h2>Tokens</h2>
+<table>
+    <thead><tr><th>Token</th><th>Direction</th><th>What it does</th><th>Example</th></tr></thead>
+    <tbody>
+        <tr>
+            <td><code>$</code></td>
+            <td>State -> DOM</td>
+            <td>Binds a state path to a DOM property. Works on any property the element exposes.</td>
+            <td><code>$text="/username"</code></td>
+        </tr>
+        <tr>
+            <td><code>*</code></td>
+            <td>State -> DOM structure</td>
+            <td>Runs a structural directive. Built-ins are <code>*if</code> and <code>*list</code>.</td>
+            <td><code>*if="/ready"</code>, <code>*list="/items"</code></td>
+        </tr>
+        <tr>
+            <td><code>@</code></td>
+            <td>Event -> handler</td>
+            <td>Delegates a native DOM event to a registered handler topic. One listener per event type on the wrapper.</td>
+            <td><code>@click="todo/remove"</code></td>
+        </tr>
+    </tbody>
+</table>
+</section>

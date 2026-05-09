@@ -1,0 +1,33 @@
+<section id="dwrl">
+<h2>DWRL Reference</h2>
+<p>Data Wrapper Resource Locator. A URL-shaped addressing scheme parsed entirely by
+   the browser's native <code>new URL()</code>. The token determines intent; DWRL names the resource.</p>
+
+<h3>Path syntax</h3>
+<table>
+    <thead><tr><th>Syntax</th><th>Resolves to</th></tr></thead>
+    <tbody>
+        <tr><td><code>/key</code></td><td>Wrapper-root state key</td></tr>
+        <tr><td><code>/firstName</code></td><td>Camel-cased <code>data-first-name</code> / <code>state.firstName</code></td></tr>
+        <tr><td><code>./key</code></td><td>Item-scoped (inside <code>*list</code> template only)</td></tr>
+        <tr><td><code>//other-id/key</code></td><td>Cross-wrapper paths are reserved for a future release</td></tr>
+    </tbody>
+</table>
+
+<h3>Query params</h3>
+<table>
+    <thead><tr><th>Param</th><th>Effect</th><th>Example</th></tr></thead>
+    <tbody>
+        <tr>
+            <td><code>?format=name</code></td>
+            <td>Apply a named formatter. Chain multiple — applied left to right.</td>
+            <td><code>$text="/price?format=currency"</code></td>
+        </tr>
+        <tr>
+            <td><code>?key=field</code></td>
+            <td>Override the identity key for <code>*list</code> reconciliation (default: <code>id</code>).</td>
+            <td><code>*list="/users?key=uuid"</code></td>
+        </tr>
+    </tbody>
+</table>
+</section>

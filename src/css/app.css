@@ -13,11 +13,9 @@ body > header { padding-bottom: 0; }
     --hero-mute: color-mix(in srgb, var(--hero-fg) 60%, transparent);
     --hero-faint: color-mix(in srgb, var(--hero-fg) 22%, transparent);
 
-    margin: 1.25rem 0 2.75rem;
     padding: clamp(2rem, 6vw, 4.5rem) clamp(1.75rem, 5vw, 3.5rem);
     background: var(--ink);
     color: var(--hero-fg);
-    border-radius: var(--radius);
     overflow: clip;
 }
 
