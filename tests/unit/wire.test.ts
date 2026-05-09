@@ -78,11 +78,15 @@ describe('wake bindings', () => {
     });
 
     it('marks wired elements with _live to prevent double wiring', () => {
-        const wrapper = appendWrapper('<span $text="/name"></span>');
+        const wrapper = appendWrapper(`
+            <p>Static</p>
+            <span $text="/name"></span>
+        `);
 
         wake(wrapper);
         wake(wrapper);
 
+        expect(wrapper.querySelector('p')?.hasAttribute('_live')).toBe(false);
         expect(wrapper.querySelector('span')?.hasAttribute('_live')).toBe(true);
         expect(wrapper._subs.name).toHaveLength(1);
     });

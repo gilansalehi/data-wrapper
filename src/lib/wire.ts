@@ -107,8 +107,11 @@ const _wireElement = (el: Element, row: Row | null, wrapper: WrapperNode | null)
     if (el.hasAttribute(LIVE)) return;
     if (!wrapper) return;
 
+    const attrs = [...el.attributes].filter(attr => '@$*'.includes(attr.name[0]));
+    if (!attrs.length) return;
+
     el.setAttribute(LIVE, '');
-    for (const attr of [...el.attributes]) wire(el, attr, row, wrapper);
+    for (const attr of attrs) wire(el, attr, row, wrapper);
 };
 
 export const wake = (
