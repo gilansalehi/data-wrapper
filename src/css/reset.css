@@ -118,8 +118,16 @@ tr:last-child td { border-bottom: none; }
 label {
     display: block;
     font-size: .85rem;
+    font-weight: 600;
     color: var(--muted);
     margin-bottom: .25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    margin-bottom: 1rem;
 }
 
 input[type="text"],
@@ -128,7 +136,8 @@ input[type="password"],
 input[type="email"],
 input[type="search"],
 input[type="url"],
-textarea {
+textarea,
+select {
     padding: .4rem .65rem;
     font-size: .9rem;
     border: var(--border-strong);
@@ -145,6 +154,21 @@ textarea {
         border-color: var(--link);
         box-shadow: var(--ring);
     }
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--faint);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    width: auto;
+    accent-color: var(--link);
+}
+
+input[type="range"] {
+    accent-color: var(--link);
 }
 
 button {

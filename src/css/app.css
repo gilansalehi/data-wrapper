@@ -23,6 +23,13 @@ body > header { padding-bottom: 0; }
     color: var(--ink-text);
 }
 
+/* ── Framework overview ── */
+
+#pitch .grid,
+#use-cases .grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+}
+
 /* ── Demo box ── */
 
 .demo {

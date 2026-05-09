@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>data-wrapper — Reactive HTML, no ceremony</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="stylesheet" href="/src/css/index.css">
+    <script src="/dist/data-wrapper.js" type="module"></script>
+</head>
+<body>
+
+<data-wrapper id="nav" src="/views/nav-framework.html" data-nav-open="false"
+    onload="this.register({
+        'nav/toggle':   () => nav.put('navOpen', v => !v),
+        'nav/close':    () => nav.put('navOpen', false),
+        'theme/toggle': () => {
+            const h = document.documentElement;
+            h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
+        },
+    })">
+</data-wrapper>
+
+<header class="container">
+    <h1>Reactive HTML, no ceremony</h1>
+    <p class="tagline">
+        <code>data-wrapper</code> gives plain HTML a tiny reactive layer:
+        state in <code>data-*</code>, bindings in attributes, events through
+        browser bubbling, and no build step between you and the DOM.
+    </p>
+    <p class="row">
+        <a class="btn btn-primary" href="#start">Start with one wrapper</a>
+        <a class="btn btn-outline" href="/documentation.html">Read the code tour</a>
+    </p>
+</header>
+
+<main class="container">
+
+<!-- =====================================================================
+     § POSITIONING
+     ===================================================================== -->
+
+<section id="pitch">
+    <h2>The pitch</h2>
+    <div class="grid gap-4">
+        <article class="card">
+            <h3>Lightweight</h3>
+            <p>
+                One custom element. Three wiring tokens. No compiler, no VDOM,
+                no component runtime. Add the script and start binding HTML.
+            </p>
+        </article>
+        <article class="card">
+            <h3>Instantly familiar</h3>
+            <p>
+                State is visible as <code>data-*</code>. Events are browser
+                events. Paths look like URLs. DOM properties stay DOM properties.
+            </p>
+        </article>
+        <article class="card">
+            <h3>Minimal cognitive load</h3>
+            <p>
+                You do not learn a template language. You learn three prefixes:
+                <code>$</code> for data, <code>*</code> for structure,
+                <code>@</code> for events.
+            </p>
+        </article>
+    </div>
+
+    <p>
+        Most frontend tools ask you to move your UI into JavaScript.
+        <code>data-wrapper</code> moves just enough reactivity into HTML that
+        the page can explain itself. The browser remains the platform. The
+        framework is the smallest useful agreement between state, markup, and
+        events.
+    </p>
+</section>
+
+<!-- =====================================================================
+     § START
+     ===================================================================== -->
+
+<section id="start">
+    <h2>Start with one wrapper</h2>
+    <p>
+        Wrap a piece of HTML. Put state on the wrapper. Bind DOM properties
+        with <code>$</code>. Delegate events with <code>@</code>.
+    </p>
+
+    <pre><code>&lt;script type="module" src="/dist/data-wrapper.js"&gt;&lt;/script&gt;
+
+&lt;data-wrapper id="counter" data-count="0"&gt;
+  &lt;button @click="count/down"&gt;-&lt;/button&gt;
+  &lt;output $text="/count"&gt;&lt;/output&gt;
+  &lt;button @click="count/up"&gt;+&lt;/button&gt;
+&lt;/data-wrapper&gt;
+
+&lt;script type="module"&gt;
+  counter.register({
+    'count/down': () =&gt; counter.put('count', n =&gt; Number(n) - 1),
+    'count/up':   () =&gt; counter.put('count', n =&gt; Number(n) + 1),
+  });
+&lt;/script&gt;</code></pre>
+
+    <p>
+        That is the whole loop: HTML declares what it needs, JavaScript handles
+        what happened, and the wrapper keeps state reflected in the DOM.
+    </p>
+</section>
+
+<!-- =====================================================================
+     § MODEL
+     ===================================================================== -->
+
+<section id="model">
+    <h2>The mental model</h2>
+    <table>
+        <thead>
+            <tr><th>Question</th><th>Answer</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Where does state live?</td>
+                <td>On the wrapper's <code>data-*</code> attributes.</td>
+            </tr>
+            <tr>
+                <td>How does state reach the DOM?</td>
+                <td><code>$prop="/key"</code> sets <code>el[prop]</code>.</td>
+            </tr>
+            <tr>
+                <td>How does state change structure?</td>
+                <td><code>*if</code> mounts/removes one node; <code>*list</code> renders rows from a template.</td>
+            </tr>
+            <tr>
+                <td>How do events reach app code?</td>
+                <td><code>@click="topic"</code> emits a topic handled with <code>register()</code>.</td>
+            </tr>
+            <tr>
+                <td>What happens on update?</td>
+                <td>The wrapper broadcasts the changed key to already-compiled subscribers.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>
+        The important part is what you do <em>not</em> think about: component
+        lifecycles, render functions, dependency arrays, stores, build tools,
+        hydration boundaries, or a second model of the page. The DOM is the
+        page. The wrapper is the stateful boundary around the part you want to
+        make reactive.
+    </p>
+</section>
+
+<!-- =====================================================================
+     § WHY ATTRIBUTES
+     ===================================================================== -->
+
+<section id="attributes">
+    <h2>Why <code>data-*</code> works</h2>
+    <p>
+        Attributes are inspectable, serializable, and already meaningful to
+        CSS. Using them as state is not a gimmick; it lets the platform carry
+        more of the work.
+    </p>
+    <ul>
+        <li><strong>Debugging is obvious.</strong> Open DevTools and read the state on the element.</li>
+        <li><strong>CSS becomes reactive.</strong> <code>data-wrapper[data-filter="done"]</code> is a state selector.</li>
+        <li><strong>Server HTML starts alive.</strong> Initial state can ship in markup.</li>
+        <li><strong>Persistence is simple.</strong> Read from localStorage, a server payload, or inline HTML, then <code>put()</code>.</li>
+    </ul>
+    <p>
+        If your UI can be described as "some state changes some DOM", this is
+        often enough.
+    </p>
+</section>
+
+<!-- =====================================================================
+     § COMPARE
+     ===================================================================== -->
+
+<section id="compare">
+    <h2>Where it fits</h2>
+    <p>
+        <code>data-wrapper</code> is not trying to replace every frontend tool.
+        It is for the broad middle where you want a reactive page, but you do
+        not want to adopt an application framework.
+    </p>
+
+    <table>
+        <thead>
+            <tr><th>Tool</th><th>Great when...</th><th>data-wrapper differs by...</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Alpine</td>
+                <td>You want inline expressions and local component behavior.</td>
+                <td>Keeping behavior in registered event topics and state in visible <code>data-*</code>.</td>
+            </tr>
+            <tr>
+                <td>htmx</td>
+                <td>The server owns interactions and returns HTML fragments.</td>
+                <td>Handling client-local state without requiring a request for every UI change.</td>
+            </tr>
+            <tr>
+                <td>Stimulus</td>
+                <td>You want controller classes attached to existing markup.</td>
+                <td>Using declarative state bindings instead of imperative DOM targets.</td>
+            </tr>
+            <tr>
+                <td>React/Vue/Svelte</td>
+                <td>You need a component system, ecosystem, and build-time tooling.</td>
+                <td>Letting existing HTML be the source instead of compiled component output.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>
+        A useful shorthand: htmx makes HTML talk to the server. Alpine makes
+        HTML execute local expressions. <code>data-wrapper</code> makes HTML
+        subscribe to wrapper state.
+    </p>
+</section>
+
+<!-- =====================================================================
+     § USE CASES
+     ===================================================================== -->
+
+<section id="use-cases">
+    <h2>Good fits</h2>
+    <div class="grid gap-4">
+        <article class="card">
+            <h3>Server-rendered pages</h3>
+            <p>
+                Add reactive islands without replacing the page architecture.
+                The wrapper can start from server-provided <code>data-*</code>.
+            </p>
+        </article>
+        <article class="card">
+            <h3>Internal tools</h3>
+            <p>
+                Forms, tables, filters, dashboards, CRUD widgets. Most of the
+                value comes from predictable bindings and low ceremony.
+            </p>
+        </article>
+        <article class="card">
+            <h3>Embeddable widgets</h3>
+            <p>
+                Drop into an existing page without asking what framework the
+                host app uses. The boundary is a custom element.
+            </p>
+        </article>
+        <article class="card">
+            <h3>Documentation demos</h3>
+            <p>
+                Examples stay honest because the markup is live. The code you
+                show is the code the browser runs.
+            </p>
+        </article>
+    </div>
+</section>
+
+<!-- =====================================================================
+     § HOW IT WORKS
+     ===================================================================== -->
+
+<section id="how">
+    <h2>How it works in one pass</h2>
+    <ol>
+        <li>The wrapper connects and wakes its subtree.</li>
+        <li><code>wake()</code> compiles <code>$</code>, <code>*</code>, and <code>@</code> attributes once.</li>
+        <li>Bindings become subscriber functions stored on the wrapper or row.</li>
+        <li><code>put()</code>, <code>patch()</code>, <code>push()</code>, and <code>pull()</code> update state.</li>
+        <li>The wrapper broadcasts the changed key to the subscribers that already exist.</li>
+    </ol>
+    <p>
+        Runtime updates do not re-parse templates or walk the page. The setup
+        cost happens at wake time; state changes call closures.
+    </p>
+    <p class="note">
+        For the implementation-level tour, see <a href="/documentation.html">Generated documentation</a>.
+        For live examples, see the <a href="/">component showcase</a>.
+    </p>
+</section>
+
+<!-- =====================================================================
+     § CONTRAINTS
+     ===================================================================== -->
+
+<section id="constraints">
+    <h2>The constraints are the feature</h2>
+    <p>
+        The framework stays small because it refuses to become a second
+        browser. It does not own routing, animation, fetch policy, validation,
+        or your app architecture. It owns one thing: connecting wrapper state
+        to DOM output.
+    </p>
+    <ul>
+        <li>If browser events already solve it, use browser events.</li>
+        <li>If CSS selectors already solve it, use CSS selectors.</li>
+        <li>If HTML already describes it, keep it in HTML.</li>
+        <li>If a tiny subscriber can update it, do not build a render engine.</li>
+    </ul>
+    <p>
+        That is the bet: the less framework you have to learn, the more of the
+        platform you get to keep.
+    </p>
+</section>
+
+</main>
+
+</body>
+</html>
