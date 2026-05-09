@@ -26,7 +26,7 @@
     <h1>Documentation</h1>
     <p class="tagline">
         Generated from the lib source. Each region below is rendered by loading
-        a partial via <code>&lt;data-wrapper src=""&gt;</code> — the framework
+        a view via <code>&lt;data-wrapper src=""&gt;</code> — the framework
         documents itself.
         &nbsp;·&nbsp; <a href="/">← Landing page</a>
     </p>
@@ -34,36 +34,140 @@
 
 <main class="container">
 
+<!-- =====================================================================
+     § MENTAL MODEL
+     ===================================================================== -->
+
+<section id="wrapper-contract">
+    <h2>Wrapper contract</h2>
+    <p>
+        The shape every <code>&lt;data-wrapper&gt;</code> presents to the
+        framework. <code>state</code> reads and writes through a Proxy backed
+        by <code>data-*</code> attributes; <code>_subs</code> holds path
+        subscribers; <code>_listCache</code> holds row caches per list element;
+        <code>_watch</code> and <code>_routeEvent</code> are the registration
+        seams used by <code>wire()</code>.
+    </p>
+    <data-wrapper src="/views/docs/wrapper-contract.html"></data-wrapper>
+</section>
+
 <section id="tokens">
     <h2>Tokens</h2>
     <p>
-        The wire dispatch. <code>$prop</code> sets <code>el[prop] = value</code>;
+        The wire dispatch. <code>$prop</code> binds state to a DOM property;
         <code>*directive</code> invokes a registered structural directive;
         <code>@event</code> delegates a native DOM event to a registered topic.
+        These three are the entire surface area for wiring HTML to state.
     </p>
     <data-wrapper src="/views/docs/tokens.html"></data-wrapper>
 </section>
+
+<section id="dwrl">
+    <h2>DWRL — Data Wrapper Resource Locator</h2>
+    <p>
+        Path values like <code>/key</code>, <code>./key?format=upper</code>, or
+        <code>*list="/items?key=uuid"</code> are parsed by the browser's native
+        <code>new URL()</code>. The leading slash means wrapper-root state; a
+        leading <code>./</code> means item-scoped (inside a <code>*list</code>
+        template); <code>?format=name</code> chains formatters; <code>?key=field</code>
+        overrides the list identity key. <code>formatter()</code> compiles the
+        format chain into a single closure at wake time.
+    </p>
+    <data-wrapper src="/views/docs/dwrl.html"></data-wrapper>
+</section>
+
+<!-- =====================================================================
+     § LIFECYCLE
+     ===================================================================== -->
+
+<section id="wake">
+    <h2>Wake</h2>
+    <p>
+        The lifecycle entry point. <code>wake(root)</code> walks the subtree
+        with a <code>TreeWalker</code>, skipping nested wrappers, templates,
+        and SVG (per <code>NO_WAKE</code>). Each wired element is tagged with
+        <code>_live</code> to make re-entry idempotent. Walking happens once;
+        every attribute is compiled into a subscriber by <code>wire()</code>
+        so runtime updates never re-parse anything.
+    </p>
+    <data-wrapper src="/views/docs/wake.html"></data-wrapper>
+</section>
+
+<section id="load">
+    <h2>Loading via <code>src=""</code></h2>
+    <p>
+        A <code>.js</code> or <code>.mjs</code> source is dynamically imported
+        and its <code>default</code> export is invoked with the wrapper —
+        useful for handler registration in a separate file. Anything else is
+        fetched as text, replaces <code>innerHTML</code>, and re-wakes. After
+        either path, <code>data:load</code> fires on the wrapper with the
+        resolved URL.
+    </p>
+    <data-wrapper src="/views/docs/load.html"></data-wrapper>
+</section>
+
+<!-- =====================================================================
+     § STATE
+     ===================================================================== -->
 
 <section id="state-api">
     <h2>State API</h2>
     <p>
         Every mutation routes through <code>put()</code> and emits
         <code>data:sync</code>. <code>patch</code> shallow-merges,
-        <code>push</code> appends, <code>pull</code> filters.
-        <code>register</code> wires event topics to handlers.
+        <code>push</code> appends, <code>pull</code> filters by id or predicate.
+        <code>register</code> wires event topics to handlers — sugar over
+        <code>addEventListener</code> for the wrapper itself.
     </p>
     <data-wrapper src="/views/docs/state-api.html"></data-wrapper>
 </section>
+
+<section id="state-proxy">
+    <h2>State proxy</h2>
+    <p>
+        State <em>is</em> <code>data-*</code>. The Proxy serializes objects as
+        JSON on write, parses them back on read, and broadcasts subscribers on
+        every set. A <code>MutationObserver</code> catches external attribute
+        changes (DevTools edits, third-party scripts) and broadcasts those too.
+        <code>_isSyncing</code> suppresses the echo from the wrapper's own
+        writes so the same set never fires twice.
+    </p>
+    <data-wrapper src="/views/docs/state-proxy.html"></data-wrapper>
+</section>
+
+<section id="subscriptions">
+    <h2>Subscriptions</h2>
+    <p>
+        The framework's update primitive. <code>watch</code> registers a
+        subscriber and runs it once for initial render; <code>broadcast</code>
+        calls every stored subscriber with a new value. Wrapper-scoped
+        subscribers live in <code>_subs[path]</code>; row-scoped subscribers
+        live in <code>row.subs</code>. Everything else — bindings, directives,
+        list rows — composes from this primitive.
+    </p>
+    <data-wrapper src="/views/docs/subscriptions.html"></data-wrapper>
+</section>
+
+<!-- =====================================================================
+     § BINDINGS ($)
+     ===================================================================== -->
 
 <section id="prop-aliases">
     <h2>Bindings (<code>$</code>)</h2>
     <p>
         <code>$prop="/path"</code> sets <code>el[prop] = value</code> on update.
-        Most names map directly; the table below covers the HTML-attribute /
-        DOM-property naming gap.
+        Most names map directly. The table below covers the HTML-attribute /
+        DOM-property naming gap (<code>class</code> →
+        <code>className</code>, <code>for</code> → <code>htmlFor</code>, etc.).
+        <code>$class</code> additionally preserves the element's static base
+        classes and merges the dynamic value on top.
     </p>
     <data-wrapper src="/views/docs/prop-aliases.html"></data-wrapper>
 </section>
+
+<!-- =====================================================================
+     § DIRECTIVES (*)
+     ===================================================================== -->
 
 <section id="list-directive">
     <h2><code>*list</code></h2>
@@ -77,14 +181,49 @@
     <data-wrapper src="/views/docs/list-directive.html"></data-wrapper>
 </section>
 
+<section id="reconcile">
+    <h2>Reconciliation</h2>
+    <p>
+        How <code>*list</code> stays cheap. <code>reconcile()</code> walks
+        incoming items, reuses cached rows by identity key, broadcasts the
+        updated item into the row's subscribers (no DOM rebuild for unchanged
+        rows), removes rows whose ids dropped out, and appends new rows
+        through a <code>DocumentFragment</code> before waking them. The DOM
+        node is rendered output; the row record is the framework state.
+    </p>
+    <data-wrapper src="/views/docs/reconcile.html"></data-wrapper>
+</section>
+
 <section id="if-directive">
     <h2><code>*if</code></h2>
     <p>
         Toggles an element's presence in the DOM. When false, the element is
-        replaced with a comment anchor; when true, it returns and re-wakes.
+        replaced with a comment anchor; when true, it returns to its place and
+        re-wakes. Useful for conditionally rendered fragments inside list rows
+        or wrapper roots.
     </p>
     <data-wrapper src="/views/docs/if-directive.html"></data-wrapper>
 </section>
+
+<!-- =====================================================================
+     § EVENTS (@)
+     ===================================================================== -->
+
+<section id="event-routing">
+    <h2>Event routing (<code>@</code>)</h2>
+    <p>
+        One delegated listener per event type per wrapper. Native browser
+        bubbling carries the event up to the wrapper; the listener filters out
+        events owned by nested wrappers, then emits the topic named on the
+        declaring element. Adding handlers to dynamically-inserted DOM costs
+        nothing — the listener is already installed.
+    </p>
+    <data-wrapper src="/views/docs/event-routing.html"></data-wrapper>
+</section>
+
+<!-- =====================================================================
+     § FORMATTERS & TEMPLATES
+     ===================================================================== -->
 
 <section id="formatters">
     <h2>Formatters</h2>
@@ -103,7 +242,8 @@
     <p>
         Built-in templates referenced by <code>data-empty="name"</code> on a
         <code>*list</code> element. Override by declaring a
-        <code>&lt;template id&gt;</code> with the same name in your document.
+        <code>&lt;template id&gt;</code> with the same name anywhere in your
+        document — the resolver prefers user-declared templates over built-ins.
     </p>
     <data-wrapper src="/views/docs/templates.html"></data-wrapper>
 </section>

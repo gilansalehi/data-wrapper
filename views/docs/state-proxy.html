@@ -1,0 +1,33 @@
+<figure data-source="component.ts" data-region="state-proxy">
+  <pre><code>        self.state = new Proxy(self.dataset as unknown as Record&lt;string, unknown&gt;, {
+            set(target, key: string, value: unknown) {
+                const serialized = (value &amp;&amp; typeof value === &#x27;object&#x27;)
+                    ? JSON.stringify(value)
+                    : String(value ?? &#x27;&#x27;);
+
+                if ((target as DOMStringMap)[key] === serialized) return true;
+
+                self._isSyncing = true;
+                (target as DOMStringMap)[key] = serialized;
+                self._broadcast(key, value);
+                queueMicrotask(() =&gt; { self._isSyncing = false; });
+                return true;
+            },
+            get(target, key: string) {
+                const val = (target as DOMStringMap)[key];
+                if (val === undefined) return undefined;
+                try { return JSON.parse(val); } catch { return val; }
+            },
+        });
+
+        self._observer = new MutationObserver(mutations =&gt; {
+            if (self._isSyncing) return;
+            for (const m of mutations) {
+                const attr = m.attributeName;
+                if (attr?.startsWith(&#x27;data-&#x27;)) {
+                    const key = attr.slice(5).replace(/-./g, c =&gt; c[1].toUpperCase());
+                    self._broadcast(key, self.state[key]);
+                }
+            }
+        });</code></pre>
+</figure>

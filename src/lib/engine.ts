@@ -25,6 +25,7 @@ export const bind = (el: Element, prop: string): Sub => {
     return val => set(el, alias, val);
 };
 
+// #region subscriptions
 export const watch = <T>(subs: Subs<T>, sub: Sub<T>, value: T) => {
     subs.push(sub);
     sub(value);
@@ -33,7 +34,9 @@ export const watch = <T>(subs: Subs<T>, sub: Sub<T>, value: T) => {
 export const broadcast = <T>(subs: Subs<T> = [], value: T) => {
     for (const sub of subs) sub(value);
 };
+// #endregion
 
+// #region reconcile
 export const reconcile = (
     container: Element,
     data: Item[],
@@ -76,6 +79,7 @@ export const reconcile = (
     container.appendChild(fragment);
     for (const row of newRows) wake(row.node, row);
 };
+// #endregion
 
 // #region list-directive
 const listDirective: DirectiveHandler = ({ wrapper, el, key, wake }) => {

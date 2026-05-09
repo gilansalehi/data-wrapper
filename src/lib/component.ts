@@ -20,6 +20,7 @@ export class DataWrapper extends HTMLElement {
         self._isSyncing = false;
         self._listCache = new Map();
 
+        // #region state-proxy
         self.state = new Proxy(self.dataset as unknown as Record<string, unknown>, {
             set(target, key: string, value: unknown) {
                 const serialized = (value && typeof value === 'object')
@@ -51,6 +52,7 @@ export class DataWrapper extends HTMLElement {
                 }
             }
         });
+        // #endregion
     }
 
     connectedCallback() {
@@ -72,6 +74,7 @@ export class DataWrapper extends HTMLElement {
         watch((this._subs[path] = this._subs[path] || []), sub, this.state[path]);
     }
 
+    // #region event-routing
     _routeEvent(eventName: string) {
         if (this._boundEvents.has(eventName)) return;
         this._boundEvents.add(eventName);
@@ -85,6 +88,7 @@ export class DataWrapper extends HTMLElement {
             emit(delegate.getAttribute(attrName)!, e, delegate);
         }, `[${CSS.escape(attrName)}]`, this);
     }
+    // #endregion
 
     // #region state-api
     register(actions: Record<string, EventListener>) {
@@ -117,6 +121,7 @@ export class DataWrapper extends HTMLElement {
     }
     // #endregion
 
+    // #region load
     async load(src: string | null = this.getAttribute('src')) {
         if (!src) return;
         const url = new URL(src, document.baseURI);
@@ -135,6 +140,7 @@ export class DataWrapper extends HTMLElement {
         }
         emit('data:load', { src: url.href }, this);
     }
+    // #endregion
 }
 
 if (typeof customElements !== 'undefined' && !customElements.get('data-wrapper')) {

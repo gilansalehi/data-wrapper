@@ -1,0 +1,25 @@
+<figure data-source="wire.ts" data-region="dwrl">
+  <pre><code>const formatter = (url: URL): Format =&gt; {
+    const pipes = url.searchParams.getAll(&#x27;format&#x27;)
+        .map(n =&gt; DW_FORMATTERS.get(n))
+        .filter((f): f is NonNullable&lt;typeof f&gt; =&gt; !!f);
+
+    return value =&gt; pipes.reduce((v, pipe) =&gt; pipe(v), value);
+};
+
+const parsePath = (attrValue: string) =&gt; {
+    const isItemScoped = attrValue.startsWith(&#x27;./&#x27;);
+
+    // ./foo → /foo: strip leading dot so URL parser treats it as an absolute path.
+    // The isItemScoped flag above captures the original intent.
+    const url = new URL(isItemScoped ? attrValue.slice(1) : attrValue, DWRL_BASE);
+
+    return {
+        url,
+        format: formatter(url),
+        isItemScoped,
+        key:       url.searchParams.get(&#x27;key&#x27;) ?? undefined,
+        path:      url.pathname.slice(1), // URL always produces leading /; strip it
+    };
+};</code></pre>
+</figure>

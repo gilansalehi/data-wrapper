@@ -4,6 +4,7 @@ export type Formatter = (v: unknown) => unknown;
 export type Item = Record<string, unknown>;
 export type Row = { node: Element; item: Item; subs: Subs<Item> };
 export type ListCache = Map<Element, Map<unknown, Row>>;
+// #region wrapper-contract
 export type Wrapper = HTMLElement & {
     state:        Record<string, unknown>;
     _subs:        Record<string, Subs>;
@@ -12,6 +13,7 @@ export type Wrapper = HTMLElement & {
     _watch(path: string, sub: Sub): void;
     _routeEvent(eventName: string): void;
 };
+// #endregion
 
 const tmpl = (html: string) => {
     const tpl = document.createElement('template');

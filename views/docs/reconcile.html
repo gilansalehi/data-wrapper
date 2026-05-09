@@ -1,0 +1,44 @@
+<figure data-source="engine.ts" data-region="reconcile">
+  <pre><code>export const reconcile = (
+    container: Element,
+    data: Item[],
+    cache: Map&lt;unknown, Row&gt;,
+    tpl: HTMLTemplateElement,
+    wake: (node: Element, row: Row | null) =&gt; void,
+    keyProp = &#x27;id&#x27;,
+) =&gt; {
+    const activeIds = new Set&lt;unknown&gt;();
+    const fragment  = document.createDocumentFragment();
+    const newRows: Row[] = [];
+
+    for (const item of data) {
+        const id  = item[keyProp] ?? JSON.stringify(item);
+        activeIds.add(id);
+
+        let row   = cache.get(id);
+        let isNew = false;
+
+        if (!row) {
+            row = {
+                node: cloneTemplate(tpl)!,
+                item,
+                subs: [],
+            };
+            cache.set(id, row);
+            isNew = true;
+            newRows.push(row);
+        }
+
+        row.item = item;
+        if (!isNew) broadcast(row.subs, item);
+        fragment.appendChild(row.node);
+    }
+
+    cache.forEach((row, id) =&gt; {
+        if (!activeIds.has(id)) { row.node.remove(); cache.delete(id); }
+    });
+
+    container.appendChild(fragment);
+    for (const row of newRows) wake(row.node, row);
+};</code></pre>
+</figure>

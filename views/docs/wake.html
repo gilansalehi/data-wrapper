@@ -1,0 +1,27 @@
+<figure data-source="wire.ts" data-region="wake">
+  <pre><code>const _wireElement = (el: Element, row: Row | null, wrapper: WrapperNode | null) =&gt; {
+    if (el.hasAttribute(LIVE)) return;
+    if (!wrapper) return;
+
+    el.setAttribute(LIVE, &#x27;&#x27;);
+    for (const attr of [...el.attributes]) wire(el, attr, row, wrapper);
+};
+
+export const wake = (
+    root: Element,
+    row: Row | null = null,
+    wrapper: WrapperNode | null = owner(root),
+) =&gt; {
+    const nodes = [root];
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
+        acceptNode: (n: Node) =&gt; NO_WAKE.includes((n as Element).tagName)
+            ? NodeFilter.FILTER_REJECT
+            : NodeFilter.FILTER_ACCEPT,
+    });
+
+    let node: Node | null;
+    while ((node = walker.nextNode())) nodes.push(node as Element);
+    for (const el of nodes) _wireElement(el, row, wrapper);
+};</code></pre>
+</figure>

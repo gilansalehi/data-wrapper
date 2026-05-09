@@ -14,6 +14,7 @@ const DWRL_BASE = 'dwrl://x/';
 const NO_WAKE   = ['DATA-WRAPPER', 'TEMPLATE', 'SVG'];
 const LIVE      = '_live';
 
+// #region dwrl
 const formatter = (url: URL): Format => {
     const pipes = url.searchParams.getAll('format')
         .map(n => DW_FORMATTERS.get(n))
@@ -37,6 +38,7 @@ const parsePath = (attrValue: string) => {
         path:      url.pathname.slice(1), // URL always produces leading /; strip it
     };
 };
+// #endregion
 
 const owner = (el: Element) => el.closest('data-wrapper') as WrapperNode | null;
 
@@ -100,6 +102,7 @@ export const wire = (
 // wake — wires one element then walks its subtree
 // ---------------------------------------------------------------------------
 
+// #region wake
 const _wireElement = (el: Element, row: Row | null, wrapper: WrapperNode | null) => {
     if (el.hasAttribute(LIVE)) return;
     if (!wrapper) return;
@@ -125,3 +128,4 @@ export const wake = (
     while ((node = walker.nextNode())) nodes.push(node as Element);
     for (const el of nodes) _wireElement(el, row, wrapper);
 };
+// #endregion
