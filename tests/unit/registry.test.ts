@@ -11,7 +11,7 @@ import type { DirectiveContext, Item, Row, Sub, Subs, Wrapper } from '@lib/regis
 
 beforeEach(() => {
     document.body.innerHTML = '';
-    DW_DIRECTIVES.clear();
+    DW_DIRECTIVES.delete('probe');
 });
 
 describe('framework types', () => {

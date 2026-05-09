@@ -26,7 +26,7 @@ const tick = () => new Promise(resolve => setTimeout(resolve, 0));
 
 beforeEach(() => {
     document.body.innerHTML = '';
-    DW_DIRECTIVES.clear();
+    DW_DIRECTIVES.delete('probe');
 });
 
 describe('custom element registration', () => {

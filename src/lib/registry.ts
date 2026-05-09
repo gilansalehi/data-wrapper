@@ -69,7 +69,8 @@ export interface DirectiveContext {
     wrapper: Wrapper;
     el: Element;
     key?: string;
-    wake: (node: Element, row: Row | null) => void;
+    row?: Row | null;
+    wake: (node: Element, row?: Row | null, wrapper?: Wrapper | null) => void;
 }
 
 export type DirectiveHandler = (ctx: DirectiveContext) => Sub;

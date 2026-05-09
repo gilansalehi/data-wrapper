@@ -593,8 +593,8 @@ DW_FORMATTERS.set('ago', v => {
     <thead><tr><th>Event</th><th>Target</th><th>When</th></tr></thead>
     <tbody>
         <tr><td><code>data:sync</code></td><td>Wrapper element</td><td>Any <code>put/patch/push/pull</code>. <code>e.detail.key</code> = changed key.</td></tr>
-        <tr><td><code>data-wrapper:load</code></td><td><code>document</code></td><td>Wrapper connected. <code>e.detail</code> = the element.</td></tr>
-        <tr><td><code>load</code></td><td>Wrapper element</td><td>Wrapper connected — triggers <code>onload=""</code> attribute.</td></tr>
+        <tr><td><code>load</code></td><td>Wrapper element</td><td>Wrapper connected — triggers <code>onload=""</code> attribute. <code>e.detail</code> = the element.</td></tr>
+        <tr><td><code>data:load</code></td><td>Wrapper element</td><td>Fires after <code>src=""</code> resolves. <code>e.detail.src</code> = resolved URL.</td></tr>
     </tbody>
 </table>
 </section>
@@ -650,19 +650,18 @@ DW_FORMATTERS.set('ago', v => {
 <section id="config">
 <h2>Configuration</h2>
 
-<h3>Custom tokens</h3>
+<h3>Custom directives</h3>
 <details>
-    <summary>window.DW_CUSTOM_CONFIG</summary>
-    <pre><code>&lt;script&gt;
-  window.DW_CUSTOM_CONFIG = {
-    TOKENS: { BIND: ':', DIR: '+', EVT: '#' },
-  };
-&lt;/script&gt;
-&lt;script src="/dist/data-wrapper.js" type="module"&gt;&lt;/script&gt;
+    <summary>DW_DIRECTIVES.set()</summary>
+    <pre><code>import { DW_DIRECTIVES } from 'data-wrapper';
 
-&lt;!-- Then use your custom tokens --&gt;
-&lt;span :text="/username"&gt;&lt;/span&gt;
-&lt;button #click="count/inc"&gt;+1&lt;/button&gt;</code></pre>
+// A directive is a compiled handler. It runs once at wake time and returns
+// a subscriber that the wrapper calls whenever its bound state changes.
+DW_DIRECTIVES.set('show', ({ el }) =&gt; value =&gt; {
+  el.hidden = !value;
+});
+
+// Use: &lt;div *show="/loggedIn"&gt;…&lt;/div&gt;</code></pre>
 </details>
 
 <h3>Custom formatters</h3>

@@ -40,8 +40,8 @@ const parsePath = (attrValue: string) => {
 
 const owner = (el: Element) => el.closest('data-wrapper') as WrapperNode | null;
 
-const wireEvent = (el: Element, name: string) => {
-    owner(el)?._routeEvent(name.slice(1));
+const wireEvent = (wrapper: WrapperNode | null, name: string) => {
+    wrapper?._routeEvent(name.slice(1));
 };
 
 const subscribe = (wrapper: WrapperNode, row: Row | null, path: string, sub: Sub) => {
@@ -55,12 +55,11 @@ const subscribe = (wrapper: WrapperNode, row: Row | null, path: string, sub: Sub
 const wireState = (wrapper: WrapperNode, el: Element, token: string, prop: string, p: ReturnType<typeof parsePath>, row: Row | null) => {
     const update = token === '$'
         ? bind(el, prop)
-        : DW_DIRECTIVES.get(prop)?.({ wrapper, el, key: p.key, wake });
+        : DW_DIRECTIVES.get(prop)?.({ wrapper, el, key: p.key, row, wake });
 
     if (!update) return;
 
     subscribe(wrapper, p.isItemScoped ? row : null, p.path, value => {
-        if (!el.isConnected) return;
         update(p.format(value));
     });
 };
@@ -73,13 +72,14 @@ export const wire = (
     el: Element,
     attr: Attr,
     row: Row | null = null,
+    wrapper: WrapperNode | null = owner(el),
 ) => {
     const { name } = attr;
     const token = name[0];
     const prop  = name.slice(1);
 
     if (token === '@') {
-        wireEvent(el, name);
+        wireEvent(wrapper, name);
         return;
     }
 
@@ -89,7 +89,6 @@ export const wire = (
 
     if (p.url.hostname !== 'x') return; // TODO: cross-wrapper mesh
 
-    const wrapper = owner(el);
     if (!wrapper) return;
 
     wireState(wrapper, el, token, prop, p, row);
@@ -99,15 +98,20 @@ export const wire = (
 // wake — wires one element then walks its subtree
 // ---------------------------------------------------------------------------
 
-const _wireElement = (el: Element, row: Row | null) => {
+const _wireElement = (el: Element, row: Row | null, wrapper: WrapperNode | null) => {
     if (el.hasAttribute(LIVE)) return;
-    el.setAttribute(LIVE, '');
+    if (!wrapper) return;
 
-    for (const attr of [...el.attributes]) wire(el, attr, row);
+    el.setAttribute(LIVE, '');
+    for (const attr of [...el.attributes]) wire(el, attr, row, wrapper);
 };
 
-export const wake = (root: Element, row: Row | null = null) => {
-    _wireElement(root, row);
+export const wake = (
+    root: Element,
+    row: Row | null = null,
+    wrapper: WrapperNode | null = owner(root),
+) => {
+    _wireElement(root, row, wrapper);
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
         acceptNode: (n: Node) => NO_WAKE.includes((n as Element).tagName)
@@ -116,5 +120,5 @@ export const wake = (root: Element, row: Row | null = null) => {
     });
 
     let node: Node | null;
-    while ((node = walker.nextNode())) _wireElement(node as Element, row);
+    while ((node = walker.nextNode())) _wireElement(node as Element, row, wrapper);
 };

@@ -46,7 +46,7 @@ const firstSub = (wrapper: TestWrapper, path: string): Sub => {
 
 beforeEach(() => {
     document.body.innerHTML = '';
-    DW_DIRECTIVES.clear();
+    DW_DIRECTIVES.delete('probe');
 });
 
 describe('wake bindings', () => {
@@ -161,9 +161,41 @@ describe('wake row bindings', () => {
 
         expect(seen).toEqual([true, false]);
     });
+
+    it('wakes item-scoped children when built-in *if remounts a row node', () => {
+        const wrapper = appendWrapper();
+        const row = makeRow('<section><span $text="./label"></span></section>', {
+            visible: false,
+            label: 'Hidden',
+        });
+        row.node.querySelector('section')!.setAttribute('*if', './visible');
+        wrapper.appendChild(row.node);
+
+        wake(row.node, row);
+        expect(row.node.querySelector('section')).toBeNull();
+
+        row.item = { visible: true, label: 'Visible' };
+        row.subs.forEach(sub => sub(row.item));
+
+        expect(row.node.querySelector('section')).toBeDefined();
+        expect(row.node.querySelector('span')?.textContent).toBe('Visible');
+    });
 });
 
 describe('wake directives and events', () => {
+    it('remounts built-in *if nodes with current wrapper-scoped bindings', () => {
+        const wrapper = appendWrapper('<p $text="/message"></p>');
+        wrapper.querySelector('p')!.setAttribute('*if', '/show');
+        wrapper.state.show = false;
+        wrapper.state.message = 'Hidden';
+
+        wake(wrapper);
+        firstSub(wrapper, 'message')('Updated while hidden');
+        firstSub(wrapper, 'show')(true);
+
+        expect(wrapper.querySelector('p')?.textContent).toBe('Updated while hidden');
+    });
+
     it('registers wrapper-scoped directives as subscribers', () => {
         const wrapper = appendWrapper('<span></span>');
         wrapper.querySelector('span')!.setAttribute('*probe', '/name');

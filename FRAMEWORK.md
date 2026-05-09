@@ -80,8 +80,11 @@ Row = { node, item, subs }
 The shared wrapper shape owns both subscription systems:
 
 ```ts
-Wrapper = HTMLElement & { state, _subs, _listCache, _watch, _routeEvent }
+Wrapper = HTMLElement & { state, _subs, _boundEvents, _listCache, _watch, _routeEvent }
 ```
+
+`_boundEvents` records which native event types already have a delegated
+listener installed on the wrapper, so `_routeEvent()` is idempotent.
 
 `watch(subs, sub, value)` stores a subscriber and immediately runs it for
 initial render. `broadcast(subs, value)` only calls stored subscribers.

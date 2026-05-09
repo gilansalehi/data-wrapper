@@ -1,5 +1,5 @@
 import { cloneTemplate, DW_DIRECTIVES, PROP_ALIASES, resolveTemplate } from './registry.ts';
-import type { DirectiveHandler, Item, Row, Sub, Subs } from './registry.ts';
+import type { DirectiveHandler, Item, Row, Sub, Subs, Wrapper } from './registry.ts';
 
 export type { Item, ListCache, Row, Sub, Subs, Wrapper } from './registry.ts';
 
@@ -88,6 +88,7 @@ const listDirective: DirectiveHandler = ({ wrapper, el, key, wake }) => {
     }
 
     const identityKey = key || 'id';
+    const wakeOwned = (node: Element, row: Row | null = null) => wake(node, row, wrapper);
     let emptyNode: Element | null = null;
 
     const clearRows = () => {
@@ -105,7 +106,7 @@ const listDirective: DirectiveHandler = ({ wrapper, el, key, wake }) => {
 
         emptyNode.setAttribute('_empty', '');
         el.appendChild(emptyNode);
-        wake(emptyNode, null);
+        wakeOwned(emptyNode);
     };
 
     const hideEmpty = () => {
@@ -123,8 +124,29 @@ const listDirective: DirectiveHandler = ({ wrapper, el, key, wake }) => {
         }
 
         hideEmpty();
-        reconcile(el, items, cache, tpl, wake, identityKey);
+        reconcile(el, items, cache, tpl, wakeOwned, identityKey);
+    };
+};
+
+const ifDirective: DirectiveHandler = ({ wrapper, el, row, wake }) => {
+    const anchor = document.createComment('dw-if');
+
+    const show = () => {
+        if (el.isConnected) return;
+        anchor.replaceWith(el);
+        wake(el, row ?? null, wrapper);
+    };
+
+    const hide = () => {
+        if (!el.isConnected) return;
+        el.replaceWith(anchor);
+    };
+
+    return value => {
+        if (value) show();
+        else hide();
     };
 };
 
 DW_DIRECTIVES.set('list', listDirective);
+DW_DIRECTIVES.set('if', ifDirective);
