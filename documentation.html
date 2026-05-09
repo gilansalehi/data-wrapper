@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>data-wrapper — Documentation</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="stylesheet" href="/src/css/index.css">
+    <script src="/dist/data-wrapper.js" type="module"></script>
+</head>
+<body>
+
+<data-wrapper id="nav" src="/partials/nav-docs.html" data-nav-open="false"
+    onload="this.register({
+        'nav/toggle':   () => nav.put('navOpen', v => !v),
+        'nav/close':    () => nav.put('navOpen', false),
+        'theme/toggle': () => {
+            const h = document.documentElement;
+            h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
+        },
+    })">
+</data-wrapper>
+
+<header class="container">
+    <h1>Documentation</h1>
+    <p class="tagline">
+        Generated from the lib source. Each region below is rendered by loading
+        a partial via <code>&lt;data-wrapper src=""&gt;</code> — the framework
+        documents itself.
+        &nbsp;·&nbsp; <a href="/">← Landing page</a>
+    </p>
+</header>
+
+<main class="container">
+
+<section id="tokens">
+    <h2>Tokens</h2>
+    <p>
+        The wire dispatch. <code>$prop</code> sets <code>el[prop] = value</code>;
+        <code>*directive</code> invokes a registered structural directive;
+        <code>@event</code> delegates a native DOM event to a registered topic.
+    </p>
+    <data-wrapper src="/partials/docs/tokens.html"></data-wrapper>
+</section>
+
+<section id="state-api">
+    <h2>State API</h2>
+    <p>
+        Every mutation routes through <code>put()</code> and emits
+        <code>data:sync</code>. <code>patch</code> shallow-merges,
+        <code>push</code> appends, <code>pull</code> filters.
+        <code>register</code> wires event topics to handlers.
+    </p>
+    <data-wrapper src="/partials/docs/state-api.html"></data-wrapper>
+</section>
+
+<section id="prop-aliases">
+    <h2>Bindings (<code>$</code>)</h2>
+    <p>
+        <code>$prop="/path"</code> sets <code>el[prop] = value</code> on update.
+        Most names map directly; the table below covers the HTML-attribute /
+        DOM-property naming gap.
+    </p>
+    <data-wrapper src="/partials/docs/prop-aliases.html"></data-wrapper>
+</section>
+
+<section id="list-directive">
+    <h2><code>*list</code></h2>
+    <p>
+        Reconciles a child <code>&lt;template&gt;</code> against an array.
+        Reuses rows by identity (default key <code>id</code>; override with
+        <code>?key=field</code>), broadcasts updated values into existing row
+        subscribers, and renders a <code>data-empty</code> template when the
+        array is empty.
+    </p>
+    <data-wrapper src="/partials/docs/list-directive.html"></data-wrapper>
+</section>
+
+<section id="if-directive">
+    <h2><code>*if</code></h2>
+    <p>
+        Toggles an element's presence in the DOM. When false, the element is
+        replaced with a comment anchor; when true, it returns and re-wakes.
+    </p>
+    <data-wrapper src="/partials/docs/if-directive.html"></data-wrapper>
+</section>
+
+<section id="formatters">
+    <h2>Formatters</h2>
+    <p>
+        Append <code>?format=name</code> to any path. Chain multiple — applied
+        left to right. Built-ins:
+    </p>
+    <data-wrapper src="/partials/docs/formatters.html"></data-wrapper>
+    <p class="note">
+        Add your own with <code>DW_FORMATTERS.set(name, fn)</code>.
+    </p>
+</section>
+
+<section id="templates">
+    <h2>Empty-state templates</h2>
+    <p>
+        Built-in templates referenced by <code>data-empty="name"</code> on a
+        <code>*list</code> element. Override by declaring a
+        <code>&lt;template id&gt;</code> with the same name in your document.
+    </p>
+    <data-wrapper src="/partials/docs/templates.html"></data-wrapper>
+</section>
+
+</main>
+
+</body>
+</html>
