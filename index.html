@@ -60,6 +60,7 @@
                 <li class="todo-item" $class="./status">
                     <input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id" aria-label="Toggle todo completion">
                     <span $text="./task"></span>
+                    <strong class="done-badge" *if="./done">done</strong>
                     <button class="delete-btn" @click="todo/remove" $value="./id" aria-label="Remove">✕</button>
                 </li>
             </template>
@@ -246,6 +247,7 @@ app.put('todos', [
             <span class="badge" $class="/on?format=onoff">●</span>
             <code $text="/on"></code>
         </div>
+        <p class="note" *if="/on">This node exists only while <code>data-on="true"</code>.</p>
     </data-wrapper>
 </article>
 <details>
@@ -422,7 +424,7 @@ export default function init(wrapper) {
             <td><code>*</code></td>
             <td>State → DOM structure</td>
             <td>Runs a structural directive. Use this only when data-wrapper owns the shape of the DOM.</td>
-            <td><code>*list="/items"</code></td>
+            <td><code>*if="/ready"</code>, <code>*list="/items"</code></td>
         </tr>
         <tr>
             <td><code>@</code></td>

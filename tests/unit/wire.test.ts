@@ -196,6 +196,19 @@ describe('wake directives and events', () => {
         expect(wrapper.querySelector('p')?.textContent).toBe('Updated while hidden');
     });
 
+    it('continues wiring siblings after a structural directive removes a node', () => {
+        const wrapper = appendWrapper('<span></span><button @click="topic"></button>');
+        wrapper.querySelector('span')!.setAttribute('*if', '/show');
+        wrapper.state.show = false;
+        let fired = false;
+        wrapper.addEventListener('topic', () => { fired = true; });
+
+        wake(wrapper);
+        wrapper.querySelector('button')!.click();
+
+        expect(fired).toBe(true);
+    });
+
     it('registers wrapper-scoped directives as subscribers', () => {
         const wrapper = appendWrapper('<span></span>');
         wrapper.querySelector('span')!.setAttribute('*probe', '/name');

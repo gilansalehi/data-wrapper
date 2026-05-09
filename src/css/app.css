@@ -82,6 +82,16 @@ body > header { padding-bottom: 0; }
     &.done span { text-decoration: line-through; opacity: .45; }
 }
 
+.done-badge {
+    font-size: .68rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ok);
+    border: 1px solid color-mix(in srgb, var(--ok) 40%, transparent);
+    border-radius: 999px;
+    padding: .05rem .45rem;
+}
+
 .delete-btn {
     margin-left: auto;
     color: var(--ng);

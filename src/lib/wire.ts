@@ -111,7 +111,7 @@ export const wake = (
     row: Row | null = null,
     wrapper: WrapperNode | null = owner(root),
 ) => {
-    _wireElement(root, row, wrapper);
+    const nodes = [root];
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
         acceptNode: (n: Node) => NO_WAKE.includes((n as Element).tagName)
@@ -120,5 +120,6 @@ export const wake = (
     });
 
     let node: Node | null;
-    while ((node = walker.nextNode())) _wireElement(node as Element, row, wrapper);
+    while ((node = walker.nextNode())) nodes.push(node as Element);
+    for (const el of nodes) _wireElement(el, row, wrapper);
 };
