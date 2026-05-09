@@ -1,0 +1,30 @@
+<figure data-source="component.ts" data-region="state-api">
+  <pre><code>    register(actions: Record&lt;string, EventListener&gt;) {
+        for (const [eventType, cb] of Object.entries(actions)) on(eventType, cb, &#x27;&#x27;, this);
+    }
+
+    put(key: string, val: unknown | ((prev: unknown) =&gt; unknown)) {
+        const next = typeof val === &#x27;function&#x27;
+            ? (val as (p: unknown) =&gt; unknown)(this.state[key])
+            : val;
+        if (this.state[key] === next) return;
+        this.state[key] = next;
+        emit(&#x27;data:sync&#x27;, { key }, this);
+    }
+
+    patch(key: string, obj: Record&lt;string, unknown&gt;) {
+        this.put(key, { ...(this.state[key] as Record&lt;string, unknown&gt; || {}), ...obj });
+    }
+
+    push(key: string, item: unknown) {
+        this.put(key, [...(this.state[key] as unknown[] || []), item]);
+    }
+
+    pull(key: string, predicate: ((item: unknown) =&gt; boolean) | unknown) {
+        const current = this.state[key] as unknown[] || [];
+        const fn      = typeof predicate === &#x27;function&#x27;
+            ? (i: unknown) =&gt; !(predicate as (i: unknown) =&gt; boolean)(i)
+            : (i: unknown) =&gt; (i as Record&lt;string, unknown&gt;).id !== predicate;
+        this.put(key, current.filter(fn));
+    }</code></pre>
+</figure>

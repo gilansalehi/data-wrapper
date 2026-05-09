@@ -22,10 +22,12 @@ const tmpl = (html: string) => {
 export const DW_TEMPLATES = [...document.querySelectorAll('template')].reduce((acc, item) => {
     return acc.set(item.id, item as HTMLTemplateElement);
 }, new Map<string, HTMLTemplateElement>([
+    // #region templates
     ['dw-empty',   tmpl('<li data-dw-template="empty">No items</li>')],
     ['dw-missing', tmpl('<span data-dw-template="missing">—</span>')],
     ['dw-loading', tmpl('<span data-dw-template="loading">Loading...</span>')],
     ['dw-error',   tmpl('<span data-dw-template="error">Something went wrong</span>')],
+    // #endregion
 ]));
 
 export const resolveTemplate = (name: string): HTMLTemplateElement => {
@@ -39,6 +41,7 @@ export const cloneTemplate = (tpl: HTMLTemplateElement) =>
     (tpl.content.cloneNode(true) as DocumentFragment).firstElementChild as Element | null;
 
 export const DW_FORMATTERS = new Map<string, Formatter>([
+    // #region formatters
     ['count',    v => (Array.isArray(v) || typeof v === 'string') ? v.length : 0],
     ['fallback', v => v ?? '—'],
     ['json',     v => JSON.stringify(v, null, 2)],
@@ -50,9 +53,11 @@ export const DW_FORMATTERS = new Map<string, Formatter>([
     ['bool',     v => !!v],
     ['onoff',    v => v ? 'on' : 'off'],
     ['yesno',    v => v ? 'yes' : 'no'],
+    // #endregion
 ]);
 
 export const PROP_ALIASES: Record<string, string> = {
+    // #region prop-aliases
     text:            'textContent',
     html:            'innerHTML',
     class:           'className',
@@ -63,6 +68,7 @@ export const PROP_ALIASES: Record<string, string> = {
     minlength:       'minLength',
     contenteditable: 'contentEditable',
     crossorigin:     'crossOrigin',
+    // #endregion
 };
 
 export interface DirectiveContext {

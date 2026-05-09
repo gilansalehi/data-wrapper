@@ -1,0 +1,21 @@
+<figure data-source="engine.ts" data-region="if-directive">
+  <pre><code>const ifDirective: DirectiveHandler = ({ wrapper, el, row, wake }) =&gt; {
+    const anchor = document.createComment(&#x27;dw-if&#x27;);
+
+    const show = () =&gt; {
+        if (el.isConnected) return;
+        anchor.replaceWith(el);
+        wake(el, row ?? null, wrapper);
+    };
+
+    const hide = () =&gt; {
+        if (!el.isConnected) return;
+        el.replaceWith(anchor);
+    };
+
+    return value =&gt; {
+        if (value) show();
+        else hide();
+    };
+};</code></pre>
+</figure>

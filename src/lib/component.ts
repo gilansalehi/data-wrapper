@@ -86,6 +86,7 @@ export class DataWrapper extends HTMLElement {
         }, `[${CSS.escape(attrName)}]`, this);
     }
 
+    // #region state-api
     register(actions: Record<string, EventListener>) {
         for (const [eventType, cb] of Object.entries(actions)) on(eventType, cb, '', this);
     }
@@ -114,6 +115,7 @@ export class DataWrapper extends HTMLElement {
             : (i: unknown) => (i as Record<string, unknown>).id !== predicate;
         this.put(key, current.filter(fn));
     }
+    // #endregion
 
     async load(src: string | null = this.getAttribute('src')) {
         if (!src) return;

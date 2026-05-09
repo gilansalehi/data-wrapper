@@ -29,6 +29,18 @@ test.describe('Todos demo', () => {
         await expect(items(page)).toHaveCount(4);
     });
 
+    test('persists todos through localStorage reloads', async ({ page }) => {
+        await page.locator('#app input[name="task"]').fill('Persist this todo');
+        await page.locator('#app form button[type="submit"]').click();
+
+        await expect(row(page, 'Persist this todo')).toHaveCount(1);
+
+        await page.reload();
+        await page.waitForFunction(() => customElements.get('data-wrapper'));
+
+        await expect(row(page, 'Persist this todo')).toHaveCount(1);
+    });
+
     test('clears the input after adding', async ({ page }) => {
         const input = page.locator('#app input[name="task"]');
         await input.fill('Clear after add');

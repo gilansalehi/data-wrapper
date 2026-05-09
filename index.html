@@ -45,7 +45,9 @@
 <section id="todos">
 <h2>Todos app</h2>
 <p>A complete CRUD app. State in <code>data-*</code> attributes, actions registered in JS,
-   list rendered via <code>*list</code>. Open DevTools → Elements and watch the attributes update live.</p>
+   rows rendered via <code>*list</code>, and per-row badges controlled by <code>*if</code>.
+   Todos persist through <code>localStorage</code>, then render through wrapper state.
+   Open DevTools → Elements and watch the attributes update live.</p>
 
 <article class="demo" data-to="todosCode" @reflect="demo/reflect">
     <data-wrapper id="app" data-filter="all">
@@ -87,6 +89,17 @@
     <summary>Full HTML</summary>
     <pre><code $text="/todosCode"></code></pre>
     <pre><code>const app = document.getElementById('app');
+const TODOS_STORAGE = 'data-wrapper:todos';
+const SEED_TODOS = [
+  { id: 1, task: 'Master the DOM',    status: 'done',   done: true  },
+  { id: 2, task: 'Ship data-wrapper', status: 'active', done: false },
+  { id: 3, task: 'Write the docs',    status: 'active', done: false },
+];
+
+const loadTodos = () => {
+  try { return JSON.parse(localStorage.getItem(TODOS_STORAGE)) || SEED_TODOS; }
+  catch { return SEED_TODOS; }
+};
 
 const compute = () => {
   const todos  = app.state.todos  || [];
@@ -119,16 +132,18 @@ app.register({
 });
 
 app.addEventListener('data:sync', e => {
-  if (['todos', 'filter'].includes(e.detail.key)) compute();
+  if (e.detail.key === 'todos') {
+    localStorage.setItem(TODOS_STORAGE, JSON.stringify(app.state.todos || []));
+    compute();
+  }
+  if (e.detail.key === 'filter') compute();
 });
 
-app.put('todos', [
-  { id: 1, task: 'Master the DOM',    status: 'done',   done: true  },
-  { id: 2, task: 'Ship data-wrapper', status: 'active', done: false },
-]);</code></pre>
+app.put('todos', loadTodos());</code></pre>
 </details>
 <p class="note">
-    The filter buttons are styled by a plain CSS attribute selector:
+    Todo data is loaded from <code>localStorage["data-wrapper:todos"]</code> on startup and saved when
+    <code>todos</code> changes. The filter buttons are styled by a plain CSS attribute selector:
     <code>data-wrapper[data-filter="done"] button[data-val="done"] { font-weight: bold }</code> — no JS.
 </p>
 </section>
@@ -290,7 +305,9 @@ demo.register({
 
 demo.addEventListener('data:sync', () => {
   demo.put('fullName', `${demo.state.firstName} ${demo.state.lastName}`);
-});</code></pre>
+});
+
+demo.put('fullName', `${demo.state.firstName} ${demo.state.lastName}`);</code></pre>
 </details>
 
 <h3>Inline init via <code>onload</code></h3>
@@ -423,7 +440,7 @@ export default function init(wrapper) {
         <tr>
             <td><code>*</code></td>
             <td>State → DOM structure</td>
-            <td>Runs a structural directive. Use this only when data-wrapper owns the shape of the DOM.</td>
+            <td>Runs a structural directive. Built-ins are <code>*if</code> and <code>*list</code>.</td>
             <td><code>*if="/ready"</code>, <code>*list="/items"</code></td>
         </tr>
         <tr>
@@ -616,9 +633,9 @@ DW_FORMATTERS.set('ago', v => {
     <thead><tr><th>Syntax</th><th>Resolves to</th></tr></thead>
     <tbody>
         <tr><td><code>/key</code></td><td>Wrapper-root state key</td></tr>
-        <tr><td><code>/user/name</code></td><td>Nested: <code>state.user.name</code></td></tr>
+        <tr><td><code>/firstName</code></td><td>Camel-cased <code>data-first-name</code> / <code>state.firstName</code></td></tr>
         <tr><td><code>./key</code></td><td>Item-scoped (inside <code>*list</code> template only)</td></tr>
-        <tr><td><code>//other-id/key</code></td><td>Cross-wrapper by id <em>(in progress)</em></td></tr>
+        <tr><td><code>//other-id/key</code></td><td>Cross-wrapper paths are reserved for a future release</td></tr>
     </tbody>
 </table>
 
@@ -754,6 +771,17 @@ DW_FORMATTERS.set('pluralise', v =>
 
         // Todos app
         const app = document.getElementById('app');
+        const TODOS_STORAGE = 'data-wrapper:todos';
+        const SEED_TODOS = [
+            { id: 1, task: 'Master the DOM',    status: 'done',   done: true  },
+            { id: 2, task: 'Ship data-wrapper', status: 'active', done: false },
+            { id: 3, task: 'Write the docs',    status: 'active', done: false },
+        ];
+
+        const loadTodos = () => {
+            try { return JSON.parse(localStorage.getItem(TODOS_STORAGE)) || SEED_TODOS; }
+            catch { return SEED_TODOS; }
+        };
 
         const compute = () => {
             const todos  = app.state.todos  || [];
@@ -786,14 +814,14 @@ DW_FORMATTERS.set('pluralise', v =>
         });
 
         app.addEventListener('data:sync', e => {
-            if (['todos', 'filter'].includes(e.detail.key)) compute();
+            if (e.detail.key === 'todos') {
+                localStorage.setItem(TODOS_STORAGE, JSON.stringify(app.state.todos || []));
+                compute();
+            }
+            if (e.detail.key === 'filter') compute();
         });
 
-        app.put('todos', [
-            { id: 1, task: 'Master the DOM',    status: 'done',   done: true  },
-            { id: 2, task: 'Ship data-wrapper', status: 'active', done: false },
-            { id: 3, task: 'Write the docs',    status: 'active', done: false },
-        ]);
+        app.put('todos', loadTodos());
 
     });
 </script>

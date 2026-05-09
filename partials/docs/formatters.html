@@ -1,0 +1,13 @@
+<figure data-source="registry.ts" data-region="formatters">
+  <pre><code>    [&#x27;count&#x27;,    v =&gt; (Array.isArray(v) || typeof v === &#x27;string&#x27;) ? v.length : 0],
+    [&#x27;fallback&#x27;, v =&gt; v ?? &#x27;—&#x27;],
+    [&#x27;json&#x27;,     v =&gt; JSON.stringify(v, null, 2)],
+    [&#x27;upper&#x27;,    v =&gt; String(v || &#x27;&#x27;).toUpperCase()],
+    [&#x27;lower&#x27;,    v =&gt; String(v || &#x27;&#x27;).toLowerCase()],
+    [&#x27;currency&#x27;, v =&gt; new Intl.NumberFormat(&#x27;en-US&#x27;, { style: &#x27;currency&#x27;, currency: &#x27;USD&#x27; }).format(Number(v) || 0)],
+    [&#x27;date&#x27;,     v =&gt; v ? new Date(v as string).toLocaleDateString() : &#x27;&#x27;],
+    [&#x27;trim&#x27;,     v =&gt; String(v || &#x27;&#x27;).trim()],
+    [&#x27;bool&#x27;,     v =&gt; !!v],
+    [&#x27;onoff&#x27;,    v =&gt; v ? &#x27;on&#x27; : &#x27;off&#x27;],
+    [&#x27;yesno&#x27;,    v =&gt; v ? &#x27;yes&#x27; : &#x27;no&#x27;],</code></pre>
+</figure>

@@ -77,6 +77,7 @@ export const reconcile = (
     for (const row of newRows) wake(row.node, row);
 };
 
+// #region list-directive
 const listDirective: DirectiveHandler = ({ wrapper, el, key, wake }) => {
     const tpl = el.querySelector(':scope > template') as HTMLTemplateElement | null;
     if (!tpl) return () => {};
@@ -127,7 +128,9 @@ const listDirective: DirectiveHandler = ({ wrapper, el, key, wake }) => {
         reconcile(el, items, cache, tpl, wakeOwned, identityKey);
     };
 };
+// #endregion
 
+// #region if-directive
 const ifDirective: DirectiveHandler = ({ wrapper, el, row, wake }) => {
     const anchor = document.createComment('dw-if');
 
@@ -147,6 +150,7 @@ const ifDirective: DirectiveHandler = ({ wrapper, el, row, wake }) => {
         else hide();
     };
 };
+// #endregion
 
 DW_DIRECTIVES.set('list', listDirective);
 DW_DIRECTIVES.set('if', ifDirective);
