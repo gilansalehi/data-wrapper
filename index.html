@@ -6,6 +6,7 @@
     <title>data-wrapper — HTML-first reactivity</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="manifest" href="/site.webmanifest">
+    <script src="/src/js/theme.js"></script>
     <link rel="stylesheet" href="/src/css/index.css">
     <script src="/dist/data-wrapper.js" type="module"></script>
 </head>
@@ -18,26 +19,30 @@
     onload="this.register({
         'nav/toggle':   () => nav.put('navOpen', v => !v),
         'nav/close':    () => nav.put('navOpen', false),
-        'theme/toggle': () => {
-            const h = document.documentElement;
-            h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
-        },
+        'theme/toggle': () => theme.toggle(),
     })">
 </data-wrapper>
 
-<header class="container">
-    <h1>data-wrapper</h1>
-    <p class="tagline">HTML-first reactivity. State lives in <code>data-*</code> attributes. Three tokens wire everything else.</p>
-    <p><a href="/framework.html">Why data-wrapper?</a> · <a href="/documentation.html">Code tour</a></p>
-    <pre class="install">
-        <code>
-    &lt;script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"&gt;&lt;/script&gt;
-    &lt;!-- or: npm install data-wrapper --&gt;
-        </code>
-    </pre>
+<header>
+    <data-wrapper src="/views/framework/hero.html"></data-wrapper>
 </header>
 
 <main class="container">
+    <data-wrapper id="get-started" src="views/framework/get-started.html">
+    </data-wrapper>
+
+    <data-wrapper id="impossible" src="views/framework/impossible.html">
+    </data-wrapper>
+
+    <data-wrapper id="showcase-todos" src="views/showcase/todos.html">
+    </data-wrapper>
+
+    <data-wrapper id="how-to" src="views/framework/how-to.html">
+    </data-wrapper>
+
+    <data-wrapper id="why" src="views/framework/why.html">
+    </data-wrapper>
+
 <data-wrapper id="docs">
 <!-- =====================================================================
      § TODOS — flagship demo
@@ -45,7 +50,8 @@
 
 <section id="todos">
 <h2>Todos app</h2>
-<p>A complete CRUD app. State in <code>data-*</code> attributes, actions registered in JS,
+
+<p>A complete CRUD app built in HTML. State in <code>data-*</code> attributes, actions registered in JS,
    rows rendered via <code>*list</code>, and per-row badges controlled by <code>*if</code>.
    Todos persist through <code>localStorage</code>, then render through wrapper state.
    Open DevTools → Elements and watch the attributes update live.</p>
@@ -155,9 +161,8 @@ app.put('todos', loadTodos());</code></pre>
      ===================================================================== -->
 
 <section id="start">
-<h2>Getting Started</h2>
-<p>State starts in <code>data-*</code> attributes. <code>$text="/count"</code> binds the value to the DOM.
-   <code>@click="topic"</code> delegates the event to a registered handler.</p>
+
+<!-- <data-wrapper id="counterDemo" src="views/showcase/counter.html"></data-wrapper> -->
 
 <article class="demo" data-to="counterCode" @reflect="demo/reflect">
     <data-wrapper id="counter" data-count="0">

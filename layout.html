@@ -6,6 +6,7 @@
     <title>data-wrapper — Layout prototype</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="manifest" href="/site.webmanifest">
+    <script src="/src/js/theme.js"></script>
     <link rel="stylesheet" href="/src/css/index.css">
     <script src="/dist/data-wrapper.js" type="module"></script>
 </head>
@@ -19,16 +20,13 @@
     onload="this.register({
         'nav/toggle':   () => nav.put('navOpen', v => !v),
         'nav/close':    () => nav.put('navOpen', false),
-        'theme/toggle': () => {
-            const h = document.documentElement;
-            h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
-        },
+        'theme/toggle': () => theme.toggle(),
     })">
 </data-wrapper>
 
 <main class="container">
-    <data-wrapper src="/views/framework/hero.html"></data-wrapper>
 
+    <data-wrapper src="/views/framework/hero.html"></data-wrapper>
     <!-- Add more view loaders here as the layout is assembled:
     <data-wrapper src="/views/framework/pitch.html"></data-wrapper>
     <data-wrapper src="/views/showcase/todos.html"></data-wrapper>

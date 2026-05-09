@@ -1,43 +1,45 @@
 <section id="todos">
-<h2>Todos app</h2>
-<p>A complete CRUD app. State in <code>data-*</code> attributes, actions registered in JS,
-   rows rendered via <code>*list</code>, and per-row badges controlled by <code>*if</code>.
-   Todos persist through <code>localStorage</code>, then render through wrapper state.
-   Open DevTools → Elements and watch the attributes update live.</p>
+    <h2>Todos app</h2>
+    <p>
+        A complete CRUD app. State in <code>data-*</code> attributes, actions registered in JS,
+        rows rendered via <code>*list</code>, and per-row badges controlled by <code>*if</code>.
+        Todos persist through <code>localStorage</code>, then render through wrapper state.
+        Open DevTools → Elements and watch the attributes update live.
+    </p>
 
-<article class="demo" data-to="todosCode" @reflect="demo/reflect">
-    <data-wrapper id="app" data-filter="all">
+    <article class="demo" data-to="todosCode" @reflect="demo/reflect">
+        <data-wrapper id="app" data-filter="all">
 
-        <form @submit="todo/add">
-            <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off">
-            <button type="submit">Add</button>
-        </form>
+            <form @submit="todo/add">
+                <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off">
+                <button type="submit">Add</button>
+            </form>
 
-        <ul class="todo-list" *list="/view" data-empty="dw-empty">
-            <template>
-                <li class="todo-item" $class="./status">
-                    <input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id" aria-label="Toggle todo completion">
-                    <span $text="./task"></span>
-                    <strong class="done-badge" *if="./done">done</strong>
-                    <button class="delete-btn" @click="todo/remove" $value="./id" aria-label="Remove">x</button>
-                </li>
-            </template>
-        </ul>
+            <ul class="todo-list" *list="/view" data-empty="dw-empty">
+                <template>
+                    <li class="todo-item" $class="./status">
+                        <input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id" aria-label="Toggle todo completion">
+                        <span $text="./task"></span>
+                        <strong class="done-badge" *if="./done">done</strong>
+                        <button class="delete-btn" @click="todo/remove" $value="./id" aria-label="Remove">x</button>
+                    </li>
+                </template>
+            </ul>
 
-        <div class="controls">
-            <span><strong $text="/active?format=count">0</strong> active</span>
-            <div class="filter-btns" role="group" aria-label="Filter todos">
-                <button @click="filter/set" data-val="all">All</button>
-                <button @click="filter/set" data-val="active">Active</button>
-                <button @click="filter/set" data-val="done">Done</button>
+            <div class="controls">
+                <span><strong $text="/active?format=count">0</strong> active</span>
+                <div class="filter-btns" role="group" aria-label="Filter todos">
+                    <button @click="filter/set" data-val="all">All</button>
+                    <button @click="filter/set" data-val="active">Active</button>
+                    <button @click="filter/set" data-val="done">Done</button>
+                </div>
             </div>
-        </div>
 
-        <details>
-            <summary>Live state — inspect data-todos in DevTools or expand here</summary>
-            <pre class="state-pre"><code $text="/todos?format=json"></code></pre>
-        </details>
+            <details>
+                <summary>Live state — inspect data-todos in DevTools or expand here</summary>
+                <pre class="state-pre"><code $text="/todos?format=json"></code></pre>
+            </details>
 
-    </data-wrapper>
-</article>
+        </data-wrapper>
+    </article>
 </section>

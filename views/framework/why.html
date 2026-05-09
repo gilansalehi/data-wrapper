@@ -1,0 +1,69 @@
+<section id="why">
+    <h2>Why Choose Data-Wrapper</h2>
+
+    <p>
+        Most frameworks ask you to move your UI into JavaScript. Components
+        replace HTML. Templates become a dialect of JSX. State lives in a
+        parallel model, mirrored into the DOM by a render function that runs
+        on every change.
+    </p>
+    <p>
+        That approach works — and it costs you the platform. Build pipelines.
+        Hydration boundaries. A second mental model for what is on screen.
+        Tooling for the tooling.
+    </p>
+    <p>
+        <code>data-wrapper</code> goes the other direction. State lives where
+        you can already read it: in <code>data-*</code> attributes. One
+        custom element observes its own attributes, compiles bindings once
+        at wake time, and broadcasts updates to pre-arranged subscriber
+        closures. No virtual DOM. No compiler. No build step.
+    </p>
+
+    <h3>What you keep</h3>
+    <ul>
+        <li>
+            <strong>HTML as the source.</strong>
+            The markup you wrote is the page that ships.
+        </li>
+        <li>
+            <strong>The browser as the runtime.</strong>
+            URL parsing, attribute observation, native event bubbling — all
+            already there, already fast.
+        </li>
+        <li>
+            <strong>State you can inspect.</strong>
+            Attributes are visible in DevTools, mutable from the inspector,
+            and reactive to CSS selectors for free.
+        </li>
+        <li>
+            <strong>Server HTML that starts alive.</strong>
+            No hydration step; the wrapper reads its own attributes on connect.
+        </li>
+    </ul>
+
+    <h3>What you skip</h3>
+    <ul>
+        <li>JSX, build tools, and compilers</li>
+        <li>Virtual DOM diffing and reconciliation trees</li>
+        <li>A parallel state model that has to stay in sync with the DOM</li>
+        <li>Component libraries you have to learn before you can ship anything</li>
+    </ul>
+
+    <h3>Where it fits</h3>
+    <p>
+        Internal tools. Dashboards. Embedded widgets that have to coexist with
+        someone else's framework. Progressive enhancement of server-rendered
+        pages. Anywhere you want a predictable reactive layer on top of HTML
+        the server already produces.
+    </p>
+    <p>
+        Sub-kilobyte runtime. Three tokens to learn — <code>$</code> for
+        data, <code>*</code> for structure, <code>@</code> for events. State
+        you can read with your eyes.
+    </p>
+    <p>
+        <code>data-wrapper</code> does not try to replace React for app-shell
+        scenarios. It asks whether you needed React at all.
+    </p>
+</section>

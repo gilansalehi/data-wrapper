@@ -1,10 +1,20 @@
-/* ── Light theme (default) ── */
+:root {
+    --measure:   768px;
+    --pad:       2rem 1.25rem 4rem;
+    --radius:    6px;
 
-:root, [data-theme="light"] {
+    --sans:      system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono:      ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --quote:     "Iowan Old Style", "Apple Garamond", monospace;
+}
+/* ── Light theme (default) ── */
+:root,
+[data-theme="light"] {
     color-scheme: light;
 
     --bg:        #ffffff;
     --surface:   #f6f8fa;
+
     --ink:       #1e1e1e;
     --ink-text:  #9cdcfe;
 
@@ -14,17 +24,10 @@
 
     --link:      #0066cc;
     --ok:        #2da44e;
-    --ng:        #cf222e;
+    --err:       #cf222e;
     --warn:      #bf8700;
     --info:      #0969da;
 
-    --measure:   768px;
-    --pad:       2rem 1.25rem 4rem;
-
-    --sans:      system-ui, -apple-system, "Segoe UI", sans-serif;
-    --mono:      ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-
-    --radius:    6px;
     --shadow:    0 1px 2px rgb(0 0 0 / .04), 0 4px 16px rgb(0 0 0 / .06);
     --ring:      0 0 0 2px color-mix(in srgb, var(--link) 45%, transparent);
 
@@ -40,8 +43,13 @@
 [data-theme="dark"] {
     color-scheme: dark;
 
+    --hero-fg: #f4f5f7;
+    --hero-mute: color-mix(in srgb, var(--hero-fg) 60%, transparent);
+    --hero-faint: color-mix(in srgb, var(--hero-fg) 22%, transparent);
+
     --bg:       #0e0e16;
     --surface:  #171923;
+
     --ink:      #0d1117;
     --ink-text: #79c0ff;
 
@@ -51,15 +59,29 @@
 
     --link:     #79c0ff;
     --ok:       #7ee787;
-    --ng:       #f85149;
+    --err:      #f85149;
     --warn:     #d29922;
     --info:     #58a6ff;
 
-    --shadow:   0 1px 2px rgb(0 0 0 / .3), 0 4px 16px rgb(0 0 0 / .45);
-
+    --shadow:        0 1px 2px rgb(0 0 0 / .3), 0 4px 16px rgb(0 0 0 / .45);
     --border:        1px solid color-mix(in srgb, currentColor 20%, transparent);
     --border-strong: 1px solid color-mix(in srgb, currentColor 40%, transparent);
 
     --control-bg:    var(--surface);
     --control-hover: color-mix(in srgb, var(--surface) 80%, currentColor);
+}
+
+.theme-base {
+    background: var(--bg);
+    color: var(--text);
+}
+
+.theme-surface {
+    background: var(--surface);
+    color: var(--text);
+}
+
+.theme-ink {
+    background: var(--ink);
+    color: var(--ink-text);
 }

@@ -1,0 +1,116 @@
+
+.no-hero {
+    --hero-fg: #f4f5f7;
+    --hero-mute: color-mix(in srgb, var(--hero-fg) 60%, transparent);
+    --hero-faint: color-mix(in srgb, var(--hero-fg) 22%, transparent);
+    --quote: "Iowan Old Style", "Apple Garamond", monospace;
+
+    background: var(--ink);
+    color: var(--hero-fg);
+    overflow: clip;
+}
+
+.no-hero__inner {
+    padding: clamp(2rem, 6vw, 4.5rem) 0;
+}
+
+.no-hero__kicker {
+    margin: 0;
+    padding: .5em 0;
+    color: var(--hero-mute);
+    font-family: var(--mono);
+    font-size: .78rem;
+    font-weight: 500;
+    letter-spacing: .14em;
+    text-transform: lowercase;
+}
+
+.no-hero__lead-in {
+    max-width: 36rem;
+    margin: 0;
+    color: var(--hero-mute);
+    font-size: 1.02rem;
+    font-style: italic;
+    line-height: 1.55;
+}
+
+.no-hero__title {
+    margin: 0;
+    color: var(--hero-fg);
+    font-size: clamp(6rem, 22vw, 14rem);
+    line-height: .82;
+    letter-spacing: -.08em;
+    font-weight: 900;
+    text-wrap: nowrap;
+}
+
+.no-hero__title::before,
+.no-hero__title::after {
+    color: var(--ink-text);
+    font-family: var(--quote);
+    font-style: italic;
+    font-weight: 400;
+    font-size: .42em;
+    letter-spacing: 0;
+    vertical-align: .55em;
+    line-height: 0;
+}
+
+.no-hero__title::before { content: "\201C"; margin-right: .12em; vertical-align: 1em; }
+.no-hero__title::after  { content: "\201D"; margin-left: .12em; vertical-align: -0.5em; }
+
+.no-hero__line {
+    max-width: 38rem;
+    margin: clamp(1.25rem, 3vw, 2rem) 0 0;
+    color: var(--hero-fg);
+    font-size: clamp(1.35rem, 3.4vw, 2.05rem);
+    font-weight: 700;
+    line-height: 1.18;
+    letter-spacing: -.01em;
+    text-wrap: balance;
+}
+
+.no-hero__pivot {
+    max-width: 38rem;
+    margin: .55em 0 0;
+    color: var(--ink-text);
+    font-size: clamp(1.35rem, 3.4vw, 2.05rem);
+    font-weight: 700;
+    font-style: italic;
+    letter-spacing: -.01em;
+}
+
+.no-hero__copy {
+    max-width: 36rem;
+    margin: clamp(1.5rem, 3vw, 2rem) 0 0;
+    color: var(--hero-mute);
+    font-size: 1.02rem;
+    line-height: 1.55;
+}
+
+.no-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .65rem;
+    margin: clamp(1.75rem, 3vw, 2.25rem) 0 0;
+}
+
+.no-hero .btn {
+    border-color: var(--hero-faint);
+    background: transparent;
+    color: var(--hero-fg);
+}
+.no-hero .btn:hover {
+    background: color-mix(in srgb, var(--hero-fg) 8%, transparent);
+    border-color: color-mix(in srgb, var(--hero-fg) 50%, transparent);
+}
+.no-hero .btn-primary {
+    background: var(--hero-fg);
+    color: var(--ink);
+    border-color: var(--hero-fg);
+}
+.no-hero .btn-primary:hover {
+    background: #fff;
+    border-color: #fff;
+    color: var(--ink);
+}

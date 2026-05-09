@@ -6,6 +6,7 @@
     <title>data-wrapper — Documentation</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="manifest" href="/site.webmanifest">
+    <script src="/src/js/theme.js"></script>
     <link rel="stylesheet" href="/src/css/index.css">
     <script src="/dist/data-wrapper.js" type="module"></script>
 </head>
@@ -15,10 +16,7 @@
     onload="this.register({
         'nav/toggle':   () => nav.put('navOpen', v => !v),
         'nav/close':    () => nav.put('navOpen', false),
-        'theme/toggle': () => {
-            const h = document.documentElement;
-            h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
-        },
+        'theme/toggle': () => theme.toggle(),
     })">
 </data-wrapper>
 

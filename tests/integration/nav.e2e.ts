@@ -69,6 +69,17 @@ test.describe('Nav sidebar', () => {
         await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     });
 
+    test('theme choice persists across reloads', async ({ page }) => {
+        await page.locator('.nav-hamburger').click();
+        await page.locator('.theme-toggle').click();
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+
+        await page.reload();
+        await page.waitForFunction(() => customElements.get('data-wrapper'));
+
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    });
+
     test('dark theme applies --bg variable change to body', async ({ page }) => {
         const lightBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 

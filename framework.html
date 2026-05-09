@@ -6,6 +6,7 @@
     <title>data-wrapper — Reactive HTML, no ceremony</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="manifest" href="/site.webmanifest">
+    <script src="/src/js/theme.js"></script>
     <link rel="stylesheet" href="/src/css/index.css">
     <script src="/dist/data-wrapper.js" type="module"></script>
 </head>
@@ -15,36 +16,12 @@
     onload="this.register({
         'nav/toggle':   () => nav.put('navOpen', v => !v),
         'nav/close':    () => nav.put('navOpen', false),
-        'theme/toggle': () => {
-            const h = document.documentElement;
-            h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
-        },
+        'theme/toggle': () => theme.toggle(),
     })">
 </data-wrapper>
 
 <header>
-    <section class="hero-no" aria-labelledby="hero-title">
-        <p class="hero-kicker">&lt;data-wrapper&gt; &nbsp;:&nbsp; the no-framework framework</p>
-        <p class="hero-copy">Just say,</p>
-        <h1 id="hero-title">NO.</h1>
-        <p class="hero-line">
-            <br />No React.
-            <br />No JSX.
-            <br />No build step.
-            <br />No dependencies.
-            <br />No config.
-        </p>
-        <p class="hero-pivot">No&nbsp;worries.</p>
-        <p class="hero-copy">
-            HTML-first reactivity with browser primitives you already know. One custom element,
-            three tokens, and state you can read straight in DevTools.
-            <em>It just works.</em>
-        </p>
-        <p class="hero-actions">
-            <a class="btn btn-primary" href="#start">Start with one wrapper</a>
-            <a class="btn btn-outline" href="/documentation.html">Read the code tour</a>
-        </p>
-    </section>
+    <data-wrapper src="/views/framework/hero.html"></data-wrapper>
 </header>
 
 <main class="container">
