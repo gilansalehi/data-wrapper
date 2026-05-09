@@ -29,11 +29,9 @@ body {
 img { display: block; max-width: 100%; }
 
 /* ── Typography ── */
-
-h1 { font-size: 2rem;   margin: 0 0 .2rem; text-wrap: balance; }
-h2 { font-size: 1.2rem; margin: 3rem 0 .75rem; padding-bottom: .4rem; border-bottom: var(--border-strong); text-wrap: balance; }
-h3 { font-size: .95rem; color: var(--muted); margin: 1.75rem 0 .5rem; text-wrap: balance; }
-p  { text-wrap: pretty; }
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+}
 
 a {
     color: var(--link);
@@ -49,12 +47,15 @@ code {
     font-family: var(--mono);
 }
 
-/* ── Details / disclosure ── */
+ul, ol {
+    list-style: none;
+    padding: 0;
+}
 
+/* ── Details / disclosure ── */
 details {
     border: var(--border);
     border-radius: var(--radius);
-    margin: .4rem 0 1.5rem;
 }
 
 details summary {

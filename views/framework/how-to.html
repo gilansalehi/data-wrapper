@@ -3,16 +3,20 @@
 
     <p>Awaken your HTML with familiar concepts:</p>
 
-    <ul>
-        <li>Custom attribute tokens awaken the DOM:
-            <ul>
-                <li><code>$</code> sets a value</li>
-                <li><code>@</code> emits an event</li>
-                <li><code>*</code> controls the DOM</li>
-            </ul>
+    <div id="how-to-hover-demo">
+        <data-wrapper id="counter-demo" src="/views/showcase/counter.html">
+        </data-wrapper>
+    </div>
+
+    <ul id="how-to-awaken" class="flex flex-wrap gap-lg">
+        <li class="card" @hover="/hovered?value=1">
+            <h4>Wrap it with a <code class="code-pop">&lt;data-wrapper&gt;</code> web component to awaken the DOM</h4>
+            <p hidden>One <code>&lt;data-wrapper&gt;</code> web component to bind it all together.</p>
         </li>
-        <li>DRWLs track your data like a URL:<br />
-            <code>data://data-wrapper-id/user/name/first?format=upper</code>
+
+        <li class="card">
+            <h4>DRWLs track your data like a URL:</h4>
+            <code id="dwrl-demo" class="code-pop">data://data-wrapper-id/user/name/first?format=upper</code>
             <ul>
                 <li>Scheme: <code>data://</code> reads from the target's dataset.</li>
                 <li>Host: <code>data-wrapper-id</code> defines the target wrapper by id</li>
@@ -21,10 +25,14 @@
                 <li hidden>Hash: <code>tbd!</code> coming soon.</li>
             </ul>
         </li>
-        <li>One <code>&lt;data-wrapper&gt;</code> web component to bind it all together.</li>
-            <ul>
-                <li>If you can write a <code>&lt;Provider /&gt;</code> you can write a <code>&lt;data-wrapper&gt;</code></li>
+        <li class="card">
+            <h4>Custom attribute tokens awaken the DOM:</h4>
+            <ul class="flex gap-lg">
+                <li><code class="code-pop">$</code> sets a value</li>
+                <li><code class="code-pop">@</code> emits an event</li>
+                <li><code class="code-pop">*</code> controls the DOM</li>
             </ul>
+        </li>
     </ul>
 
     <h4>How to think in <code>data-wrapper</code></h4>
@@ -35,7 +43,7 @@
         let the browser do the work it already knows how to do.
     </p>
 
-    <div class="grid gap-4">
+    <div class="grid gap-md">
         <article class="card">
             <h3>1. State is visible</h3>
             <p>

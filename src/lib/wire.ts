@@ -80,14 +80,12 @@ export const wire = (
     const token = name[0];
     const prop  = name.slice(1);
 
-    // #region tokens
     if (token === '@') {
         wireEvent(wrapper, name);
         return;
     }
 
     if (token !== '$' && token !== '*') return;
-    // #endregion
 
     const p = parsePath(attr.value);
 

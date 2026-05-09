@@ -1,0 +1,73 @@
+/* ============================================================
+   Reusable surfaces
+   ============================================================ */
+.card {
+    background: var(--surface);
+    border: var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    box-shadow: var(--shadow);
+    transition: box-shadow .2s, transform .2s, border-color .2s;
+}
+
+.card:hover {
+    border-color: color-mix(in srgb, currentColor 28%, transparent);
+    /* transform: translateY(-2px); */
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35em;
+    min-height: 2.15em;
+    padding: .35em .8em;
+    border: var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--control-bg);
+    color: var(--text);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color .15s, border-color .15s, box-shadow .15s;
+}
+
+.btn:hover {
+    background: var(--control-hover);
+    font-weight: 600;
+}
+
+.btn-primary {
+    border-color: color-mix(in srgb, var(--link) 45%, transparent);
+    background: var(--link);
+    color: var(--bg);
+}
+
+.btn-primary:hover {
+    background: color-mix(in srgb, var(--link) 82%, var(--text));
+}
+
+.btn-outline {
+    background: transparent;
+}
+
+.btn-sm { min-height: 0; padding: .2em .65em; font-size: .8rem; }
+.btn-md { font-size: 1rem; }
+.btn-lg { padding: .55em 1em; font-size: 1rem; }
+
+.code {
+    font-size: .82rem;
+    background: var(--surface);
+    padding: .15em .4em;
+    border-radius: 3px;
+    font-family: var(--mono);
+}
+
+.code-pop {
+    --code-pop-color: color-mix(var(--ink-text) 50%, transparent);
+    font-size: 1.18rem;
+    padding: .15em .4em;
+    border-radius: 4px;
+    font-family: var(--mono);
+    background: var(--code-pop-color);
+}

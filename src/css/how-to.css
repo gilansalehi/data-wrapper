@@ -1,0 +1,19 @@
+
+ul#how-to-awaken {
+    list-style: lower-roman inside;
+    display: flex;
+
+    ul {
+        text-align: center;
+    }
+
+    li::marker {
+        font-size: 4em;
+        color: var(--ink-text);
+        font-family: var(--quote);
+    }
+
+    .card {
+        min-height: 12em;
+    }
+}

@@ -1,8 +1,48 @@
+
+/* ============================================================
+   Layout primitives
+   ============================================================ */
+
+.relative { position: relative; }
+.absolute { position: absolute; }
+.sticky { position: sticky; top: 0; }
+
+.container {
+    max-width: var(--measure);
+    margin-inline: auto;
+}
+
+.flex  { display: flex; }
+.grid  { display: grid; }
+.flex-col,
+.stack { display: flex; flex-direction: column; }
+
+.row {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.col {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.items-center    { align-items: center; }
+.justify-between { justify-content: space-between; }
+
+.gap-sm { gap: .35rem; }
+.gap-md { gap: .75rem; }
+.gap-lg { gap: 1.25rem; }
+
+
+
 .header {
     --header-fg: #f4f5f7;
     --header-mute: color-mix(in srgb, var(--header-fg) 60%, transparent);
     --header-faint: color-mix(in srgb, var(--header-fg) 22%, transparent);
-    --quote: "Iowan Old Style", "Apple Garamond", monospace;
 
     background: var(--ink);
     color: var(--header-fg);
@@ -17,4 +57,3 @@
     letter-spacing: .14em;
     text-transform: lowercase;
 }
-
