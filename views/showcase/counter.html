@@ -1,10 +1,13 @@
 <section>
-    <article class="demo" data-to="counterCode" @reflect="demo/reflect">
-        <data-wrapper id="counter" data-count="0">
+    <article class="demo" data-to="counterCode" @reflect="//docs/demo/reflect">
+        <data-wrapper id="counter" data-count="0" onload="this.register({
+            '/count/inc': () => this.put('count', n => Number(n) + 1),
+            '/count/dec': () => this.put('count', n => Number(n) - 1),
+        });">
             <div class="row">
-                <button @click="count/dec">−</button>
+                <button @click="/count/dec" value="-1">−</button>
                 <output class="count-display" $text="/count" aria-live="polite"></output>
-                <button @click="count/inc">+</button>
+                <button @click="/count/inc" value="+1">+</button>
             </div>
             <p class="note" style="margin:.5rem 0 0">
                 Inspect <code>#counter</code> in DevTools — watch <code>data-count</code> update.
@@ -13,7 +16,7 @@
     </article>
     <details open>
         <summary>HTML + JS</summary>
-        <pre><code $text="/counterCode"></code></pre>
+        <pre><code $text="//docs/counterCode"></code></pre>
 
 <pre><code>customElements.whenDefined('data-wrapper').then(() => {
   const counter = document.getElementById('counter');

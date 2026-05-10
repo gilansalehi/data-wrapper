@@ -2,9 +2,10 @@
 ul#how-to-awaken {
     list-style: lower-roman inside;
     display: flex;
+    flex-direction: column;
 
-    ul {
-        text-align: center;
+    &> li {
+        flex: 1 1 100%;
     }
 
     li::marker {

@@ -6,6 +6,10 @@
     --sans:      system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono:      ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --quote:     "Iowan Old Style", "Apple Garamond", monospace;
+
+    --hero-fg: #f4f5f7;
+    --hero-mute: color-mix(in srgb, var(--hero-fg) 80%, transparent);
+    --hero-faint: color-mix(in srgb, var(--hero-fg) 22%, transparent);
 }
 /* ── Light theme (default) ── */
 :root,
@@ -41,10 +45,6 @@
 /* ── Dark theme ── */
 [data-theme="dark"] {
     color-scheme: dark;
-
-    --hero-fg: #f4f5f7;
-    --hero-mute: color-mix(in srgb, var(--hero-fg) 60%, transparent);
-    --hero-faint: color-mix(in srgb, var(--hero-fg) 22%, transparent);
 
     --bg:       #0e0e16;
     --surface:  #171923;

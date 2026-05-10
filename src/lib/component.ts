@@ -3,6 +3,8 @@ import { wake } from './wire.ts';
 import { broadcast, watch } from './engine.ts';
 import type { ListCache, Sub, Subs } from './engine.ts';
 
+const v = '0.0.3';
+
 export class DataWrapper extends HTMLElement {
     declare state:        Record<string, unknown>;
     declare _subs:        Record<string, Subs>;
@@ -57,6 +59,7 @@ export class DataWrapper extends HTMLElement {
 
     connectedCallback() {
         this._observer.observe(this, { attributes: true });
+        on('/log', console.log, '', this);
         wake(this);
         emit('load', this, this);          // triggers onload="" attribute on the element
         if (this.hasAttribute('src')) queueMicrotask(() => this.load());
@@ -136,7 +139,7 @@ export class DataWrapper extends HTMLElement {
             this._subs = {};
             this._listCache = new Map();
             this.removeAttribute('_live');
-            wake(this);
+            wake(this, null, this);
         }
         emit('data:load', { src: url.href }, this);
     }
@@ -145,4 +148,5 @@ export class DataWrapper extends HTMLElement {
 
 if (typeof customElements !== 'undefined' && !customElements.get('data-wrapper')) {
     customElements.define('data-wrapper', DataWrapper);
+    console.info(`<data-wrapper version="${v}">`);
 }

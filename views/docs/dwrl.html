@@ -7,6 +7,30 @@
     return value =&gt; pipes.reduce((v, pipe) =&gt; pipe(v), value);
 };
 
+const parseDWRL = (dwrlString: string): DWRL =&gt; {
+    const isScoped = dwrlString.startsWith(&#x27;./&#x27;);
+
+    const url = new URL(dwrlString.slice(isScoped ? 1 : 0), DWRL_BASE);
+    const dwrl = {
+        url,
+        ...url,
+        key:  url.searchParams.get(&#x27;key&#x27;) ?? undefined,
+        path: url.pathname.slice(1),
+        protocol: url.protocol,
+        host: url.hostname,
+        format: formatter(url),
+        params: url.searchParams,
+        isItemScoped: isScoped,
+    }
+
+    // DEBUGGING:
+    if (url.hash === &#x27;#debug&#x27;) {
+        console.info(&#x27;debug:dwrl&#x27;, dwrl);
+    }
+
+    return dwrl;
+}
+
 const parsePath = (attrValue: string) =&gt; {
     const isItemScoped = attrValue.startsWith(&#x27;./&#x27;);
 

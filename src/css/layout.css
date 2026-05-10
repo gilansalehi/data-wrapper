@@ -57,3 +57,7 @@
     letter-spacing: .14em;
     text-transform: lowercase;
 }
+
+@media screen and (max-width: 768px) {
+    .container { padding-left: 1em; padding-right: 1em; }
+}

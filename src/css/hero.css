@@ -1,17 +1,13 @@
 
 .no-hero {
-    --hero-fg: #f4f5f7;
-    --hero-mute: color-mix(in srgb, var(--hero-fg) 60%, transparent);
-    --hero-faint: color-mix(in srgb, var(--hero-fg) 22%, transparent);
-    --quote: "Iowan Old Style", "Apple Garamond", monospace;
-
     background: var(--ink);
     color: var(--hero-fg);
     overflow: clip;
 }
 
 .no-hero__inner {
-    padding: clamp(2rem, 6vw, 4.5rem) 0;
+    padding-top: clamp(2rem, 6vw, 4.5rem);
+    padding-bottom: clamp(2rem, 6vw, 4.5rem);
 }
 
 .no-hero__kicker {

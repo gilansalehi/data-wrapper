@@ -13,7 +13,7 @@
             this._subs = {};
             this._listCache = new Map();
             this.removeAttribute(&#x27;_live&#x27;);
-            wake(this);
+            wake(this, null, this);
         }
         emit(&#x27;data:load&#x27;, { src: url.href }, this);
     }</code></pre>

@@ -12,7 +12,13 @@ const server = Bun.serve({
             return new Response('Not found', { status: 404 });
         }
 
-        return new Response(file);
+        return new Response(file, {
+            headers: {
+                "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            },
+        });
     },
 });
 

@@ -5,6 +5,13 @@ import type { Row, Sub, Wrapper } from './engine.ts';
 type Format = (value: unknown) => unknown;
 
 export type WrapperNode = Wrapper;
+export type DWRL = URL & {
+    url: URL,
+    isItemScoped: boolean,
+    key?: string,
+    path?: string,
+    format?: Format,
+};
 
 // ---------------------------------------------------------------------------
 // DWRL parsing — native new URL() is the entire parser
@@ -22,6 +29,30 @@ const formatter = (url: URL): Format => {
 
     return value => pipes.reduce((v, pipe) => pipe(v), value);
 };
+
+const parseDWRL = (dwrlString: string): DWRL => {
+    const isScoped = dwrlString.startsWith('./');
+
+    const url = new URL(dwrlString.slice(isScoped ? 1 : 0), DWRL_BASE);
+    const dwrl = {
+        url,
+        ...url,
+        key:  url.searchParams.get('key') ?? undefined,
+        path: url.pathname.slice(1),
+        protocol: url.protocol,
+        host: url.hostname,
+        format: formatter(url),
+        params: url.searchParams,
+        isItemScoped: isScoped,
+    }
+
+    // DEBUGGING:
+    if (url.hash === '#debug') {
+        console.info('debug:dwrl', dwrl);
+    }
+
+    return dwrl;
+}
 
 const parsePath = (attrValue: string) => {
     const isItemScoped = attrValue.startsWith('./');
@@ -80,6 +111,8 @@ export const wire = (
     const token = name[0];
     const prop  = name.slice(1);
 
+    const { path, host, url } = parseDWRL(attr.value);
+
     if (token === '@') {
         wireEvent(wrapper, name);
         return;
@@ -87,7 +120,7 @@ export const wire = (
 
     if (token !== '$' && token !== '*') return;
 
-    const p = parsePath(attr.value);
+    const p = parsePath(attr.value)
 
     if (p.url.hostname !== 'x') return; // TODO: cross-wrapper mesh
 
