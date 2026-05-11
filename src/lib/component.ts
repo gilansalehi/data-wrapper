@@ -18,9 +18,9 @@ export class DataWrapper extends HTMLElement {
         const self = this;
 
         self._subs        = {};
-        self._boundEvents = new Set();
-        self._isSyncing = false;
-        self._listCache = new Map();
+        self._boundEvents = new Set(); // avoid double subs
+        self._listCache   = new Map();
+        self._isSyncing   = false;
 
         // #region state-proxy
         self.state = new Proxy(self.dataset as unknown as Record<string, unknown>, {
@@ -69,29 +69,26 @@ export class DataWrapper extends HTMLElement {
         this._observer.disconnect();
     }
 
+    // bus(path: string) {
+    //     return this._subs[path];
+    // }
+
+    // pub(key: string, val: unknown) {
+    //     for (const sub of this._subs[key]) sub(val); // run updater
+    // }
+
+    // sub(path: string, updater: Sub) {
+    //     this._subs[path] = [...this._subs[path], updater]; // append subscriber.
+    // }
+
     _broadcast(key: string, val: unknown) {
         broadcast(this._subs[key], val);
     }
 
-    _watch(path: string, sub: Sub) {
-        watch((this._subs[path] = this._subs[path] || []), sub, this.state[path]);
+    _watch(path: string, updater: Sub) {
+        this._subs[path] = this._subs[path] || [];
+        watch(this._subs[path], updater, this.state[path]);
     }
-
-    // #region event-routing
-    _routeEvent(eventName: string) {
-        if (this._boundEvents.has(eventName)) return;
-        this._boundEvents.add(eventName);
-
-        const attrName = `@${eventName}`;
-
-        // Listeners intentionally persist — a delegate can always be woken into the DOM later.
-        on(eventName, (e: Event) => {
-            const delegate = (e as Event & { delegateTarget?: Element }).delegateTarget;
-            if (!delegate || delegate.closest('data-wrapper') !== this) return;
-            emit(delegate.getAttribute(attrName)!, e, delegate);
-        }, `[${CSS.escape(attrName)}]`, this);
-    }
-    // #endregion
 
     // #region state-api
     register(actions: Record<string, EventListener>) {

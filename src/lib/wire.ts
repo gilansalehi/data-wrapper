@@ -1,25 +1,20 @@
 import { DW_DIRECTIVES, DW_FORMATTERS } from './registry.ts';
 import { bind, watch } from './engine.ts';
 import type { Row, Sub, Wrapper } from './engine.ts';
+import { p, on, emit } from './utils.ts';
+import type { DWRL } from './utils.ts';
 
 type Format = (value: unknown) => unknown;
 
 export type WrapperNode = Wrapper;
-export type DWRL = URL & {
-    url: URL,
-    isItemScoped: boolean,
-    key?: string,
-    path?: string,
-    format?: Format,
-};
 
 // ---------------------------------------------------------------------------
 // DWRL parsing — native new URL() is the entire parser
 // ---------------------------------------------------------------------------
 
-const DWRL_BASE = 'dwrl://x/';
 const NO_WAKE   = ['DATA-WRAPPER', 'TEMPLATE', 'SVG'];
 const LIVE      = '_live';
+const TOKENS    = '@$*';
 
 // #region dwrl
 const formatter = (url: URL): Format => {
@@ -30,53 +25,9 @@ const formatter = (url: URL): Format => {
     return value => pipes.reduce((v, pipe) => pipe(v), value);
 };
 
-const parseDWRL = (dwrlString: string): DWRL => {
-    const isScoped = dwrlString.startsWith('./');
+const owner = (el: Element): WrapperNode | null => el.closest('data-wrapper')
 
-    const url = new URL(dwrlString.slice(isScoped ? 1 : 0), DWRL_BASE);
-    const dwrl = {
-        url,
-        ...url,
-        key:  url.searchParams.get('key') ?? undefined,
-        path: url.pathname.slice(1),
-        protocol: url.protocol,
-        host: url.hostname,
-        format: formatter(url),
-        params: url.searchParams,
-        isItemScoped: isScoped,
-    }
-
-    // DEBUGGING:
-    if (url.hash === '#debug') {
-        console.info('debug:dwrl', dwrl);
-    }
-
-    return dwrl;
-}
-
-const parsePath = (attrValue: string) => {
-    const isItemScoped = attrValue.startsWith('./');
-
-    // ./foo → /foo: strip leading dot so URL parser treats it as an absolute path.
-    // The isItemScoped flag above captures the original intent.
-    const url = new URL(isItemScoped ? attrValue.slice(1) : attrValue, DWRL_BASE);
-
-    return {
-        url,
-        format: formatter(url),
-        isItemScoped,
-        key:       url.searchParams.get('key') ?? undefined,
-        path:      url.pathname.slice(1), // URL always produces leading /; strip it
-    };
-};
-// #endregion
-
-const owner = (el: Element) => el.closest('data-wrapper') as WrapperNode | null;
-
-const wireEvent = (wrapper: WrapperNode | null, name: string) => {
-    wrapper?._routeEvent(name.slice(1));
-};
-
+// subscribe = watch
 const subscribe = (wrapper: WrapperNode, row: Row | null, path: string, sub: Sub) => {
     if (row) {
         watch(row.subs, item => sub(item?.[path]), row.item);
@@ -85,71 +36,54 @@ const subscribe = (wrapper: WrapperNode, row: Row | null, path: string, sub: Sub
     }
 };
 
-const wireState = (wrapper: WrapperNode, el: Element, token: string, prop: string, p: ReturnType<typeof parsePath>, row: Row | null) => {
+const wireState = (wrapper: WrapperNode, el: Element, token: string, prop: string, p: DWRL, row: Row | null) => {
     const update = token === '$'
         ? bind(el, prop)
         : DW_DIRECTIVES.get(prop)?.({ wrapper, el, key: p.key, row, wake });
 
     if (!update) return;
 
-    subscribe(wrapper, p.isItemScoped ? row : null, p.path, value => {
-        update(p.format(value));
+    subscribe(wrapper, p.isRel ? row : null, p.path ?? '', value => {
+        update(value);
     });
 };
 
-// ---------------------------------------------------------------------------
-// wire — wires one tokenized attribute on an element
-// ---------------------------------------------------------------------------
-
+// #region wire — wires one tokenized attribute on an element
 export const wire = (
     el: Element,
     attr: Attr,
     row: Row | null = null,
     wrapper: WrapperNode | null = owner(el),
 ) => {
-    const { name } = attr;
+    const { name, value } = attr;
     const token = name[0];
     const prop  = name.slice(1);
 
-    const { path, host, url } = parseDWRL(attr.value);
+    const dwrl = p(value);
+    const { path, params, isRel, host, url } = dwrl;
+    if (!path || !wrapper) return; // set default "debugger path"?
 
-    if (token === '@') {
-        wireEvent(wrapper, name);
-        return;
+    switch (token) {
+    case '@': on(prop,
+                e => emit(path, { ...params, delegateTarget: el }, el),
+                `[${CSS.escape(name)}]`, // delegate selector :(
+                wrapper ?? undefined,
+            );
+            break;
+    case '$': subscribe(wrapper, row, path, bind(el, prop)); break;
+    case '*': wireState(wrapper, el, token, prop, dwrl, row); break;
+    default : return;
     }
-
-    if (token !== '$' && token !== '*') return;
-
-    const p = parsePath(attr.value)
-
-    if (p.url.hostname !== 'x') return; // TODO: cross-wrapper mesh
-
-    if (!wrapper) return;
-
-    wireState(wrapper, el, token, prop, p, row);
 };
+// #endregion
 
-// ---------------------------------------------------------------------------
-// wake — wires one element then walks its subtree
-// ---------------------------------------------------------------------------
-
-// #region wake
-const _wireElement = (el: Element, row: Row | null, wrapper: WrapperNode | null) => {
-    if (el.hasAttribute(LIVE)) return;
-    if (!wrapper) return;
-
-    const attrs = [...el.attributes].filter(attr => '@$*'.includes(attr.name[0]));
-    if (!attrs.length) return;
-
-    el.setAttribute(LIVE, '');
-    for (const attr of attrs) wire(el, attr, row, wrapper);
-};
-
+// #region wake -- wakes node & subtree, wires dynamic attrs
 export const wake = (
     root: Element,
     row: Row | null = null,
     wrapper: WrapperNode | null = owner(root),
 ) => {
+    if (!wrapper) return;
     const nodes = [root];
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
@@ -160,6 +94,15 @@ export const wake = (
 
     let node: Node | null;
     while ((node = walker.nextNode())) nodes.push(node as Element);
-    for (const el of nodes) _wireElement(el, row, wrapper);
+
+    for (const el of nodes) {
+        if (el.hasAttribute(LIVE)) return;
+
+        const attrs = [...el.attributes].filter(attr => TOKENS.includes(attr.name[0]));
+        if (!attrs.length) return;
+
+        el.setAttribute(LIVE, '');
+        for (const attr of attrs) wire(el, attr, row, wrapper);
+    }
 };
 // #endregion

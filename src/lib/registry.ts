@@ -11,7 +11,7 @@ export type Wrapper = HTMLElement & {
     _boundEvents: Set<string>;
     _listCache:   ListCache;
     _watch(path: string, sub: Sub): void;
-    _routeEvent(eventName: string): void;
+    // _routeEvent(eventName: string): void; // aka on x do y
 };
 // #endregion
 

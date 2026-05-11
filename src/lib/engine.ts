@@ -1,6 +1,5 @@
 import { cloneTemplate, DW_DIRECTIVES, PROP_ALIASES, resolveTemplate } from './registry.ts';
 import type { DirectiveHandler, Item, Row, Sub, Subs, Wrapper } from './registry.ts';
-
 export type { Item, ListCache, Row, Sub, Subs, Wrapper } from './registry.ts';
 
 const set = (el: Element, prop: string, val: unknown) => {

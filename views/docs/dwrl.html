@@ -12,8 +12,8 @@ const parseDWRL = (dwrlString: string): DWRL =&gt; {
 
     const url = new URL(dwrlString.slice(isScoped ? 1 : 0), DWRL_BASE);
     const dwrl = {
-        url,
         ...url,
+        url,
         key:  url.searchParams.get(&#x27;key&#x27;) ?? undefined,
         path: url.pathname.slice(1),
         protocol: url.protocol,

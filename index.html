@@ -710,13 +710,13 @@ DW_FORMATTERS.set('pluralise', v =>
         const docs = document.getElementById('docs');
         docs.register({
             'demo/reflect': e => {
-                const el = e.detail.delegateTarget || e.target;
+                const el = e.detail?.delegateTarget ?? e.target;
                 docs.put(el.dataset.to, el.innerHTML.trim());
             },
             'data:load': e => { awakenTarget(e.target); },
         });
         const awakenTarget = (root) => {
-            q('[data-to]', root).forEach(el => emit('/demo/reflect', null, el));
+            q('[data-to]', root).forEach(el => emit('demo/reflect', el.dataset.to, el));
         }
         awakenTarget(docs);
 
