@@ -2,7 +2,7 @@ import { DW_DIRECTIVES, DW_FORMATTERS } from './registry.ts';
 import { bind, watch } from './engine.ts';
 import type { Row, Sub, Wrapper } from './engine.ts';
 import { p, on, emit } from './utils.ts';
-import type { DWRL } from './utils.ts';
+import type { pURL } from './utils.ts';
 
 type Format = (value: unknown) => unknown;
 
@@ -36,14 +36,14 @@ const subscribe = (wrapper: WrapperNode, row: Row | null, path: string, sub: Sub
     }
 };
 
-const wireState = (wrapper: WrapperNode, el: Element, token: string, prop: string, p: DWRL, row: Row | null) => {
+const wireState = (wrapper: WrapperNode, el: Element, token: string, prop: string, purl: pURL, row: Row | null) => {
     const update = token === '$'
         ? bind(el, prop)
-        : DW_DIRECTIVES.get(prop)?.({ wrapper, el, key: p.key, row, wake });
+        : DW_DIRECTIVES.get(prop)?.({ wrapper, el, key: purl.key, row, wake });
 
     if (!update) return;
 
-    subscribe(wrapper, p.isRel ? row : null, p.path ?? '', value => {
+    subscribe(wrapper, purl.isRel ? row : null, purl.path ?? '', value => {
         update(value);
     });
 };
@@ -60,7 +60,7 @@ export const wire = (
     const prop  = name.slice(1);
 
     const dwrl = p(value);
-    const { path, params, isRel, host, url } = dwrl;
+    const { path, params } = dwrl;
     if (!path || !wrapper) return; // set default "debugger path"?
 
     switch (token) {
