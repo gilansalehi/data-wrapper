@@ -76,14 +76,25 @@ explicitly so destructuring is safe.
 
 ```ts
 type pURL = {
-  path:    string                  // pathname without leading '/'
-  isRel:   boolean                 // true when source string starts with './'
-  key:     string | undefined      // ?key= override (used by *list identity)
-  params:  URLSearchParams         // remaining query params
-  format:  (v: unknown) => unknown // pipeline composed from ?format=…
-  hash:    string                  // '#debug' enables console trace
+  path:     string                // pathname without leading '/'
+  isRel:    boolean               // true when source starts with './'
+  key:      string | undefined    // ?key= override (used by *list identity)
+  params:   URLSearchParams       // remaining query params
+  hash:     string                // '#debug' enables console trace
+  host:     string                // Roadmap: mesh resolution
+  protocol: string                // Roadmap: api:// etc.
 }
 ```
+
+`pURL()` is a pure parser. It does not read from `DW_FORMATTERS`,
+`DW_DIRECTIVES`, or any registry — those are consumer concerns. A
+parsed pURL is plain, serializable data plus a `URLSearchParams`.
+
+The `?format=` pipeline is composed at wake time by tokens that opt
+in. The `$` subscriber, for example, builds its format function from
+`purl.params.getAll('format')` and the `DW_FORMATTERS` registry, then
+captures it in the bound closure. Tokens that don't apply formatters
+(`@`, `*if`, `*list` row identity) simply ignore the `format` params.
 
 ### Path forms
 

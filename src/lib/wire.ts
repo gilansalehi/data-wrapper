@@ -17,8 +17,8 @@ const LIVE      = '_live';
 const TOKENS    = '@$*';
 
 // #region dwrl
-const formatter = (url: URL): Format => {
-    const pipes = url.searchParams.getAll('format')
+const formatter = (params: URLSearchParams): Format => {
+    const pipes = params.getAll('format')
         .map(n => DW_FORMATTERS.get(n))
         .filter((f): f is NonNullable<typeof f> => !!f);
 
@@ -70,7 +70,12 @@ export const wire = (
                 wrapper ?? undefined,
             );
             break;
-    case '$': subscribe(wrapper, row, path, bind(el, prop)); break;
+    case '$': {
+        const format = formatter(params);
+        const set    = bind(el, prop);
+        subscribe(wrapper, row, path, value => set(format(value)));
+        break;
+    }
     case '*': wireState(wrapper, el, token, prop, dwrl, row); break;
     default : return;
     }
@@ -96,10 +101,10 @@ export const wake = (
     while ((node = walker.nextNode())) nodes.push(node as Element);
 
     for (const el of nodes) {
-        if (el.hasAttribute(LIVE)) return;
+        if (el.hasAttribute(LIVE)) continue;
 
         const attrs = [...el.attributes].filter(attr => TOKENS.includes(attr.name[0]));
-        if (!attrs.length) return;
+        if (!attrs.length) continue;
 
         el.setAttribute(LIVE, '');
         for (const attr of attrs) wire(el, attr, row, wrapper);

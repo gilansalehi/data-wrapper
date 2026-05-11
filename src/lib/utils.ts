@@ -1,23 +1,10 @@
-import { DW_FORMATTERS } from './registry.ts';
-
 export const DWRL_BASE = 'dwrl://data-wrapper/';
-
-export type Format = (v: unknown) => unknown;
-
-const formatter = (params: URLSearchParams): Format => {
-    const pipes = params.getAll('format')
-        .map(n => DW_FORMATTERS.get(n))
-        .filter((f): f is NonNullable<typeof f> => !!f);
-
-    return value => pipes.reduce((v, pipe) => pipe(v), value);
-};
 
 export type pURL = {
     path:     string,
     isRel:    boolean,            // true when source starts with './'
     key:      string | undefined, // ?key= override (used by *list identity)
     params:   URLSearchParams,
-    format:   Format,             // pipeline composed from ?format=…
     hash:     string,
     host:     string,             // Roadmap: mesh resolution
     protocol: string,             // Roadmap: api:// etc.
@@ -32,7 +19,6 @@ export const pURL = (dwrlString: string): pURL => {
         isRel,
         key:      url.searchParams.get('key') ?? undefined,
         params:   url.searchParams,
-        format:   formatter(url.searchParams),
         hash:     url.hash,
         host:     url.hostname,
         protocol: url.protocol,
