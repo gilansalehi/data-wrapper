@@ -68,10 +68,10 @@
         <ul class="todo-list" *list="/view" data-empty="dw-empty">
             <template>
                 <li class="todo-item" $class="./status">
-                    <input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id" aria-label="Toggle todo completion">
+                    <input type="checkbox" $checked="./done" @change="todo/toggle" name="id" $value="./id" aria-label="Toggle todo completion">
                     <span $text="./task"></span>
                     <strong class="done-badge" *if="./done">done</strong>
-                    <button class="delete-btn" @click="todo/remove" $value="./id" aria-label="Remove">✕</button>
+                    <button class="delete-btn" @click="todo/remove" name="id" $value="./id" aria-label="Remove">✕</button>
                 </li>
             </template>
         </ul>
@@ -79,9 +79,9 @@
         <div class="controls">
             <span><strong $text="/active?format=count">0</strong> active</span>
             <div class="filter-btns" role="group" aria-label="Filter todos">
-                <button @click="filter/set" data-val="all">All</button>
-                <button @click="filter/set" data-val="active">Active</button>
-                <button @click="filter/set" data-val="done">Done</button>
+                <button @click="filter/set" name="filter" value="all">All</button>
+                <button @click="filter/set" name="filter" value="active">Active</button>
+                <button @click="filter/set" name="filter" value="done">Done</button>
             </div>
         </div>
 
@@ -120,22 +120,22 @@ const compute = () => {
 
 app.register({
   'todo/add': e => {
-    const input = e.target.querySelector('input[name="task"]');
-    if (!input?.value.trim()) return;
-    app.push('todos', { id: Date.now(), task: input.value.trim(), status: 'active', done: false });
-    input.value = '';
+    const task = String(e.detail.payload.task ?? '').trim();
+    if (!task) return;
+    app.push('todos', { id: Date.now(), task, status: 'active', done: false });
+    e.target.reset();
   },
   'todo/toggle': e => {
-    const id = Number(e.target?.value);
+    const id = Number(e.detail.payload.id);
     app.put('todos', prev => (prev || []).map(t =>
       t.id === id ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' } : t
     ));
   },
   'todo/remove': e => {
-    const id = Number(e.target?.value);
+    const id = Number(e.detail.payload.id);
     app.put('todos', prev => (prev || []).filter(t => t.id !== id));
   },
-  'filter/set': e => app.put('filter', e.target?.dataset.val),
+  'filter/set': e => app.put('filter', e.detail.payload.filter),
 });
 
 app.addEventListener('dw/sync', e => {
@@ -184,7 +184,9 @@ app.put('todos', loadTodos());</code></pre>
 <section id="events">
 <h2>Events (<code>@</code>)</h2>
 <p><code>@event="topic/name"</code> delegates the native event to a registered handler.
-   One listener per event type on the wrapper — zero per-element listeners, even for dynamic lists.</p>
+   Listeners attach to the wrapper, not to individual elements — list rows don't get their own
+   <code>addEventListener</code> calls. Each <code>@</code>-decl filters by identity so siblings
+   don't cross-fire.</p>
 
 <table>
     <thead><tr><th>Property</th><th>Value</th></tr></thead>
@@ -311,10 +313,12 @@ demo.put('fullName', `${demo.state.firstName} ${demo.state.lastName}`);</code></
    without any binding. The filter buttons above and the nav sidebar both use this pattern.</p>
 <details>
     <summary>CSS — no JS, no $ binding needed</summary>
-    <pre><code>/* Active filter button — pure CSS, reacts to data-filter attribute */
-data-wrapper[data-filter="all"]    button[data-val="all"],
-data-wrapper[data-filter="active"] button[data-val="active"],
-data-wrapper[data-filter="done"]   button[data-val="done"] {
+    <pre><code>/* Active filter button — pure CSS, reacts to data-filter attribute.
+   Buttons use name+value to drive both the action payload AND this selector,
+   so one attribute pair does double duty. */
+data-wrapper[data-filter="all"]    button[value="all"],
+data-wrapper[data-filter="active"] button[value="active"],
+data-wrapper[data-filter="done"]   button[value="done"] {
   font-weight: bold;
   text-decoration: underline;
 }
@@ -424,7 +428,7 @@ export default function init(wrapper) {
         <tr>
             <td><code>@</code></td>
             <td>Event → handler</td>
-            <td>Delegates a native DOM event to a registered handler topic. One listener per event type on the wrapper.</td>
+            <td>Delegates a native DOM event to a registered handler topic. Listeners attach to the wrapper, not the children.</td>
             <td><code>@click="todo/remove"</code></td>
         </tr>
     </tbody>
@@ -590,7 +594,8 @@ DW_FORMATTERS.set('ago', v => {
     <thead><tr><th>Event</th><th>Target</th><th>When</th></tr></thead>
     <tbody>
         <tr><td><code>dw/sync</code></td><td>Wrapper element</td><td>Any <code>put/patch/push/pull</code>. <code>e.detail.key</code> = changed key.</td></tr>
-        <tr><td><code>load</code></td><td>Wrapper element</td><td>Wrapper connected — triggers <code>onload=""</code> attribute. <code>e.detail</code> = the element.</td></tr>
+        <tr><td><code>dw/load</code></td><td>Wrapper element</td><td>Wrapper connected and woken. <code>e.detail</code> = <code>undefined</code> — use <code>e.target</code> for the wrapper.</td></tr>
+        <tr><td><code>load</code></td><td>Wrapper element</td><td>Alias of <code>dw/load</code>, dispatched alongside it so the browser-native <code>onload=""</code> attribute fires.</td></tr>
         <tr><td><code>dw/loaded</code></td><td>Wrapper element</td><td>Fires after <code>src=""</code> resolves. <code>e.detail.src</code> = resolved URL.</td></tr>
     </tbody>
 </table>
@@ -635,7 +640,9 @@ DW_FORMATTERS.set('ago', v => {
 </table>
 
 <h3>Event topics</h3>
-<p>The <code>@event</code> value is the topic name emitted as a CustomEvent on the wrapper.
+<p>The <code>@event</code> value's path becomes the topic name. The framework dispatches the
+   CustomEvent from the actionTarget (the element carrying the <code>@</code>), and native
+   bubbling carries it up to the wrapper where <code>register()</code> handlers fire.
    Use slash paths as namespaces: <code>todo/add</code>, <code>filter/set</code>, <code>modal/close</code>.</p>
 </section>
 
@@ -767,22 +774,22 @@ DW_FORMATTERS.set('pluralise', v =>
 
         app.register({
             'todo/add': e => {
-                const input = e.target.querySelector('input[name="task"]');
-                if (!input?.value.trim()) return;
-                app.push('todos', { id: Date.now(), task: input.value.trim(), status: 'active', done: false });
-                input.value = '';
+                const task = String(e.detail.payload.task ?? '').trim();
+                if (!task) return;
+                app.push('todos', { id: Date.now(), task, status: 'active', done: false });
+                e.target.reset();
             },
             'todo/toggle': e => {
-                const id = Number(e.target?.value);
+                const id = Number(e.detail.payload.id);
                 app.put('todos', prev => (prev || []).map(t =>
                     t.id === id ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' } : t
                 ));
             },
             'todo/remove': e => {
-                const id = Number(e.target?.value);
+                const id = Number(e.detail.payload.id);
                 app.put('todos', prev => (prev || []).filter(t => t.id !== id));
             },
-            'filter/set': e => app.put('filter', e.target?.dataset.val),
+            'filter/set': e => app.put('filter', e.detail.payload.filter),
         });
 
         app.addEventListener('dw/sync', e => {

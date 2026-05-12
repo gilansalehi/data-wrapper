@@ -174,9 +174,9 @@ p  { text-wrap: pretty; } */
 
 /* ── CSS-as-view-layer: active filter via wrapper attribute ── */
 
-data-wrapper[data-filter="all"]    button[data-val="all"],
-data-wrapper[data-filter="active"] button[data-val="active"],
-data-wrapper[data-filter="done"]   button[data-val="done"] {
+data-wrapper[data-filter="all"]    button[value="all"],
+data-wrapper[data-filter="active"] button[value="active"],
+data-wrapper[data-filter="done"]   button[value="done"] {
     font-weight: 700;
     text-decoration: underline;
     text-underline-offset: .18em;

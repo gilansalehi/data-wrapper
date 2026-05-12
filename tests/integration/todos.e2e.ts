@@ -12,7 +12,7 @@ test.describe('Todos demo', () => {
     const row = (page: import('@playwright/test').Page, text: string) =>
         page.locator('#app .todo-item').filter({ hasText: text });
     const filterButton = (page: import('@playwright/test').Page, value: string) =>
-        page.locator(`#app .filter-btns button[data-val="${value}"]`);
+        page.locator(`#app .filter-btns button[value="${value}"]`);
 
     test('renders seed todos on load', async ({ page }) => {
         await expect(items(page)).toHaveCount(3);

@@ -29,9 +29,9 @@
             <div class="controls">
                 <span><strong $text="/active?format=count">0</strong> active</span>
                 <div class="filter-btns" role="group" aria-label="Filter todos">
-                    <button @click="filter/set" data-val="all">All</button>
-                    <button @click="filter/set" data-val="active">Active</button>
-                    <button @click="filter/set" data-val="done">Done</button>
+                    <button @click="filter/set" name="filter" value="all">All</button>
+                    <button @click="filter/set" name="filter" value="active">Active</button>
+                    <button @click="filter/set" name="filter" value="done">Done</button>
                 </div>
             </div>
 
