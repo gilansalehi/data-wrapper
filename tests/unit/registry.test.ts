@@ -41,10 +41,8 @@ describe('framework types', () => {
         const wrapper = document.createElement('data-wrapper') as Wrapper;
         wrapper.state = {};
         wrapper._subs = {};
-        wrapper._boundEvents = new Set();
         wrapper._listCache = new Map();
         wrapper._watch = () => {};
-        wrapper._routeEvent = () => {};
 
         const ctx: DirectiveContext = {
             wrapper,
@@ -104,10 +102,8 @@ describe('DW_DIRECTIVES', () => {
         const wrapper = document.createElement('data-wrapper') as Wrapper;
         wrapper.state = {};
         wrapper._subs = {};
-        wrapper._boundEvents = new Set();
         wrapper._listCache = new Map();
         wrapper._watch = () => {};
-        wrapper._routeEvent = () => {};
 
         DW_DIRECTIVES.set('probe', () => value => { document.body.dataset.value = String(value); });
         DW_DIRECTIVES.get('probe')!({

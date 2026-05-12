@@ -4,14 +4,21 @@ export type Formatter = (v: unknown) => unknown;
 export type Item = Record<string, unknown>;
 export type Row = { node: Element; item: Item; subs: Subs<Item> };
 export type ListCache = Map<Element, Map<unknown, Row>>;
+
+// #region @-dispatch
+export type DispatchPayload = Record<string, FormDataEntryValue | FormDataEntryValue[]>;
+export type DispatchDetail  = {
+    originalEvent: Event;
+    payload:       DispatchPayload;
+};
+export type DispatchEvent = CustomEvent<DispatchDetail>;
+// #endregion
 // #region wrapper-contract
 export type Wrapper = HTMLElement & {
     state:        Record<string, unknown>;
     _subs:        Record<string, Subs>;
-    _boundEvents: Set<string>;
     _listCache:   ListCache;
     _watch(path: string, sub: Sub): void;
-    // _routeEvent(eventName: string): void; // aka on x do y
 };
 // #endregion
 

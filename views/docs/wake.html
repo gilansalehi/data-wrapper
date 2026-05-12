@@ -1,20 +1,10 @@
 <figure data-source="wire.ts" data-region="wake">
-  <pre><code>const _wireElement = (el: Element, row: Row | null, wrapper: WrapperNode | null) =&gt; {
-    if (el.hasAttribute(LIVE)) return;
-    if (!wrapper) return;
-
-    const attrs = [...el.attributes].filter(attr =&gt; &#x27;@$*&#x27;.includes(attr.name[0]));
-    if (!attrs.length) return;
-
-    el.setAttribute(LIVE, &#x27;&#x27;);
-    for (const attr of attrs) wire(el, attr, row, wrapper);
-};
-
-export const wake = (
+  <pre><code>export const wake = (
     root: Element,
     row: Row | null = null,
     wrapper: WrapperNode | null = owner(root),
 ) =&gt; {
+    if (!wrapper) return;
     const nodes = [root];
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
@@ -25,6 +15,15 @@ export const wake = (
 
     let node: Node | null;
     while ((node = walker.nextNode())) nodes.push(node as Element);
-    for (const el of nodes) _wireElement(el, row, wrapper);
+
+    for (const el of nodes) {
+        if (el.hasAttribute(LIVE)) continue;
+
+        const attrs = [...el.attributes].filter(attr =&gt; TOKENS.includes(attr.name[0]));
+        if (!attrs.length) continue;
+
+        el.setAttribute(LIVE, &#x27;&#x27;);
+        for (const attr of attrs) wire(el, attr, row, wrapper);
+    }
 };</code></pre>
 </figure>

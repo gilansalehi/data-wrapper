@@ -155,18 +155,32 @@ Booleans follow the stable query-param rule (`.has()` is truth).
 
 ### actionTarget
 
-The element carrying the `@event` attribute is the `actionTarget`. It
-is distinct from native event fields:
+The element carrying the `@event` attribute is the `actionTarget`.
+The framework dispatches the action `CustomEvent` from that element,
+so for handlers reached via `register()` it is simply `event.target`
+— alongside the native `currentTarget` (the wrapper).
 
 ```txt
-originalEvent.target         deepest native event target
-originalEvent.currentTarget  data-wrapper delegation root
-detail.actionTarget          element declaring the action
+event.target           actionTarget (declarer)
+event.currentTarget    data-wrapper delegation root
+event.type             action name, e.g. "todos/remove"
+event.detail.originalEvent.target   deepest native event target
 ```
 
-`actionTarget` is intentionally framework-specific — it avoids
-overloading native `currentTarget` and side-steps jQuery's
-`delegateTarget` convention.
+For the underlying native delegated event (the one `on()` is
+listening to before dispatch), the framework augments `Event` with an
+`actionTarget` property:
+
+```ts
+interface Event {
+  actionTarget?: Element;
+}
+```
+
+`on(name, cb, selector, ctx)` sets `event.actionTarget` to the
+matched element before invoking `cb`. This is the only place where
+the framework adds to the native Event shape, and it lives alongside
+`target` / `currentTarget` as a peer concept.
 
 ### Payload
 
@@ -189,35 +203,41 @@ non-overlapping.
 ### Detail shape
 
 `register()` handlers receive a `DispatchEvent` — a `CustomEvent`
-typed against a fixed dispatch contract:
+typed against a minimal dispatch contract:
 
 ```ts
-type DispatchOptions = {
-  prevent:   boolean
-  stop:      boolean
-  immediate: boolean
-}
-
 type DispatchPayload = Record<string, FormDataEntryValue | FormDataEntryValue[]>
 
 type DispatchDetail = {
-  originalEvent: Event              // the native DOM event
-  wrapper:       Wrapper            // delegation root
-  actionTarget:  Element            // declarer
-  eventType:     string             // e.g. "click"
-  action:        string             // e.g. "todos/remove"
-  options:       DispatchOptions
-  payload:       DispatchPayload
+  originalEvent: Event              // the triggering native DOM event
+  payload:       DispatchPayload    // collected from the actionTarget
 }
 
 type DispatchEvent = CustomEvent<DispatchDetail>
 ```
 
-`DispatchOptions` is a closed shape at v1. Every known dispatch flag
-is a field of this type; missing options default to `false`. Adding a
-new option (e.g. the deferred `once`, `capture`) is a type bump.
-Reopening this to a `Record<string, boolean>` is on the Roadmap if
-the option set proves to need user extension.
+`detail` carries only what isn't already on the event. Everything
+else comes from native fields:
+
+| Want…          | Read…                               |
+| -------------- | ----------------------------------- |
+| action name    | `event.type`                        |
+| actionTarget   | `event.target`                      |
+| wrapper        | `event.currentTarget`               |
+| native event   | `event.detail.originalEvent`        |
+| deep target    | `event.detail.originalEvent.target` |
+| was prevented? | `event.detail.originalEvent.defaultPrevented` |
+| form data      | `event.detail.payload`              |
+
+Dispatch flags (`?prevent`, `?stop`, `?immediate`) are applied to
+`originalEvent` before the action CustomEvent is dispatched. They
+aren't echoed into `detail` — they're declarative side effects, not
+information the handler needs at runtime.
+
+`DispatchPayload` is intentionally flexible. The current default
+shape comes from named controls (`FormData`-style for `<form>`
+actionTargets, `{ name: value }` otherwise), but the payload-mode
+spec is still being dialed in.
 
 ### Bubbling
 
@@ -235,6 +255,44 @@ submitter       ~  actionTarget
 FormData        ~  payload
 navigation      ~  registered handler dispatch
 ```
+
+## Event Primitives
+
+The framework exposes two thin wrappers around native DOM events:
+
+```ts
+emit(eventName: string, detail?: unknown, ctx?: DWContext): void;
+
+on(eventName: string,
+   cb: EventListener,
+   delegate?: string,
+   ctx?: DWContext): () => void;
+```
+
+- `emit` dispatches a bubbling `CustomEvent`. No parsing, no merging
+  — `detail` is whatever the caller provides.
+- `on` is `addEventListener` plus optional delegation. When
+  `delegate` is set, `on` performs `closest(selector)` on the deep
+  target, then sets `event.actionTarget` to the match before
+  invoking `cb`. Callbacks keep the standard
+  `(event) => void` shape — identical to `addEventListener`.
+
+The match is reachable through `event.actionTarget`, sitting
+alongside `event.target` and `event.currentTarget`. This is the only
+augmentation the framework makes to the native `Event` type.
+
+Both deal in **bare action names** — `'todos/add'`, not pURL strings.
+pURL parsing happens at the `@` token boundary in `wire.ts`; from there
+on, the rest of the framework talks in plain strings.
+
+Action names use `/` as separator. Colons are reserved: `new URL()`
+treats `data:sync` as protocol `data:` + path `sync`, silently
+dropping the prefix. Any framework-owned event name follows the slash
+convention.
+
+`register()` is sugar that loops `on()` for each entry in an actions
+map. The callback shape is the standard `EventListener` — same as
+`addEventListener`. No special wrapping.
 
 ## Render Lifecycle
 
@@ -296,7 +354,7 @@ subscribers.
 4. `_isSyncing` suppresses the MutationObserver echo from internal
    writes.
 5. `_broadcast(key, value)` calls subscribers for that key.
-6. `data:sync` is emitted for app-level derived state.
+6. `dw/sync` is emitted with `{ key }` for app-level observers.
 
 External `data-*` mutations take the MutationObserver path:
 
@@ -379,9 +437,26 @@ A wrapper with `src="<url>"` calls `load()` on connect. `load()`:
   `default(wrapper)`. The module is responsible for any setup.
 - For HTML sources, fetches the body, replaces `innerHTML`, resets
   `_subs` and `_listCache`, clears `_live`, and re-`wake()`s the
-  wrapper. `data:load` is emitted on completion.
+  wrapper. `dw/loaded` is emitted on completion.
 
 This is the primitive used to compose pages from view fragments.
+
+## Lifecycle Events
+
+The framework emits a small set of named lifecycle events on the
+wrapper. Each bubbles. The wrapper itself is reachable via
+`event.target`, so it is not duplicated in `detail` — detail carries
+only what isn't derivable from the dispatch context.
+
+| Event       | When                              | `detail`           |
+| ----------- | --------------------------------- | ------------------ |
+| `dw/load`   | Wrapper connected and woken       | `undefined`        |
+| `dw/sync`   | A state key changed               | `{ key: string }`  |
+| `dw/loaded` | `src` fetch finished              | `{ src: string }`  |
+
+These are notifications, not actions. The `DispatchDetail` contract
+applies only to `@`-token actions; lifecycle events use the simplest
+detail shape that carries their data.
 
 ## Accepted Complexity
 
@@ -423,18 +498,14 @@ stable. Open:
 
 ## `@` dispatch — deferred options
 
-The stable set is `prevent` / `stop` / `immediate`, modeled as a
-closed `DispatchOptions` type. Additional options are tentatively
-planned but not committed:
+The stable set is `prevent` / `stop` / `immediate`, applied to the
+originalEvent before dispatch (not echoed into `detail`). Additional
+options are tentatively planned but not committed:
 
 - `once` — remove the listener after one dispatch (maps to
   `addEventListener({ once: true })`).
 - `capture` — listen in the capture phase, for events that don't
   bubble (`focus`, `blur`).
-
-Open: whether to keep `DispatchOptions` closed (each new option = type
-bump) or reopen it to `Record<string, boolean>` for user-defined
-dispatch flags. Closed is the v1 stance.
 
 ## `@` payload modes
 
@@ -508,3 +579,7 @@ Apply to stable and WIP alike:
    renaming one line of JavaScript?
 5. Is this complexity improving DX, or protecting the framework from
    its own abstraction?
+6. Does this abstraction lean **toward** the DOM (CustomEvent,
+   FormData, URLSearchParams, FormElement) or away from it? The
+   browser has already engineered the hard parts; reach for them
+   before inventing.

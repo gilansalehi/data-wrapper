@@ -2,31 +2,17 @@ import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
 import { DW_DIRECTIVES } from '@lib/registry.ts';
 import { wake } from '@lib/wire.ts';
 import type { Row, Sub, Subs, Wrapper } from '@lib/engine.ts';
-import { emit } from '@lib/utils.ts';
 
 type TestWrapper = Wrapper & HTMLElement;
 
 const makeWrapper = (): TestWrapper => {
     const el = document.createElement('data-wrapper') as TestWrapper;
-    el.state        = {};
-    el._subs        = {};
-    el._boundEvents = new Set();
-    el._listCache   = new Map();
-    el._watch       = (path: string, sub: Sub) => {
+    el.state      = {};
+    el._subs      = {};
+    el._listCache = new Map();
+    el._watch     = (path: string, sub: Sub) => {
         (el._subs[path] ??= []).push(sub);
         sub(el.state[path]);
-    };
-    el._routeEvent  = (eventName: string) => {
-        if (el._boundEvents.has(eventName)) return;
-        el._boundEvents.add(eventName);
-
-        const attrName = `@${eventName}`;
-        el.addEventListener(eventName, e => {
-            const delegate = (e.target as Element).closest(`[${CSS.escape(attrName)}]`);
-            if (!delegate || delegate.closest('data-wrapper') !== el) return;
-            (e as Event & { delegateTarget?: Element | null }).delegateTarget = delegate;
-            emit(delegate.getAttribute(attrName)!, e, delegate);
-        });
     };
     return el;
 };
@@ -235,19 +221,18 @@ describe('wake directives and events', () => {
         wake(wrapper);
         wrapper.querySelector('button')!.click();
 
-        expect(wrapper._boundEvents.has('click')).toBe(true);
         expect(fired).toBe(true);
     });
 
-    it('passes original event with delegateTarget in CustomEvent.detail', () => {
+    it('dispatches the action CustomEvent from the actionTarget element', () => {
         const wrapper = appendWrapper('<button @click="topic"><span>Click</span></button>');
-        let detail: (Event & { delegateTarget?: Element | null }) | undefined;
-        wrapper.addEventListener('topic', e => { detail = (e as CustomEvent).detail; });
+        let target = null as EventTarget | null;
+        wrapper.addEventListener('topic', e => { target = e.target; });
 
         wake(wrapper);
         wrapper.querySelector('span')!.dispatchEvent(new Event('click', { bubbles: true }));
 
-        expect(detail?.delegateTarget).toBe(wrapper.querySelector('button'));
+        expect(target).toBe(wrapper.querySelector('button')!);
     });
 
     it('does not route events owned by nested wrappers', () => {
@@ -259,10 +244,8 @@ describe('wake directives and events', () => {
         const inner = wrapper.querySelector('data-wrapper') as TestWrapper;
         inner.state = {};
         inner._subs = {};
-        inner._boundEvents = new Set();
         inner._listCache = new Map();
         inner._watch = (_path: string, _sub: Sub) => {};
-        inner._routeEvent = wrapper._routeEvent.bind(inner);
 
         let outerCalls = 0;
         wrapper.addEventListener('topic', () => { outerCalls += 1; });

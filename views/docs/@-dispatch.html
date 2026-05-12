@@ -1,0 +1,8 @@
+<figure data-source="registry.ts" data-region="@-dispatch">
+  <pre><code>export type DispatchPayload = Record&lt;string, FormDataEntryValue | FormDataEntryValue[]&gt;;
+export type DispatchDetail  = {
+    originalEvent: Event;
+    payload:       DispatchPayload;
+};
+export type DispatchEvent = CustomEvent&lt;DispatchDetail&gt;;</code></pre>
+</figure>

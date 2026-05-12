@@ -2,9 +2,7 @@
   <pre><code>export type Wrapper = HTMLElement &amp; {
     state:        Record&lt;string, unknown&gt;;
     _subs:        Record&lt;string, Subs&gt;;
-    _boundEvents: Set&lt;string&gt;;
     _listCache:   ListCache;
     _watch(path: string, sub: Sub): void;
-    _routeEvent(eventName: string): void;
 };</code></pre>
 </figure>

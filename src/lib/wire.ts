@@ -1,4 +1,5 @@
 import { DW_DIRECTIVES, DW_FORMATTERS } from './registry.ts';
+import type { DispatchDetail, DispatchPayload } from './registry.ts';
 import { bind, watch } from './engine.ts';
 import type { Row, Sub, Wrapper } from './engine.ts';
 import { p, on, emit } from './utils.ts';
@@ -26,6 +27,21 @@ const formatter = (params: URLSearchParams): Format => {
 };
 
 const owner = (el: Element): WrapperNode | null => el.closest('data-wrapper')
+
+const collectPayload = (el: Element): DispatchPayload => {
+    if (el instanceof HTMLFormElement) {
+        const out: DispatchPayload = {};
+        for (const [k, v] of new FormData(el)) {
+            const existing = out[k];
+            if (existing === undefined)   out[k] = v;
+            else if (Array.isArray(existing)) existing.push(v);
+            else                               out[k] = [existing, v];
+        }
+        return out;
+    }
+    const ni = el as HTMLInputElement;
+    return ni.name ? { [ni.name]: ni.value } : {};
+};
 
 // subscribe = watch
 const subscribe = (wrapper: WrapperNode, row: Row | null, path: string, sub: Sub) => {
@@ -64,12 +80,20 @@ export const wire = (
     if (!path || !wrapper) return; // set default "debugger path"?
 
     switch (token) {
-    case '@': on(prop,
-                e => emit(path, { ...params, delegateTarget: el }, el),
-                `[${CSS.escape(name)}]`, // delegate selector :(
-                wrapper ?? undefined,
-            );
-            break;
+    case '@': {
+        on(prop, (e) => {
+            if (params.has('prevent'))   e.preventDefault();
+            if (params.has('stop'))      e.stopPropagation();
+            if (params.has('immediate')) e.stopImmediatePropagation();
+
+            const detail: DispatchDetail = {
+                originalEvent: e,
+                payload: collectPayload(el),
+            };
+            emit(path, detail, el);
+        }, el, wrapper);
+        break;
+    }
     case '$': {
         const format = formatter(params);
         const set    = bind(el, prop);

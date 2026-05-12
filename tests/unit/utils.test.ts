@@ -80,26 +80,47 @@ describe('emit', () => {
 describe('on', () => {
     beforeEach(() => { document.body.innerHTML = ''; });
 
+    // #region basics
     it('calls callback when the event fires', () => {
         let calls = 0;
-        on('utils:plain', () => { calls += 1; });
+        on('utils/plain', () => { calls += 1; });
 
-        document.dispatchEvent(new Event('utils:plain'));
+        document.dispatchEvent(new Event('utils/plain'));
 
         expect(calls).toBe(1);
     });
 
     it('returns an unsubscribe function that stops the listener', () => {
         let calls = 0;
-        const off = on('utils:unsubscribe', () => { calls += 1; });
+        const off = on('utils/unsubscribe', () => { calls += 1; });
 
         off();
-        document.dispatchEvent(new Event('utils:unsubscribe'));
+        document.dispatchEvent(new Event('utils/unsubscribe'));
 
         expect(calls).toBe(0);
     });
 
-    it('with delegate selector: fires only when a matching child is the target', () => {
+    it('with no delegate: does not set actionTarget on the event', () => {
+        let actionTarget: Element | undefined;
+        on('utils/no-delegate', (e) => { actionTarget = e.actionTarget; });
+
+        document.dispatchEvent(new Event('utils/no-delegate'));
+
+        expect(actionTarget).toBeUndefined();
+    });
+
+    it('with empty string delegate: behaves like no delegate', () => {
+        let calls = 0;
+        on('utils/empty-delegate', () => { calls += 1; }, '');
+
+        document.dispatchEvent(new Event('utils/empty-delegate'));
+
+        expect(calls).toBe(1);
+    });
+    // #endregion
+
+    // #region selector delegate
+    it('with selector delegate: fires only when a matching ancestor exists', () => {
         document.body.innerHTML = '<button class="match"></button><button class="miss"></button>';
         let calls = 0;
         on('click', () => { calls += 1; }, '.match', document.body);
@@ -110,19 +131,17 @@ describe('on', () => {
         expect(calls).toBe(1);
     });
 
-    it('with delegate selector: sets e.delegateTarget to the matching element', () => {
+    it('with selector delegate: sets e.actionTarget to the matched element', () => {
         document.body.innerHTML = '<button class="match"><span>Label</span></button>';
-        let delegate: Element | null | undefined;
-        on('click', e => {
-            delegate = (e as Event & { delegateTarget?: Element | null }).delegateTarget;
-        }, '.match', document.body);
+        let actionTarget: Element | undefined;
+        on('click', (e) => { actionTarget = e.actionTarget; }, '.match', document.body);
 
         document.querySelector('span')!.dispatchEvent(new Event('click', { bubbles: true }));
 
-        expect(delegate).toBe(document.querySelector('.match'));
+        expect(actionTarget).toBe(document.querySelector('.match')!);
     });
 
-    it('with delegate selector: does not fire when no matching ancestor', () => {
+    it('with selector delegate: does not fire when no matching ancestor', () => {
         document.body.innerHTML = '<button class="miss"></button>';
         let calls = 0;
         on('click', () => { calls += 1; }, '.match', document.body);
@@ -131,4 +150,108 @@ describe('on', () => {
 
         expect(calls).toBe(0);
     });
+
+    it('with selector delegate matching nothing in ctx: never fires', () => {
+        document.body.innerHTML = '<button class="present"></button>';
+        let calls = 0;
+        on('click', () => { calls += 1; }, '.absent', document.body);
+
+        document.querySelector('.present')!.dispatchEvent(new Event('click', { bubbles: true }));
+
+        expect(calls).toBe(0);
+    });
+    // #endregion
+
+    // #region element delegate
+    it('with Element delegate: fires when click is on the element itself', () => {
+        document.body.innerHTML = '<button id="A"></button>';
+        const a = document.getElementById('A') as Element;
+        let calls = 0;
+        on('click', () => { calls += 1; }, a, document.body);
+
+        a.dispatchEvent(new Event('click', { bubbles: true }));
+
+        expect(calls).toBe(1);
+    });
+
+    it('with Element delegate: fires when click is on a descendant', () => {
+        document.body.innerHTML = '<button id="A"><span>x</span></button>';
+        const a = document.getElementById('A') as Element;
+        let calls = 0;
+        on('click', () => { calls += 1; }, a, document.body);
+
+        document.querySelector('span')!.dispatchEvent(new Event('click', { bubbles: true }));
+
+        expect(calls).toBe(1);
+    });
+
+    it('with Element delegate: does not fire for clicks outside its subtree', () => {
+        document.body.innerHTML = '<button id="A"></button><button id="B"></button>';
+        const a = document.getElementById('A') as Element;
+        const b = document.getElementById('B') as Element;
+        let calls = 0;
+        on('click', () => { calls += 1; }, a, document.body);
+
+        b.dispatchEvent(new Event('click', { bubbles: true }));
+
+        expect(calls).toBe(0);
+    });
+
+    it('with Element delegate: sets e.actionTarget to the delegate', () => {
+        document.body.innerHTML = '<button id="A"><span>x</span></button>';
+        const a = document.getElementById('A') as Element;
+        let actionTarget: Element | undefined;
+        on('click', (e) => { actionTarget = e.actionTarget; }, a, document.body);
+
+        document.querySelector('span')!.dispatchEvent(new Event('click', { bubbles: true }));
+
+        expect(actionTarget).toBe(a);
+    });
+    // #endregion
+
+    // #region cross-firing — the core dedup contract
+    it('two Element-delegated listeners on the same event type do not cross-fire', () => {
+        document.body.innerHTML = '<button id="A"></button><button id="B"></button>';
+        const a = document.getElementById('A') as Element;
+        const b = document.getElementById('B') as Element;
+        let aCalls = 0;
+        let bCalls = 0;
+        on('click', () => { aCalls += 1; }, a, document.body);
+        on('click', () => { bCalls += 1; }, b, document.body);
+
+        a.dispatchEvent(new Event('click', { bubbles: true }));
+
+        expect(aCalls).toBe(1);
+        expect(bCalls).toBe(0);
+    });
+
+    it('two selector-delegated listeners on the same event type do not cross-fire', () => {
+        document.body.innerHTML = '<button class="alpha"></button><button class="beta"></button>';
+        let alphaCalls = 0;
+        let betaCalls = 0;
+        on('click', () => { alphaCalls += 1; }, '.alpha', document.body);
+        on('click', () => { betaCalls += 1; }, '.beta', document.body);
+
+        document.querySelector('.alpha')!.dispatchEvent(new Event('click', { bubbles: true }));
+
+        expect(alphaCalls).toBe(1);
+        expect(betaCalls).toBe(0);
+    });
+
+    it('two listeners with identical delegate values fire once each on their own element', () => {
+        document.body.innerHTML = '<button id="A"></button><button id="B"></button>';
+        const a = document.getElementById('A') as Element;
+        const b = document.getElementById('B') as Element;
+        let aCalls = 0;
+        let bCalls = 0;
+        on('click', () => { aCalls += 1; }, a, document.body);
+        on('click', () => { bCalls += 1; }, b, document.body);
+
+        a.dispatchEvent(new Event('click', { bubbles: true }));
+        b.dispatchEvent(new Event('click', { bubbles: true }));
+
+        expect(aCalls).toBe(1);
+        expect(bCalls).toBe(1);
+    });
+    // #endregion
 });

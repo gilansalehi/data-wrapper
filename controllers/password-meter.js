@@ -20,7 +20,7 @@ export default function init(wrapper) {
         'pw/update': e => wrapper.put('password', e.detail.target.value),
     });
 
-    wrapper.addEventListener('data:sync', e => {
+    wrapper.addEventListener('data/sync', e => {
         if (e.detail.key === 'password') compute(wrapper.state.password ?? '');
     });
 

@@ -117,10 +117,10 @@ describe('put', () => {
         expect(broadcasts).toBe(0);
     });
 
-    it('emits data:sync event with the changed key', () => {
+    it('emits dw/sync event with the changed key', () => {
         const el = make();
         let key: unknown;
-        el.addEventListener('data:sync', e => { key = (e as CustomEvent).detail.key; });
+        el.addEventListener('dw/sync', e => { key = (e as CustomEvent).detail.key; });
 
         el.put('count', 1);
 

@@ -1,5 +1,13 @@
+declare global {
+    interface Event {
+        actionTarget?: Element; // set by on() during delegation; lives alongside target/currentTarget
+    }
+}
+
 export const DWRL_BASE = 'dwrl://data-wrapper/';
 
+export type DWContext = Element | Document | DocumentFragment;
+export type Unsubscriber = () => void;
 export type pURL = {
     path:     string,
     isRel:    boolean,            // true when source starts with './'
@@ -8,7 +16,7 @@ export type pURL = {
     hash:     string,
     host:     string,             // Roadmap: mesh resolution
     protocol: string,             // Roadmap: api:// etc.
-};
+}; // returnTypeOf pURL; <-- possible? More concise...
 
 export const pURL = (dwrlString: string): pURL => {
     const isRel = dwrlString.startsWith('./');
@@ -31,26 +39,21 @@ export const pURL = (dwrlString: string): pURL => {
 
 export const p = pURL;
 
-export const q = (s: string, ctx: Element | Document | DocumentFragment = document) => [...ctx.querySelectorAll(s)];
+export const q = (s: string, ctx: DWContext = document) => [...ctx.querySelectorAll(s)];
 
-export const emit = (eventName: string, payload?: unknown, ctx: Element | Document = document) => {
-    const { path, params } = p(eventName);
-
-    ctx.dispatchEvent(new CustomEvent(path ?? eventName, {
-        bubbles: true,
-        detail: Object.assign({}, params, payload)
-    }));
+export const emit = (eventName: string, detail?: unknown, ctx: DWContext = document) => {
+    ctx.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }));
 };
 
-export const on = (eventName: string, cb: EventListener, delegate = '', ctx: Element | Document = document): () => void => {
-    const handler: EventListener = delegate
-        ? delegateCb(cb, delegate, ctx)
-        : cb;
+export const on = (eventName: string, cb: EventListener, delegate: string | Element = '', ctx: DWContext = document): Unsubscriber => {
+    const handler: EventListener = !delegate ? cb : (e) => {
+        const targets = delegate instanceof Element ? [delegate] : q(delegate, ctx);
+        const actionTarget = targets.find(t => t.contains(e.target as Element));
+        if (!actionTarget) return;
+        Object.assign(e, { actionTarget });
+        cb(e);
+    }
+
     ctx.addEventListener(eventName, handler);
     return () => ctx.removeEventListener(eventName, handler); // unsub
 };
-
-export const delegateCb = (cb: EventListener, delegate: string, ctx: Element | Document = document): EventListener => (event) => {
-    const match = (event.target as Element).closest(delegate);
-    if (match && ctx.contains(match)) cb(event);
-}

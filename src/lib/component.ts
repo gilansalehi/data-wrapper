@@ -6,21 +6,19 @@ import type { ListCache, Sub, Subs } from './engine.ts';
 const v = '0.0.3';
 
 export class DataWrapper extends HTMLElement {
-    declare state:        Record<string, unknown>;
-    declare _subs:        Record<string, Subs>;
-    declare _boundEvents: Set<string>;
-    declare _isSyncing:   boolean;
-    declare _listCache:   ListCache;
-    declare _observer:    MutationObserver;
+    declare state:      Record<string, unknown>;
+    declare _subs:      Record<string, Subs>;
+    declare _isSyncing: boolean;
+    declare _listCache: ListCache;
+    declare _observer:  MutationObserver;
 
     constructor() {
         super();
         const self = this;
 
-        self._subs        = {};
-        self._boundEvents = new Set(); // avoid double subs
-        self._listCache   = new Map();
-        self._isSyncing   = false;
+        self._subs      = {};
+        self._listCache = new Map();
+        self._isSyncing = false;
 
         // #region state-proxy
         self.state = new Proxy(self.dataset as unknown as Record<string, unknown>, {
@@ -59,9 +57,9 @@ export class DataWrapper extends HTMLElement {
 
     connectedCallback() {
         this._observer.observe(this, { attributes: true });
-        on('/log', console.log, '', this);
+        on('dw/log', console.log, '', this);
         wake(this);
-        emit('load', this, this);          // triggers onload="" attribute on the element
+        emit('dw/load', undefined, this);
         if (this.hasAttribute('src')) queueMicrotask(() => this.load());
     }
 
@@ -101,7 +99,7 @@ export class DataWrapper extends HTMLElement {
             : val;
         if (this.state[key] === next) return;
         this.state[key] = next;
-        emit('data:sync', { key }, this);
+        emit('dw/sync', { key }, this);
     }
 
     patch(key: string, obj: Record<string, unknown>) {
@@ -138,7 +136,7 @@ export class DataWrapper extends HTMLElement {
             this.removeAttribute('_live');
             wake(this, null, this);
         }
-        emit('data:load', { src: url.href }, this);
+        emit('dw/loaded', { src: url.href }, this);
     }
     // #endregion
 }

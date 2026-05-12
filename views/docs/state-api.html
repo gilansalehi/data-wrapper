@@ -9,7 +9,7 @@
             : val;
         if (this.state[key] === next) return;
         this.state[key] = next;
-        emit(&#x27;data:sync&#x27;, { key }, this);
+        emit(&#x27;dw/sync&#x27;, { key }, this);
     }
 
     patch(key: string, obj: Record&lt;string, unknown&gt;) {

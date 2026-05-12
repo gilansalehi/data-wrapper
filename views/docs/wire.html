@@ -1,0 +1,41 @@
+<figure data-source="wire.ts" data-region="wire">
+  <pre><code>export const wire = (
+    el: Element,
+    attr: Attr,
+    row: Row | null = null,
+    wrapper: WrapperNode | null = owner(el),
+) =&gt; {
+    const { name, value } = attr;
+    const token = name[0];
+    const prop  = name.slice(1);
+
+    const dwrl = p(value);
+    const { path, params } = dwrl;
+    if (!path || !wrapper) return; // set default &quot;debugger path&quot;?
+
+    switch (token) {
+    case &#x27;@&#x27;: {
+        on(prop, (e) =&gt; {
+            if (params.has(&#x27;prevent&#x27;))   e.preventDefault();
+            if (params.has(&#x27;stop&#x27;))      e.stopPropagation();
+            if (params.has(&#x27;immediate&#x27;)) e.stopImmediatePropagation();
+
+            const detail: DispatchDetail = {
+                originalEvent: e,
+                payload: collectPayload(el),
+            };
+            emit(path, detail, el);
+        }, el, wrapper);
+        break;
+    }
+    case &#x27;$&#x27;: {
+        const format = formatter(params);
+        const set    = bind(el, prop);
+        subscribe(wrapper, row, path, value =&gt; set(format(value)));
+        break;
+    }
+    case &#x27;*&#x27;: wireState(wrapper, el, token, prop, dwrl, row); break;
+    default : return;
+    }
+};</code></pre>
+</figure>
