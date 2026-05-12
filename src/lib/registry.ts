@@ -1,5 +1,6 @@
 export type Sub<T = unknown> = (value: T) => void;
 export type Subs<T = unknown> = Sub<T>[];
+export type Station = Record<string, Subs>;
 export type Formatter = (v: unknown) => unknown;
 export type Item = Record<string, unknown>;
 export type Row = { node: Element; item: Item; subs: Subs<Item> };

@@ -1,6 +1,6 @@
 import { cloneTemplate, DW_DIRECTIVES, PROP_ALIASES, resolveTemplate } from './registry.ts';
-import type { DirectiveHandler, Item, Row, Sub, Subs, Wrapper } from './registry.ts';
-export type { Item, ListCache, Row, Sub, Subs, Wrapper } from './registry.ts';
+import type { DirectiveHandler, Item, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
+export type { Item, ListCache, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
 
 const set = (el: Element, prop: string, val: unknown) => {
     if (val === undefined || val === null) return;
@@ -27,6 +27,11 @@ export const bind = (el: Element, prop: string): Sub => {
 // #region subscriptions
 export const watch = <T>(subs: Subs<T>, sub: Sub<T>, value: T) => {
     subs.push(sub);
+    sub(value);
+};
+
+export const superscribe = (station: Station, channel: string, sub: Sub, value: unknown) => {
+    (station[channel] ??= []).push(sub);
     sub(value);
 };
 

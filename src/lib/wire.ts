@@ -3,7 +3,6 @@ import type { DispatchDetail, DispatchPayload } from './registry.ts';
 import { bind, watch } from './engine.ts';
 import type { Row, Sub, Wrapper } from './engine.ts';
 import { p, on, emit } from './utils.ts';
-import type { pURL } from './utils.ts';
 
 type Format = (value: unknown) => unknown;
 
@@ -52,17 +51,11 @@ const subscribe = (wrapper: WrapperNode, row: Row | null, path: string, sub: Sub
     }
 };
 
-const wireState = (wrapper: WrapperNode, el: Element, token: string, prop: string, purl: pURL, row: Row | null) => {
-    const update = token === '$'
-        ? bind(el, prop)
-        : DW_DIRECTIVES.get(prop)?.({ wrapper, el, key: purl.key, row, wake });
-
-    if (!update) return;
-
-    subscribe(wrapper, purl.isRel ? row : null, purl.path ?? '', value => {
-        update(value);
-    });
-};
+export const _superscribe = (path: string, updater: Sub, row: Row | null, ctx: Wrapper) => {
+    const membership = row ? row.subs : ctx._subs[path];
+    const item = row ? row.item : ctx.state[path];
+    return watch(membership, updater, item);
+}
 
 // #region wire — wires one tokenized attribute on an element
 export const wire = (
@@ -76,7 +69,7 @@ export const wire = (
     const prop  = name.slice(1);
 
     const dwrl = p(value);
-    const { path, params } = dwrl;
+    const { path, params, key } = dwrl;
     if (!path || !wrapper) return; // set default "debugger path"?
 
     switch (token) {
@@ -97,10 +90,17 @@ export const wire = (
     case '$': {
         const format = formatter(params);
         const set    = bind(el, prop);
+
         subscribe(wrapper, row, path, value => set(format(value)));
         break;
     }
-    case '*': wireState(wrapper, el, token, prop, dwrl, row); break;
+    case '*': {
+        const updater = DW_DIRECTIVES.get(prop)?.({ wrapper, el, key, row, wake });
+        if (!updater) throw new Error(`Did not recognize directive "${prop}"`);
+
+        subscribe(wrapper, row, path, updater);
+        break;
+    }
     default : return;
     }
 };
