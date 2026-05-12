@@ -1,10 +1,10 @@
 <figure data-source="engine.ts" data-region="subscriptions">
-  <pre><code>export const watch = &lt;T&gt;(subs: Subs&lt;T&gt;, sub: Sub&lt;T&gt;, value: T) =&gt; {
-    subs.push(sub);
+  <pre><code>export const subscribe = (station: Station, channel: string, sub: Sub, value: unknown) =&gt; {
+    (station[channel] ??= []).push(sub);
     sub(value);
 };
 
-export const broadcast = &lt;T&gt;(subs: Subs&lt;T&gt; = [], value: T) =&gt; {
+export const broadcast = (subs: Subs = [], value: unknown) =&gt; {
     for (const sub of subs) sub(value);
 };</code></pre>
 </figure>

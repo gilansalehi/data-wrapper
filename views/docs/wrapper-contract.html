@@ -1,8 +1,7 @@
 <figure data-source="registry.ts" data-region="wrapper-contract">
   <pre><code>export type Wrapper = HTMLElement &amp; {
     state:        Record&lt;string, unknown&gt;;
-    _subs:        Record&lt;string, Subs&gt;;
+    _subs:        Station;
     _listCache:   ListCache;
-    _watch(path: string, sub: Sub): void;
 };</code></pre>
 </figure>

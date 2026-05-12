@@ -10,11 +10,10 @@
     const prop  = name.slice(1);
 
     const dwrl = p(value);
-    const { path, params } = dwrl;
+    const { path, params, key } = dwrl;
     if (!path || !wrapper) return; // set default &quot;debugger path&quot;?
 
-    switch (token) {
-    case &#x27;@&#x27;: {
+    if (token === &#x27;@&#x27;) {
         on(prop, (e) =&gt; {
             if (params.has(&#x27;prevent&#x27;))   e.preventDefault();
             if (params.has(&#x27;stop&#x27;))      e.stopPropagation();
@@ -26,16 +25,26 @@
             };
             emit(path, detail, el);
         }, el, wrapper);
-        break;
+        return;
     }
-    case &#x27;$&#x27;: {
+
+    const station = row ? row.subs       : wrapper._subs;
+    const initial = row ? row.item[path] : wrapper.state[path];
+
+    if (token === &#x27;$&#x27;) {
         const format = formatter(params);
         const set    = bind(el, prop);
-        subscribe(wrapper, row, path, value =&gt; set(format(value)));
-        break;
+
+        subscribe(station, path, v =&gt; set(format(v)), initial);
+        return;
     }
-    case &#x27;*&#x27;: wireState(wrapper, el, token, prop, dwrl, row); break;
-    default : return;
+
+    if (token === &#x27;*&#x27;) {
+        const updater = DW_DIRECTIVES.get(prop)?.({ wrapper, el, key, row, wake });
+        if (!updater) throw new Error(`Did not recognize directive &quot;${prop}&quot;`);
+
+        subscribe(station, path, updater, initial);
+        return;
     }
 };</code></pre>
 </figure>

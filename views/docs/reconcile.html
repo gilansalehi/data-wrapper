@@ -22,7 +22,7 @@
             row = {
                 node: cloneTemplate(tpl)!,
                 item,
-                subs: [],
+                subs: {},
             };
             cache.set(id, row);
             isNew = true;
@@ -30,7 +30,10 @@
         }
 
         row.item = item;
-        if (!isNew) broadcast(row.subs, item);
+        if (!isNew) {
+            for (const channel in row.subs)
+                broadcast(row.subs[channel], item[channel]);
+        }
         fragment.appendChild(row.node);
     }
 
