@@ -1,0 +1,27 @@
+<figure data-source="utils.ts" data-region="path">
+  <pre><code>// readPath/writePath walk a deep tree along slash-separated paths.
+// readPath bottoms out via direct property access — when the root is the
+// state Proxy, the first segment hits proxy.get (which parses JSON).
+// writePath rebuilds the path with immutable spreads and reassigns the
+// root key, so the proxy setter fires once at the root and the framework&#x27;s
+// fan-out handles nested subscribers.
+export const readPath = (obj: unknown, path: string): unknown =&gt; {
+    if (!path) return obj;
+    return path.split(&#x27;/&#x27;).reduce&lt;unknown&gt;(
+        (acc, key) =&gt; acc == null ? undefined : (acc as Record&lt;string, unknown&gt;)[key],
+        obj,
+    );
+};
+
+export const writePath = (obj: Record&lt;string, unknown&gt;, path: string, value: unknown): void =&gt; {
+    const [head, ...rest] = path.split(&#x27;/&#x27;);
+    if (rest.length === 0) { obj[head] = value; return; }
+
+    const current = obj[head];
+    const sub = Array.isArray(current)
+        ? [...current] : (current &amp;&amp; typeof current === &#x27;object&#x27;)
+        ? { ...(current as Record&lt;string, unknown&gt;) } : {};
+    writePath(sub as Record&lt;string, unknown&gt;, rest.join(&#x27;/&#x27;), value);
+    obj[head] = sub;
+};</code></pre>
+</figure>

@@ -31,7 +31,7 @@
 
         row.item = item;
         if (!isNew) {
-            for (const channel in row.subs) publish(row.subs, channel, item[channel])
+            for (const channel in row.subs) publish(row.subs, channel, readPath(item, channel));
         }
         fragment.appendChild(row.node);
     }

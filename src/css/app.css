@@ -374,3 +374,68 @@ data-wrapper[data-filter="done"]   button[value="done"] {
 }
 .pw-constraints li.off .pw-check { opacity: .25; }
 .pw-constraints li.on  .pw-check { opacity: 1; }
+
+/* ── pURL annotated demo ── */
+
+.purl-display {
+    font-family: var(--mono);
+    font-size: .95rem;
+    line-height: 1.8;
+    padding: 1rem;
+    margin: .75rem 0;
+    background: var(--surface);
+    border: var(--border);
+    border-radius: var(--radius);
+    overflow-x: auto;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.purl-seg {
+    padding: .15em .45em;
+    border-radius: 4px;
+    cursor: help;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    transition: background-color .15s, outline-color .15s;
+}
+.purl-seg:hover,
+.purl-seg:focus-visible { outline-color: currentColor; }
+
+.purl-sep { color: var(--muted); padding: 0 .1em; }
+
+.purl-protocol { background: color-mix(in srgb, var(--err)  18%, transparent); color: var(--err);  }
+.purl-host     { background: color-mix(in srgb, var(--info) 18%, transparent); color: var(--info); }
+.purl-path     { background: color-mix(in srgb, var(--ok)   18%, transparent); color: var(--ok);   }
+.purl-query    { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+
+.purl-widget[data-active="protocol"] .purl-protocol { background: color-mix(in srgb, var(--err)  38%, transparent); }
+.purl-widget[data-active="host"]     .purl-host     { background: color-mix(in srgb, var(--info) 38%, transparent); }
+.purl-widget[data-active="path"]     .purl-path     { background: color-mix(in srgb, var(--ok)   38%, transparent); }
+.purl-widget[data-active="query"]    .purl-query    { background: color-mix(in srgb, var(--warn) 38%, transparent); }
+
+.purl-blurbs {
+    min-height: 5.5rem;
+    padding: .75rem 1rem;
+    background: var(--surface);
+    border: var(--border);
+    border-radius: var(--radius);
+}
+.purl-blurb { display: none; }
+.purl-widget[data-active="protocol"] .purl-blurb[data-section="protocol"],
+.purl-widget[data-active="host"]     .purl-blurb[data-section="host"],
+.purl-widget[data-active="path"]     .purl-blurb[data-section="path"],
+.purl-widget[data-active="params"]    .purl-blurb[data-section="params"],
+.purl-widget[data-active="query"]    .purl-blurb[data-section="query"] {
+    display: block;
+}
+.purl-blurb strong {
+    display: block;
+    margin-bottom: .35rem;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+}
+.purl-blurb p { margin: 0; }
+.purl-hint    { margin: .5rem 0 0; font-size: .82rem; color: var(--faint); }

@@ -28,8 +28,9 @@
         return;
     }
 
-    const station = row ? row.subs       : wrapper._subs;
-    const initial = row ? row.item[path] : wrapper.state[path];
+    const scoped  = row &amp;&amp; dwrl.isRel;
+    const station = scoped ? row.subs                 : wrapper._subs;
+    const initial = scoped ? readPath(row.item, path) : readPath(wrapper.state, path);
 
     if (token === &#x27;$&#x27;) {
         const format = formatter(params);

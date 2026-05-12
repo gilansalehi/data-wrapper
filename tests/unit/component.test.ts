@@ -8,6 +8,7 @@ interface TestWrapper extends HTMLElement {
     state: Record<string, unknown>;
     _subs: Station;
     register(actions: Record<string, EventListener>): void;
+    get(path: string): unknown;
     put(key: string, val: unknown | ((prev: unknown) => unknown)): void;
     patch(key: string, obj: Record<string, unknown>): void;
     push(key: string, item: unknown): void;
@@ -313,6 +314,69 @@ describe('MutationObserver', () => {
 
         expect(pipeCalls).toBe(1);
         expect(target.textContent).toBe('1');
+    });
+});
+
+describe('nested paths', () => {
+    it('wrapper.get drills slash-separated paths into deep state', () => {
+        const el = make();
+        el.put('user', { name: { first: 'Ali' }, age: 30 });
+
+        expect(el.get('user/name/first')).toBe('Ali');
+        expect(el.get('user/age')).toBe(30);
+        expect(el.get('user/missing')).toBeUndefined();
+    });
+
+    it('wrapper.get accepts flat keys (backward compatible)', () => {
+        const el = make();
+        el.put('name', 'Ali');
+
+        expect(el.get('name')).toBe('Ali');
+    });
+
+    it('put writes a nested leaf without disturbing siblings', () => {
+        const el = make();
+        el.put('user', { name: 'Ali', age: 30 });
+
+        el.put('user/name', 'Bo');
+
+        expect(el.get('user/name')).toBe('Bo');
+        expect(el.get('user/age')).toBe(30);
+    });
+
+    it('put on a nested path fans out to both the root and leaf channels', () => {
+        const el = make();
+        el.put('user', { name: 'Ali' });
+
+        const rootSeen: unknown[] = [];
+        const leafSeen: unknown[] = [];
+        el._subs.user        = [v => rootSeen.push(v)];
+        el._subs['user/name'] = [v => leafSeen.push(v)];
+
+        el.put('user/name', 'Bo');
+
+        expect(rootSeen).toEqual([{ name: 'Bo' }]);
+        expect(leafSeen).toEqual(['Bo']);
+    });
+
+    it('external dataset mutation fans out to nested subscribers', async () => {
+        const el = make();
+        const seen: unknown[] = [];
+        el._subs['user/name'] = [v => seen.push(v)];
+
+        el.dataset.user = JSON.stringify({ name: 'Bo' });
+        await tick();
+
+        expect(seen).toEqual(['Bo']);
+    });
+
+    it('patch merges into deeply nested objects', () => {
+        const el = make();
+        el.put('config', { theme: { mode: 'dark', accent: 'blue' } });
+
+        el.patch('config/theme', { mode: 'light' });
+
+        expect(el.get('config/theme')).toEqual({ mode: 'light', accent: 'blue' });
     });
 });
 

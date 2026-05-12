@@ -115,6 +115,30 @@ describe('wake row bindings', () => {
         expect(wrapper._subs.task).toBeUndefined();
     });
 
+    it('routes absolute $ bindings to the wrapper Station even inside a row', () => {
+        const wrapper = appendWrapper();
+        wrapper.state.filter = 'all';
+        const row = makeRow('<span $text="/filter"></span>', { filter: 'row-local' });
+        wrapper.appendChild(row.node);
+
+        wake(row.node, row);
+
+        expect(row.node.querySelector('span')?.textContent).toBe('all');
+        expect(wrapper._subs.filter).toHaveLength(1);
+        expect(row.subs.filter).toBeUndefined();
+    });
+
+    it('drills nested pURL paths into row item state', () => {
+        const wrapper = appendWrapper();
+        const row = makeRow('<span $text="./user/name"></span>', { user: { name: 'Ali' } });
+        wrapper.appendChild(row.node);
+
+        wake(row.node, row);
+
+        expect(row.node.querySelector('span')?.textContent).toBe('Ali');
+        expect(row.subs['user/name']).toHaveLength(1);
+    });
+
     it('updates item-scoped bindings when row subs run', () => {
         const wrapper = appendWrapper();
         const row = makeRow('<span $text="./task"></span>', { task: 'Ship tests' });

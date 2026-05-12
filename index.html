@@ -562,23 +562,28 @@ DW_FORMATTERS.set('ago', v => {
     <thead><tr><th>Method</th><th>Description</th><th>Example</th></tr></thead>
     <tbody>
         <tr>
-            <td><code>put(key, val)</code></td>
-            <td>Set a state key. Pass a value or an updater function.</td>
-            <td><code>app.put('count', n => n + 1)</code></td>
+            <td><code>get(path)</code></td>
+            <td>Read a leaf at any depth. Returns <code>undefined</code> for missing paths.</td>
+            <td><code>app.get('user/name')</code></td>
         </tr>
         <tr>
-            <td><code>patch(key, obj)</code></td>
-            <td>Shallow-merge into an existing object state key.</td>
+            <td><code>put(path, val)</code></td>
+            <td>Set a leaf at any depth. Pass a value or an updater function.</td>
+            <td><code>app.put('user/name', 'Ali')</code></td>
+        </tr>
+        <tr>
+            <td><code>patch(path, obj)</code></td>
+            <td>Shallow-merge into the object at <code>path</code>.</td>
             <td><code>app.patch('user', { name: 'Ali' })</code></td>
         </tr>
         <tr>
-            <td><code>push(key, item)</code></td>
-            <td>Append an item to an array state key.</td>
+            <td><code>push(path, item)</code></td>
+            <td>Append an item to the array at <code>path</code>.</td>
             <td><code>app.push('todos', { id: 1, task: '…' })</code></td>
         </tr>
         <tr>
-            <td><code>pull(key, pred)</code></td>
-            <td>Remove items from an array by id or predicate.</td>
+            <td><code>pull(path, pred)</code></td>
+            <td>Remove items from the array at <code>path</code> by id or predicate.</td>
             <td><code>app.pull('todos', t => t.done)</code></td>
         </tr>
         <tr>
@@ -588,6 +593,8 @@ DW_FORMATTERS.set('ago', v => {
         </tr>
     </tbody>
 </table>
+
+<p><code>path</code> is a slash-separated pURL path. <code>'name'</code> reads/writes a top-level state key; <code>'user/name/first'</code> drills into nested state under the <code>user</code> root key. Single-segment paths and nested paths share the same call sites — flat keys are the degenerate case.</p>
 
 <h3>System events</h3>
 <table>

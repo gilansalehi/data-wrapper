@@ -8,25 +8,30 @@
         }
     }
 
+    get(path: string): unknown {
+        return readPath(this.state, path);
+    }
+
     put(key: string, val: unknown | ((prev: unknown) =&gt; unknown)) {
+        const prev = readPath(this.state, key);
         const next = typeof val === &#x27;function&#x27;
-            ? (val as (p: unknown) =&gt; unknown)(this.state[key])
+            ? (val as (p: unknown) =&gt; unknown)(prev)
             : val;
-        if (this.state[key] === next) return;
-        this.state[key] = next;
+        if (prev === next) return;
+        writePath(this.state, key, next);
         emit(&#x27;dw/sync&#x27;, { key }, this);
     }
 
     patch(key: string, obj: Record&lt;string, unknown&gt;) {
-        this.put(key, { ...(this.state[key] as Record&lt;string, unknown&gt; || {}), ...obj });
+        this.put(key, { ...(readPath(this.state, key) as Record&lt;string, unknown&gt; || {}), ...obj });
     }
 
     push(key: string, item: unknown) {
-        this.put(key, [...(this.state[key] as unknown[] || []), item]);
+        this.put(key, [...(readPath(this.state, key) as unknown[] || []), item]);
     }
 
     pull(key: string, predicate: ((item: unknown) =&gt; boolean) | unknown) {
-        const current = this.state[key] as unknown[] || [];
+        const current = readPath(this.state, key) as unknown[] || [];
         const fn      = typeof predicate === &#x27;function&#x27;
             ? (i: unknown) =&gt; !(predicate as (i: unknown) =&gt; boolean)(i)
             : (i: unknown) =&gt; (i as Record&lt;string, unknown&gt;).id !== predicate;

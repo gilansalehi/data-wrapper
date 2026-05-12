@@ -57,7 +57,11 @@ debugging).
 
 - `/key` — wrapper-scoped state, resolves on the closest
   `<data-wrapper>` ancestor.
-- `./key` — item-scoped, only meaningful inside a `*list` row.
+- `/key/sub/leaf` — drills into a deeply-nested value at the root
+  state key. The first segment hits the state Proxy (which parses
+  JSON); subsequent segments are property access on the parsed tree.
+- `./key` / `./key/sub/leaf` — item-scoped variants, only meaningful
+  inside a `*list` row. Same drilling rules.
 - `topic/name` — action topic for `@` tokens. Becomes the
   `CustomEvent` name.
 
@@ -74,6 +78,49 @@ debugging).
 This keeps the parser dependency-free and the result serializable.
 
 `#debug` on a pURL logs its parse to the console.
+
+## State Access
+
+State is two layers stacked.
+
+**`dataset`** is durable persistence — flat, string-only, visible in
+DevTools, addressable from CSS attribute selectors, surviving
+`innerHTML` operations. The framework writes through it so state is
+inspectable without framework plugins.
+
+**`state`** is the typed access layer over dataset. It's a Proxy:
+writes JSON-serialize at the root key, reads JSON-parse on the way
+out. So `<data-wrapper data-user='{"name":"Ali"}'>` already gives you
+`wrapper.state.user.name === 'Ali'` for free — one dataset key, an
+arbitrarily deep value beneath it.
+
+pURL paths extend the model one segment further. A slash-separated
+path walks the parsed tree: `/user/name/first` reads `state.user`
+(parse), then `.name`, then `.first`. Single-segment paths are the
+degenerate case — same code path, no special branch.
+
+The wrapper's path-aware API:
+
+| Method                   | Purpose                                                |
+| ------------------------ | ------------------------------------------------------ |
+| `wrapper.get(path)`      | Read a leaf at any depth; `undefined` for missing      |
+| `wrapper.put(path, v)`   | Write a leaf; rebuilds the root key immutably          |
+| `wrapper.patch(path, o)` | Merge `o` into the object at `path`                    |
+| `wrapper.push(path, x)`  | Append `x` to the array at `path`                      |
+| `wrapper.pull(path, p)`  | Filter `p` out of the array at `path`                  |
+
+**Fan-out semantics.** A write at `path` publishes on its root channel
+and on every subscribed channel that descends from it. So
+`put('user/name', 'Bo')` updates bindings to `/user`, `/user/name`,
+and any other live channel under `user/`. External mutations (via
+`MutationObserver` on dataset) fan out the same way. The model: one
+write, many tuned-in listeners — every coherent view of the change
+fires, without prefix matching or path inference at subscribe time.
+
+Subscribers themselves never compute paths. The path is resolved once
+at the publish boundary; subscribers just receive their leaf value.
+This keeps `subscribe`/`publish` ignorant of depth — depth lives in
+the path utility and the fan-out helper, not in pub/sub.
 
 ## @ Event Dispatch
 
@@ -144,6 +191,15 @@ when `event.target.closest('data-wrapper') === this`. Without it, an
 outer wrapper would catch an inner wrapper's bubbled actions. The
 cost is one `closest()` call per dispatch — paid in microseconds.
 
+Callbacks are invoked as plain function calls (no rebind to the
+wrapper). **Use arrow functions** if you want `this` to refer to the
+wrapper — they capture `this` lexically from the enclosing scope,
+which inside an inline `onload=""` is the wrapper itself. A regular
+`function (e) { this.put(...) }` body will see `this` as `undefined`
+(strict) or `window` (sloppy). The framework deliberately doesn't
+rebind: JS readers expect `this` to follow standard rules, and arrow
+functions make the lexical-capture intent explicit at the call site.
+
 We considered a `_boundEvents`-style listener-dedup mechanism (one
 listener per event type, internal routing). Deliberately not built:
 it required wrapper state, lazy attribute re-parsing at dispatch
@@ -165,15 +221,26 @@ re-parses attributes or rebuilds the binding.
 
 ## Subscriptions
 
-The one update primitive is the subscriber: `(value) => void`.
-Subscribers live on the wrapper (keyed by state path) and on rows
-(inside the wrapper-owned list cache). Initial values fire
-immediately at registration so the DOM matches state on first render.
+The framework runs on a tiny pub/sub. A **subscriber** is
+`(value) => void`. Subscribers live on **Stations** keyed by
+**channel**: many channels per station, many listeners per channel.
+Both wrappers and rows carry their own Station — wrappers keyed by
+state path, rows by the path slot each binding declared. Reading and
+writing on a row is the same operation as on the wrapper; only the
+target Station differs.
+
+The radio analogy is load-bearing: think tuning in and broadcasting,
+not flat callback lists. The structural symmetry between wrapper and
+row Stations is what lets `*list` rows participate in the same pub/sub
+model the wrapper uses, with no adapter layer between them.
+
+Initial values fire immediately at registration so the DOM matches
+state on first render.
 
 External `data-*` mutations take the symmetric path: a
-`MutationObserver` on the wrapper catches the change and broadcasts.
+`MutationObserver` on the wrapper catches the change and publishes.
 `_isSyncing` suppresses the echo from internal writes — without it,
-every `put()` would re-broadcast itself.
+every `put()` would re-publish its own mutation.
 
 `dw/sync` is emitted with the changed key after any state update,
 for app-level observers.
@@ -184,9 +251,9 @@ for app-level observers.
 element, its child `<template>`, the wrapper-owned cache, and the row
 identity key (`?key=`, defaulting to `id`).
 
-Reconciliation reuses rows by identity, broadcasts updated items to
-existing row subscribers, removes stale rows, and wakes new rows
-after insertion. The DOM node is rendered output; the row record is
+Reconciliation reuses rows by identity, fans out updates over the
+row's channels, removes stale rows, and wakes new rows after
+insertion. The DOM node is rendered output; the row record is
 framework state. This split is the reason lists update without
 re-parsing the template and without forcing rerenders of unchanged
 rows.
@@ -237,10 +304,12 @@ initialization in loaded views possible.
 
 Some complexity serves DX and should remain:
 
-1. `put` / `patch` / `push` / `pull` as mutation helpers.
+1. `get` / `put` / `patch` / `push` / `pull` as path-aware state accessors.
 2. `register()` as bulk subscription sugar with wrapper-ownership filter.
 3. `_isSyncing` to suppress reflect-back loops.
 4. Delegated events keep updates O(1) when DOM is added.
+5. Fan-out at the publish boundary — depth lives in one place, not in
+   every subscriber.
 
 ---
 

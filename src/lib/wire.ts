@@ -2,7 +2,7 @@ import { DW_DIRECTIVES, DW_FORMATTERS } from './registry.ts';
 import type { DispatchDetail, DispatchPayload } from './registry.ts';
 import { bind, subscribe } from './engine.ts';
 import type { Row, Wrapper } from './engine.ts';
-import { p, on, emit } from './utils.ts';
+import { p, on, emit, readPath } from './utils.ts';
 
 type Format = (value: unknown) => unknown;
 
@@ -72,8 +72,9 @@ export const wire = (
         return;
     }
 
-    const station = row ? row.subs       : wrapper._subs;
-    const initial = row ? row.item[path] : wrapper.state[path];
+    const scoped  = row && dwrl.isRel;
+    const station = scoped ? row.subs                 : wrapper._subs;
+    const initial = scoped ? readPath(row.item, path) : readPath(wrapper.state, path);
 
     if (token === '$') {
         const format = formatter(params);

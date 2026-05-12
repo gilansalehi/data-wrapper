@@ -39,6 +39,34 @@ export const pURL = (dwrlString: string): pURL => {
 
 export const p = pURL;
 
+// #region path access
+// readPath/writePath walk a deep tree along slash-separated paths.
+// readPath bottoms out via direct property access — when the root is the
+// state Proxy, the first segment hits proxy.get (which parses JSON).
+// writePath rebuilds the path with immutable spreads and reassigns the
+// root key, so the proxy setter fires once at the root and the framework's
+// fan-out handles nested subscribers.
+export const readPath = (obj: unknown, path: string): unknown => {
+    if (!path) return obj;
+    return path.split('/').reduce<unknown>(
+        (acc, key) => acc == null ? undefined : (acc as Record<string, unknown>)[key],
+        obj,
+    );
+};
+
+export const writePath = (obj: Record<string, unknown>, path: string, value: unknown): void => {
+    const [head, ...rest] = path.split('/');
+    if (rest.length === 0) { obj[head] = value; return; }
+
+    const current = obj[head];
+    const sub = Array.isArray(current)
+        ? [...current] : (current && typeof current === 'object')
+        ? { ...(current as Record<string, unknown>) } : {};
+    writePath(sub as Record<string, unknown>, rest.join('/'), value);
+    obj[head] = sub;
+};
+// #endregion
+
 export const q = (s: string, ctx: DWContext = document) => [...ctx.querySelectorAll(s)];
 
 export const emit = (eventName: string, detail?: unknown, ctx: DWContext = document) => {

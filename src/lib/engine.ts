@@ -1,5 +1,6 @@
 import { cloneTemplate, DW_DIRECTIVES, PROP_ALIASES, resolveTemplate } from './registry.ts';
 import type { DirectiveHandler, Item, Row, Station, Sub, Subs } from './registry.ts';
+import { readPath } from './utils.ts';
 export type { Item, ListCache, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
 
 const set = (el: Element, prop: string, val: unknown) => {
@@ -68,7 +69,7 @@ export const reconcile = (
 
         row.item = item;
         if (!isNew) {
-            for (const channel in row.subs) publish(row.subs, channel, item[channel])
+            for (const channel in row.subs) publish(row.subs, channel, readPath(item, channel));
         }
         fragment.appendChild(row.node);
     }

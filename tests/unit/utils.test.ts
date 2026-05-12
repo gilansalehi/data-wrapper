@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
-import { q, emit, on } from '@lib/utils.ts';
+import { q, emit, on, readPath, writePath } from '@lib/utils.ts';
 
 describe('q', () => {
     beforeEach(() => { document.body.innerHTML = ''; });
@@ -254,4 +254,63 @@ describe('on', () => {
         expect(bCalls).toBe(1);
     });
     // #endregion
+});
+
+describe('readPath', () => {
+    it('returns the object itself for an empty path', () => {
+        const obj = { a: 1 };
+        expect(readPath(obj, '')).toBe(obj);
+    });
+
+    it('reads a single-segment path like a flat key', () => {
+        expect(readPath({ name: 'Ali' }, 'name')).toBe('Ali');
+    });
+
+    it('drills through nested objects', () => {
+        expect(readPath({ user: { name: { first: 'Ali' } } }, 'user/name/first')).toBe('Ali');
+    });
+
+    it('reads array indices via numeric segments', () => {
+        expect(readPath({ items: [{ id: 1 }, { id: 2 }] }, 'items/1/id')).toBe(2);
+    });
+
+    it('returns undefined for missing branches without throwing', () => {
+        expect(readPath({ user: { name: 'Ali' } }, 'user/age')).toBeUndefined();
+        expect(readPath({ user: null }, 'user/name')).toBeUndefined();
+        expect(readPath(undefined, 'user/name')).toBeUndefined();
+    });
+});
+
+describe('writePath', () => {
+    it('writes a single-segment path like a flat key', () => {
+        const obj: Record<string, unknown> = {};
+        writePath(obj, 'name', 'Ali');
+        expect(obj.name).toBe('Ali');
+    });
+
+    it('creates intermediate objects when branches are missing', () => {
+        const obj: Record<string, unknown> = {};
+        writePath(obj, 'user/name/first', 'Ali');
+        expect(obj).toEqual({ user: { name: { first: 'Ali' } } });
+    });
+
+    it('rebuilds the root key with an immutable spread', () => {
+        const prevUser = { name: 'Ali', age: 30 };
+        const obj: Record<string, unknown> = { user: prevUser };
+
+        writePath(obj, 'user/name', 'Bo');
+
+        expect(obj.user).not.toBe(prevUser);                       // new reference
+        expect(obj.user).toEqual({ name: 'Bo', age: 30 });         // preserved siblings
+        expect(prevUser).toEqual({ name: 'Ali', age: 30 });        // original untouched
+    });
+
+    it('preserves array type when drilling through arrays', () => {
+        const obj: Record<string, unknown> = { items: [{ name: 'a' }, { name: 'b' }] };
+
+        writePath(obj, 'items/1/name', 'updated');
+
+        expect(Array.isArray(obj.items)).toBe(true);
+        expect(obj.items).toEqual([{ name: 'a' }, { name: 'updated' }]);
+    });
 });

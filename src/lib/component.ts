@@ -1,4 +1,4 @@
-import { emit, on } from './utils.ts';
+import { emit, on, readPath, writePath } from './utils.ts';
 import { wake } from './wire.ts';
 import { publish } from './engine.ts';
 import type { ListCache, Station } from './engine.ts';
@@ -31,7 +31,7 @@ export class DataWrapper extends HTMLElement {
 
                 self._isSyncing = true;
                 (target as DOMStringMap)[key] = serialized;
-                publish(self._subs, key, value);
+                self._fanout(key, value);
                 queueMicrotask(() => { self._isSyncing = false; });
                 return true;
             },
@@ -48,11 +48,21 @@ export class DataWrapper extends HTMLElement {
                 const attr = m.attributeName;
                 if (attr?.startsWith('data-')) {
                     const key = attr.slice(5).replace(/-./g, c => c[1].toUpperCase());
-                    publish(self._subs, key, self.state[key]);
+                    self._fanout(key, self.state[key]);
                 }
             }
         });
         // #endregion
+    }
+
+    _fanout(key: string, value: unknown) {
+        publish(this._subs, key, value);
+        const prefix = key + '/';
+        for (const channel in this._subs) {
+            if (channel.startsWith(prefix)) {
+                publish(this._subs, channel, readPath(value, channel.slice(prefix.length)));
+            }
+        }
     }
 
     connectedCallback() {
@@ -78,25 +88,30 @@ export class DataWrapper extends HTMLElement {
         }
     }
 
+    get(path: string): unknown {
+        return readPath(this.state, path);
+    }
+
     put(key: string, val: unknown | ((prev: unknown) => unknown)) {
+        const prev = readPath(this.state, key);
         const next = typeof val === 'function'
-            ? (val as (p: unknown) => unknown)(this.state[key])
+            ? (val as (p: unknown) => unknown)(prev)
             : val;
-        if (this.state[key] === next) return;
-        this.state[key] = next;
+        if (prev === next) return;
+        writePath(this.state, key, next);
         emit('dw/sync', { key }, this);
     }
 
     patch(key: string, obj: Record<string, unknown>) {
-        this.put(key, { ...(this.state[key] as Record<string, unknown> || {}), ...obj });
+        this.put(key, { ...(readPath(this.state, key) as Record<string, unknown> || {}), ...obj });
     }
 
     push(key: string, item: unknown) {
-        this.put(key, [...(this.state[key] as unknown[] || []), item]);
+        this.put(key, [...(readPath(this.state, key) as unknown[] || []), item]);
     }
 
     pull(key: string, predicate: ((item: unknown) => boolean) | unknown) {
-        const current = this.state[key] as unknown[] || [];
+        const current = readPath(this.state, key) as unknown[] || [];
         const fn      = typeof predicate === 'function'
             ? (i: unknown) => !(predicate as (i: unknown) => boolean)(i)
             : (i: unknown) => (i as Record<string, unknown>).id !== predicate;

@@ -15,14 +15,36 @@
 
         <li class="card">
             <h4>pURLs track your data like a URL:</h4>
-            <code id="dwrl-demo" class="code-pop">dwrl://data-wrapper-id/user/name/first?format=upper</code>
-            <ul>
-                <li>Scheme: <code>dwrl://</code> reads from the target wrapper's state.</li>
-                <li>Host: <code>data-wrapper-id</code> names the target wrapper (Roadmap)</li>
-                <li>Path: <code>/user/name/first</code> drills into the data</li>
-                <li>Query: <code>?format=upper</code> transforms the response</li>
-                <li hidden>Hash: <code>tbd!</code> coming soon.</li>
-            </ul>
+            <data-wrapper class="purl-widget" data-active="path"
+                          onload="this.register({
+                              'purl/hover': e => this.put('active', e.target.dataset.section)
+                          })">
+                <pre class="purl-display"><span class="purl-seg purl-protocol" tabindex="0" data-section="protocol"
+            @mouseover="purl/hover" @focusin="purl/hover">dwrl:</span><span class="purl-sep">//</span><span class="purl-seg purl-host" tabindex="0" data-section="host"
+            @mouseover="purl/hover" @focusin="purl/hover">data-wrapper</span><span class="purl-seg purl-path" tabindex="0" data-section="path"
+            @mouseover="purl/hover" @focusin="purl/hover">/user/name/first</span><span class="purl-seg purl-query" tabindex="0" data-section="query"
+            @mouseover="purl/hover" @focusin="purl/hover">?format=upper</span></pre>
+
+                <div class="purl-blurbs">
+                    <div class="purl-blurb" data-section="protocol">
+                        <strong>Protocol</strong>
+                        <p><code>dwrl://</code> reads from a wrapper's state. Other protocols like <code>api://</code> for fetch-driven injectors are on the roadmap.</p>
+                    </div>
+                    <div class="purl-blurb" data-section="host">
+                        <strong>Host</strong>
+                        <p>Names the target wrapper. Today this is the closest <code>&lt;data-wrapper&gt;</code> ancestor; cross-wrapper mesh resolution by id is on the roadmap.</p>
+                    </div>
+                    <div class="purl-blurb" data-section="path">
+                        <strong>Path</strong>
+                        <p>Slash-separated drill into state. The first segment hits the state proxy (JSON parse at the dataset boundary); subsequent segments walk the parsed tree.</p>
+                    </div>
+                    <div class="purl-blurb" data-section="query">
+                        <strong>Query</strong>
+                        <p>Framework flags. <code>?format=</code> pipes the value through formatters; <code>?key=</code> sets <code>*list</code> row identity; <code>?prevent</code> / <code>?stop</code> / <code>?immediate</code> control <code>@</code>-event dispatch.</p>
+                    </div>
+                </div>
+                <p class="purl-hint">Hover or focus a colored segment — the familiar URL, supercharged for page-level reactivity.</p>
+            </data-wrapper>
         </li>
         <li class="card">
             <h4>Custom attribute tokens awaken the DOM:</h4>
