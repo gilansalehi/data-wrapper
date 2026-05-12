@@ -1,3 +1,5 @@
+import { record } from './debug.ts';
+
 declare global {
     interface Event {
         actionTarget?: Element; // set by on() during delegation; lives alongside target/currentTarget
@@ -70,6 +72,7 @@ export const writePath = (obj: Record<string, unknown>, path: string, value: unk
 export const q = (s: string, ctx: DWContext = document) => [...ctx.querySelectorAll(s)];
 
 export const emit = (eventName: string, detail?: unknown, ctx: DWContext = document) => {
+    if (ctx instanceof Element) record(eventName, ctx, detail);
     ctx.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }));
 };
 

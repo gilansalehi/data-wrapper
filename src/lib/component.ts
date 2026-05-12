@@ -3,8 +3,6 @@ import { wake } from './wire.ts';
 import { publish } from './engine.ts';
 import type { ListCache, Station } from './engine.ts';
 
-const v = '0.0.4';
-
 export class DataWrapper extends HTMLElement {
     declare state:      Record<string, unknown>;
     declare _subs:      Station; // radio station analogy
@@ -143,5 +141,4 @@ export class DataWrapper extends HTMLElement {
 
 if (typeof customElements !== 'undefined' && !customElements.get('data-wrapper')) {
     customElements.define('data-wrapper', DataWrapper);
-    console.info(`<data-wrapper version="${v}">`);
 }

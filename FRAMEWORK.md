@@ -1,6 +1,6 @@
 # data-wrapper framework
 
-`data-wrapper` treats the browser as the framework. HTML declares data
+For `data-wrapper`s, the browser *is* the framework. HTML declares data
 relationships through attributes; the custom element owns the data,
 subscriptions, list caches, and event routing. There is no virtual
 DOM, no template compiler, no runtime expression parser. The browser
@@ -25,8 +25,10 @@ Two parts:
 
 The DOM is declarative. `data-wrapper` owns the logic. DOM nodes hold
 attributes and rendered output. Runtime framework state lives on the
-wrapper. Framework-owned DOM markers use underscore-prefixed attributes
-(`_live`, `_empty`) — visible debugging flags, not subscription storage.
+wrapper. Framework-namespaced DOM markers use underscore-prefixed
+attributes (`_live`, `_empty`, `_debug`) — visible flags, not
+subscription storage. `_live` and `_empty` are framework-written;
+`_debug` is the one user-facing flag in this namespace.
 
 ## Reserved Attribute Sigils
 
@@ -310,6 +312,40 @@ Some complexity serves DX and should remain:
 4. Delegated events keep updates O(1) when DOM is added.
 5. Fan-out at the publish boundary — depth lives in one place, not in
    every subscriber.
+
+## Debugging
+
+All debugging logic lives in `src/lib/debug.ts`, isolated from the
+framework. Framework code touches it through exactly one entry point —
+`record()`, called from `emit()` — so the rest of the lib stays
+debug-agnostic. The browser console is the logger; this file decides
+when to flush.
+
+The constraint: **the framework should not build tools the browser
+already has.** No custom log format, no DevTools panel, no
+state-replay UI. If a need can be met with `console.log` plus DOM
+attribute selectors plus a console handle, that's how it's met.
+
+- **`_debug` attribute** — set on any `<data-wrapper>`, the framework
+  logs every `emit()` whose ctx is at or below that wrapper through
+  `console.log`. The line carries the wrapper id, the event name, and
+  the original ctx and detail. DevTools' filter box does the rest.
+  Lifecycle events (`load`, `dw/load`, `dw/sync`, `dw/loaded`) and
+  every `@`-action go through `emit`, so all of them appear; native
+  DOM events that bypass `emit` do not.
+- **`window.dw`** — a thin handle for the console. `dw.all` lists
+  every wrapper on the page; `dw.debug(el)` toggles `_debug` on one
+  element, `dw.debug()` toggles it on every wrapper; `dw.history`
+  returns the recent event buffer; `dw.clear()` empties it.
+- **History buffer** — `emit()` always records the last 1000 events
+  whether `_debug` is set or not. The overhead is one push + one
+  bounded shift per dispatch. Flipping `_debug` on shows everything
+  going forward; `dw.history` surfaces what happened *before* the flag
+  was set. This is the foundation a time-travel debugger would build
+  on; today it's just a ring buffer the console can read.
+
+The underscore-prefix convention is provisional; if the namespace
+moves to `data-*` later (e.g. `data-dw-debug`), it's a find-replace.
 
 ---
 
