@@ -9,7 +9,7 @@
 
                 self._isSyncing = true;
                 (target as DOMStringMap)[key] = serialized;
-                self._broadcast(key, value);
+                publish(self._subs, key, value);
                 queueMicrotask(() =&gt; { self._isSyncing = false; });
                 return true;
             },
@@ -26,7 +26,7 @@
                 const attr = m.attributeName;
                 if (attr?.startsWith(&#x27;data-&#x27;)) {
                     const key = attr.slice(5).replace(/-./g, c =&gt; c[1].toUpperCase());
-                    self._broadcast(key, self.state[key]);
+                    publish(self._subs, key, self.state[key]);
                 }
             }
         });</code></pre>

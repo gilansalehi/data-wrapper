@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
 import { DW_DIRECTIVES } from '@lib/registry.ts';
 import { wake } from '@lib/wire.ts';
-import type { Row, Sub, Subs, Wrapper } from '@lib/engine.ts';
+import { publish } from '@lib/engine.ts';
+import type { Row, Sub, Wrapper } from '@lib/engine.ts';
 
 type TestWrapper = Wrapper & HTMLElement;
 
@@ -10,10 +11,6 @@ const makeWrapper = (): TestWrapper => {
     el.state      = {};
     el._subs      = {};
     el._listCache = new Map();
-    el._watch     = (path: string, sub: Sub) => {
-        (el._subs[path] ??= []).push(sub);
-        sub(el.state[path]);
-    };
     return el;
 };
 
@@ -102,7 +99,7 @@ describe('wake row bindings', () => {
     const makeRow = (html: string, item: Record<string, unknown>) => {
         const node = document.createElement('li');
         node.innerHTML = html;
-        const row: Row = { node, item, subs: [] };
+        const row: Row = { node, item, subs: {} };
         return row;
     };
 
@@ -114,7 +111,7 @@ describe('wake row bindings', () => {
         wake(row.node, row);
 
         expect(row.node.querySelector('span')?.textContent).toBe('Ship tests');
-        expect(row.subs).toHaveLength(1);
+        expect(row.subs.task).toHaveLength(1);
         expect(wrapper._subs.task).toBeUndefined();
     });
 
@@ -124,7 +121,7 @@ describe('wake row bindings', () => {
         wrapper.appendChild(row.node);
 
         wake(row.node, row);
-        row.subs[0]({ task: 'Updated' });
+        publish(row.subs, 'task', 'Updated');
 
         expect(row.node.querySelector('span')?.textContent).toBe('Updated');
     });
@@ -139,7 +136,7 @@ describe('wake row bindings', () => {
         DW_DIRECTIVES.set('probe', () => value => { seen.push(value); });
 
         wake(row.node, row);
-        row.subs[0]({ visible: false });
+        publish(row.subs, 'visible', false);
 
         expect(seen).toEqual([true, false]);
     });
@@ -157,7 +154,7 @@ describe('wake row bindings', () => {
         expect(row.node.querySelector('section')).toBeNull();
 
         row.item = { visible: true, label: 'Visible' };
-        row.subs.forEach(sub => sub(row.item));
+        for (const channel in row.subs) publish(row.subs, channel, row.item[channel]);
 
         expect(row.node.querySelector('section')).toBeDefined();
         expect(row.node.querySelector('span')?.textContent).toBe('Visible');

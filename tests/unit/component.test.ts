@@ -1,13 +1,12 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
 import { DW_DIRECTIVES } from '@lib/registry.ts';
-import type { Sub, Subs } from '@lib/engine.ts';
+import type { Station, Sub } from '@lib/engine.ts';
 // DataWrapper is registered as a side-effect of the import
 import '@lib/component.ts';
 
 interface TestWrapper extends HTMLElement {
     state: Record<string, unknown>;
-    _subs: Record<string, Subs>;
-    _broadcast(key: string, val: unknown): void;
+    _subs: Station;
     register(actions: Record<string, EventListener>): void;
     put(key: string, val: unknown | ((prev: unknown) => unknown)): void;
     patch(key: string, obj: Record<string, unknown>): void;
@@ -108,13 +107,13 @@ describe('put', () => {
 
     it('skips broadcast when value is identical', () => {
         const el = make();
-        el.dataset.count = '1';
-        let broadcasts = 0;
-        el._broadcast = () => { broadcasts += 1; };
+        el.put('count', 1);
+        let calls = 0;
+        el._subs.count = [() => { calls += 1; }];
 
         el.put('count', 1);
 
-        expect(broadcasts).toBe(0);
+        expect(calls).toBe(0);
     });
 
     it('emits dw/sync event with the changed key', () => {
@@ -218,7 +217,7 @@ describe('register', () => {
     });
 });
 
-describe('_broadcast', () => {
+describe('publish', () => {
     it('routes registered directives through DW_DIRECTIVES', () => {
         let seen: unknown;
 
@@ -281,7 +280,7 @@ describe('_broadcast', () => {
             }) as Sub,
         ];
 
-        el._broadcast('name', 'Ali');
+        el.put('name', 'Ali');
 
         expect(target.textContent).toBe('');
     });

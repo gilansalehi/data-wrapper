@@ -4,7 +4,7 @@
     sub(value);
 };
 
-export const broadcast = (subs: Subs = [], value: unknown) =&gt; {
-    for (const sub of subs) sub(value);
-};</code></pre>
+export const publish = (station: Station, channel: string, value: unknown) =&gt; {
+    for (const sub of station[channel] ?? []) sub(value);
+}</code></pre>
 </figure>

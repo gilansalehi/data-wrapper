@@ -1,6 +1,6 @@
 import { emit, on } from './utils.ts';
 import { wake } from './wire.ts';
-import { broadcast } from './engine.ts';
+import { publish } from './engine.ts';
 import type { ListCache, Station } from './engine.ts';
 
 const v = '0.0.4';
@@ -31,7 +31,7 @@ export class DataWrapper extends HTMLElement {
 
                 self._isSyncing = true;
                 (target as DOMStringMap)[key] = serialized;
-                self._broadcast(key, value);
+                publish(self._subs, key, value);
                 queueMicrotask(() => { self._isSyncing = false; });
                 return true;
             },
@@ -48,7 +48,7 @@ export class DataWrapper extends HTMLElement {
                 const attr = m.attributeName;
                 if (attr?.startsWith('data-')) {
                     const key = attr.slice(5).replace(/-./g, c => c[1].toUpperCase());
-                    self._broadcast(key, self.state[key]);
+                    publish(self._subs, key, self.state[key]);
                 }
             }
         });
@@ -66,18 +66,6 @@ export class DataWrapper extends HTMLElement {
 
     disconnectedCallback() {
         this._observer.disconnect();
-    }
-
-    // pub(key: string, val: unknown) {
-    //     for (const sub of this._subs[key]) sub(val); // run updater
-    // }
-
-    // sub(path: string, updater: Sub) {
-    //     this._subs[path] = [...this._subs[path], updater]; // append subscriber.
-    // }
-
-    _broadcast(key: string, val: unknown) {
-        broadcast(this._subs[key], val);
     }
 
     // #region state-api

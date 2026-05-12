@@ -30,9 +30,9 @@ export const subscribe = (station: Station, channel: string, sub: Sub, value: un
     sub(value);
 };
 
-export const broadcast = (subs: Subs = [], value: unknown) => {
-    for (const sub of subs) sub(value);
-};
+export const publish = (station: Station, channel: string, value: unknown) => {
+    for (const sub of station[channel] ?? []) sub(value);
+}
 // #endregion
 
 // #region reconcile
@@ -68,8 +68,7 @@ export const reconcile = (
 
         row.item = item;
         if (!isNew) {
-            for (const channel in row.subs)
-                broadcast(row.subs[channel], item[channel]);
+            for (const channel in row.subs) publish(row.subs, channel, item[channel])
         }
         fragment.appendChild(row.node);
     }

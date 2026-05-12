@@ -7,7 +7,7 @@ declare global {
 export const DWRL_BASE = 'dwrl://data-wrapper/';
 
 export type DWContext = Element | Document | DocumentFragment;
-export type Unsubscriber = () => void;
+export type Off = () => void; // remove event listener.
 export type pURL = {
     path:     string,
     isRel:    boolean,            // true when source starts with './'
@@ -45,7 +45,7 @@ export const emit = (eventName: string, detail?: unknown, ctx: DWContext = docum
     ctx.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }));
 };
 
-export const on = (eventName: string, cb: EventListener, delegate: string | Element = '', ctx: DWContext = document): Unsubscriber => {
+export const on = (eventName: string, cb: EventListener, delegate: string | Element = '', ctx: DWContext = document): Off => {
     const handler: EventListener = !delegate ? cb : (e) => {
         const targets = delegate instanceof Element ? [delegate] : q(delegate, ctx);
         const actionTarget = targets.find(t => t.contains(e.target as Element));
@@ -55,5 +55,5 @@ export const on = (eventName: string, cb: EventListener, delegate: string | Elem
     }
 
     ctx.addEventListener(eventName, handler);
-    return () => ctx.removeEventListener(eventName, handler); // unsub
+    return () => ctx.removeEventListener(eventName, handler); // Off
 };

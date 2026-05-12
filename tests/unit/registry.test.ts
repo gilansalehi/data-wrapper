@@ -16,8 +16,8 @@ beforeEach(() => {
 
 describe('framework types', () => {
     it('Sub and Subs model subscriber buckets', () => {
-        const subs: Subs<number> = [];
-        const sub: Sub<number> = value => { document.body.dataset.value = String(value); };
+        const subs: Subs = [];
+        const sub: Sub = value => { document.body.dataset.value = String(value); };
 
         subs.push(sub);
         subs[0](7);
@@ -25,16 +25,16 @@ describe('framework types', () => {
         expect(document.body.dataset.value).toBe('7');
     });
 
-    it('Row carries node, item, and row subscriptions', () => {
+    it('Row carries node, item, and a Station of row subscriptions', () => {
         const row: Row = {
             node: document.createElement('li'),
             item: { id: 1 } satisfies Item,
-            subs: [],
+            subs: {},
         };
 
         expect(row.node.tagName).toBe('LI');
         expect(row.item.id).toBe(1);
-        expect(row.subs).toEqual([]);
+        expect(row.subs).toEqual({});
     });
 
     it('DirectiveContext receives the shared wrapper shape', () => {
@@ -42,7 +42,6 @@ describe('framework types', () => {
         wrapper.state = {};
         wrapper._subs = {};
         wrapper._listCache = new Map();
-        wrapper._watch = () => {};
 
         const ctx: DirectiveContext = {
             wrapper,
@@ -103,7 +102,6 @@ describe('DW_DIRECTIVES', () => {
         wrapper.state = {};
         wrapper._subs = {};
         wrapper._listCache = new Map();
-        wrapper._watch = () => {};
 
         DW_DIRECTIVES.set('probe', () => value => { document.body.dataset.value = String(value); });
         DW_DIRECTIVES.get('probe')!({

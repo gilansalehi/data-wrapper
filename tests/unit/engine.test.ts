@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
-import { bind, broadcast, reconcile, watch } from '@lib/engine.ts';
-import type { Item, Row, Subs } from '@lib/engine.ts';
+import { bind, publish, reconcile, subscribe } from '@lib/engine.ts';
+import type { Row, Station } from '@lib/engine.ts';
 
 beforeEach(() => {
     document.body.innerHTML = '';
@@ -56,27 +56,33 @@ describe('bind', () => {
     });
 });
 
-describe('watch/broadcast', () => {
-    it('watch stores subscriber and runs it immediately', () => {
-        const subs: Subs<string> = [];
-        let seen = '';
+describe('subscribe/publish', () => {
+    it('subscribe registers a listener on a channel and runs it immediately', () => {
+        const station: Station = {};
+        let seen: unknown;
 
-        watch(subs, value => { seen = value; }, 'initial');
+        subscribe(station, 'name', value => { seen = value; }, 'initial');
 
-        expect(subs).toHaveLength(1);
+        expect(station.name).toHaveLength(1);
         expect(seen).toBe('initial');
     });
 
-    it('broadcast calls all subscribers', () => {
+    it('publish calls every listener tuned to a channel', () => {
+        const station: Station = {};
         const seen: number[] = [];
-        const subs: Subs<number> = [
-            value => seen.push(value),
-            value => seen.push(value * 2),
-        ];
+        subscribe(station, 'n', v => seen.push(Number(v)),     0);
+        subscribe(station, 'n', v => seen.push(Number(v) * 2), 0);
+        seen.length = 0;
 
-        broadcast(subs, 3);
+        publish(station, 'n', 3);
 
         expect(seen).toEqual([3, 6]);
+    });
+
+    it('publish tolerates channels with no listeners', () => {
+        const station: Station = {};
+
+        expect(() => publish(station, 'absent', 1)).not.toThrow();
     });
 });
 
@@ -119,7 +125,7 @@ describe('reconcile', () => {
     it('broadcasts updated item values to existing row subs', () => {
         reconcile(container, [{ id: 1, label: 'One' }], cache, tpl, wakeText);
         const row = cache.get(1)!;
-        row.subs.push((item: Item) => { row.node.textContent = String(item.label); });
+        (row.subs.label ??= []).push(value => { row.node.textContent = String(value); });
 
         reconcile(container, [{ id: 1, label: 'Updated' }], cache, tpl, wakeText);
 
