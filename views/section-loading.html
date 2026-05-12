@@ -21,6 +21,7 @@
     State (<code>data-nav-open</code>) and handlers (registered via <code>onload</code>) live with the wrapper.
     The partial contributes only the view — no <code>&lt;data-wrapper&gt;</code> tag inside, just the children.
     <code>onload</code> fires on connect, so handlers register <em>before</em> the partial's <code>@</code> bindings wire up.
+    Note: <code>&lt;script&gt;</code> tags inside src-loaded HTML do not execute (HTML5 spec), so <code>onload=""</code> or a <code>.js</code> controller is how loaded views initialize.
 </p>
 
 <h3>JS module</h3>
@@ -37,7 +38,7 @@
 
 <h3>Notes</h3>
 <ul>
-    <li><code>data:load</code> event fires on the wrapper after the resource is applied.</li>
+    <li><code>dw/loaded</code> event fires on the wrapper after the resource is applied.</li>
     <li>HTML inserted via <code>innerHTML</code> — <code>&lt;script&gt;</code> tags do not execute (HTML5 spec).</li>
     <li>Cross-origin URLs are blocked by the browser's same-origin / CORS rules — no app-level policy needed.</li>
     <li>This feature is for <strong>trusted, app-authored sources</strong>. Don't <code>src=""</code> arbitrary user URLs.</li>

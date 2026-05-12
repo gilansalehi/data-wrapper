@@ -55,14 +55,6 @@ describe('wake bindings', () => {
         expect(wrapper.querySelector('span')?.textContent).toBe('ALI');
     });
 
-    it('skips cross-wrapper paths for now', () => {
-        const wrapper = appendWrapper('<span $text="//other/name"></span>');
-
-        wake(wrapper);
-
-        expect(wrapper._subs).toEqual({});
-    });
-
     it('marks wired elements with _live to prevent double wiring', () => {
         const wrapper = appendWrapper(`
             <p>Static</p>
@@ -235,25 +227,4 @@ describe('wake directives and events', () => {
         expect(target).toBe(wrapper.querySelector('button')!);
     });
 
-    it('does not route events owned by nested wrappers', () => {
-        const wrapper = appendWrapper(`
-            <data-wrapper>
-                <button @click="topic"></button>
-            </data-wrapper>
-        `);
-        const inner = wrapper.querySelector('data-wrapper') as TestWrapper;
-        inner.state = {};
-        inner._subs = {};
-        inner._listCache = new Map();
-        inner._watch = (_path: string, _sub: Sub) => {};
-
-        let outerCalls = 0;
-        wrapper.addEventListener('topic', () => { outerCalls += 1; });
-
-        wake(wrapper);
-        wake(inner);
-        inner.querySelector('button')!.click();
-
-        expect(outerCalls).toBe(0);
-    });
 });

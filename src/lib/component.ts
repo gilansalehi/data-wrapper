@@ -3,7 +3,7 @@ import { wake } from './wire.ts';
 import { broadcast, watch } from './engine.ts';
 import type { ListCache, Sub, Subs } from './engine.ts';
 
-const v = '0.0.3';
+const v = '0.0.4';
 
 export class DataWrapper extends HTMLElement {
     declare state:      Record<string, unknown>;
@@ -60,6 +60,7 @@ export class DataWrapper extends HTMLElement {
         on('dw/log', console.log, '', this);
         wake(this);
         emit('dw/load', undefined, this);
+        emit('load', undefined, this);   // fires the inline onload="" attribute
         if (this.hasAttribute('src')) queueMicrotask(() => this.load());
     }
 
@@ -90,7 +91,12 @@ export class DataWrapper extends HTMLElement {
 
     // #region state-api
     register(actions: Record<string, EventListener>) {
-        for (const [eventType, cb] of Object.entries(actions)) on(eventType, cb, '', this);
+        for (const [eventType, cb] of Object.entries(actions)) {
+            on(eventType, (e) => {
+                if ((e.target as Element).closest('data-wrapper') !== this) return;
+                cb(e);
+            }, '', this);
+        }
     }
 
     put(key: string, val: unknown | ((prev: unknown) => unknown)) {

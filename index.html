@@ -18,9 +18,9 @@
 
 <data-wrapper id="nav" src="/views/nav.html" data-nav-open="false"
     onload="this.register({
-        'nav/toggle':   () => nav.put('navOpen', v => !v),
-        'nav/close':    () => nav.put('navOpen', false),
-        'theme/toggle': () => theme.toggle(),
+        'nav/toggle':   () => this.put('navOpen', v => !v),
+        'nav/close':    () => this.put('navOpen', false),
+        'theme/toggle': () => window.theme?.toggle(),
     })">
 </data-wrapper>
 
@@ -60,7 +60,7 @@
 <article class="demo" data-to="todosCode" @reflect="demo/reflect">
     <data-wrapper id="app" data-filter="all">
 
-        <form @submit="todo/add">
+        <form @submit="todo/add?prevent">
             <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off">
             <button type="submit">Add</button>
         </form>
@@ -120,26 +120,25 @@ const compute = () => {
 
 app.register({
   'todo/add': e => {
-    e.detail.preventDefault();
-    const input = e.detail.target.querySelector('input[name="task"]');
+    const input = e.target.querySelector('input[name="task"]');
     if (!input?.value.trim()) return;
     app.push('todos', { id: Date.now(), task: input.value.trim(), status: 'active', done: false });
     input.value = '';
   },
   'todo/toggle': e => {
-    const id = Number(e.detail.delegateTarget?.value);
+    const id = Number(e.target?.value);
     app.put('todos', prev => (prev || []).map(t =>
       t.id === id ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' } : t
     ));
   },
   'todo/remove': e => {
-    const id = Number(e.detail.delegateTarget?.value);
+    const id = Number(e.target?.value);
     app.put('todos', prev => (prev || []).filter(t => t.id !== id));
   },
-  'filter/set': e => app.put('filter', e.detail.delegateTarget?.dataset.val),
+  'filter/set': e => app.put('filter', e.target?.dataset.val),
 });
 
-app.addEventListener('data:sync', e => {
+app.addEventListener('dw/sync', e => {
   if (e.detail.key === 'todos') {
     localStorage.setItem(TODOS_STORAGE, JSON.stringify(app.state.todos || []));
     compute();
@@ -190,9 +189,9 @@ app.put('todos', loadTodos());</code></pre>
 <table>
     <thead><tr><th>Property</th><th>Value</th></tr></thead>
     <tbody>
-        <tr><td><code>e.detail</code></td><td>Original browser event</td></tr>
-        <tr><td><code>e.detail.target</code></td><td>Native event target — useful for <code>input.value</code></td></tr>
-        <tr><td><code>e.detail.delegateTarget</code></td><td>Element carrying the <code>@</code> attribute</td></tr>
+        <tr><td><code>e.target</code></td><td>The element carrying the <code>@</code> attribute (the actionTarget)</td></tr>
+        <tr><td><code>e.detail.originalEvent</code></td><td>The native browser event that triggered the action</td></tr>
+        <tr><td><code>e.detail.payload</code></td><td>Named-control data collected from the actionTarget</td></tr>
     </tbody>
 </table>
 
@@ -209,7 +208,7 @@ app.put('todos', loadTodos());</code></pre>
     <pre><code $text="/controlledCode"></code></pre>
 
     <pre><code>controlled.register({
-  'msg/update': e => controlled.put('message', e.detail.target.value),
+  'msg/update': e => controlled.put('message', e.target.value),
 });</code></pre>
 </details>
 
@@ -229,7 +228,7 @@ app.put('todos', loadTodos());</code></pre>
     <pre><code $text="/twowayCode"></code></pre>
 
     <pre><code>twoway.register({
-  'val/update': e => twoway.put('val', e.detail.target.value),
+  'val/update': e => twoway.put('val', e.target.value),
 });</code></pre>
 </details>
 
@@ -260,8 +259,8 @@ app.put('todos', loadTodos());</code></pre>
 <section id="patterns">
 <h2>Patterns</h2>
 
-<h3>Computed state via <code>data:sync</code></h3>
-<p>Listen for state changes with <code>data:sync</code> and derive new values with <code>put</code>.
+<h3>Computed state via <code>dw/sync</code></h3>
+<p>Listen for state changes with <code>dw/sync</code> and derive new values with <code>put</code>.
    No dependency tracking required — recompute whenever dependencies change.</p>
 
 <article class="demo">
@@ -278,11 +277,11 @@ app.put('todos', loadTodos());</code></pre>
     <pre><code>const demo = document.getElementById('computed-demo');
 
 demo.register({
-  'first/set': e => demo.put('firstName', e.detail.target.value),
-  'last/set':  e => demo.put('lastName',  e.detail.target.value),
+  'first/set': e => demo.put('firstName', e.target.value),
+  'last/set':  e => demo.put('lastName',  e.target.value),
 });
 
-demo.addEventListener('data:sync', () => {
+demo.addEventListener('dw/sync', () => {
   demo.put('fullName', `${demo.state.firstName} ${demo.state.lastName}`);
 });
 
@@ -383,10 +382,10 @@ export default function init(wrapper) {
   };
 
   wrapper.register({
-    'pw/update': e =&gt; wrapper.put('password', e.detail.target.value),
+    'pw/update': e =&gt; wrapper.put('password', e.target.value),
   });
 
-  wrapper.addEventListener('data:sync', e =&gt; {
+  wrapper.addEventListener('dw/sync', e =&gt; {
     if (e.detail.key === 'password') compute(wrapper.state.password ?? '');
   });
 
@@ -395,7 +394,7 @@ export default function init(wrapper) {
 </details>
 <p class="note">
     The module demonstrates three things at once: <strong>handlers from a file</strong> (the <code>register</code> call),
-    <strong>derived state</strong> (the <code>data:sync</code> listener recomputes <code>constraints</code> and <code>strength</code>),
+    <strong>derived state</strong> (the <code>dw/sync</code> listener recomputes <code>constraints</code> and <code>strength</code>),
     and <strong><code>*list</code> + <code>$class</code></strong> rendering each rule's met/unmet state without per-item listeners.
 </p>
 </section>
@@ -590,9 +589,9 @@ DW_FORMATTERS.set('ago', v => {
 <table>
     <thead><tr><th>Event</th><th>Target</th><th>When</th></tr></thead>
     <tbody>
-        <tr><td><code>data:sync</code></td><td>Wrapper element</td><td>Any <code>put/patch/push/pull</code>. <code>e.detail.key</code> = changed key.</td></tr>
+        <tr><td><code>dw/sync</code></td><td>Wrapper element</td><td>Any <code>put/patch/push/pull</code>. <code>e.detail.key</code> = changed key.</td></tr>
         <tr><td><code>load</code></td><td>Wrapper element</td><td>Wrapper connected — triggers <code>onload=""</code> attribute. <code>e.detail</code> = the element.</td></tr>
-        <tr><td><code>data:load</code></td><td>Wrapper element</td><td>Fires after <code>src=""</code> resolves. <code>e.detail.src</code> = resolved URL.</td></tr>
+        <tr><td><code>dw/loaded</code></td><td>Wrapper element</td><td>Fires after <code>src=""</code> resolves. <code>e.detail.src</code> = resolved URL.</td></tr>
     </tbody>
 </table>
 </section>
@@ -710,10 +709,10 @@ DW_FORMATTERS.set('pluralise', v =>
         const docs = document.getElementById('docs');
         docs.register({
             'demo/reflect': e => {
-                const el = e.detail?.delegateTarget ?? e.target;
+                const el = e.target;
                 docs.put(el.dataset.to, el.innerHTML.trim());
             },
-            'data:load': e => { awakenTarget(e.target); },
+            'dw/loaded': e => { awakenTarget(e.target); },
         });
         const awakenTarget = (root) => {
             q('[data-to]', root).forEach(el => emit('demo/reflect', el.dataset.to, el));
@@ -726,19 +725,19 @@ DW_FORMATTERS.set('pluralise', v =>
 
         // Controlled input
         const controlled = document.getElementById('controlled');
-        controlled.register({ 'msg/update': e => controlled.put('message', e.detail.target.value) });
+        controlled.register({ 'msg/update': e => controlled.put('message', e.target.value) });
 
         // Two-way binding
         const twoway = document.getElementById('twoway');
-        twoway.register({ 'val/update': e => twoway.put('val', e.detail.target.value) });
+        twoway.register({ 'val/update': e => twoway.put('val', e.target.value) });
 
         // Computed state demo
         const demo = document.getElementById('computed-demo');
         demo.register({
-            'first/set': e => demo.put('firstName', e.detail.target.value),
-            'last/set':  e => demo.put('lastName',  e.detail.target.value),
+            'first/set': e => demo.put('firstName', e.target.value),
+            'last/set':  e => demo.put('lastName',  e.target.value),
         });
-        demo.addEventListener('data:sync', () =>
+        demo.addEventListener('dw/sync', () =>
             demo.put('fullName', `${demo.state.firstName} ${demo.state.lastName}`)
         );
         demo.put('fullName', `${demo.state.firstName} ${demo.state.lastName}`);
@@ -768,26 +767,25 @@ DW_FORMATTERS.set('pluralise', v =>
 
         app.register({
             'todo/add': e => {
-                e.detail.preventDefault();
-                const input = e.detail.target.querySelector('input[name="task"]');
+                const input = e.target.querySelector('input[name="task"]');
                 if (!input?.value.trim()) return;
                 app.push('todos', { id: Date.now(), task: input.value.trim(), status: 'active', done: false });
                 input.value = '';
             },
             'todo/toggle': e => {
-                const id = Number(e.detail.delegateTarget?.value);
+                const id = Number(e.target?.value);
                 app.put('todos', prev => (prev || []).map(t =>
                     t.id === id ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' } : t
                 ));
             },
             'todo/remove': e => {
-                const id = Number(e.detail.delegateTarget?.value);
+                const id = Number(e.target?.value);
                 app.put('todos', prev => (prev || []).filter(t => t.id !== id));
             },
-            'filter/set': e => app.put('filter', e.detail.delegateTarget?.dataset.val),
+            'filter/set': e => app.put('filter', e.target?.dataset.val),
         });
 
-        app.addEventListener('data:sync', e => {
+        app.addEventListener('dw/sync', e => {
             if (e.detail.key === 'todos') {
                 localStorage.setItem(TODOS_STORAGE, JSON.stringify(app.state.todos || []));
                 compute();

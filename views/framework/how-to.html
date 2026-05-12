@@ -4,10 +4,7 @@
     <p>Awaken your HTML with familiar concepts:</p>
 
     <div id="how-to-hover-demo">
-        <data-wrapper id="counter-demo" src="/views/showcase/counter.html"
-            onload="this.register({ '/log': (e, ...etc) => console.log(e, {...etc}) })"
-        >
-        </data-wrapper>
+        <data-wrapper id="counter-demo" src="/views/showcase/counter.html"></data-wrapper>
     </div>
 
     <ul id="how-to-awaken" class="flex flex-wrap gap-lg">
@@ -17,11 +14,11 @@
         </li>
 
         <li class="card">
-            <h4>DRWLs track your data like a URL:</h4>
-            <code id="dwrl-demo" class="code-pop">data://data-wrapper-id/user/name/first?format=upper</code>
+            <h4>pURLs track your data like a URL:</h4>
+            <code id="dwrl-demo" class="code-pop">dwrl://data-wrapper-id/user/name/first?format=upper</code>
             <ul>
-                <li>Scheme: <code>data://</code> reads from the target's dataset.</li>
-                <li>Host: <code>data-wrapper-id</code> defines the target wrapper by id</li>
+                <li>Scheme: <code>dwrl://</code> reads from the target wrapper's state.</li>
+                <li>Host: <code>data-wrapper-id</code> names the target wrapper (Roadmap)</li>
                 <li>Path: <code>/user/name/first</code> drills into the data</li>
                 <li>Query: <code>?format=upper</code> transforms the response</li>
                 <li hidden>Hash: <code>tbd!</code> coming soon.</li>

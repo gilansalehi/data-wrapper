@@ -1,6 +1,11 @@
 <figure data-source="component.ts" data-region="state-api">
   <pre><code>    register(actions: Record&lt;string, EventListener&gt;) {
-        for (const [eventType, cb] of Object.entries(actions)) on(eventType, cb, &#x27;&#x27;, this);
+        for (const [eventType, cb] of Object.entries(actions)) {
+            on(eventType, (e) =&gt; {
+                if ((e.target as Element).closest(&#x27;data-wrapper&#x27;) !== this) return;
+                cb(e);
+            }, &#x27;&#x27;, this);
+        }
     }
 
     put(key: string, val: unknown | ((prev: unknown) =&gt; unknown)) {
