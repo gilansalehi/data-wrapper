@@ -1,6 +1,6 @@
 import { DW_DIRECTIVES, DW_FORMATTERS } from './registry.ts';
 import type { DispatchDetail, DispatchPayload } from './registry.ts';
-import { bind, watch } from './engine.ts';
+import { bind, superscribe } from './engine.ts';
 import type { Row, Sub, Wrapper } from './engine.ts';
 import { p, on, emit } from './utils.ts';
 
@@ -42,20 +42,11 @@ const collectPayload = (el: Element): DispatchPayload => {
     return ni.name ? { [ni.name]: ni.value } : {};
 };
 
-// subscribe = watch
 const subscribe = (wrapper: WrapperNode, row: Row | null, path: string, sub: Sub) => {
-    if (row) {
-        watch(row.subs, item => sub(item?.[path]), row.item);
-    } else {
-        wrapper._watch(path, sub);
-    }
+    const station = row ? row.subs : wrapper._subs;
+    const value   = row ? row.item[path] : wrapper.state[path];
+    superscribe(station, path, sub, value);
 };
-
-export const _superscribe = (path: string, updater: Sub, row: Row | null, ctx: Wrapper) => {
-    const membership = row ? row.subs : ctx._subs[path];
-    const item = row ? row.item : ctx.state[path];
-    return watch(membership, updater, item);
-}
 
 // #region wire — wires one tokenized attribute on an element
 export const wire = (

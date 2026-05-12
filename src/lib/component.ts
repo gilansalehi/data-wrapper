@@ -1,13 +1,13 @@
 import { emit, on } from './utils.ts';
 import { wake } from './wire.ts';
-import { broadcast, watch } from './engine.ts';
-import type { ListCache, Sub, Subs } from './engine.ts';
+import { broadcast } from './engine.ts';
+import type { ListCache, Station } from './engine.ts';
 
 const v = '0.0.4';
 
 export class DataWrapper extends HTMLElement {
     declare state:      Record<string, unknown>;
-    declare _subs:      Record<string, Subs>;
+    declare _subs:      Station;
     declare _isSyncing: boolean;
     declare _listCache: ListCache;
     declare _observer:  MutationObserver;
@@ -82,11 +82,6 @@ export class DataWrapper extends HTMLElement {
 
     _broadcast(key: string, val: unknown) {
         broadcast(this._subs[key], val);
-    }
-
-    _watch(path: string, updater: Sub) {
-        this._subs[path] = this._subs[path] || [];
-        watch(this._subs[path], updater, this.state[path]);
     }
 
     // #region state-api

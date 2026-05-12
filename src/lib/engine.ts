@@ -1,5 +1,5 @@
 import { cloneTemplate, DW_DIRECTIVES, PROP_ALIASES, resolveTemplate } from './registry.ts';
-import type { DirectiveHandler, Item, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
+import type { DirectiveHandler, Item, Row, Station, Sub, Subs } from './registry.ts';
 export type { Item, ListCache, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
 
 const set = (el: Element, prop: string, val: unknown) => {
@@ -25,17 +25,12 @@ export const bind = (el: Element, prop: string): Sub => {
 };
 
 // #region subscriptions
-export const watch = <T>(subs: Subs<T>, sub: Sub<T>, value: T) => {
-    subs.push(sub);
-    sub(value);
-};
-
 export const superscribe = (station: Station, channel: string, sub: Sub, value: unknown) => {
     (station[channel] ??= []).push(sub);
     sub(value);
 };
 
-export const broadcast = <T>(subs: Subs<T> = [], value: T) => {
+export const broadcast = (subs: Subs = [], value: unknown) => {
     for (const sub of subs) sub(value);
 };
 // #endregion
@@ -64,7 +59,7 @@ export const reconcile = (
             row = {
                 node: cloneTemplate(tpl)!,
                 item,
-                subs: [],
+                subs: {},
             };
             cache.set(id, row);
             isNew = true;
@@ -72,7 +67,10 @@ export const reconcile = (
         }
 
         row.item = item;
-        if (!isNew) broadcast(row.subs, item);
+        if (!isNew) {
+            for (const channel in row.subs)
+                broadcast(row.subs[channel], item[channel]);
+        }
         fragment.appendChild(row.node);
     }
 
