@@ -1,7 +1,7 @@
 import { DW_DIRECTIVES, DW_FORMATTERS } from './registry.ts';
 import type { DispatchDetail, DispatchPayload } from './registry.ts';
-import { bind, superscribe } from './engine.ts';
-import type { Row, Sub, Wrapper } from './engine.ts';
+import { bind, subscribe } from './engine.ts';
+import type { Row, Wrapper } from './engine.ts';
 import { p, on, emit } from './utils.ts';
 
 type Format = (value: unknown) => unknown;
@@ -42,12 +42,6 @@ const collectPayload = (el: Element): DispatchPayload => {
     return ni.name ? { [ni.name]: ni.value } : {};
 };
 
-const subscribe = (wrapper: WrapperNode, row: Row | null, path: string, sub: Sub) => {
-    const station = row ? row.subs : wrapper._subs;
-    const value   = row ? row.item[path] : wrapper.state[path];
-    superscribe(station, path, sub, value);
-};
-
 // #region wire — wires one tokenized attribute on an element
 export const wire = (
     el: Element,
@@ -63,8 +57,7 @@ export const wire = (
     const { path, params, key } = dwrl;
     if (!path || !wrapper) return; // set default "debugger path"?
 
-    switch (token) {
-    case '@': {
+    if (token === '@') {
         on(prop, (e) => {
             if (params.has('prevent'))   e.preventDefault();
             if (params.has('stop'))      e.stopPropagation();
@@ -76,23 +69,26 @@ export const wire = (
             };
             emit(path, detail, el);
         }, el, wrapper);
-        break;
+        return;
     }
-    case '$': {
+
+    const station = row ? row.subs       : wrapper._subs;
+    const initial = row ? row.item[path] : wrapper.state[path];
+
+    if (token === '$') {
         const format = formatter(params);
         const set    = bind(el, prop);
 
-        subscribe(wrapper, row, path, value => set(format(value)));
-        break;
+        subscribe(station, path, v => set(format(v)), initial);
+        return;
     }
-    case '*': {
+
+    if (token === '*') {
         const updater = DW_DIRECTIVES.get(prop)?.({ wrapper, el, key, row, wake });
         if (!updater) throw new Error(`Did not recognize directive "${prop}"`);
 
-        subscribe(wrapper, row, path, updater);
-        break;
-    }
-    default : return;
+        subscribe(station, path, updater, initial);
+        return;
     }
 };
 // #endregion

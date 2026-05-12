@@ -7,7 +7,7 @@ const v = '0.0.4';
 
 export class DataWrapper extends HTMLElement {
     declare state:      Record<string, unknown>;
-    declare _subs:      Station;
+    declare _subs:      Station; // radio station analogy
     declare _isSyncing: boolean;
     declare _listCache: ListCache;
     declare _observer:  MutationObserver;
@@ -67,10 +67,6 @@ export class DataWrapper extends HTMLElement {
     disconnectedCallback() {
         this._observer.disconnect();
     }
-
-    // bus(path: string) {
-    //     return this._subs[path];
-    // }
 
     // pub(key: string, val: unknown) {
     //     for (const sub of this._subs[key]) sub(val); // run updater

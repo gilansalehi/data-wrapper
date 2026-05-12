@@ -25,7 +25,7 @@ export const bind = (el: Element, prop: string): Sub => {
 };
 
 // #region subscriptions
-export const superscribe = (station: Station, channel: string, sub: Sub, value: unknown) => {
+export const subscribe = (station: Station, channel: string, sub: Sub, value: unknown) => {
     (station[channel] ??= []).push(sub);
     sub(value);
 };
