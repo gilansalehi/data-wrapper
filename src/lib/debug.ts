@@ -28,6 +28,13 @@ export const record = (event: string, ctx: Element, detail: unknown) => {
     if (dbg) console.log(`[dw:${dbg.id || '?'}]`, event, { ctx, detail });
 };
 
+// Structural view of a wrapper for serialization — avoids importing
+// the DataWrapper class (which would form a cycle through utils.ts).
+type Inspectable = Element & {
+    state: Record<string, unknown>;
+    _subs: Record<string, unknown[]>;
+};
+
 declare global {
     interface Window {
         dw?: {
@@ -36,6 +43,7 @@ declare global {
             readonly history: LogEntry[];
             debug(target?: Element): void;
             clear(): void;
+            toJSON(): unknown;
         };
     }
 }
@@ -54,5 +62,26 @@ if (typeof window !== 'undefined' && !window.dw) {
             if (enabled) console.log(`<data-wrapper v${VERSION}> debug ON`);
         },
         clear() { history.length = 0; },
+        // Native JSON.stringify hook. Returns a plain, JSON-friendly view of
+        // every wrapper plus a recent-history tail — readable in a chat
+        // paste without DOM-element noise.
+        toJSON() {
+            return {
+                version:  VERSION,
+                wrappers: this.all.map(w => {
+                    const i = w as unknown as Inspectable;
+                    return {
+                        id:       w.id || null,
+                        state:    { ...i.state },
+                        channels: Object.keys(i._subs),
+                        debug:    w.hasAttribute('_debug'),
+                    };
+                }),
+                history: history.slice(-20).map(e => ({
+                    event:   e.event,
+                    wrapper: e.ctx.closest('data-wrapper')?.id || null,
+                })),
+            };
+        },
     };
 }
