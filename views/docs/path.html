@@ -1,11 +1,6 @@
 <figure data-source="utils.ts" data-region="path">
-  <pre><code>// readPath/writePath walk a deep tree along slash-separated paths.
-// readPath bottoms out via direct property access — when the root is the
-// state Proxy, the first segment hits proxy.get (which parses JSON).
-// writePath rebuilds the path with immutable spreads and reassigns the
-// root key, so the proxy setter fires once at the root and the framework&#x27;s
-// fan-out handles nested subscribers.
-export const readPath = (obj: unknown, path: string): unknown =&gt; {
+  <figcaption>readPath/writePath walk a deep tree along slash-separated paths. readPath bottoms out via direct property access — when the root is the state Proxy, the first segment hits proxy.get (which parses JSON). writePath rebuilds the path with immutable spreads and reassigns the root key, so the proxy setter fires once at the root and the framework&#x27;s fan-out handles nested subscribers.</figcaption>
+  <pre><code>export const readPath = (obj: unknown, path: string): unknown =&gt; {
     if (!path) return obj;
     return path.split(&#x27;/&#x27;).reduce&lt;unknown&gt;(
         (acc, key) =&gt; acc == null ? undefined : (acc as Record&lt;string, unknown&gt;)[key],

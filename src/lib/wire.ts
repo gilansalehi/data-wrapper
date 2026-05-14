@@ -41,6 +41,7 @@ const collectPayload = (el: Element): DispatchPayload => {
     const ni = el as HTMLInputElement;
     return ni.name ? { [ni.name]: ni.value } : {};
 };
+// #endregion
 
 // #region wire — wires one tokenized attribute on an element
 export const wire = (

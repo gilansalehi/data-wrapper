@@ -42,7 +42,7 @@ export const pURL = (dwrlString: string): pURL => {
 export const p = pURL;
 
 // #region path access
-// readPath/writePath walk a deep tree along slash-separated paths.
+// @docs readPath/writePath walk a deep tree along slash-separated paths.
 // readPath bottoms out via direct property access — when the root is the
 // state Proxy, the first segment hits proxy.get (which parses JSON).
 // writePath rebuilds the path with immutable spreads and reassigns the

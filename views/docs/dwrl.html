@@ -1,49 +1,26 @@
 <figure data-source="wire.ts" data-region="dwrl">
-  <pre><code>const formatter = (url: URL): Format =&gt; {
-    const pipes = url.searchParams.getAll(&#x27;format&#x27;)
+  <pre><code>const formatter = (params: URLSearchParams): Format =&gt; {
+    const pipes = params.getAll(&#x27;format&#x27;)
         .map(n =&gt; DW_FORMATTERS.get(n))
         .filter((f): f is NonNullable&lt;typeof f&gt; =&gt; !!f);
 
     return value =&gt; pipes.reduce((v, pipe) =&gt; pipe(v), value);
 };
 
-const parseDWRL = (dwrlString: string): DWRL =&gt; {
-    const isScoped = dwrlString.startsWith(&#x27;./&#x27;);
+const owner = (el: Element): WrapperNode | null =&gt; el.closest(&#x27;data-wrapper&#x27;)
 
-    const url = new URL(dwrlString.slice(isScoped ? 1 : 0), DWRL_BASE);
-    const dwrl = {
-        ...url,
-        url,
-        key:  url.searchParams.get(&#x27;key&#x27;) ?? undefined,
-        path: url.pathname.slice(1),
-        protocol: url.protocol,
-        host: url.hostname,
-        format: formatter(url),
-        params: url.searchParams,
-        isItemScoped: isScoped,
+const collectPayload = (el: Element): DispatchPayload =&gt; {
+    if (el instanceof HTMLFormElement) {
+        const out: DispatchPayload = {};
+        for (const [k, v] of new FormData(el)) {
+            const existing = out[k];
+            if (existing === undefined)   out[k] = v;
+            else if (Array.isArray(existing)) existing.push(v);
+            else                               out[k] = [existing, v];
+        }
+        return out;
     }
-
-    // DEBUGGING:
-    if (url.hash === &#x27;#debug&#x27;) {
-        console.info(&#x27;debug:dwrl&#x27;, dwrl);
-    }
-
-    return dwrl;
-}
-
-const parsePath = (attrValue: string) =&gt; {
-    const isItemScoped = attrValue.startsWith(&#x27;./&#x27;);
-
-    // ./foo → /foo: strip leading dot so URL parser treats it as an absolute path.
-    // The isItemScoped flag above captures the original intent.
-    const url = new URL(isItemScoped ? attrValue.slice(1) : attrValue, DWRL_BASE);
-
-    return {
-        url,
-        format: formatter(url),
-        isItemScoped,
-        key:       url.searchParams.get(&#x27;key&#x27;) ?? undefined,
-        path:      url.pathname.slice(1), // URL always produces leading /; strip it
-    };
+    const ni = el as HTMLInputElement;
+    return ni.name ? { [ni.name]: ni.value } : {};
 };</code></pre>
 </figure>

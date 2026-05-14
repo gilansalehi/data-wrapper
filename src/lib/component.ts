@@ -77,6 +77,13 @@ export class DataWrapper extends HTMLElement {
     }
 
     // #region state-api
+    // @docs Public surface for reading and writing wrapper state. Every
+    // mutation routes through `put()`, which short-circuits no-op writes and
+    // emits `dw/sync` so subscribers fan out exactly once.
+    //  - `patch` does a shallow merge,
+    //  - `push` appends,
+    //  - `pull` filters by id or predicate.
+    //  - `register` attaches event handlers scoped to the wrapper.
     register(actions: Record<string, EventListener>) {
         for (const [eventType, cb] of Object.entries(actions)) {
             on(eventType, (e) => {

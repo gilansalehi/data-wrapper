@@ -15,9 +15,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "bun docs && bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.js --format esm --target browser && bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.min.js --format iife --minify --target browser",
-    "docs": "bun scripts/generate-docs.ts",
-    "docs:check": "bun docs && git diff --exit-code -- views/docs/",
+    "build": "bun update:docs && bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.js --format esm --target browser && bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.min.js --format iife --minify --target browser",
+    "update:docs": "bun scripts/generate-docs.ts",
+    "docs:check": "bun scripts/generate-docs.ts --strict && git diff --exit-code -- views/docs/",
     "review": "bun typecheck && bun docs:check && bun test:all",
     "serve": "bun serve.ts",
     "typecheck": "tsc --noEmit",
