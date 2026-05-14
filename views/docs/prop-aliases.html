@@ -1,4 +1,5 @@
 <figure data-source="registry.ts" data-region="prop-aliases">
+  <figcaption><code>$prop=&quot;/path&quot;</code> sets <code>el[prop] = value</code> on update. Most names map directly — these are the exceptions, the HTML-attribute to DOM-property naming gap (<code>class</code> → <code>className</code>, <code>for</code> → <code>htmlFor</code>, etc.). <code>$class</code> is special-cased in <code>bind()</code>: it preserves the element&#x27;s static base classes and merges the dynamic value on top.</figcaption>
   <pre><code>    text:            &#x27;textContent&#x27;,
     html:            &#x27;innerHTML&#x27;,
     class:           &#x27;className&#x27;,

@@ -1,4 +1,5 @@
 <figure data-source="wire.ts" data-region="wire">
+  <figcaption>The token dispatch. <code>wire()</code> runs once per tokenized attribute and turns it into a subscriber. <code>$prop</code> binds state to a DOM property, <code>*directive</code> invokes a registered structural directive, <code>@event</code> delegates a native DOM event to an emitted topic. Three tokens, one function, no runtime parsing past wake.</figcaption>
   <pre><code>export const wire = (
     el: Element,
     attr: Attr,

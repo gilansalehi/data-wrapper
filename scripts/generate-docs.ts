@@ -71,11 +71,38 @@ const trim = (lines: string[]) => {
     return lines.slice(i, j);
 };
 
-// Plain prose with one inline transform: backticked spans → <code>.
+// Prose with two inline transforms: backticked spans → <code>, and lines
+// starting with `-` or `*` group into <ul><li>. Blank lines flush paragraphs.
 const caption = (docs: string[]) => {
-    const text = docs.map(l => l.trim()).filter(Boolean).join(' ');
-    if (!text) return '';
-    return '  <figcaption>' + Bun.escapeHTML(text).replace(/`([^`]+)`/g, '<code>$1</code>') + '</figcaption>\n';
+    if (!docs.length) return '';
+
+    const escape = (s: string) => Bun.escapeHTML(s).replace(/`([^`]+)`/g, '<code>$1</code>');
+    const out: string[] = [];
+    let para: string[] = [];
+    let listOpen = false;
+
+    const flushPara = () => { if (para.length) { out.push(escape(para.join(' '))); para = []; } };
+    const closeList = () => { if (listOpen) { out.push('</ul>'); listOpen = false; } };
+
+    for (const raw of docs) {
+        const line = raw.trim();
+        if (!line) { flushPara(); closeList(); continue; }
+
+        const bullet = line.match(/^[-*]\s+(.*)$/);
+        if (bullet) {
+            flushPara();
+            if (!listOpen) { out.push('<ul>'); listOpen = true; }
+            out.push('<li>' + escape(bullet[1]) + '</li>');
+            continue;
+        }
+        closeList();
+        para.push(line);
+    }
+    flushPara();
+    closeList();
+
+    if (!out.length) return '';
+    return '  <figcaption>' + out.join('') + '</figcaption>\n';
 };
 
 const partial = (source: string, region: Region) =>

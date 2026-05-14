@@ -1,4 +1,5 @@
 <figure data-source="engine.ts" data-region="subscriptions">
+  <figcaption>The framework&#x27;s update primitive. <code>subscribe()</code> adds a sub to a Station channel and runs it once for the initial render; <code>publish()</code> calls every sub on a channel with a new value. A Station is <code>Record&lt;channel, Subs&gt;</code> — the wrapper has one (<code>_subs</code>) and every <code>*list</code> row carries its own (<code>row.subs</code>). Bindings, directives, and list rows all compose from this primitive.</figcaption>
   <pre><code>export const subscribe = (station: Station, channel: string, sub: Sub, value: unknown) =&gt; {
     (station[channel] ??= []).push(sub);
     sub(value);

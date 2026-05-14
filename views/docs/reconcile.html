@@ -1,4 +1,5 @@
 <figure data-source="engine.ts" data-region="reconcile">
+  <figcaption>How <code>*list</code> stays cheap. <code>reconcile()</code> walks incoming items, reuses cached rows by identity key, publishes the updated item into each row&#x27;s subscribers (no DOM rebuild for unchanged rows), removes rows whose ids dropped out, and appends new rows through a <code>DocumentFragment</code> before waking them. The DOM node is rendered output; the row record is the framework state.</figcaption>
   <pre><code>export const reconcile = (
     container: Element,
     data: Item[],

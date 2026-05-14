@@ -19,6 +19,12 @@ export class DataWrapper extends HTMLElement {
         self._isSyncing = false;
 
         // #region state-proxy
+        // @docs State *is* `data-*`. The Proxy serializes objects as JSON on
+        // write, parses them back on read, and fans subscribers out on every
+        // set via `_fanout()`. A `MutationObserver` catches external attribute
+        // changes (DevTools edits, third-party scripts) and fans those out
+        // too. `_isSyncing` suppresses the echo from the wrapper's own writes
+        // so the same set never fires twice.
         self.state = new Proxy(self.dataset as unknown as Record<string, unknown>, {
             set(target, key: string, value: unknown) {
                 const serialized = (value && typeof value === 'object')
@@ -80,9 +86,10 @@ export class DataWrapper extends HTMLElement {
     // @docs Public surface for reading and writing wrapper state. Every
     // mutation routes through `put()`, which short-circuits no-op writes and
     // emits `dw/sync` so subscribers fan out exactly once.
+    //  - `get` reads a path from state (single segment or slash-separated),
     //  - `patch` does a shallow merge,
     //  - `push` appends,
-    //  - `pull` filters by id or predicate.
+    //  - `pull` filters by id or predicate,
     //  - `register` attaches event handlers scoped to the wrapper.
     register(actions: Record<string, EventListener>) {
         for (const [eventType, cb] of Object.entries(actions)) {
@@ -125,6 +132,12 @@ export class DataWrapper extends HTMLElement {
     // #endregion
 
     // #region load
+    // @docs Loads content into the wrapper. A `.js` or `.mjs` source is
+    // dynamically imported and its `default` export is invoked with the
+    // wrapper as the only argument — handy for handler registration in a
+    // separate file. Anything else is fetched as text, replaces `innerHTML`,
+    // and re-wakes the subtree. Either path ends with a `dw/loaded` event
+    // carrying the resolved URL.
     async load(src: string | null = this.getAttribute('src')) {
         if (!src) return;
         const url = new URL(src, document.baseURI);

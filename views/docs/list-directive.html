@@ -1,4 +1,5 @@
 <figure data-source="engine.ts" data-region="list-directive">
+  <figcaption>Reconciles a child <code>&lt;template&gt;</code> against an array. Reuses rows by identity (default key <code>id</code>; override with <code>?key=field</code>), publishes updated values into existing row subscribers, and renders a <code>data-empty</code> template when the array is empty.</figcaption>
   <pre><code>const listDirective: DirectiveHandler = ({ wrapper, el, key, wake }) =&gt; {
     const tpl = el.querySelector(&#x27;:scope &gt; template&#x27;) as HTMLTemplateElement | null;
     if (!tpl) return () =&gt; {};

@@ -1,4 +1,5 @@
 <figure data-source="wire.ts" data-region="dwrl">
+  <figcaption>DWRL drives the framework&#x27;s wire surface — <code>pURL()</code> in <code>utils.ts</code> does the parsing; these helpers consume the result. <code>formatter()</code> compiles a <code>?format=name</code> chain into a single closure at wake time, so runtime updates never look up formatters again. <code>collectPayload()</code> packs the data <code>@</code>-events ride with: a full FormData dump from <code>&lt;form&gt;</code>, or <code>{name: value}</code> from anything else with a <code>name</code> attribute.</figcaption>
   <pre><code>const formatter = (params: URLSearchParams): Format =&gt; {
     const pipes = params.getAll(&#x27;format&#x27;)
         .map(n =&gt; DW_FORMATTERS.get(n))

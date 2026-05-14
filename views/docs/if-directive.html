@@ -1,4 +1,5 @@
 <figure data-source="engine.ts" data-region="if-directive">
+  <figcaption>Toggles an element&#x27;s presence in the DOM. When the value is falsy, the element is replaced with a comment anchor; when truthy, it returns to its place and re-wakes. Useful for conditionally rendered fragments inside list rows or wrapper roots.</figcaption>
   <pre><code>const ifDirective: DirectiveHandler = ({ wrapper, el, row, wake }) =&gt; {
     const anchor = document.createComment(&#x27;dw-if&#x27;);
 

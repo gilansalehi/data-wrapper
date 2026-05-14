@@ -1,4 +1,5 @@
 <figure data-source="component.ts" data-region="state-proxy">
+  <figcaption>State *is* <code>data-*</code>. The Proxy serializes objects as JSON on write, parses them back on read, and fans subscribers out on every set via <code>_fanout()</code>. A <code>MutationObserver</code> catches external attribute changes (DevTools edits, third-party scripts) and fans those out too. <code>_isSyncing</code> suppresses the echo from the wrapper&#x27;s own writes so the same set never fires twice.</figcaption>
   <pre><code>        self.state = new Proxy(self.dataset as unknown as Record&lt;string, unknown&gt;, {
             set(target, key: string, value: unknown) {
                 const serialized = (value &amp;&amp; typeof value === &#x27;object&#x27;)

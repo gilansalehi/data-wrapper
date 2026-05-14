@@ -1,4 +1,5 @@
 <figure data-source="component.ts" data-region="load">
+  <figcaption>Loads content into the wrapper. A <code>.js</code> or <code>.mjs</code> source is dynamically imported and its <code>default</code> export is invoked with the wrapper as the only argument — handy for handler registration in a separate file. Anything else is fetched as text, replaces <code>innerHTML</code>, and re-wakes the subtree. Either path ends with a <code>dw/loaded</code> event carrying the resolved URL.</figcaption>
   <pre><code>    async load(src: string | null = this.getAttribute(&#x27;src&#x27;)) {
         if (!src) return;
         const url = new URL(src, document.baseURI);

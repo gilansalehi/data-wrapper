@@ -1,4 +1,5 @@
 <figure data-source="wire.ts" data-region="wake">
+  <figcaption>The lifecycle entry point. <code>wake()</code> walks the subtree with a <code>TreeWalker</code>, skipping nested wrappers, templates, and SVG (per <code>NO_WAKE</code>). Each wired element gets the <code>_live</code> attribute so re-entry is idempotent. Walking happens once; every tokenized attribute is compiled into a subscriber by <code>wire()</code>, so runtime updates never re-parse anything.</figcaption>
   <pre><code>export const wake = (
     root: Element,
     row: Row | null = null,

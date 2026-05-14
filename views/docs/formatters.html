@@ -1,4 +1,5 @@
 <figure data-source="registry.ts" data-region="formatters">
+  <figcaption>Append <code>?format=name</code> to any path to pipe its value through a transformer. Chain multiple — applied left to right. The snippet below is the built-in set; add your own with <code>DW_FORMATTERS.set(name, fn)</code>.</figcaption>
   <pre><code>    [&#x27;count&#x27;,    v =&gt; (Array.isArray(v) || typeof v === &#x27;string&#x27;) ? v.length : 0],
     [&#x27;fallback&#x27;, v =&gt; v ?? &#x27;—&#x27;],
     [&#x27;json&#x27;,     v =&gt; JSON.stringify(v, null, 2)],

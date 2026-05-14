@@ -1,5 +1,5 @@
 <figure data-source="component.ts" data-region="state-api">
-  <figcaption>Public surface for reading and writing wrapper state. Every mutation routes through <code>put()</code>, which short-circuits no-op writes and emits <code>dw/sync</code> so subscribers fan out exactly once. - <code>patch</code> does a shallow merge, - <code>push</code> appends, - <code>pull</code> filters by id or predicate. - <code>register</code> attaches event handlers scoped to the wrapper.</figcaption>
+  <figcaption>Public surface for reading and writing wrapper state. Every mutation routes through <code>put()</code>, which short-circuits no-op writes and emits <code>dw/sync</code> so subscribers fan out exactly once.<ul><li><code>get</code> reads a path from state (single segment or slash-separated),</li><li><code>patch</code> does a shallow merge,</li><li><code>push</code> appends,</li><li><code>pull</code> filters by id or predicate,</li><li><code>register</code> attaches event handlers scoped to the wrapper.</li></ul></figcaption>
   <pre><code>    register(actions: Record&lt;string, EventListener&gt;) {
         for (const [eventType, cb] of Object.entries(actions)) {
             on(eventType, (e) =&gt; {

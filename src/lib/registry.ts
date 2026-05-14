@@ -6,7 +6,12 @@ export type Item = Record<string, unknown>;
 export type Row = { node: Element; item: Item; subs: Station };
 export type ListCache = Map<Element, Map<unknown, Row>>;
 
-// #region @-dispatch
+// #region event-dispatch
+// @docs One delegated listener per `@event` token, attached to the wrapper.
+// Native browser bubbling carries the event up; the listener filters out
+// events owned by nested wrappers, then emits the topic named on the
+// declaring element along with a `DispatchDetail`. Adding handlers to
+// dynamically-inserted DOM costs nothing — the listener is already installed.
 export type DispatchPayload = Record<string, FormDataEntryValue | FormDataEntryValue[]>;
 export type DispatchDetail  = {
     originalEvent: Event;
@@ -15,6 +20,11 @@ export type DispatchDetail  = {
 export type DispatchEvent = CustomEvent<DispatchDetail>;
 // #endregion
 // #region wrapper-contract
+// @docs The shape every `<data-wrapper>` presents to the rest of the
+// framework. `state` reads and writes through a Proxy over `data-*`
+// attributes; `_subs` is the wrapper's Station (one channel per path);
+// `_listCache` holds row caches per `*list` element. Everything else lives
+// in methods on the class.
 export type Wrapper = HTMLElement & {
     state:        Record<string, unknown>;
     _subs:        Station;
@@ -32,6 +42,10 @@ export const DW_TEMPLATES = [...document.querySelectorAll('template')].reduce((a
     return acc.set(item.id, item as HTMLTemplateElement);
 }, new Map<string, HTMLTemplateElement>([
     // #region templates
+    // @docs Built-in templates referenced by `data-empty="name"` on a `*list`
+    // element. Override by declaring a `<template id>` with the same name
+    // anywhere in your document — `resolveTemplate()` prefers user-declared
+    // templates over built-ins.
     ['dw-empty',   tmpl('<li data-dw-template="empty">No items</li>')],
     ['dw-missing', tmpl('<span data-dw-template="missing">—</span>')],
     ['dw-loading', tmpl('<span data-dw-template="loading">Loading...</span>')],
@@ -51,6 +65,9 @@ export const cloneTemplate = (tpl: HTMLTemplateElement) =>
 
 export const DW_FORMATTERS = new Map<string, Formatter>([
     // #region formatters
+    // @docs Append `?format=name` to any path to pipe its value through a
+    // transformer. Chain multiple — applied left to right. The snippet below
+    // is the built-in set; add your own with `DW_FORMATTERS.set(name, fn)`.
     ['count',    v => (Array.isArray(v) || typeof v === 'string') ? v.length : 0],
     ['fallback', v => v ?? '—'],
     ['json',     v => JSON.stringify(v, null, 2)],
@@ -67,6 +84,11 @@ export const DW_FORMATTERS = new Map<string, Formatter>([
 
 export const PROP_ALIASES: Record<string, string> = {
     // #region prop-aliases
+    // @docs `$prop="/path"` sets `el[prop] = value` on update. Most names map
+    // directly — these are the exceptions, the HTML-attribute to DOM-property
+    // naming gap (`class` → `className`, `for` → `htmlFor`, etc.). `$class` is
+    // special-cased in `bind()`: it preserves the element's static base classes
+    // and merges the dynamic value on top.
     text:            'textContent',
     html:            'innerHTML',
     class:           'className',

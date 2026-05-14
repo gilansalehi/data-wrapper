@@ -1,0 +1,9 @@
+<figure data-source="registry.ts" data-region="event-dispatch">
+  <figcaption>One delegated listener per <code>@event</code> token, attached to the wrapper. Native browser bubbling carries the event up; the listener filters out events owned by nested wrappers, then emits the topic named on the declaring element along with a <code>DispatchDetail</code>. Adding handlers to dynamically-inserted DOM costs nothing — the listener is already installed.</figcaption>
+  <pre><code>export type DispatchPayload = Record&lt;string, FormDataEntryValue | FormDataEntryValue[]&gt;;
+export type DispatchDetail  = {
+    originalEvent: Event;
+    payload:       DispatchPayload;
+};
+export type DispatchEvent = CustomEvent&lt;DispatchDetail&gt;;</code></pre>
+</figure>

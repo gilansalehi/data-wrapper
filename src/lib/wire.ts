@@ -17,6 +17,12 @@ const LIVE      = '_live';
 const TOKENS    = '@$*';
 
 // #region dwrl
+// @docs DWRL drives the framework's wire surface — `pURL()` in `utils.ts`
+// does the parsing; these helpers consume the result. `formatter()` compiles
+// a `?format=name` chain into a single closure at wake time, so runtime
+// updates never look up formatters again. `collectPayload()` packs the data
+// `@`-events ride with: a full FormData dump from `<form>`, or `{name: value}`
+// from anything else with a `name` attribute.
 const formatter = (params: URLSearchParams): Format => {
     const pipes = params.getAll('format')
         .map(n => DW_FORMATTERS.get(n))
@@ -43,7 +49,12 @@ const collectPayload = (el: Element): DispatchPayload => {
 };
 // #endregion
 
-// #region wire — wires one tokenized attribute on an element
+// #region wire
+// @docs The token dispatch. `wire()` runs once per tokenized attribute and
+// turns it into a subscriber. `$prop` binds state to a DOM property,
+// `*directive` invokes a registered structural directive, `@event` delegates
+// a native DOM event to an emitted topic. Three tokens, one function, no
+// runtime parsing past wake.
 export const wire = (
     el: Element,
     attr: Attr,
@@ -95,7 +106,12 @@ export const wire = (
 };
 // #endregion
 
-// #region wake -- wakes node & subtree, wires dynamic attrs
+// #region wake
+// @docs The lifecycle entry point. `wake()` walks the subtree with a
+// `TreeWalker`, skipping nested wrappers, templates, and SVG (per `NO_WAKE`).
+// Each wired element gets the `_live` attribute so re-entry is idempotent.
+// Walking happens once; every tokenized attribute is compiled into a
+// subscriber by `wire()`, so runtime updates never re-parse anything.
 export const wake = (
     root: Element,
     row: Row | null = null,

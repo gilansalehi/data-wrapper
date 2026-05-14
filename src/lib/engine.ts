@@ -26,6 +26,12 @@ export const bind = (el: Element, prop: string): Sub => {
 };
 
 // #region subscriptions
+// @docs The framework's update primitive. `subscribe()` adds a sub to a
+// Station channel and runs it once for the initial render; `publish()` calls
+// every sub on a channel with a new value. A Station is `Record<channel, Subs>`
+// — the wrapper has one (`_subs`) and every `*list` row carries its own
+// (`row.subs`). Bindings, directives, and list rows all compose from this
+// primitive.
 export const subscribe = (station: Station, channel: string, sub: Sub, value: unknown) => {
     (station[channel] ??= []).push(sub);
     sub(value);
@@ -37,6 +43,11 @@ export const publish = (station: Station, channel: string, value: unknown) => {
 // #endregion
 
 // #region reconcile
+// @docs How `*list` stays cheap. `reconcile()` walks incoming items, reuses
+// cached rows by identity key, publishes the updated item into each row's
+// subscribers (no DOM rebuild for unchanged rows), removes rows whose ids
+// dropped out, and appends new rows through a `DocumentFragment` before waking
+// them. The DOM node is rendered output; the row record is the framework state.
 export const reconcile = (
     container: Element,
     data: Item[],
@@ -84,6 +95,10 @@ export const reconcile = (
 // #endregion
 
 // #region list-directive
+// @docs Reconciles a child `<template>` against an array. Reuses rows by
+// identity (default key `id`; override with `?key=field`), publishes updated
+// values into existing row subscribers, and renders a `data-empty` template
+// when the array is empty.
 const listDirective: DirectiveHandler = ({ wrapper, el, key, wake }) => {
     const tpl = el.querySelector(':scope > template') as HTMLTemplateElement | null;
     if (!tpl) return () => {};
@@ -137,6 +152,10 @@ const listDirective: DirectiveHandler = ({ wrapper, el, key, wake }) => {
 // #endregion
 
 // #region if-directive
+// @docs Toggles an element's presence in the DOM. When the value is falsy,
+// the element is replaced with a comment anchor; when truthy, it returns to
+// its place and re-wakes. Useful for conditionally rendered fragments inside
+// list rows or wrapper roots.
 const ifDirective: DirectiveHandler = ({ wrapper, el, row, wake }) => {
     const anchor = document.createComment('dw-if');
 
