@@ -3,6 +3,7 @@
     --pad:       2rem 1.25rem 4rem;
     --radius:    6px;
 
+    --serif:     "Iowan Old Style";
     --sans:      system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono:      ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --quote:     "Iowan Old Style", "Apple Garamond", monospace;
