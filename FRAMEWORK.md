@@ -428,6 +428,25 @@ Built-ins: `count`, `fallback`, `json`, `upper`, `lower`, `currency`,
 - Parametrized formatters (see query-param conventions).
 - Locale / i18n strategy for `currency` and `date`.
 
+## Progressive Web App
+
+Site-level, not library — `src/lib` is unaffected.
+
+Every page references `/site.webmanifest`. The manifest now exists
+(name, theme colour, icon slots), so the console stays clean and "Add
+to Home Screen" carries real metadata. Outstanding before the site is
+a true installable PWA:
+
+- **Icons** — the manifest references `icon-192.png` and
+  `icon-512.png`, which don't exist yet. The install prompt is gated
+  on them.
+- **Service worker** — no offline support or installability.
+  Deferred deliberately: a cache layer between edits and users is a
+  foot-gun while the site is still iterating. Revisit once it
+  stabilises. When built, it should be a no-build worker on the native
+  `ServiceWorker` API — a zero-dependency framework warrants nothing
+  less.
+
 ---
 
 ## Pressure Points
