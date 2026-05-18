@@ -22,12 +22,17 @@ const stripFramework = (el) => {
             if (attr.name[0] === '_') node.removeAttribute(attr.name);
         }
     }
-    return clone.innerHTML.trim();
+    return clone.innerHTML;
 };
+
+const dedent = (htmlString) => {
+    const splitter = htmlString.split('<data-wrapper ')[0];
+    return htmlString.split(splitter).join('\n');
+}
 
 // *source="elementId" — find the target by id, render its inner HTML as text.
 DW_DIRECTIVES.set('source', ({ el, path }) => {
     const target = document.getElementById(path);
-    if (target) el.textContent = stripFramework(target);
+    if (target) el.textContent = dedent(stripFramework(target)).trim();
     return () => {};
 });
