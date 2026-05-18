@@ -261,10 +261,11 @@ const collectPayload = (el: Element): DispatchPayload => {
 // @docs The token dispatch. `wire()` runs once per tokenized attribute and
 // turns it into a subscriber. `$prop` binds state to a DOM property,
 // `*directive` invokes a registered structural directive, `@event` delegates
-// a native DOM event to an emitted topic. A `//host/path` DWRL points `$`/`*`
-// at a wrapper named by id rather than the local one. A subscription that
-// escapes the element's own scope — a `/absolute` path inside a `*list` row,
-// a `//host/` path, or any `@` listener — has its `Off` recorded on the
+// a native DOM event to an emitted topic. A `//host/path` DWRL retargets the
+// binding to a wrapper named by id rather than the local one — `$`/`*` read
+// its state, `@` dispatches its topic onto it. A subscription that escapes
+// the element's own scope — a `/absolute` path inside a `*list` row, a
+// `//host/` path, or any `@` listener — has its `Off` recorded on the
 // scope's `unsubs` so eviction can tear it down. Three tokens, one function,
 // no runtime parsing past wake.
 
@@ -296,8 +297,13 @@ export const wire = (
     const unsubs = row ? row.unsubs : wrapper._unsubs;
 
     if (token === '@') {
-        // The delegated listener lands on the wrapper — it outlives the
-        // declaring element's scope, so its Off is always kept for teardown.
+        // A plain topic bubbles from the declaring element; a `//host/` topic
+        // is re-dispatched onto the named wrapper. The native-event listener
+        // stays on the local wrapper either way — the host is not a DOM
+        // ancestor of `el` — so its Off is always kept for local teardown.
+        const sink = host === HOST_SELF ? el : resolveHost(host, wrapper);
+        if (!sink) return; // named host absent — resolveHost has warned
+
         const off = on(prop, (e) => {
             if (params.has('prevent'))   e.preventDefault();
             if (params.has('stop'))      e.stopPropagation();
@@ -307,7 +313,7 @@ export const wire = (
                 originalEvent: e,
                 payload: collectPayload(el),
             };
-            emit(path, detail, el);
+            emit(path, detail, sink);
         }, el, wrapper);
 
         unsubs.push(off);

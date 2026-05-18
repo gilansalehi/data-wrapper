@@ -386,4 +386,31 @@ describe('//host resolution', () => {
         expect(warn).toHaveBeenCalled();
         warn.mockRestore();
     });
+
+    it('a //host @ dispatches its topic on the named wrapper', () => {
+        const host = appendWrapper();
+        host.id = 'remote';
+        const consumer = appendWrapper('<button @click="//remote/act"></button>');
+        let target = null as EventTarget | null;
+        host.addEventListener('act', e => { target = e.target; });
+
+        wake(consumer);
+        consumer.querySelector('button')!.click();
+
+        expect(target).toBe(host);
+    });
+
+    it('skips a //host @ when the named wrapper is absent', () => {
+        const warn = spyOn(console, 'warn').mockImplementation(() => {});
+        const consumer = appendWrapper('<button @click="//ghost/act"></button>');
+        let fired = false;
+        consumer.addEventListener('act', () => { fired = true; });
+
+        wake(consumer);
+        consumer.querySelector('button')!.click();
+
+        expect(fired).toBe(false);
+        expect(warn).toHaveBeenCalled();
+        warn.mockRestore();
+    });
 });

@@ -64,6 +64,10 @@ debugging).
   JSON); subsequent segments are property access on the parsed tree.
 - `./key` / `./key/sub/leaf` — item-scoped variants, only meaningful
   inside a `*list` row. Same drilling rules.
+- `//id/key` — state on the wrapper with DOM id `id`, resolved by
+  lookup rather than ancestry. Shipped for `$`/`*` (see Roadmap →
+  host). A plain `/key` carries the default host `data-wrapper`,
+  meaning "the closest ancestor wrapper."
 - `topic/name` — action topic for `@` tokens. Becomes the
   `CustomEvent` name.
 
@@ -183,7 +187,7 @@ only augmentation the framework makes to `Event` — it lives alongside
 Detail is whatever the caller provides; no merging or parsing.
 
 Both deal in **bare action names** (`'todos/add'`), not pURL strings.
-pURL parsing happens at the `@` token boundary in `wire.ts`. Action
+pURL parsing happens at the `@` token boundary in `wire()`. Action
 names use `/` as separator — `:` is reserved by URL semantics
 (`new URL('data:sync', base)` resolves to protocol `data:`, silently
 dropping the prefix).
@@ -208,7 +212,8 @@ it required wrapper state, lazy attribute re-parsing at dispatch
 time, and tangled routing with attribute lookup. The simpler
 identity-filtered model installs N listeners but each early-exits on
 non-match. If N ever becomes a bottleneck for huge lists, a routing
-layer can be added under `wire.ts` without changing `on`/`emit`/`register`.
+layer can be added at the `wire()` boundary without changing
+`on`/`emit`/`register`.
 
 ## Wake & Wire
 
@@ -247,6 +252,27 @@ every `put()` would re-publish its own mutation.
 `dw/sync` is emitted with the changed key after any state update,
 for app-level observers.
 
+## Subscription Teardown
+
+`subscribe()` returns an `Off` — a reference-based detach, idempotent
+and order-independent (it never caches an array index). Most
+subscriptions never need it: a subscriber and the node it updates
+share a scope and are collected together — a `*list` row drops its
+node, Station, and closures as one unit; `load()` resets the wrapper's
+whole Station.
+
+The exception is an **escaping** subscription — one whose Station
+isn't its element's own scope: a `/absolute` path inside a row (binds
+up to the wrapper), or a `//host/` path (binds to another wrapper).
+Its `Off` is recorded on the local scope's `unsubs` list. `unwire()`
+runs a batch of them on row eviction; `unwake()` tears down a whole
+wrapper — its own escapes and every cached row's — on `load()`.
+Escapes are the only subscriptions tracked for teardown; in-scope subs
+cost nothing.
+
+`publish()` iterates a snapshot of the channel, so a subscriber that
+detaches another mid-broadcast can't corrupt the pass.
+
 ## Lists & Reconcile
 
 `*list` is a compiled directive. At wake it captures the list
@@ -254,8 +280,8 @@ element, its child `<template>`, the wrapper-owned cache, and the row
 identity key (`?key=`, defaulting to `id`).
 
 Reconciliation reuses rows by identity, fans out updates over the
-row's channels, removes stale rows, and wakes new rows after
-insertion. The DOM node is rendered output; the row record is
+row's channels, removes stale rows — unwiring any escaped
+subscriptions they held — and wakes new rows after insertion. The DOM node is rendered output; the row record is
 framework state. This split is the reason lists update without
 re-parsing the template and without forcing rerenders of unchanged
 rows.
@@ -275,8 +301,10 @@ configuration object, no plugin lifecycle.
 
 A wrapper with `src="<url>"` calls `load()` on connect. For `.js` /
 `.mjs`, it dynamic-imports and calls `default(wrapper)`. For HTML, it
-fetches, replaces `innerHTML`, resets subs and the list cache, clears
-`_live`, and re-wakes. `dw/loaded` is emitted on completion.
+fetches, tears down the outgoing subtree (`unwake` — releasing escaped
+subscriptions and `@` listeners), replaces `innerHTML`, resets the
+Station and list cache, clears `_live`, and re-wakes. `dw/loaded` is
+emitted on completion.
 
 **Caveat:** `<script>` tags inside src-loaded HTML do not execute
 (HTML5 `innerHTML` rule). Loaded views must initialize via the inline
@@ -355,13 +383,22 @@ Provisional. Spec first, code second.
 
 ## pURL — extended fields
 
-`p()` exposes raw URL parts not yet bound to behavior:
+`p()` exposes raw URL parts. Status:
 
-- **`host`** — mesh. `//other-wrapper/key` should bind to a named
-  sibling wrapper's state. Resolution strategy undecided (id lookup?
-  closest named ancestor? document-wide registry?).
+- **`host`** — **shipped** for all three tokens, resolved by
+  `document.getElementById`. `//id/key` retargets a binding to the
+  wrapper carrying that DOM id instead of the closest ancestor:
+  `$`/`*` read its state, `@` dispatches its topic onto it. The host
+  must be an upgraded wrapper when wiring runs (true for ancestors);
+  an unresolved host is skipped with a console warning. Host strings
+  are URL hostnames, so effectively lowercase. A cross-wrapper `$`/`*`
+  subscription is an *escape* (see Subscription Teardown), tracked and
+  torn down; a host-`@` listener stays on the local wrapper, so it
+  needs no extra teardown. One caveat: a host-`@` handler's
+  `event.target` is the host wrapper, not the origin element — origin
+  travels in `event.detail.originalEvent`.
 - **`protocol`** — `api://path` for fetch-driven injectors. Other
-  protocols TBD.
+  protocols TBD. *(Still roadmap.)*
 
 ## pURL query-param conventions
 

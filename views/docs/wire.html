@@ -1,5 +1,5 @@
 <figure data-source="engine.ts" data-region="wire">
-  <figcaption>The token dispatch. <code>wire()</code> runs once per tokenized attribute and turns it into a subscriber. <code>$prop</code> binds state to a DOM property, <code>*directive</code> invokes a registered structural directive, <code>@event</code> delegates a native DOM event to an emitted topic. A <code>//host/path</code> DWRL points <code>$</code>/<code>*</code> at a wrapper named by id rather than the local one. A subscription that escapes the element&#x27;s own scope — a <code>/absolute</code> path inside a <code>*list</code> row, a <code>//host/</code> path, or any <code>@</code> listener — has its <code>Off</code> recorded on the scope&#x27;s <code>unsubs</code> so eviction can tear it down. Three tokens, one function, no runtime parsing past wake.</figcaption>
+  <figcaption>The token dispatch. <code>wire()</code> runs once per tokenized attribute and turns it into a subscriber. <code>$prop</code> binds state to a DOM property, <code>*directive</code> invokes a registered structural directive, <code>@event</code> delegates a native DOM event to an emitted topic. A <code>//host/path</code> DWRL retargets the binding to a wrapper named by id rather than the local one — <code>$</code>/<code>*</code> read its state, <code>@</code> dispatches its topic onto it. A subscription that escapes the element&#x27;s own scope — a <code>/absolute</code> path inside a <code>*list</code> row, a <code>//host/</code> path, or any <code>@</code> listener — has its <code>Off</code> recorded on the scope&#x27;s <code>unsubs</code> so eviction can tear it down. Three tokens, one function, no runtime parsing past wake.</figcaption>
   <pre><code>// Resolve a DWRL host to its wrapper. The default sentinel keeps the local
 // wrapper; a named host is looked up by id and must already be upgraded.
 const resolveHost = (host: string, local: WrapperNode): WrapperNode | null =&gt; {
@@ -28,8 +28,13 @@ export const wire = (
     const unsubs = row ? row.unsubs : wrapper._unsubs;
 
     if (token === &#x27;@&#x27;) {
-        // The delegated listener lands on the wrapper — it outlives the
-        // declaring element&#x27;s scope, so its Off is always kept for teardown.
+        // A plain topic bubbles from the declaring element; a `//host/` topic
+        // is re-dispatched onto the named wrapper. The native-event listener
+        // stays on the local wrapper either way — the host is not a DOM
+        // ancestor of `el` — so its Off is always kept for local teardown.
+        const sink = host === HOST_SELF ? el : resolveHost(host, wrapper);
+        if (!sink) return; // named host absent — resolveHost has warned
+
         const off = on(prop, (e) =&gt; {
             if (params.has(&#x27;prevent&#x27;))   e.preventDefault();
             if (params.has(&#x27;stop&#x27;))      e.stopPropagation();
@@ -39,7 +44,7 @@ export const wire = (
                 originalEvent: e,
                 payload: collectPayload(el),
             };
-            emit(path, detail, el);
+            emit(path, detail, sink);
         }, el, wrapper);
 
         unsubs.push(off);
