@@ -14,13 +14,13 @@
     const { path, params } = dwrl;
     if (!path || !wrapper) return; // set default &quot;debugger path&quot;?
 
-    // Where this element&#x27;s scope keeps teardown handles: its row, else the wrapper.
+    // Teardown handles live on the element&#x27;s scope: its *list row, else the wrapper.
     const unsubs = row ? row.unsubs : wrapper._unsubs;
 
     if (token === &#x27;@&#x27;) {
         // The delegated listener lands on the wrapper — it outlives the
         // declaring element&#x27;s scope, so its Off is always kept for teardown.
-        let unsub = on(prop, (e) =&gt; {
+        const off = on(prop, (e) =&gt; {
             if (params.has(&#x27;prevent&#x27;))   e.preventDefault();
             if (params.has(&#x27;stop&#x27;))      e.stopPropagation();
             if (params.has(&#x27;immediate&#x27;)) e.stopImmediatePropagation();
@@ -32,7 +32,7 @@
             emit(path, detail, el);
         }, el, wrapper);
 
-        unsubs.push(unsub);
+        unsubs.push(off);
         return;
     }
 
@@ -40,18 +40,17 @@
     const station = scoped ? row.subs                 : wrapper._subs;
     const initial = scoped ? readPath(row.item, path) : readPath(wrapper.state, path);
 
-    // Keep an `Off` only when the subscription escapes this element&#x27;s own
-    // scope — a `/absolute` path inside a row binds to the wrapper&#x27;s Station.
-    // In-scope subs are collected with their scope and need no explicit Off.
-    const track = (off: Off) =&gt; {
-        if (station !== (row ? row.subs : wrapper._subs)) unsubs.push(off);
-    };
+    // A binding escapes its scope when it subscribes somewhere other than that
+    // scope&#x27;s own Station — a `/absolute` path inside a row reaches up to the
+    // wrapper. Escapes are tracked for teardown; in-scope subs are not.
+    const escapes = station !== (row ? row.subs : wrapper._subs);
 
     if (token === &#x27;$&#x27;) {
         const format = formatter(params);
         const set    = bind(el, prop);
 
-        track(subscribe(station, path, v =&gt; set(format(v)), initial));
+        const off = subscribe(station, path, v =&gt; set(format(v)), initial);
+        if (escapes) unsubs.push(off);
         return;
     }
 
@@ -59,7 +58,8 @@
         const updater = DW_DIRECTIVES.get(prop)?.({ ...dwrl, wrapper, el, row, wake });
         if (!updater) throw new Error(`Did not recognize directive &quot;${prop}&quot;`);
 
-        track(subscribe(station, path, updater, initial));
+        const off = subscribe(station, path, updater, initial);
+        if (escapes) unsubs.push(off);
         return;
     }
 };</code></pre>
