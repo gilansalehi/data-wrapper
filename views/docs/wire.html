@@ -1,5 +1,5 @@
-<figure data-source="wire.ts" data-region="wire">
-  <figcaption>The token dispatch. <code>wire()</code> runs once per tokenized attribute and turns it into a subscriber. <code>$prop</code> binds state to a DOM property, <code>*directive</code> invokes a registered structural directive, <code>@event</code> delegates a native DOM event to an emitted topic. Three tokens, one function, no runtime parsing past wake.</figcaption>
+<figure data-source="engine.ts" data-region="wire">
+  <figcaption>The token dispatch. <code>wire()</code> runs once per tokenized attribute and turns it into a subscriber. <code>$prop</code> binds state to a DOM property, <code>*directive</code> invokes a registered structural directive, <code>@event</code> delegates a native DOM event to an emitted topic. A subscription that escapes the element&#x27;s own scope — a <code>/absolute</code> path inside a <code>*list</code> row, or any <code>@</code> listener (which lands on the wrapper) — has its <code>Off</code> recorded on the scope&#x27;s <code>unsubs</code> so eviction can tear it down. Three tokens, one function, no runtime parsing past wake.</figcaption>
   <pre><code>export const wire = (
     el: Element,
     attr: Attr,
@@ -14,8 +14,13 @@
     const { path, params } = dwrl;
     if (!path || !wrapper) return; // set default &quot;debugger path&quot;?
 
+    // Where this element&#x27;s scope keeps teardown handles: its row, else the wrapper.
+    const unsubs = row ? row.unsubs : wrapper._unsubs;
+
     if (token === &#x27;@&#x27;) {
-        on(prop, (e) =&gt; {
+        // The delegated listener lands on the wrapper — it outlives the
+        // declaring element&#x27;s scope, so its Off is always kept for teardown.
+        let unsub = on(prop, (e) =&gt; {
             if (params.has(&#x27;prevent&#x27;))   e.preventDefault();
             if (params.has(&#x27;stop&#x27;))      e.stopPropagation();
             if (params.has(&#x27;immediate&#x27;)) e.stopImmediatePropagation();
@@ -26,6 +31,8 @@
             };
             emit(path, detail, el);
         }, el, wrapper);
+
+        unsubs.push(unsub);
         return;
     }
 
@@ -33,11 +40,18 @@
     const station = scoped ? row.subs                 : wrapper._subs;
     const initial = scoped ? readPath(row.item, path) : readPath(wrapper.state, path);
 
+    // Keep an `Off` only when the subscription escapes this element&#x27;s own
+    // scope — a `/absolute` path inside a row binds to the wrapper&#x27;s Station.
+    // In-scope subs are collected with their scope and need no explicit Off.
+    const track = (off: Off) =&gt; {
+        if (station !== (row ? row.subs : wrapper._subs)) unsubs.push(off);
+    };
+
     if (token === &#x27;$&#x27;) {
         const format = formatter(params);
         const set    = bind(el, prop);
 
-        subscribe(station, path, v =&gt; set(format(v)), initial);
+        track(subscribe(station, path, v =&gt; set(format(v)), initial));
         return;
     }
 
@@ -45,7 +59,7 @@
         const updater = DW_DIRECTIVES.get(prop)?.({ ...dwrl, wrapper, el, row, wake });
         if (!updater) throw new Error(`Did not recognize directive &quot;${prop}&quot;`);
 
-        subscribe(station, path, updater, initial);
+        track(subscribe(station, path, updater, initial));
         return;
     }
 };</code></pre>

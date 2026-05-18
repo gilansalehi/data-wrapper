@@ -15,7 +15,7 @@
     let emptyNode: Element | null = null;
 
     const clearRows = () =&gt; {
-        cache.forEach(row =&gt; row.node.remove());
+        cache.forEach(row =&gt; { unwire(row.unsubs); row.node.remove(); });
         cache.clear();
     };
 

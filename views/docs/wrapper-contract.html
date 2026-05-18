@@ -1,8 +1,9 @@
 <figure data-source="registry.ts" data-region="wrapper-contract">
-  <figcaption>The shape every <code>&lt;data-wrapper&gt;</code> presents to the rest of the framework. <code>state</code> reads and writes through a Proxy over <code>data-*</code> attributes; <code>_subs</code> is the wrapper&#x27;s Station (one channel per path); <code>_listCache</code> holds row caches per <code>*list</code> element. Everything else lives in methods on the class.</figcaption>
+  <figcaption>The shape every <code>&lt;data-wrapper&gt;</code> presents to the rest of the framework. <code>state</code> reads and writes through a Proxy over <code>data-*</code> attributes; <code>_subs</code> is the wrapper&#x27;s Station (one channel per path); <code>_listCache</code> holds row caches per <code>*list</code> element; <code>_unsubs</code> collects the <code>Off</code> handles for subscriptions that escape the wrapper&#x27;s own scope, so <code>load()</code> can tear them down. Everything else lives in methods on the class.</figcaption>
   <pre><code>export type Wrapper = HTMLElement &amp; {
     state:        Record&lt;string, unknown&gt;;
     _subs:        Station;
     _listCache:   ListCache;
+    _unsubs:      Off[];
 };</code></pre>
 </figure>

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
-import { bind, publish, reconcile, subscribe, unsubscribe } from '@lib/engine.ts';
-import type { Row, Station } from '@lib/engine.ts';
+import { bind, publish, reconcile, subscribe, unsubscribe, unwire, unwake } from '@lib/engine.ts';
+import type { Row, Station, Wrapper } from '@lib/engine.ts';
 
 beforeEach(() => {
     document.body.innerHTML = '';
@@ -224,5 +224,67 @@ describe('reconcile', () => {
 
         expect(container.children).toHaveLength(0);
         expect(cache.size).toBe(0);
+    });
+
+    it('unwires an evicted row before dropping it', () => {
+        reconcile(container, [
+            { id: 1, label: 'One' },
+            { id: 2, label: 'Two' },
+        ], cache, tpl, wakeText);
+        let torn = false;
+        cache.get(1)!.unsubs.push(() => { torn = true; });
+
+        reconcile(container, [{ id: 2, label: 'Two' }], cache, tpl, wakeText);
+
+        expect(torn).toBe(true);
+        expect(cache.has(1)).toBe(false);
+    });
+
+    it('leaves a surviving row\'s unsubs intact across re-render', () => {
+        reconcile(container, [{ id: 1, label: 'One' }], cache, tpl, wakeText);
+        cache.get(1)!.unsubs.push(() => {});
+
+        reconcile(container, [{ id: 1, label: 'Updated' }], cache, tpl, wakeText);
+
+        expect(cache.get(1)!.unsubs).toHaveLength(1);
+    });
+});
+
+describe('unwire / unwake', () => {
+    it('unwire runs every Off and empties the list', () => {
+        const log: string[] = [];
+        const unsubs = [() => log.push('a'), () => log.push('b')];
+
+        unwire(unsubs);
+
+        expect(log).toEqual(['a', 'b']);
+        expect(unsubs).toHaveLength(0);
+    });
+
+    it('unwire is idempotent — a second call has nothing left to run', () => {
+        let calls = 0;
+        const unsubs = [() => { calls++; }];
+
+        unwire(unsubs);
+        unwire(unsubs);
+
+        expect(calls).toBe(1);
+    });
+
+    it('unwake tears down the wrapper\'s own unsubs and every cached row\'s', () => {
+        const log: string[] = [];
+        const rowCache = new Map<unknown, Row>([
+            [1, { node: document.createElement('li'), item: {}, subs: {}, unsubs: [() => log.push('row')] }],
+        ]);
+        const wrapper = {
+            _unsubs: [() => log.push('wrapper')],
+            _listCache: new Map([[document.createElement('ul'), rowCache]]),
+        } as unknown as Wrapper;
+
+        unwake(wrapper);
+
+        expect(log.sort()).toEqual(['row', 'wrapper']);
+        expect(wrapper._unsubs).toHaveLength(0);
+        expect(rowCache.get(1)!.unsubs).toHaveLength(0);
     });
 });

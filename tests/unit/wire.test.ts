@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
 import { DW_DIRECTIVES } from '@lib/registry.ts';
-import { wake } from '@lib/wire.ts';
-import { publish } from '@lib/engine.ts';
+import { wake, publish, unwire } from '@lib/engine.ts';
 import type { Row, Sub, Wrapper } from '@lib/engine.ts';
 
 type TestWrapper = Wrapper & HTMLElement;
@@ -10,6 +9,7 @@ const makeWrapper = (): TestWrapper => {
     const el = document.createElement('data-wrapper') as TestWrapper;
     el.state      = {};
     el._subs      = {};
+    el._unsubs    = [];
     el._listCache = new Map();
     return el;
 };
@@ -99,7 +99,7 @@ describe('wake row bindings', () => {
     const makeRow = (html: string, item: Record<string, unknown>) => {
         const node = document.createElement('li');
         node.innerHTML = html;
-        const row: Row = { node, item, subs: {} };
+        const row: Row = { node, item, subs: {}, unsubs: [] };
         return row;
     };
 
@@ -248,4 +248,65 @@ describe('wake directives and events', () => {
         expect(target).toBe(wrapper.querySelector('button')!);
     });
 
+});
+
+describe('escape tracking — unsubs', () => {
+    const makeRow = (html: string, item: Record<string, unknown>): Row => {
+        const node = document.createElement('li');
+        node.innerHTML = html;
+        return { node, item, subs: {}, unsubs: [] };
+    };
+
+    it('records an absolute $ binding inside a row — it escapes to the wrapper', () => {
+        const wrapper = appendWrapper();
+        wrapper.state.filter = 'all';
+        const row = makeRow('<span $text="/filter"></span>', { filter: 'row-local' });
+        wrapper.appendChild(row.node);
+
+        wake(row.node, row);
+
+        expect(row.unsubs).toHaveLength(1);
+    });
+
+    it('does not record a relative $ binding — it is in-scope, GC-d with the row', () => {
+        const wrapper = appendWrapper();
+        const row = makeRow('<span $text="./task"></span>', { task: 'Ship it' });
+        wrapper.appendChild(row.node);
+
+        wake(row.node, row);
+
+        expect(row.unsubs).toHaveLength(0);
+        expect(row.subs.task).toHaveLength(1);
+    });
+
+    it('records a row @ listener — the delegated listener lands on the wrapper', () => {
+        const wrapper = appendWrapper();
+        const row = makeRow('<button @click="row/act"></button>', {});
+        wrapper.appendChild(row.node);
+
+        wake(row.node, row);
+
+        expect(row.unsubs).toHaveLength(1);
+    });
+
+    it('records wrapper-level @ listeners on the wrapper itself', () => {
+        const wrapper = appendWrapper('<button @click="topic"></button>');
+
+        wake(wrapper);
+
+        expect(wrapper._unsubs).toHaveLength(1);
+    });
+
+    it('unwiring a row detaches its escaped subs from the wrapper Station', () => {
+        const wrapper = appendWrapper();
+        wrapper.state.filter = 'all';
+        const row = makeRow('<span $text="/filter"></span>', {});
+        wrapper.appendChild(row.node);
+
+        wake(row.node, row);
+        expect(wrapper._subs.filter).toHaveLength(1);
+
+        unwire(row.unsubs);
+        expect(wrapper._subs.filter).toHaveLength(0);
+    });
 });

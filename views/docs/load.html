@@ -10,8 +10,10 @@
         } else {
             const res = await fetch(url);
             if (!res.ok) throw new Error(`load ${url.href}: ${res.status}`);
+            unwake(this);
             this.innerHTML = await res.text();
             this._subs = {};
+            this._unsubs = [];
             this._listCache = new Map();
             this.removeAttribute(&#x27;_live&#x27;);
             wake(this, null, this);

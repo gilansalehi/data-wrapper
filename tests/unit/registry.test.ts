@@ -26,16 +26,18 @@ describe('framework types', () => {
         expect(document.body.dataset.value).toBe('7');
     });
 
-    it('Row carries node, item, and a Station of row subscriptions', () => {
+    it('Row carries node, item, a Station of subs, and escape Offs', () => {
         const row: Row = {
             node: document.createElement('li'),
             item: { id: 1 } satisfies Item,
             subs: {},
+            unsubs: [],
         };
 
         expect(row.node.tagName).toBe('LI');
         expect(row.item.id).toBe(1);
         expect(row.subs).toEqual({});
+        expect(row.unsubs).toEqual([]);
     });
 
     it('DirectiveContext receives the shared wrapper shape', () => {

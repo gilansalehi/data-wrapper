@@ -1,6 +1,6 @@
-import { cloneTemplate, DW_DIRECTIVES, PROP_ALIASES, resolveTemplate } from './registry.ts';
-import type { DirectiveHandler, Item, Row, Station, Sub, Subs } from './registry.ts';
-import { readPath, type Off } from './utils.ts';
+import { cloneTemplate, DW_DIRECTIVES, DW_FORMATTERS, PROP_ALIASES, resolveTemplate } from './registry.ts';
+import type { DirectiveHandler, DispatchDetail, DispatchPayload, Item, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
+import { p, on, emit, readPath, type Off } from './utils.ts';
 
 export type { Item, ListCache, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
 
@@ -33,9 +33,11 @@ export const bind = (el: Element, prop: string): Sub => {
 // (never index-based) so repeated calls and out-of-order teardown stay correct.
 // `publish()` calls every sub on a channel with a new value, iterating a
 // snapshot so a sub that detaches another mid-broadcast can't corrupt the pass.
-// A Station is `Record<channel, Subs>` — the wrapper has one (`_subs`) and
-// every `*list` row carries its own (`row.subs`). Bindings, directives, and
-// list rows all compose from this primitive.
+// Teardown mirrors the build: `unwire()` runs a batch of `Off`s and clears the
+// list; `unwake()` tears down a whole wrapper — its own escaped subscriptions
+// and every cached `*list` row's. A Station is `Record<channel, Subs>` — the
+// wrapper has one (`_subs`) and every row carries its own (`row.subs`).
+// Bindings, directives, and list rows all compose from this primitive.
 export const subscribe = (station: Station, channel: string, sub: Sub, value: unknown): Off => {
     const subs = (station[channel] ??= []);
     subs.push(sub);
@@ -53,6 +55,22 @@ export const unsubscribe = (sub: Sub, subs: Subs) => {
 export const publish = (station: Station, channel: string, value: unknown) => {
     const subs = [...(station[channel] ?? [])]; // snapshot
     for (const sub of subs) sub(value);
+};
+
+// Run a batch of `Off`s and clear the list — the inverse of the wiring that
+// filled it. Idempotent: each `Off` is, and the emptied list re-runs to nothing.
+export const unwire = (unsubs: Off[]) => {
+    for (const off of unsubs) off();
+    unsubs.length = 0;
+};
+
+// Tear down every escaping subscription a wrapper accumulated — its own and
+// each cached `*list` row's. The inverse of waking the wrapper's subtree.
+export const unwake = (wrapper: Wrapper) => {
+    for (const cache of wrapper._listCache.values()) {
+        for (const row of cache.values()) unwire(row.unsubs);
+    }
+    unwire(wrapper._unsubs);
 };
 // #endregion
 
@@ -86,6 +104,7 @@ export const reconcile = (
                 node: cloneTemplate(tpl)!,
                 item,
                 subs: {},
+                unsubs: [],
             };
             cache.set(id, row);
             isNew = true;
@@ -100,7 +119,7 @@ export const reconcile = (
     }
 
     cache.forEach((row, id) => {
-        if (!activeIds.has(id)) { row.node.remove(); cache.delete(id); }
+        if (!activeIds.has(id)) { unwire(row.unsubs); row.node.remove(); cache.delete(id); }
     });
 
     container.appendChild(fragment);
@@ -128,7 +147,7 @@ const listDirective: DirectiveHandler = ({ wrapper, el, key, wake }) => {
     let emptyNode: Element | null = null;
 
     const clearRows = () => {
-        cache.forEach(row => row.node.remove());
+        cache.forEach(row => { unwire(row.unsubs); row.node.remove(); });
         cache.clear();
     };
 
@@ -193,3 +212,155 @@ const ifDirective: DirectiveHandler = ({ wrapper, el, row, wake }) => {
 
 DW_DIRECTIVES.set('list', listDirective);
 DW_DIRECTIVES.set('if', ifDirective);
+
+type Format = (value: unknown) => unknown;
+
+export type WrapperNode = Wrapper;
+
+// ---------------------------------------------------------------------------
+// DWRL parsing — native new URL() is the entire parser
+// ---------------------------------------------------------------------------
+
+const NO_WAKE   = ['DATA-WRAPPER', 'TEMPLATE', 'SVG'];
+const LIVE      = '_live';
+const TOKENS    = '@$*';
+
+// #region dwrl
+// @docs DWRL drives the framework's wire surface — `pURL()` in `utils.ts`
+// does the parsing; these helpers consume the result. `formatter()` compiles
+// a `?format=name` chain into a single closure at wake time, so runtime
+// updates never look up formatters again. `collectPayload()` packs the data
+// `@`-events ride with: a full FormData dump from `<form>`, or `{name: value}`
+// from anything else with a `name` attribute.
+const formatter = (params: URLSearchParams): Format => {
+    const pipes = params.getAll('format')
+        .map(n => DW_FORMATTERS.get(n))
+        .filter((f): f is NonNullable<typeof f> => !!f);
+
+    return value => pipes.reduce((v, pipe) => pipe(v), value);
+};
+
+const collectPayload = (el: Element): DispatchPayload => {
+    if (el instanceof HTMLFormElement) {
+        const out: DispatchPayload = {};
+        for (const [k, v] of new FormData(el)) {
+            const existing = out[k];
+            if (existing === undefined)       out[k] = v;
+            else if (Array.isArray(existing)) existing.push(v);
+            else                              out[k] = [existing, v];
+        }
+        return out;
+    }
+    const ni = el as HTMLInputElement;
+    return ni.name ? { [ni.name]: ni.value } : {};
+};
+// #endregion
+
+// #region wire
+// @docs The token dispatch. `wire()` runs once per tokenized attribute and
+// turns it into a subscriber. `$prop` binds state to a DOM property,
+// `*directive` invokes a registered structural directive, `@event` delegates
+// a native DOM event to an emitted topic. A subscription that escapes the
+// element's own scope — a `/absolute` path inside a `*list` row, or any `@`
+// listener (which lands on the wrapper) — has its `Off` recorded on the
+// scope's `unsubs` so eviction can tear it down. Three tokens, one function,
+// no runtime parsing past wake.
+export const wire = (
+    el: Element,
+    attr: Attr,
+    row: Row | null = null,
+    wrapper: WrapperNode | null = el.closest('data-wrapper')
+) => {
+    const { name, value } = attr;
+    const token = name[0];
+    const prop  = name.slice(1);
+
+    const dwrl = p(value);
+    const { path, params } = dwrl;
+    if (!path || !wrapper) return; // set default "debugger path"?
+
+    // Where this element's scope keeps teardown handles: its row, else the wrapper.
+    const unsubs = row ? row.unsubs : wrapper._unsubs;
+
+    if (token === '@') {
+        // The delegated listener lands on the wrapper — it outlives the
+        // declaring element's scope, so its Off is always kept for teardown.
+        let unsub = on(prop, (e) => {
+            if (params.has('prevent'))   e.preventDefault();
+            if (params.has('stop'))      e.stopPropagation();
+            if (params.has('immediate')) e.stopImmediatePropagation();
+
+            const detail: DispatchDetail = {
+                originalEvent: e,
+                payload: collectPayload(el),
+            };
+            emit(path, detail, el);
+        }, el, wrapper);
+
+        unsubs.push(unsub);
+        return;
+    }
+
+    const scoped  = row && dwrl.isRel;
+    const station = scoped ? row.subs                 : wrapper._subs;
+    const initial = scoped ? readPath(row.item, path) : readPath(wrapper.state, path);
+
+    // Keep an `Off` only when the subscription escapes this element's own
+    // scope — a `/absolute` path inside a row binds to the wrapper's Station.
+    // In-scope subs are collected with their scope and need no explicit Off.
+    const track = (off: Off) => {
+        if (station !== (row ? row.subs : wrapper._subs)) unsubs.push(off);
+    };
+
+    if (token === '$') {
+        const format = formatter(params);
+        const set    = bind(el, prop);
+
+        track(subscribe(station, path, v => set(format(v)), initial));
+        return;
+    }
+
+    if (token === '*') {
+        const updater = DW_DIRECTIVES.get(prop)?.({ ...dwrl, wrapper, el, row, wake });
+        if (!updater) throw new Error(`Did not recognize directive "${prop}"`);
+
+        track(subscribe(station, path, updater, initial));
+        return;
+    }
+};
+// #endregion
+
+// #region wake
+// @docs The lifecycle entry point. `wake()` walks the subtree with a
+// `TreeWalker`, skipping nested wrappers, templates, and SVG (per `NO_WAKE`).
+// Each wired element gets the `_live` attribute so re-entry is idempotent.
+// Walking happens once; every tokenized attribute is compiled into a
+// subscriber by `wire()`, so runtime updates never re-parse anything.
+export const wake = (
+    root: Element,
+    row: Row | null = null,
+    wrapper: WrapperNode | null = root.closest('data-wrapper'),
+) => {
+    if (!wrapper) return;
+    const nodes = [root];
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
+        acceptNode: (n: Node) => NO_WAKE.includes((n as Element).tagName)
+            ? NodeFilter.FILTER_REJECT
+            : NodeFilter.FILTER_ACCEPT,
+    });
+
+    let node: Node | null;
+    while ((node = walker.nextNode())) nodes.push(node as Element);
+
+    for (const el of nodes) {
+        if (el.hasAttribute(LIVE)) continue;
+
+        const attrs = [...el.attributes].filter(attr => TOKENS.includes(attr.name[0]));
+        if (!attrs.length) continue;
+
+        el.setAttribute(LIVE, '');
+        for (const attr of attrs) wire(el, attr, row, wrapper);
+    }
+};
+// #endregion

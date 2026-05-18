@@ -24,6 +24,7 @@
                 node: cloneTemplate(tpl)!,
                 item,
                 subs: {},
+                unsubs: [],
             };
             cache.set(id, row);
             isNew = true;
@@ -38,7 +39,7 @@
     }
 
     cache.forEach((row, id) =&gt; {
-        if (!activeIds.has(id)) { row.node.remove(); cache.delete(id); }
+        if (!activeIds.has(id)) { unwire(row.unsubs); row.node.remove(); cache.delete(id); }
     });
 
     container.appendChild(fragment);

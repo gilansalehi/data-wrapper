@@ -1,11 +1,11 @@
-import { emit, on, readPath, writePath } from './utils.ts';
-import { wake } from './wire.ts';
-import { publish } from './engine.ts';
+import { emit, on, readPath, writePath, type Off } from './utils.ts';
+import { wake, publish, unwake } from './engine.ts';
 import type { ListCache, Station } from './engine.ts';
 
 export class DataWrapper extends HTMLElement {
     declare state:      Record<string, unknown>;
-    declare _subs:      Station; // radio station analogy
+    declare _subs:      Station;  // radio station analogy
+    declare _unsubs:    Off[];    // Offs for subscriptions that escape this wrapper's scope
     declare _isSyncing: boolean;
     declare _listCache: ListCache;
     declare _observer:  MutationObserver;
@@ -15,6 +15,7 @@ export class DataWrapper extends HTMLElement {
         const self = this;
 
         self._subs      = {};
+        self._unsubs    = [];
         self._listCache = new Map();
         self._isSyncing = false;
 
@@ -148,8 +149,10 @@ export class DataWrapper extends HTMLElement {
         } else {
             const res = await fetch(url);
             if (!res.ok) throw new Error(`load ${url.href}: ${res.status}`);
+            unwake(this);
             this.innerHTML = await res.text();
             this._subs = {};
+            this._unsubs = [];
             this._listCache = new Map();
             this.removeAttribute('_live');
             wake(this, null, this);

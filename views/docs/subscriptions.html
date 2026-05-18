@@ -1,5 +1,5 @@
 <figure data-source="engine.ts" data-region="subscriptions">
-  <figcaption>The framework&#x27;s update primitive. <code>subscribe()</code> adds a sub to a Station channel, runs it once for the initial render, and returns an <code>Off</code> that detaches it again — <code>unsubscribe()</code> is the splice, kept reference-based (never index-based) so repeated calls and out-of-order teardown stay correct. <code>publish()</code> calls every sub on a channel with a new value, iterating a snapshot so a sub that detaches another mid-broadcast can&#x27;t corrupt the pass. A Station is <code>Record&lt;channel, Subs&gt;</code> — the wrapper has one (<code>_subs</code>) and every <code>*list</code> row carries its own (<code>row.subs</code>). Bindings, directives, and list rows all compose from this primitive.</figcaption>
+  <figcaption>The framework&#x27;s update primitive. <code>subscribe()</code> adds a sub to a Station channel, runs it once for the initial render, and returns an <code>Off</code> that detaches it again — <code>unsubscribe()</code> is the splice, kept reference-based (never index-based) so repeated calls and out-of-order teardown stay correct. <code>publish()</code> calls every sub on a channel with a new value, iterating a snapshot so a sub that detaches another mid-broadcast can&#x27;t corrupt the pass. Teardown mirrors the build: <code>unwire()</code> runs a batch of <code>Off</code>s and clears the list; <code>unwake()</code> tears down a whole wrapper — its own escaped subscriptions and every cached <code>*list</code> row&#x27;s. A Station is <code>Record&lt;channel, Subs&gt;</code> — the wrapper has one (<code>_subs</code>) and every row carries its own (<code>row.subs</code>). Bindings, directives, and list rows all compose from this primitive.</figcaption>
   <pre><code>export const subscribe = (station: Station, channel: string, sub: Sub, value: unknown): Off =&gt; {
     const subs = (station[channel] ??= []);
     subs.push(sub);
@@ -17,5 +17,21 @@ export const unsubscribe = (sub: Sub, subs: Subs) =&gt; {
 export const publish = (station: Station, channel: string, value: unknown) =&gt; {
     const subs = [...(station[channel] ?? [])]; // snapshot
     for (const sub of subs) sub(value);
+};
+
+// Run a batch of `Off`s and clear the list — the inverse of the wiring that
+// filled it. Idempotent: each `Off` is, and the emptied list re-runs to nothing.
+export const unwire = (unsubs: Off[]) =&gt; {
+    for (const off of unsubs) off();
+    unsubs.length = 0;
+};
+
+// Tear down every escaping subscription a wrapper accumulated — its own and
+// each cached `*list` row&#x27;s. The inverse of waking the wrapper&#x27;s subtree.
+export const unwake = (wrapper: Wrapper) =&gt; {
+    for (const cache of wrapper._listCache.values()) {
+        for (const row of cache.values()) unwire(row.unsubs);
+    }
+    unwire(wrapper._unsubs);
 };</code></pre>
 </figure>

@@ -1,11 +1,11 @@
-import type { pURL } from './utils.ts';
+import type { pURL, Off } from './utils.ts';
 
 export type Sub = (value: unknown) => void;
 export type Subs = Sub[];
 export type Station = Record<string, Subs>;
 export type Formatter = (v: unknown) => unknown;
 export type Item = Record<string, unknown>;
-export type Row = { node: Element; item: Item; subs: Station };
+export type Row = { node: Element; item: Item; subs: Station; unsubs: Off[] };
 export type ListCache = Map<Element, Map<unknown, Row>>;
 
 // #region event-dispatch
@@ -25,12 +25,14 @@ export type DispatchEvent = CustomEvent<DispatchDetail>;
 // @docs The shape every `<data-wrapper>` presents to the rest of the
 // framework. `state` reads and writes through a Proxy over `data-*`
 // attributes; `_subs` is the wrapper's Station (one channel per path);
-// `_listCache` holds row caches per `*list` element. Everything else lives
-// in methods on the class.
+// `_listCache` holds row caches per `*list` element; `_unsubs` collects the
+// `Off` handles for subscriptions that escape the wrapper's own scope, so
+// `load()` can tear them down. Everything else lives in methods on the class.
 export type Wrapper = HTMLElement & {
     state:        Record<string, unknown>;
     _subs:        Station;
     _listCache:   ListCache;
+    _unsubs:      Off[];
 };
 // #endregion
 
