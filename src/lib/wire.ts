@@ -64,7 +64,7 @@ export const wire = (
     const prop  = name.slice(1);
 
     const dwrl = p(value);
-    const { path, params, key } = dwrl;
+    const { path, params } = dwrl;
     if (!path || !wrapper) return; // set default "debugger path"?
 
     if (token === '@') {
@@ -95,7 +95,7 @@ export const wire = (
     }
 
     if (token === '*') {
-        const updater = DW_DIRECTIVES.get(prop)?.({ wrapper, el, key, row, wake });
+        const updater = DW_DIRECTIVES.get(prop)?.({ ...dwrl, wrapper, el, row, wake });
         if (!updater) throw new Error(`Did not recognize directive "${prop}"`);
 
         subscribe(station, path, updater, initial);

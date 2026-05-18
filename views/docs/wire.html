@@ -11,7 +11,7 @@
     const prop  = name.slice(1);
 
     const dwrl = p(value);
-    const { path, params, key } = dwrl;
+    const { path, params } = dwrl;
     if (!path || !wrapper) return; // set default &quot;debugger path&quot;?
 
     if (token === &#x27;@&#x27;) {
@@ -42,7 +42,7 @@
     }
 
     if (token === &#x27;*&#x27;) {
-        const updater = DW_DIRECTIVES.get(prop)?.({ wrapper, el, key, row, wake });
+        const updater = DW_DIRECTIVES.get(prop)?.({ ...dwrl, wrapper, el, row, wake });
         if (!updater) throw new Error(`Did not recognize directive &quot;${prop}&quot;`);
 
         subscribe(station, path, updater, initial);

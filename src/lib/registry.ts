@@ -1,3 +1,5 @@
+import type { pURL } from './utils.ts';
+
 export type Sub = (value: unknown) => void;
 export type Subs = Sub[];
 export type Station = Record<string, Subs>;
@@ -102,12 +104,18 @@ export const PROP_ALIASES: Record<string, string> = {
     // #endregion
 };
 
-export interface DirectiveContext {
+// The context a directive factory receives. It carries the element the
+// directive governs and that element's wrapper, the optional `*list` row it
+// belongs to, and the `wake` callback for re-animating remounted subtrees.
+// It also extends `pURL`, so the parsed instruction's fields — `path`, `key`,
+// `params`, … — sit directly on the context: a directive reads `path` with no
+// indirection, and one that later needs `params` or `hash` reads another
+// field instead of forcing an edit here and in `wire()`.
+export interface DirectiveContext extends pURL {
     wrapper: Wrapper;
-    el: Element;
-    key?: string;
-    row?: Row | null;
-    wake: (node: Element, row?: Row | null, wrapper?: Wrapper | null) => void;
+    el:      Element;
+    row?:    Row | null;
+    wake:    (node: Element, row?: Row | null, wrapper?: Wrapper | null) => void;
 }
 
 export type DirectiveHandler = (ctx: DirectiveContext) => Sub;

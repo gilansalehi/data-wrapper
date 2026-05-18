@@ -37,6 +37,15 @@ test.describe('Counter demo', () => {
         await expect(page.locator('#counter output')).toHaveText('7');
     });
 
+    test('the HTML listing is populated from the live demo via *source', async ({ page }) => {
+        const listing = page.locator('#how-to details pre code').first();
+
+        await expect(listing).toContainText('data-wrapper id="counter"');
+        await expect(listing).toContainText('@click="count/inc"');
+        // *source strips the framework's own wake residue from the snapshot.
+        await expect(listing).not.toContainText('_live');
+    });
+
     test('has no critical a11y violations', async ({ page }) => {
         const results = await new AxeBuilder({ page })
             .include('#counter')

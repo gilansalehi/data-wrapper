@@ -8,6 +8,7 @@ import {
     resolveTemplate,
 } from '@lib/registry.ts';
 import type { DirectiveContext, Item, Row, Sub, Subs, Wrapper } from '@lib/registry.ts';
+import { p } from '@lib/utils.ts';
 
 beforeEach(() => {
     document.body.innerHTML = '';
@@ -46,6 +47,7 @@ describe('framework types', () => {
         const ctx: DirectiveContext = {
             wrapper,
             el: document.createElement('div'),
+            ...p('/count'),
             wake: () => {},
         };
 
@@ -107,6 +109,7 @@ describe('DW_DIRECTIVES', () => {
         DW_DIRECTIVES.get('probe')!({
             wrapper,
             el: document.createElement('span'),
+            ...p('/probe'),
             wake: () => {},
         })('Ali');
 
