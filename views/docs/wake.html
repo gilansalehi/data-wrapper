@@ -3,7 +3,7 @@
   <pre><code>export const wake = (
     root: Element,
     row: Row | null = null,
-    wrapper: WrapperNode | null = owner(root),
+    wrapper: WrapperNode | null = root.closest(&#x27;data-wrapper&#x27;),
 ) =&gt; {
     if (!wrapper) return;
     const nodes = [root];

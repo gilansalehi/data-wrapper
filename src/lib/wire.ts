@@ -31,16 +31,14 @@ const formatter = (params: URLSearchParams): Format => {
     return value => pipes.reduce((v, pipe) => pipe(v), value);
 };
 
-const owner = (el: Element): WrapperNode | null => el.closest('data-wrapper')
-
 const collectPayload = (el: Element): DispatchPayload => {
     if (el instanceof HTMLFormElement) {
         const out: DispatchPayload = {};
         for (const [k, v] of new FormData(el)) {
             const existing = out[k];
-            if (existing === undefined)   out[k] = v;
+            if (existing === undefined)       out[k] = v;
             else if (Array.isArray(existing)) existing.push(v);
-            else                               out[k] = [existing, v];
+            else                              out[k] = [existing, v];
         }
         return out;
     }
@@ -59,7 +57,7 @@ export const wire = (
     el: Element,
     attr: Attr,
     row: Row | null = null,
-    wrapper: WrapperNode | null = owner(el),
+    wrapper: WrapperNode | null = el.closest('data-wrapper')
 ) => {
     const { name, value } = attr;
     const token = name[0];
@@ -115,7 +113,7 @@ export const wire = (
 export const wake = (
     root: Element,
     row: Row | null = null,
-    wrapper: WrapperNode | null = owner(root),
+    wrapper: WrapperNode | null = root.closest('data-wrapper'),
 ) => {
     if (!wrapper) return;
     const nodes = [root];

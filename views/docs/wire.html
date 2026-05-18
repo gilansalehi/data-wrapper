@@ -4,7 +4,7 @@
     el: Element,
     attr: Attr,
     row: Row | null = null,
-    wrapper: WrapperNode | null = owner(el),
+    wrapper: WrapperNode | null = el.closest(&#x27;data-wrapper&#x27;)
 ) =&gt; {
     const { name, value } = attr;
     const token = name[0];
