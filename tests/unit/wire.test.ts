@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
+import { describe, it, expect, beforeEach, spyOn } from '@tests/helpers.ts';
 import { DW_DIRECTIVES } from '@lib/registry.ts';
 import { wake, publish, unwire } from '@lib/engine.ts';
 import type { Row, Sub, Wrapper } from '@lib/engine.ts';
@@ -308,5 +308,82 @@ describe('escape tracking — unsubs', () => {
 
         unwire(row.unsubs);
         expect(wrapper._subs.filter).toHaveLength(0);
+    });
+});
+
+describe('//host resolution', () => {
+    it('a //host $ binding reads the named wrapper\'s state', () => {
+        const host = appendWrapper();
+        host.id = 'remote';
+        host.state.title = 'remote title';
+        const consumer = appendWrapper('<span $text="//remote/title"></span>');
+
+        wake(consumer);
+
+        expect(consumer.querySelector('span')?.textContent).toBe('remote title');
+    });
+
+    it('a //host subscription lands in the host Station, tracked as a consumer escape', () => {
+        const host = appendWrapper();
+        host.id = 'remote';
+        host.state.title = 'x';
+        const consumer = appendWrapper('<span $text="//remote/title"></span>');
+
+        wake(consumer);
+
+        expect(host._subs.title).toHaveLength(1);
+        expect(consumer._subs.title).toBeUndefined();
+        expect(consumer._unsubs).toHaveLength(1);
+    });
+
+    it('host updates flow across wrappers', () => {
+        const host = appendWrapper();
+        host.id = 'remote';
+        host.state.title = 'before';
+        const consumer = appendWrapper('<span $text="//remote/title"></span>');
+
+        wake(consumer);
+        publish(host._subs, 'title', 'after');
+
+        expect(consumer.querySelector('span')?.textContent).toBe('after');
+    });
+
+    it('unwiring the consumer detaches its //host subscription from the host', () => {
+        const host = appendWrapper();
+        host.id = 'remote';
+        host.state.title = 'x';
+        const consumer = appendWrapper('<span $text="//remote/title"></span>');
+
+        wake(consumer);
+        expect(host._subs.title).toHaveLength(1);
+
+        unwire(consumer._unsubs);
+        expect(host._subs.title).toHaveLength(0);
+    });
+
+    it('a //host * directive subscribes against the host Station', () => {
+        const host = appendWrapper();
+        host.id = 'remote';
+        host.state.items = 'A';
+        const consumer = appendWrapper('<div></div>');
+        consumer.querySelector('div')!.setAttribute('*probe', '//remote/items');
+        const seen: unknown[] = [];
+        DW_DIRECTIVES.set('probe', () => v => { seen.push(v); });
+
+        wake(consumer);
+        publish(host._subs, 'items', 'B');
+
+        expect(seen).toEqual(['A', 'B']);
+    });
+
+    it('skips a //host binding when the named wrapper is absent', () => {
+        const warn = spyOn(console, 'warn').mockImplementation(() => {});
+        const consumer = appendWrapper('<span $text="//ghost/title">orig</span>');
+
+        wake(consumer);
+
+        expect(consumer.querySelector('span')?.textContent).toBe('orig');
+        expect(warn).toHaveBeenCalled();
+        warn.mockRestore();
     });
 });

@@ -224,6 +224,7 @@ export type WrapperNode = Wrapper;
 const NO_WAKE   = ['DATA-WRAPPER', 'TEMPLATE', 'SVG'];
 const LIVE      = '_live';
 const TOKENS    = '@$*';
+const HOST_SELF = 'data-wrapper';   // the DWRL_BASE hostname — a plain path's default host
 
 // #region dwrl
 // @docs DWRL drives the framework's wire surface — `pURL()` in `utils.ts`
@@ -260,11 +261,23 @@ const collectPayload = (el: Element): DispatchPayload => {
 // @docs The token dispatch. `wire()` runs once per tokenized attribute and
 // turns it into a subscriber. `$prop` binds state to a DOM property,
 // `*directive` invokes a registered structural directive, `@event` delegates
-// a native DOM event to an emitted topic. A subscription that escapes the
-// element's own scope — a `/absolute` path inside a `*list` row, or any `@`
-// listener (which lands on the wrapper) — has its `Off` recorded on the
+// a native DOM event to an emitted topic. A `//host/path` DWRL points `$`/`*`
+// at a wrapper named by id rather than the local one. A subscription that
+// escapes the element's own scope — a `/absolute` path inside a `*list` row,
+// a `//host/` path, or any `@` listener — has its `Off` recorded on the
 // scope's `unsubs` so eviction can tear it down. Three tokens, one function,
 // no runtime parsing past wake.
+
+// Resolve a DWRL host to its wrapper. The default sentinel keeps the local
+// wrapper; a named host is looked up by id and must already be upgraded.
+const resolveHost = (host: string, local: WrapperNode): WrapperNode | null => {
+    if (host === HOST_SELF) return local;
+    const found = document.getElementById(host);
+    if (found && '_subs' in found) return found as WrapperNode;
+    console.warn(`<data-wrapper>: host "${host}" not found or not yet upgraded`);
+    return null;
+};
+
 export const wire = (
     el: Element,
     attr: Attr,
@@ -276,7 +289,7 @@ export const wire = (
     const prop  = name.slice(1);
 
     const dwrl = p(value);
-    const { path, params } = dwrl;
+    const { path, params, host } = dwrl;
     if (!path || !wrapper) return; // set default "debugger path"?
 
     // Teardown handles live on the element's scope: its *list row, else the wrapper.
@@ -301,13 +314,19 @@ export const wire = (
         return;
     }
 
+    // `$`/`*` read from the host wrapper — the local one, unless a `//host/`
+    // DWRL names another wrapper by id.
+    const target = resolveHost(host, wrapper);
+    if (!target) return;
+
     const scoped  = row && dwrl.isRel;
-    const station = scoped ? row.subs                 : wrapper._subs;
-    const initial = scoped ? readPath(row.item, path) : readPath(wrapper.state, path);
+    const station = scoped ? row.subs                 : target._subs;
+    const initial = scoped ? readPath(row.item, path) : readPath(target.state, path);
 
     // A binding escapes its scope when it subscribes somewhere other than that
-    // scope's own Station — a `/absolute` path inside a row reaches up to the
-    // wrapper. Escapes are tracked for teardown; in-scope subs are not.
+    // scope's own Station — a `/absolute` path inside a row, or a `//host/`
+    // path into another wrapper. Escapes are tracked for teardown; in-scope
+    // subs are not.
     const escapes = station !== (row ? row.subs : wrapper._subs);
 
     if (token === '$') {
