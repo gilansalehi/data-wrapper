@@ -3,7 +3,7 @@
     --pad:       2rem 1.25rem 4rem;
     --radius:    6px;
 
-    --serif:     "Iowan Old Style";
+    --serif:     "Iowan Old Style", "Apple Garamond";
     --sans:      system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono:      ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --quote:     "Iowan Old Style", "Apple Garamond", monospace;
@@ -12,6 +12,7 @@
     --hero-mute: color-mix(in srgb, var(--hero-fg) 80%, transparent);
     --hero-faint: color-mix(in srgb, var(--hero-fg) 22%, transparent);
 }
+
 /* ── Light theme (default) ── */
 :root,
 [data-theme="light"] {

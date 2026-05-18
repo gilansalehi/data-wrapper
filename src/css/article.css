@@ -31,7 +31,6 @@ main h1 {
 }
 
 main h2 {
-    position: relative;
     font-size: clamp(2.45rem, 3vw, 3.8rem);
     font-weight: 700;
     letter-spacing: -.02em;
@@ -40,19 +39,6 @@ main h2 {
     margin: 3.75rem 0 1.25rem;
     padding-bottom: .4rem;
     border-bottom: var(--border);
-}
-
-/* The editorial tick — a short accent segment riding the hairline,
-   echoing the cyan accent used in the hero. */
-main h2::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: -1px;
-    width: 2.25rem;
-    height: 2px;
-    background: var(--link);
-    border-radius: 2px;
 }
 
 /* The first section sits closer to the page top — no orphan gap. */
