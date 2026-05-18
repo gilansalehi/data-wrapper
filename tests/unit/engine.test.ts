@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
-import { bind, publish, reconcile, subscribe } from '@lib/engine.ts';
+import { bind, publish, reconcile, subscribe, unsubscribe } from '@lib/engine.ts';
 import type { Row, Station } from '@lib/engine.ts';
 
 beforeEach(() => {
@@ -83,6 +83,66 @@ describe('subscribe/publish', () => {
         const station: Station = {};
 
         expect(() => publish(station, 'absent', 1)).not.toThrow();
+    });
+
+    it('subscribe returns an Off that detaches the sub from its channel', () => {
+        const station: Station = {};
+        const seen: number[] = [];
+        const off = subscribe(station, 'n', v => seen.push(Number(v)), 0);
+        seen.length = 0;
+
+        off();
+        publish(station, 'n', 5);
+
+        expect(station.n).toHaveLength(0);
+        expect(seen).toEqual([]);
+    });
+
+    it('the Off is idempotent — a repeated call is a safe no-op', () => {
+        const station: Station = {};
+        const off = subscribe(station, 'n', () => {}, 0);
+        subscribe(station, 'n', () => {}, 0);
+
+        off();
+        expect(() => off()).not.toThrow();
+        expect(station.n).toHaveLength(1);
+    });
+
+    it('detaching one sub leaves the rest reachable — teardown is reference-based, not index-based', () => {
+        const station: Station = {};
+        const seen: string[] = [];
+        subscribe(station, 'n', () => seen.push('a'), 0);
+        const offB = subscribe(station, 'n', () => seen.push('b'), 0);
+        subscribe(station, 'n', () => seen.push('c'), 0);
+        seen.length = 0;
+
+        offB();
+        publish(station, 'n', 1);
+
+        expect(seen).toEqual(['a', 'c']);
+    });
+
+    it('publish iterates a snapshot — a sub detaching another mid-broadcast does not skip it', () => {
+        const station: Station = {};
+        const seen: string[] = [];
+        let offC = () => {};
+        subscribe(station, 'n', () => { seen.push('a'); offC(); }, 0);
+        subscribe(station, 'n', () => seen.push('b'), 0);
+        offC = subscribe(station, 'n', () => seen.push('c'), 0);
+        seen.length = 0;
+
+        publish(station, 'n', 1);
+
+        expect(seen).toEqual(['a', 'b', 'c']);   // 'c' still ran this pass
+        expect(station.n).toHaveLength(2);        // but is detached for the next
+    });
+
+    it('unsubscribe is a no-op for a sub that is not on the channel', () => {
+        const subs: Station['x'] = [];
+        const orphan = () => {};
+
+        expect(() => unsubscribe(orphan, subs)).not.toThrow();
+        expect(subs).toHaveLength(0);
     });
 });
 

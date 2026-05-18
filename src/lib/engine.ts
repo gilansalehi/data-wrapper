@@ -1,6 +1,6 @@
 import { cloneTemplate, DW_DIRECTIVES, PROP_ALIASES, resolveTemplate } from './registry.ts';
 import type { DirectiveHandler, Item, Row, Station, Sub, Subs } from './registry.ts';
-import { readPath } from './utils.ts';
+import { readPath, type Off } from './utils.ts';
 
 export type { Item, ListCache, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
 
@@ -28,19 +28,32 @@ export const bind = (el: Element, prop: string): Sub => {
 
 // #region subscriptions
 // @docs The framework's update primitive. `subscribe()` adds a sub to a
-// Station channel and runs it once for the initial render; `publish()` calls
-// every sub on a channel with a new value. A Station is `Record<channel, Subs>`
-// — the wrapper has one (`_subs`) and every `*list` row carries its own
-// (`row.subs`). Bindings, directives, and list rows all compose from this
-// primitive.
-export const subscribe = (station: Station, channel: string, sub: Sub, value: unknown) => {
-    (station[channel] ??= []).push(sub);
+// Station channel, runs it once for the initial render, and returns an `Off`
+// that detaches it again — `unsubscribe()` is the splice, kept reference-based
+// (never index-based) so repeated calls and out-of-order teardown stay correct.
+// `publish()` calls every sub on a channel with a new value, iterating a
+// snapshot so a sub that detaches another mid-broadcast can't corrupt the pass.
+// A Station is `Record<channel, Subs>` — the wrapper has one (`_subs`) and
+// every `*list` row carries its own (`row.subs`). Bindings, directives, and
+// list rows all compose from this primitive.
+export const subscribe = (station: Station, channel: string, sub: Sub, value: unknown): Off => {
+    const subs = (station[channel] ??= []);
+    subs.push(sub);
     sub(value);
+    return () => unsubscribe(sub, subs);
+};
+
+// Detach a sub from its channel. Reference-based and idempotent: a second
+// call finds nothing and no-ops, and unrelated splices can't desync it.
+export const unsubscribe = (sub: Sub, subs: Subs) => {
+    const i = subs.indexOf(sub);
+    if (i !== -1) subs.splice(i, 1);
 };
 
 export const publish = (station: Station, channel: string, value: unknown) => {
-    for (const sub of station[channel] ?? []) sub(value);
-}
+    const subs = [...(station[channel] ?? [])]; // snapshot
+    for (const sub of subs) sub(value);
+};
 // #endregion
 
 // #region reconcile

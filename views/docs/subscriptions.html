@@ -1,11 +1,21 @@
 <figure data-source="engine.ts" data-region="subscriptions">
-  <figcaption>The framework&#x27;s update primitive. <code>subscribe()</code> adds a sub to a Station channel and runs it once for the initial render; <code>publish()</code> calls every sub on a channel with a new value. A Station is <code>Record&lt;channel, Subs&gt;</code> — the wrapper has one (<code>_subs</code>) and every <code>*list</code> row carries its own (<code>row.subs</code>). Bindings, directives, and list rows all compose from this primitive.</figcaption>
-  <pre><code>export const subscribe = (station: Station, channel: string, sub: Sub, value: unknown) =&gt; {
-    (station[channel] ??= []).push(sub);
+  <figcaption>The framework&#x27;s update primitive. <code>subscribe()</code> adds a sub to a Station channel, runs it once for the initial render, and returns an <code>Off</code> that detaches it again — <code>unsubscribe()</code> is the splice, kept reference-based (never index-based) so repeated calls and out-of-order teardown stay correct. <code>publish()</code> calls every sub on a channel with a new value, iterating a snapshot so a sub that detaches another mid-broadcast can&#x27;t corrupt the pass. A Station is <code>Record&lt;channel, Subs&gt;</code> — the wrapper has one (<code>_subs</code>) and every <code>*list</code> row carries its own (<code>row.subs</code>). Bindings, directives, and list rows all compose from this primitive.</figcaption>
+  <pre><code>export const subscribe = (station: Station, channel: string, sub: Sub, value: unknown): Off =&gt; {
+    const subs = (station[channel] ??= []);
+    subs.push(sub);
     sub(value);
+    return () =&gt; unsubscribe(sub, subs);
+};
+
+// Detach a sub from its channel. Reference-based and idempotent: a second
+// call finds nothing and no-ops, and unrelated splices can&#x27;t desync it.
+export const unsubscribe = (sub: Sub, subs: Subs) =&gt; {
+    const i = subs.indexOf(sub);
+    if (i !== -1) subs.splice(i, 1);
 };
 
 export const publish = (station: Station, channel: string, value: unknown) =&gt; {
-    for (const sub of station[channel] ?? []) sub(value);
-}</code></pre>
+    const subs = [...(station[channel] ?? [])]; // snapshot
+    for (const sub of subs) sub(value);
+};</code></pre>
 </figure>
