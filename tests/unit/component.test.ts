@@ -378,6 +378,70 @@ describe('nested paths', () => {
 
         expect(el.get('config/theme')).toEqual({ mode: 'light', accent: 'blue' });
     });
+
+    it('a nested write leaves an unchanged sibling channel quiet', () => {
+        const el = make();
+        el.put('user', { name: 'Ali', age: 30 });
+
+        const nameSeen: unknown[] = [];
+        const ageSeen: unknown[] = [];
+        el._subs['user/name'] = [v => nameSeen.push(v)];
+        el._subs['user/age']  = [v => ageSeen.push(v)];
+
+        el.put('user/name', 'Bo');
+
+        expect(nameSeen).toEqual(['Bo']);   // changed → fired
+        expect(ageSeen).toEqual([]);         // untouched → quiet
+    });
+
+    it('a nested write leaves an off-axis branch quiet', () => {
+        const el = make();
+        el.put('user', { name: 'Ali', address: { city: 'NYC' } });
+
+        const addrSeen: unknown[] = [];
+        el._subs['user/address'] = [v => addrSeen.push(v)];
+
+        el.put('user/name', 'Bo');
+
+        expect(addrSeen).toEqual([]);   // off-axis from /user/name → quiet
+    });
+
+    it('a deep write fires the intermediate object channel, not its siblings', () => {
+        const el = make();
+        el.put('user', { address: { city: 'NYC' }, name: 'Ali' });
+
+        const addrSeen: unknown[] = [];
+        const nameSeen: unknown[] = [];
+        el._subs['user/address'] = [v => addrSeen.push(v)];
+        el._subs['user/name']    = [v => nameSeen.push(v)];
+
+        el.put('user/address/city', 'LA');
+
+        expect(addrSeen).toEqual([{ city: 'LA' }]);  // on the write path → fired
+        expect(nameSeen).toEqual([]);                 // untouched → quiet
+    });
+
+    it('external mutations broadcast on the entire subtree axis', async () => {
+        const el = make();
+        el.dataset.user = JSON.stringify({ name: 'Ali', age: 30 });
+        await tick();
+
+        const nameSeen: unknown[] = [];
+        const ageSeen: unknown[] = [];
+        el._subs['user/name'] = [v => nameSeen.push(v)];
+        el._subs['user/age']  = [v => ageSeen.push(v)];
+
+        el.dataset.user = JSON.stringify({ name: 'Bo', age: 30 });
+        await tick();
+
+        // External mutations carry no path information beyond the root key,
+        // so the framework broadcasts on the entire `user` subtree axis.
+        // Subscribers receive their channel's current resolved value;
+        // whether it changed since last fire is the consumer's concern.
+        // Precision is the privilege of writes that come through `put()`.
+        expect(nameSeen).toEqual(['Bo']);
+        expect(ageSeen).toEqual([30]);
+    });
 });
 
 describe('connectedCallback', () => {

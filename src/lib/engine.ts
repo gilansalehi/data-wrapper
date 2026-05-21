@@ -33,6 +33,9 @@ export const bind = (el: Element, prop: string): Sub => {
 // (never index-based) so repeated calls and out-of-order teardown stay correct.
 // `publish()` calls every sub on a channel with a new value, iterating a
 // snapshot so a sub that detaches another mid-broadcast can't corrupt the pass.
+// `publishAxis()` lifts that primitive to deep paths: a write at path P
+// publishes to every on-axis channel — P, its ancestors, its descendants —
+// using pure string math on the channel name. Siblings stay quiet.
 // Teardown mirrors the build: `unwire()` runs a batch of `Off`s and clears the
 // list; `unwake()` tears down a whole wrapper — its own escaped subscriptions
 // and every cached `*list` row's. A Station is `Record<channel, Subs>` — the
@@ -55,6 +58,43 @@ export const unsubscribe = (sub: Sub, subs: Subs) => {
 export const publish = (station: Station, channel: string, value: unknown) => {
     const subs = [...(station[channel] ?? [])]; // snapshot
     for (const sub of subs) sub(value);
+};
+
+// A write at path P affects exactly the channels on P's vertical axis: P
+// itself, its ancestors (each a composite containing the change), and any
+// descendants (which exist only when the write replaces a subtree). Sibling
+// channels — neither containing nor contained by P — are off-axis. The
+// membership test is pure string math on the channel name; no value diff,
+// no parse of the old state. Exported as a pure predicate; `publishAxis()`
+// has its own faster path that doesn't iterate to find ancestors.
+export const onAxis = (channel: string, P: string): boolean =>
+    channel === P
+    || channel.startsWith(P + '/')   // channel is a descendant of P
+    || P.startsWith(channel + '/');  // channel is an ancestor of P
+
+// Publish a write at path P to every on-axis channel in `station`. The
+// spine (P and every ancestor) is generated from P alone — O(depth) hash
+// lookups, no iteration. Descendants require a station scan because they
+// depend on what's subscribed, not on P. Together: O(depth + |station|),
+// down from O(|station|) with a three-clause string predicate per channel.
+// Callers pass whatever P they have: `put()` knows the precise path (tight
+// spine, usually no descendants); the Proxy set and `MutationObserver`
+// only see the root key (broad subtree fan).
+export const publishAxis = (station: Station, state: unknown, P: string) => {
+    // Spine: P, then walk up by stripping trailing path segments.
+    let channel = P;
+    while (channel) {
+        if (channel in station) publish(station, channel, readPath(state, channel));
+        const slash = channel.lastIndexOf('/');
+        if (slash === -1) break;
+        channel = channel.slice(0, slash);
+    }
+
+    // Descendants: scan the station once with a single prefix check.
+    const prefix = P + '/';
+    for (const ch in station) {
+        if (ch.startsWith(prefix)) publish(station, ch, readPath(state, ch));
+    }
 };
 
 // Run a batch of `Off`s and clear the list — the inverse of the wiring that

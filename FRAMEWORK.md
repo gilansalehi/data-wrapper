@@ -115,18 +115,29 @@ The wrapper's path-aware API:
 | `wrapper.push(path, x)`  | Append `x` to the array at `path`                      |
 | `wrapper.pull(path, p)`  | Filter `p` out of the array at `path`                  |
 
-**Fan-out semantics.** A write at `path` publishes on its root channel
-and on every subscribed channel that descends from it. So
-`put('user/name', 'Bo')` updates bindings to `/user`, `/user/name`,
-and any other live channel under `user/`. External mutations (via
-`MutationObserver` on dataset) fan out the same way. The model: one
-write, many tuned-in listeners — every coherent view of the change
-fires, without prefix matching or path inference at subscribe time.
+**Fan-out semantics.** State is a tree; a write at path P affects
+exactly the channels on P's vertical axis — P itself, its ancestors
+(each a composite that contains the change), and its descendants
+when the write replaces a subtree. Sibling channels are off-axis and
+stay quiet. So `put('user/name', 'Bo')` fires `/user` and
+`/user/name`; a binding to `/user/age` doesn't fire because it's
+neither on the spine of P nor contained by it. `publishAxis()`
+decides membership by pure string math on the channel name — no
+value diff, no parse of the old attribute.
 
-Subscribers themselves never compute paths. The path is resolved once
-at the publish boundary; subscribers just receive their leaf value.
-This keeps `subscribe`/`publish` ignorant of depth — depth lives in
-the path utility and the fan-out helper, not in pub/sub.
+The information needed to be precise lives at the call site, not at
+the publish boundary. `put()` carries the precise path P and
+publishes a tight spine (P + ancestors). The Proxy setter
+(`state.x = y`) and the `MutationObserver` (external attribute
+edits, DevTools) only see the root key — they broadcast broadly on
+that key's axis (root + all subscribed descendants). Direct writes
+are an escape hatch; precision lives in `put()`.
+
+Subscribers themselves never compute paths. The path is resolved
+once at the publish boundary via `readPath(state, channel)`;
+subscribers just receive their slice of the new value. This keeps
+`subscribe`/`publish` ignorant of depth — depth lives in
+`publishAxis()`, not in pub/sub.
 
 ## @ Event Dispatch
 

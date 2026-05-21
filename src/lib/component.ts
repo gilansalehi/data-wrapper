@@ -1,5 +1,5 @@
 import { emit, on, readPath, writePath, type Off } from './utils.ts';
-import { wake, publish, unwake } from './engine.ts';
+import { wake, publishAxis, unwake } from './engine.ts';
 import type { ListCache, Station } from './engine.ts';
 
 export class DataWrapper extends HTMLElement {
@@ -21,29 +21,42 @@ export class DataWrapper extends HTMLElement {
 
         // #region state-proxy
         // @docs State *is* `data-*`. The Proxy serializes objects as JSON on
-        // write, parses them back on read, and fans subscribers out on every
-        // set via `_fanout()`. A `MutationObserver` catches external attribute
-        // changes (DevTools edits, third-party scripts) and fans those out
-        // too. `_isSyncing` suppresses the echo from the wrapper's own writes
-        // so the same set never fires twice.
+        // write, parses them back on read. Writes publish on the *axis* of
+        // the changed path — the channel itself, its ancestors (each a
+        // composite containing the change), and its descendants when the
+        // write replaces a subtree. Sibling channels are off-axis and stay
+        // quiet. Precise paths come from `put()`, which knows the full P;
+        // the Proxy setter and the `MutationObserver` only see the root key
+        // and broadcast broadly on its axis. `_isSyncing` suppresses self-
+        // echo so a write originating here doesn't fire twice through the
+        // observer — and it gates the Proxy setter when `put()` is mid-
+        // drain, since `put()` will publish precisely once `writePath()`
+        // returns.
         self.state = new Proxy(self.dataset as unknown as Record<string, unknown>, {
             set(target, key: string, value: unknown) {
                 const serialized = (value && typeof value === 'object')
                     ? JSON.stringify(value)
                     : String(value ?? '');
 
-                if ((target as DOMStringMap)[key] === serialized) return true;
+                const prevRaw = (target as DOMStringMap)[key];
+                if (prevRaw === serialized) return true;
 
-                self._isSyncing = true;
                 (target as DOMStringMap)[key] = serialized;
-                self._fanout(key, value);
-                queueMicrotask(() => { self._isSyncing = false; });
+
+                // A write that originated in `put()` will publish precisely
+                // from there — the Proxy only sees the root key. Direct
+                // writes (`state.x = y`) broadcast broadly on-axis here.
+                if (!self._isSyncing) {
+                    self._isSyncing = true;
+                    publishAxis(self._subs, self.state, key);
+                    queueMicrotask(() => { self._isSyncing = false; });
+                }
                 return true;
             },
             get(target, key: string) {
-                const val = (target as DOMStringMap)[key];
-                if (val === undefined) return undefined;
-                try { return JSON.parse(val); } catch { return val; }
+                const raw = (target as DOMStringMap)[key];
+                if (raw == null) return undefined;
+                try { return JSON.parse(raw); } catch { return raw; }
             },
         });
 
@@ -53,25 +66,15 @@ export class DataWrapper extends HTMLElement {
                 const attr = m.attributeName;
                 if (attr?.startsWith('data-')) {
                     const key = attr.slice(5).replace(/-./g, c => c[1].toUpperCase());
-                    self._fanout(key, self.state[key]);
+                    publishAxis(self._subs, self.state, key);
                 }
             }
         });
         // #endregion
     }
 
-    _fanout(key: string, value: unknown) {
-        publish(this._subs, key, value);
-        const prefix = key + '/';
-        for (const channel in this._subs) {
-            if (channel.startsWith(prefix)) {
-                publish(this._subs, channel, readPath(value, channel.slice(prefix.length)));
-            }
-        }
-    }
-
     connectedCallback() {
-        this._observer.observe(this, { attributes: true });
+        this._observer.observe(this, { attributes: true, attributeOldValue: true });
         on('dw/log', console.log, '', this);
         wake(this);
         emit('dw/load', undefined, this);
@@ -111,7 +114,16 @@ export class DataWrapper extends HTMLElement {
             ? (val as (p: unknown) => unknown)(prev)
             : val;
         if (prev === next) return;
+
+        // Raise `_isSyncing` so the Proxy setter (called inside `writePath`)
+        // skips its broad publish — `put` knows the precise path and will
+        // publish a tight spine itself. The flag stays raised across the
+        // microtask boundary so the MutationObserver also sees self-writes
+        // as synced and skips them.
+        this._isSyncing = true;
         writePath(this.state, key, next);
+        publishAxis(this._subs, this.state, key);
+        queueMicrotask(() => { this._isSyncing = false; });
         emit('dw/sync', { key }, this);
     }
 

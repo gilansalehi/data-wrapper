@@ -19,7 +19,16 @@
             ? (val as (p: unknown) =&gt; unknown)(prev)
             : val;
         if (prev === next) return;
+
+        // Raise `_isSyncing` so the Proxy setter (called inside `writePath`)
+        // skips its broad publish — `put` knows the precise path and will
+        // publish a tight spine itself. The flag stays raised across the
+        // microtask boundary so the MutationObserver also sees self-writes
+        // as synced and skips them.
+        this._isSyncing = true;
         writePath(this.state, key, next);
+        publishAxis(this._subs, this.state, key);
+        queueMicrotask(() =&gt; { this._isSyncing = false; });
         emit(&#x27;dw/sync&#x27;, { key }, this);
     }
 
