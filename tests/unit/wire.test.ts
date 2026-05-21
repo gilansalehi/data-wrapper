@@ -52,6 +52,50 @@ describe('wake bindings', () => {
         expect(wrapper.querySelector('span')?.textContent).toBe('ALI');
     });
 
+    it('dispatches param keys directly to named formatters with their value as arg', () => {
+        const wrapper = appendWrapper('<span $text="/name?upper"></span>');
+        wrapper.state.name = 'ali';
+
+        wake(wrapper);
+
+        expect(wrapper.querySelector('span')?.textContent).toBe('ALI');
+    });
+
+    it('runs formatter pipeline in URL-string order, left to right', () => {
+        // `where` filters to active items, `length` counts them.
+        const wrapper = appendWrapper('<span $text="/todos?where=!done&length"></span>');
+        wrapper.state.todos = [
+            { id: 1, done: true },
+            { id: 2, done: false },
+            { id: 3, done: false },
+        ];
+
+        wake(wrapper);
+
+        expect(wrapper.querySelector('span')?.textContent).toBe('2');
+    });
+
+    it('mixes legacy format=NAME entries with direct key=arg entries', () => {
+        const wrapper = appendWrapper('<span $text="/name?format=trim&upper"></span>');
+        wrapper.state.name = '  ali  ';
+
+        wake(wrapper);
+
+        expect(wrapper.querySelector('span')?.textContent).toBe('ALI');
+    });
+
+    it('skips reserved framework params in the formatter pipeline', () => {
+        // `key` is reserved for *list identity; it must not be treated
+        // as a formatter named `key`. The binding falls through to its
+        // raw value.
+        const wrapper = appendWrapper('<span $text="/name?key=id"></span>');
+        wrapper.state.name = 'Ali';
+
+        wake(wrapper);
+
+        expect(wrapper.querySelector('span')?.textContent).toBe('Ali');
+    });
+
     it('marks wired elements with _live to prevent double wiring', () => {
         const wrapper = appendWrapper(`
             <p>Static</p>

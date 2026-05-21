@@ -1,0 +1,61 @@
+<figure data-source="engine.ts" data-region="pURL">
+  <figcaption>pURL drives the framework&#x27;s wire surface — <code>pURL()</code> in <code>utils.ts</code> does the parsing; these helpers consume the result. <code>formatter()</code> compiles a pURL&#x27;s query string into a left-to-right pipeline at wake time, so runtime updates never look up formatters again. Each <code>?key=value</code> is dispatched as a formatter named by the key with the value as its argument; the legacy <code>?format=name</code> is a meta-key that applies the named formatter with no argument. Framework-level keys (<code>key</code>, <code>prevent</code>, <code>stop</code>, <code>immediate</code>) are reserved and skipped. <code>collectDeps()</code> walks the same params for pURL-shaped argument values and returns the absolute local channels the pURL transitively reads — the dep set a binding needs to subscribe to. <code>collectPayload()</code> packs the data <code>@</code>-events ride with: a full FormData dump from <code>&lt;form&gt;</code>, or <code>{name: value}</code> from anything else with a <code>name</code> attribute.</figcaption>
+  <pre><code>const RESERVED_PARAMS = new Set([&#x27;key&#x27;, &#x27;prevent&#x27;, &#x27;stop&#x27;, &#x27;immediate&#x27;]);
+
+const formatter = (params: URLSearchParams): Format =&gt; {
+    type Step = (v: unknown) =&gt; unknown;
+    const steps: Step[] = [];
+
+    for (const [key, val] of params) {
+        if (key === &#x27;format&#x27;) {
+            // Legacy: `format=NAME` applies the named formatter with no arg.
+            const fn = DW_FORMATTERS.get(val);
+            if (fn) steps.push(v =&gt; fn(v));
+            continue;
+        }
+        if (RESERVED_PARAMS.has(key)) continue;
+        // New: `key=val` applies the formatter named `key` with `val` as arg.
+        const fn = DW_FORMATTERS.get(key);
+        if (fn) steps.push(v =&gt; fn(v, val));
+    }
+
+    return value =&gt; steps.reduce((v, step) =&gt; step(v), value);
+};
+
+// Walk a parsed pURL and return every local-wrapper channel it
+// transitively reads — its own path plus every pURL-shaped param
+// value, recursively. Relative paths (`./…`) are scoped to an
+// iteration context, not the wrapper&#x27;s station, so they don&#x27;t
+// contribute. Cross-host paths (`//host/…`) are tracked separately
+// and excluded from the local-channel list returned here.
+export const collectDeps = (purl: pURL): string[] =&gt; {
+    const deps: string[] = [];
+
+    if (purl.path &amp;&amp; !purl.isRel &amp;&amp; purl.host === HOST_SELF) {
+        deps.push(purl.path);
+    }
+
+    for (const [, val] of purl.params) {
+        if (val.startsWith(&#x27;/&#x27;) || val.startsWith(&#x27;./&#x27;)) {
+            deps.push(...collectDeps(p(val)));
+        }
+    }
+
+    return deps;
+};
+
+const collectPayload = (el: Element): DispatchPayload =&gt; {
+    if (el instanceof HTMLFormElement) {
+        const out: DispatchPayload = {};
+        for (const [k, v] of new FormData(el)) {
+            const existing = out[k];
+            if (existing === undefined)       out[k] = v;
+            else if (Array.isArray(existing)) existing.push(v);
+            else                              out[k] = [existing, v];
+        }
+        return out;
+    }
+    const ni = el as HTMLInputElement;
+    return ni.name ? { [ni.name]: ni.value } : {};
+};</code></pre>
+</figure>

@@ -1,9 +1,13 @@
-import type { pURL, Off } from './utils.ts';
+import { readPath, type pURL, type Off } from './utils.ts';
 
 export type Sub = (value: unknown) => void;
 export type Subs = Sub[];
 export type Station = Record<string, Subs>;
-export type Formatter = (v: unknown) => unknown;
+// Formatter is the unit of the pURL pipeline. It receives the current
+// pipeline value plus the raw param value (its argument) from the URL.
+// Old single-value formatters still satisfy this shape — extra params
+// passed to a unary function are ignored.
+export type Formatter = (value: unknown, arg?: string) => unknown;
 export type Item = Record<string, unknown>;
 export type Row = { node: Element; item: Item; subs: Station; unsubs: Off[] };
 export type ListCache = Map<Element, Map<unknown, Row>>;
@@ -67,11 +71,38 @@ export const resolveTemplate = (name: string): HTMLTemplateElement => {
 export const cloneTemplate = (tpl: HTMLTemplateElement) =>
     (tpl.content.cloneNode(true) as DocumentFragment).firstElementChild as Element | null;
 
+// `where`'s v1 predicate grammar — single-clause matchers against item
+// fields. `!field` matches falsy; `field` matches truthy; `field=value`
+// compares against a JSON-parsed value (so `done=true` becomes a boolean
+// compare, `name=Ali` falls back to the literal string). Anything richer
+// — boolean compositions, comparisons, deep paths — is a custom formatter.
+const matchesPredicate = (item: unknown, arg: string): boolean => {
+    if (!arg || !item || typeof item !== 'object') return Boolean(item);
+    const obj = item as Record<string, unknown>;
+    if (arg.startsWith('!')) return !obj[arg.slice(1)];
+    const eq = arg.indexOf('=');
+    if (eq === -1) return Boolean(obj[arg]);
+    const field = arg.slice(0, eq);
+    const rawValue = arg.slice(eq + 1);
+    let value: unknown;
+    try { value = JSON.parse(rawValue); } catch { value = rawValue; }
+    return obj[field] === value;
+};
+
 export const DW_FORMATTERS = new Map<string, Formatter>([
     // #region formatters
-    // @docs Append `?format=name` to any path to pipe its value through a
-    // transformer. Chain multiple — applied left to right. The snippet below
-    // is the built-in set; add your own with `DW_FORMATTERS.set(name, fn)`.
+    // @docs Append `?formatter=arg` to any pURL to pipe its value through a
+    // transformer. The pipeline runs left-to-right in URL order: every
+    // recognised key applies its formatter with the param value as the
+    // argument. Legacy syntax `?format=name` still works — `format` is a
+    // meta-key that dispatches to a named formatter with no argument.
+    //
+    // Collection ops (operate on arrays):
+    ['where',    (v, arg) => Array.isArray(v) && arg ? v.filter(i => matchesPredicate(i, arg)) : v],
+    // Value ops (drill / size):
+    ['get',      (v, arg) => arg ? readPath(v, arg) : v],
+    ['length',   v => (Array.isArray(v) || typeof v === 'string') ? v.length : 0],
+    // Existing transforms:
     ['count',    v => (Array.isArray(v) || typeof v === 'string') ? v.length : 0],
     ['fallback', v => v ?? '—'],
     ['json',     v => JSON.stringify(v, null, 2)],

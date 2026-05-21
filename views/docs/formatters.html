@@ -1,6 +1,11 @@
 <figure data-source="registry.ts" data-region="formatters">
-  <figcaption>Append <code>?format=name</code> to any path to pipe its value through a transformer. Chain multiple — applied left to right. The snippet below is the built-in set; add your own with <code>DW_FORMATTERS.set(name, fn)</code>.</figcaption>
-  <pre><code>    [&#x27;count&#x27;,    v =&gt; (Array.isArray(v) || typeof v === &#x27;string&#x27;) ? v.length : 0],
+  <figcaption>Append <code>?formatter=arg</code> to any pURL to pipe its value through a transformer. The pipeline runs left-to-right in URL order: every recognised key applies its formatter with the param value as the argument. Legacy syntax <code>?format=name</code> still works — <code>format</code> is a meta-key that dispatches to a named formatter with no argument.Collection ops (operate on arrays):</figcaption>
+  <pre><code>    [&#x27;where&#x27;,    (v, arg) =&gt; Array.isArray(v) &amp;&amp; arg ? v.filter(i =&gt; matchesPredicate(i, arg)) : v],
+    // Value ops (drill / size):
+    [&#x27;get&#x27;,      (v, arg) =&gt; arg ? readPath(v, arg) : v],
+    [&#x27;length&#x27;,   v =&gt; (Array.isArray(v) || typeof v === &#x27;string&#x27;) ? v.length : 0],
+    // Existing transforms:
+    [&#x27;count&#x27;,    v =&gt; (Array.isArray(v) || typeof v === &#x27;string&#x27;) ? v.length : 0],
     [&#x27;fallback&#x27;, v =&gt; v ?? &#x27;—&#x27;],
     [&#x27;json&#x27;,     v =&gt; JSON.stringify(v, null, 2)],
     [&#x27;upper&#x27;,    v =&gt; String(v || &#x27;&#x27;).toUpperCase()],

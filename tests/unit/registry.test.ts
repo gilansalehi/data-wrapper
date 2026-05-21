@@ -151,4 +151,46 @@ describe('DW_FORMATTERS built-ins', () => {
         expect(fmt('fallback')(undefined)).toBe('—');
         expect(fmt('fallback')('value')).toBe('value');
     });
+
+    it('where filters arrays by a single-clause predicate', () => {
+        const items = [
+            { id: 1, done: true,  task: 'a' },
+            { id: 2, done: false, task: 'b' },
+            { id: 3, done: false, task: 'c' },
+        ];
+        // truthy field
+        expect(fmt('where')(items, 'done')).toEqual([items[0]]);
+        // falsy field (`!` prefix)
+        expect(fmt('where')(items, '!done')).toEqual([items[1], items[2]]);
+        // equality, JSON-parsed value (boolean compare, not string)
+        expect(fmt('where')(items, 'done=true')).toEqual([items[0]]);
+        // equality, string fallback when not JSON
+        expect(fmt('where')(items, 'task=b')).toEqual([items[1]]);
+    });
+
+    it('where with no arg or non-array value returns input unchanged', () => {
+        const items = [{ id: 1 }];
+        expect(fmt('where')(items, '')).toBe(items);
+        expect(fmt('where')(items, undefined)).toBe(items);
+        expect(fmt('where')(42, 'done')).toBe(42);
+    });
+
+    it('get drills a slash-separated path into the current value', () => {
+        const value = { user: { name: { first: 'Ali' } } };
+        expect(fmt('get')(value, 'user/name/first')).toBe('Ali');
+        expect(fmt('get')([10, 20, 30], '1')).toBe(20);
+    });
+
+    it('get with no arg returns the input unchanged', () => {
+        const value = { x: 1 };
+        expect(fmt('get')(value, '')).toBe(value);
+        expect(fmt('get')(value, undefined)).toBe(value);
+    });
+
+    it('length returns size for arrays and strings, 0 otherwise', () => {
+        expect(fmt('length')([1, 2, 3])).toBe(3);
+        expect(fmt('length')('hello')).toBe(5);
+        expect(fmt('length')({ length: 99 })).toBe(0);
+        expect(fmt('length')(null)).toBe(0);
+    });
 });

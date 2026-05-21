@@ -1,6 +1,6 @@
 import { cloneTemplate, DW_DIRECTIVES, DW_FORMATTERS, PROP_ALIASES, resolveTemplate } from './registry.ts';
 import type { DirectiveHandler, DispatchDetail, DispatchPayload, Item, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
-import { p, on, emit, readPath, type Off } from './utils.ts';
+import { p, on, emit, readPath, type Off, type pURL } from './utils.ts';
 
 export type { Item, ListCache, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
 
@@ -266,19 +266,62 @@ const LIVE      = '_live';
 const TOKENS    = '@$*';
 const HOST_SELF = 'data-wrapper';   // the DWRL_BASE hostname — a plain path's default host
 
-// #region dwrl
-// @docs DWRL drives the framework's wire surface — `pURL()` in `utils.ts`
-// does the parsing; these helpers consume the result. `formatter()` compiles
-// a `?format=name` chain into a single closure at wake time, so runtime
-// updates never look up formatters again. `collectPayload()` packs the data
-// `@`-events ride with: a full FormData dump from `<form>`, or `{name: value}`
-// from anything else with a `name` attribute.
-const formatter = (params: URLSearchParams): Format => {
-    const pipes = params.getAll('format')
-        .map(n => DW_FORMATTERS.get(n))
-        .filter((f): f is NonNullable<typeof f> => !!f);
+// #region pURL
+// @docs pURL drives the framework's wire surface — `pURL()` in `utils.ts`
+// does the parsing; these helpers consume the result. `formatter()`
+// compiles a pURL's query string into a left-to-right pipeline at wake
+// time, so runtime updates never look up formatters again. Each
+// `?key=value` is dispatched as a formatter named by the key with the
+// value as its argument; the legacy `?format=name` is a meta-key that
+// applies the named formatter with no argument. Framework-level keys
+// (`key`, `prevent`, `stop`, `immediate`) are reserved and skipped.
+// `collectDeps()` walks the same params for pURL-shaped argument values
+// and returns the absolute local channels the pURL transitively reads —
+// the dep set a binding needs to subscribe to. `collectPayload()` packs
+// the data `@`-events ride with: a full FormData dump from `<form>`, or
+// `{name: value}` from anything else with a `name` attribute.
+const RESERVED_PARAMS = new Set(['key', 'prevent', 'stop', 'immediate']);
 
-    return value => pipes.reduce((v, pipe) => pipe(v), value);
+const formatter = (params: URLSearchParams): Format => {
+    type Step = (v: unknown) => unknown;
+    const steps: Step[] = [];
+
+    for (const [key, val] of params) {
+        if (key === 'format') {
+            // Legacy: `format=NAME` applies the named formatter with no arg.
+            const fn = DW_FORMATTERS.get(val);
+            if (fn) steps.push(v => fn(v));
+            continue;
+        }
+        if (RESERVED_PARAMS.has(key)) continue;
+        // New: `key=val` applies the formatter named `key` with `val` as arg.
+        const fn = DW_FORMATTERS.get(key);
+        if (fn) steps.push(v => fn(v, val));
+    }
+
+    return value => steps.reduce((v, step) => step(v), value);
+};
+
+// Walk a parsed pURL and return every local-wrapper channel it
+// transitively reads — its own path plus every pURL-shaped param
+// value, recursively. Relative paths (`./…`) are scoped to an
+// iteration context, not the wrapper's station, so they don't
+// contribute. Cross-host paths (`//host/…`) are tracked separately
+// and excluded from the local-channel list returned here.
+export const collectDeps = (purl: pURL): string[] => {
+    const deps: string[] = [];
+
+    if (purl.path && !purl.isRel && purl.host === HOST_SELF) {
+        deps.push(purl.path);
+    }
+
+    for (const [, val] of purl.params) {
+        if (val.startsWith('/') || val.startsWith('./')) {
+            deps.push(...collectDeps(p(val)));
+        }
+    }
+
+    return deps;
 };
 
 const collectPayload = (el: Element): DispatchPayload => {
