@@ -297,6 +297,64 @@ framework state. This split is the reason lists update without
 re-parsing the template and without forcing rerenders of unchanged
 rows.
 
+## Computed Values
+
+A `$data-*` attribute on the wrapper itself declares a **computed
+value** — a pURL whose evaluation is written back to the matching
+`data-*` slot. There is no new primitive: a computed value is a
+`$`-binding whose **sink** happens to be the wrapper's own dataset
+rather than a DOM property. `bind()` returns a setter that routes
+through `put()` for that one prop family; the cascade falls out of
+the existing pub/sub.
+
+```html
+<data-wrapper data-todos='[…]' data-filter="all"
+              $data-active="/todos?where=!done">
+  <span $text="/active?length"></span>   <!-- "items left" -->
+</data-wrapper>
+```
+
+`$data-active` reads `/todos`, filters via the `where` formatter,
+writes the result through `put()` into `data-active`. `data-active`
+is then addressable by any DWRL the same way `data-todos` is — DOM
+bindings can subscribe to `/active` without knowing it's derived.
+
+**Mechanics.** `wire()` treats `$data-active` like any `$`-binding:
+parse pURL, subscribe to the main path channel, fire on init and
+every publish. `bind(wrapper, 'data-active')` returns
+`val => wrapper.put('active', val)`. Each fire runs the formatter
+pipeline and writes back through `put`, which calls `publishAxis()`
+on the output channel; downstream subscribers (DOM bindings on
+`/active`, or further `$data-*` declarations reading `/active`)
+fire synchronously in cascade order.
+
+**Cascade.** A chain `$data-c="/b?…"`, `$data-b="/a?…"` resolves
+itself: `put('a', …)` publishes `/a`, which fires `$data-b`'s
+update, which calls `put('b', …)`, which publishes `/b`, which
+fires `$data-c`'s update, and so on. No scheduler, no topological
+sort — the pub/sub primitive carries the order. The framework's
+own writes pass through `_isSyncing` so the `MutationObserver`
+doesn't re-publish them.
+
+**External edits.** A DevTools or third-party write to a
+computed-bound `data-*` proceeds normally — the MO catches it and
+`publishAxis` fires subscribers. The framework also `console.warn`s
+once per attribute (per session) that the value will be overwritten
+on the next upstream flush. The wrapper's own DOM is the registry:
+`hasAttribute('$data-active')` answers "is this key computed?"
+without any auxiliary state. Once the upstream channel publishes,
+the binding re-evaluates and overwrites the external edit. The
+user's edit is honored for as long as the upstream is stable; the
+declaration wins as soon as anything moves.
+
+**Tradeoffs.** v1 doesn't carry batched flush (a diamond
+`/d ← /b, /c ← /a` would fire `/d` twice — but no v1 formatter
+consumes two pURL args, so the diamond shape can't appear yet),
+nor wake-time cycle detection (a circular `$data-*` graph either
+stabilizes via `prev === next` on primitive values, or
+stack-overflows on objects). Both land in a future polish stage,
+motivated by real dogfood.
+
 ## Extensibility
 
 `DW_DIRECTIVES`, `DW_FORMATTERS`, and `DW_TEMPLATES` are exported

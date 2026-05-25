@@ -67,7 +67,7 @@ export const wire = (
     const escapes = station !== (row ? row.subs : wrapper._subs);
 
     if (token === &#x27;$&#x27;) {
-        const format = formatter(params);
+        const format = formatter(params, target);
         const set    = bind(el, prop);
 
         const off = subscribe(station, path, v =&gt; set(format(v)), initial);

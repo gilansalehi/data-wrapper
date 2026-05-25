@@ -34,6 +34,23 @@
                 const attr = m.attributeName;
                 if (attr?.startsWith(&#x27;data-&#x27;)) {
                     const key = attr.slice(5).replace(/-./g, c =&gt; c[1].toUpperCase());
+
+                    // DevTools-edit-wins: the external write proceeds and
+                    // publishes normally, but if a `$data-*` declaration
+                    // exists for this key, the value will be overwritten on
+                    // the next upstream flush. The wrapper&#x27;s own DOM is the
+                    // registry — `hasAttribute(&#x27;$data-…&#x27;)` answers the
+                    // question without any auxiliary state. Warn once per
+                    // attribute per session.
+                    if (self.hasAttribute(&#x27;$&#x27; + attr) &amp;&amp; !warned.has(attr)) {
+                        console.warn(
+                            `&lt;data-wrapper&gt;: external edit to &quot;${attr}&quot; will be ` +
+                            `overwritten — it&#x27;s bound by &quot;$${attr}&quot;. Future external ` +
+                            `writes to this key will not re-warn.`,
+                        );
+                        warned.add(attr);
+                    }
+
                     publishAxis(self._subs, self.state, key);
                 }
             }

@@ -25,10 +25,20 @@
         // publish a tight spine itself. The flag stays raised across the
         // microtask boundary so the MutationObserver also sees self-writes
         // as synced and skips them.
+        //
+        // Only the *outermost* `put` queues the clear. Re-entrant or
+        // microtask-spawned writes (e.g. flushComputeds calling `put`
+        // after an outer `put`&#x27;s clear has run) detect the in-flight
+        // syncing window and ride the existing clear. Otherwise their
+        // mutation&#x27;s MO microtask can fire *after* the outer clear has
+        // run, and the framework&#x27;s own write gets mis-seen as external —
+        // which surfaces as a spurious &quot;external edit will be overwritten&quot;
+        // warning for a key the framework wrote itself.
+        const wasIdle = !this._isSyncing;
         this._isSyncing = true;
         writePath(this.state, key, next);
         publishAxis(this._subs, this.state, key);
-        queueMicrotask(() =&gt; { this._isSyncing = false; });
+        if (wasIdle) queueMicrotask(() =&gt; { this._isSyncing = false; });
         emit(&#x27;dw/sync&#x27;, { key }, this);
     }
 

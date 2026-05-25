@@ -19,6 +19,13 @@ export class DataWrapper extends HTMLElement {
         self._listCache = new Map();
         self._isSyncing = false;
 
+        // Attribute names we've already warned about in this session — one
+        // warning per computed-bound key, not one per edit. Lives in the
+        // constructor closure so it doesn't pollute the public Wrapper
+        // contract; the wrapper's own DOM attributes are the registry of
+        // which keys are computed.
+        const warned = new Set<string>();
+
         // #region state-proxy
         // @docs State *is* `data-*`. The Proxy serializes objects as JSON on
         // write, parses them back on read. Writes publish on the *axis* of
@@ -66,6 +73,23 @@ export class DataWrapper extends HTMLElement {
                 const attr = m.attributeName;
                 if (attr?.startsWith('data-')) {
                     const key = attr.slice(5).replace(/-./g, c => c[1].toUpperCase());
+
+                    // DevTools-edit-wins: the external write proceeds and
+                    // publishes normally, but if a `$data-*` declaration
+                    // exists for this key, the value will be overwritten on
+                    // the next upstream flush. The wrapper's own DOM is the
+                    // registry — `hasAttribute('$data-…')` answers the
+                    // question without any auxiliary state. Warn once per
+                    // attribute per session.
+                    if (self.hasAttribute('$' + attr) && !warned.has(attr)) {
+                        console.warn(
+                            `<data-wrapper>: external edit to "${attr}" will be ` +
+                            `overwritten — it's bound by "$${attr}". Future external ` +
+                            `writes to this key will not re-warn.`,
+                        );
+                        warned.add(attr);
+                    }
+
                     publishAxis(self._subs, self.state, key);
                 }
             }
@@ -120,10 +144,20 @@ export class DataWrapper extends HTMLElement {
         // publish a tight spine itself. The flag stays raised across the
         // microtask boundary so the MutationObserver also sees self-writes
         // as synced and skips them.
+        //
+        // Only the *outermost* `put` queues the clear. Re-entrant or
+        // microtask-spawned writes (e.g. flushComputeds calling `put`
+        // after an outer `put`'s clear has run) detect the in-flight
+        // syncing window and ride the existing clear. Otherwise their
+        // mutation's MO microtask can fire *after* the outer clear has
+        // run, and the framework's own write gets mis-seen as external —
+        // which surfaces as a spurious "external edit will be overwritten"
+        // warning for a key the framework wrote itself.
+        const wasIdle = !this._isSyncing;
         this._isSyncing = true;
         writePath(this.state, key, next);
         publishAxis(this._subs, this.state, key);
-        queueMicrotask(() => { this._isSyncing = false; });
+        if (wasIdle) queueMicrotask(() => { this._isSyncing = false; });
         emit('dw/sync', { key }, this);
     }
 

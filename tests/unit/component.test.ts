@@ -461,3 +461,126 @@ describe('connectedCallback', () => {
         expect(el.querySelector('span')?.textContent).toBe('Ali');
     });
 });
+
+describe('$data-* computed values', () => {
+    const makeWith = (attrs: Record<string, string>, html = ''): TestWrapper => {
+        const el = document.createElement('data-wrapper') as TestWrapper;
+        // Set attrs in insertion order BEFORE appending — so wake's
+        // setupComputeds sees them and walks them in HTML order, which
+        // is the order topo sort gets to reorder.
+        for (const [name, value] of Object.entries(attrs)) el.setAttribute(name, value);
+        el.innerHTML = html;
+        document.body.appendChild(el);
+        return el;
+    };
+
+    it('computes an initial value synchronously at wake', () => {
+        const el = makeWith({
+            'data-todos':   '[{"id":1,"done":true},{"id":2,"done":false},{"id":3,"done":false}]',
+            '$data-active': '/todos?where=!done',
+        }, '<span $text="/active?length"></span>');
+
+        // Initial pass ran in topo order before DOM bindings woke, so
+        // the span should already show the filtered count.
+        expect(el.get('active')).toEqual([{ id: 2, done: false }, { id: 3, done: false }]);
+        expect(el.querySelector('span')?.textContent).toBe('2');
+    });
+
+    it('recomputes on dep change after a microtask', async () => {
+        const el = makeWith({
+            'data-todos':   '[{"id":1,"done":false}]',
+            '$data-active': '/todos?where=!done',
+        });
+
+        el.put('todos', [{ id: 1, done: true }, { id: 2, done: false }]);
+        await tick();
+
+        expect(el.get('active')).toEqual([{ id: 2, done: false }]);
+    });
+
+    it('cascades through chained computeds (/c ← /b ← /a)', async () => {
+        const el = makeWith({
+            'data-a':   'hi',
+            '$data-b':  '/a?upper',
+            '$data-c':  '/b?length',
+        });
+
+        // Initial pass: /b = "HI", /c = 2.
+        expect(el.get('b')).toBe('HI');
+        expect(el.get('c')).toBe(2);
+
+        el.put('a', 'hello');
+        await tick();
+
+        expect(el.get('b')).toBe('HELLO');
+        expect(el.get('c')).toBe(5);
+    });
+
+    it('a diamond fires the terminal binding exactly once per upstream write', async () => {
+        const el = makeWith({
+            'data-a':  '2',
+            '$data-b': '/a',
+            '$data-c': '/a',
+            '$data-d': '/b',
+        });
+
+        // Spy: count how many times /d's data-* attribute is written
+        // after the initial pass settles.
+        let dWrites = 0;
+        const obs = new MutationObserver(mutations => {
+            for (const m of mutations) {
+                if (m.attributeName === 'data-d') dWrites += 1;
+            }
+        });
+        obs.observe(el, { attributes: true });
+
+        el.put('a', '3');
+        await tick();
+        obs.disconnect();
+
+        // Numbers JSON-parse back through `state` on read — `'3'` →  3.
+        // /d reads /b only (the harder /d ← /b, /c diamond needs pURL-arg
+        // resolution in a custom formatter to test; deferred to dogfood).
+        expect(el.get('d')).toBe(3);
+        expect(dWrites).toBe(1);
+    });
+
+    it('warns once per key when DevTools edits a computed-bound attribute', async () => {
+        const el = makeWith({
+            'data-source':   'hello',
+            '$data-derived': '/source?upper',
+        });
+
+        const warn = console.warn;
+        const calls: string[] = [];
+        console.warn = (msg: string) => { calls.push(msg); };
+
+        // Two external edits to the same computed-bound key.
+        el.dataset.derived = 'EXTERNAL1';
+        await tick();
+        el.dataset.derived = 'EXTERNAL2';
+        await tick();
+
+        // Edit to a non-computed key shouldn't warn.
+        el.dataset.source = 'world';
+        await tick();
+
+        console.warn = warn;
+
+        expect(calls).toHaveLength(1);
+        expect(calls[0]).toMatch(/derived/);
+    });
+
+    it('initial values cascade in topological order regardless of attribute order', () => {
+        // `$data-c` references `/b`, which is itself computed from `/a`.
+        // Declared c-before-b on purpose; topo sort still computes /b first.
+        const el = makeWith({
+            'data-a':  'hi',
+            '$data-c': '/b?length',
+            '$data-b': '/a?upper',
+        });
+
+        expect(el.get('b')).toBe('HI');
+        expect(el.get('c')).toBe(2);
+    });
+});

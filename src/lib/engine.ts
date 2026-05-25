@@ -22,6 +22,18 @@ export const bind = (el: Element, prop: string): Sub => {
         };
     }
 
+    // `$data-*` on a `<data-wrapper>` is a computed-value declaration: the
+    // wrapper subscribes to its own dataset slot through the same `$`-binding
+    // primitive every other DOM property uses. Routing through `put()` (not
+    // `setAttribute`) keeps the JSON-serialize-on-write contract; the cascade
+    // for downstream subscribers falls out of `put()` calling `publishAxis()`.
+    // No new abstraction layer — same shape as the `class` branch above.
+    if (el.tagName === 'DATA-WRAPPER' && prop.startsWith('data-')) {
+        const wrapper = el as Wrapper;
+        const dsKey = prop.slice(5).replace(/-./g, c => c[1].toUpperCase());
+        return val => wrapper.put(dsKey, val);
+    }
+
     const alias = PROP_ALIASES[prop] || prop;
     return val => set(el, alias, val);
 };
@@ -282,7 +294,7 @@ const HOST_SELF = 'data-wrapper';   // the DWRL_BASE hostname — a plain path's
 // `{name: value}` from anything else with a `name` attribute.
 const RESERVED_PARAMS = new Set(['key', 'prevent', 'stop', 'immediate']);
 
-const formatter = (params: URLSearchParams): Format => {
+const formatter = (params: URLSearchParams, wrapper: WrapperNode | null = null): Format => {
     type Step = (v: unknown) => unknown;
     const steps: Step[] = [];
 
@@ -294,9 +306,19 @@ const formatter = (params: URLSearchParams): Format => {
             continue;
         }
         if (RESERVED_PARAMS.has(key)) continue;
-        // New: `key=val` applies the formatter named `key` with `val` as arg.
         const fn = DW_FORMATTERS.get(key);
-        if (fn) steps.push(v => fn(v, val));
+        if (!fn) continue;
+        // A param value that looks like a local-absolute pURL (`/path`)
+        // is resolved against the wrapper at fire time and the resolved
+        // value is handed to the formatter instead of the raw string.
+        // Relative paths (`./…`) are scope-dependent and left to the
+        // formatter to handle; cross-host paths (`//host/…`) too.
+        if (wrapper && val.startsWith('/') && !val.startsWith('//')) {
+            const argPath = val.slice(1);
+            steps.push(v => fn(v, readPath(wrapper.state, argPath)));
+            continue;
+        }
+        steps.push(v => fn(v, val));
     }
 
     return value => steps.reduce((v, step) => step(v), value);
@@ -419,7 +441,7 @@ export const wire = (
     const escapes = station !== (row ? row.subs : wrapper._subs);
 
     if (token === '$') {
-        const format = formatter(params);
+        const format = formatter(params, target);
         const set    = bind(el, prop);
 
         const off = subscribe(station, path, v => set(format(v)), initial);
@@ -444,12 +466,17 @@ export const wire = (
 // Each wired element gets the `_live` attribute so re-entry is idempotent.
 // Walking happens once; every tokenized attribute is compiled into a
 // subscriber by `wire()`, so runtime updates never re-parse anything.
+// `$data-*` attributes on the wrapper itself are computed-value
+// declarations — `wire()` treats them like any other `$`-binding;
+// `bind()` routes the sink through `put()` so the cascade falls out of
+// the existing pub/sub. No extra wake-time pass required.
 export const wake = (
     root: Element,
     row: Row | null = null,
     wrapper: WrapperNode | null = root.closest('data-wrapper'),
 ) => {
     if (!wrapper) return;
+
     const nodes = [root];
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {

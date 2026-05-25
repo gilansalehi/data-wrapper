@@ -4,10 +4,13 @@ export type Sub = (value: unknown) => void;
 export type Subs = Sub[];
 export type Station = Record<string, Subs>;
 // Formatter is the unit of the pURL pipeline. It receives the current
-// pipeline value plus the raw param value (its argument) from the URL.
-// Old single-value formatters still satisfy this shape — extra params
-// passed to a unary function are ignored.
-export type Formatter = (value: unknown, arg?: string) => unknown;
+// pipeline value plus its argument — either the raw param value from
+// the URL, or the *resolved* value when the param was pURL-shaped
+// (e.g. `?where=/filter` arrives at `where` as the value of `/filter`,
+// not the literal string `/filter`). Old single-value formatters still
+// satisfy this shape — extra params passed to a unary function are
+// ignored.
+export type Formatter = (value: unknown, arg?: unknown) => unknown;
 export type Item = Record<string, unknown>;
 export type Row = { node: Element; item: Item; subs: Station; unsubs: Off[] };
 export type ListCache = Map<Element, Map<unknown, Row>>;
@@ -31,12 +34,18 @@ export type DispatchEvent = CustomEvent<DispatchDetail>;
 // attributes; `_subs` is the wrapper's Station (one channel per path);
 // `_listCache` holds row caches per `*list` element; `_unsubs` collects the
 // `Off` handles for subscriptions that escape the wrapper's own scope, so
-// `load()` can tear them down. Everything else lives in methods on the class.
+// `load()` can tear them down. `put()` is the framework's path-aware
+// writer — `bind()`'s wrapper-data-* branch routes `$data-*` sinks
+// through it so the computed-value cascade rides the same primitive
+// every other binding uses. `_isSyncing` gates self-publish during a
+// put-driven drain and during the same put's MutationObserver echo.
 export type Wrapper = HTMLElement & {
     state:        Record<string, unknown>;
     _subs:        Station;
     _listCache:   ListCache;
     _unsubs:      Off[];
+    _isSyncing?:  boolean;
+    put:          (key: string, val: unknown | ((prev: unknown) => unknown)) => void;
 };
 // #endregion
 
@@ -76,6 +85,9 @@ export const cloneTemplate = (tpl: HTMLTemplateElement) =>
 // compares against a JSON-parsed value (so `done=true` becomes a boolean
 // compare, `name=Ali` falls back to the literal string). Anything richer
 // — boolean compositions, comparisons, deep paths — is a custom formatter.
+// When the param was a pURL (`?where=/filter`), `arg` arrives already
+// resolved to whatever was at that channel; the formatter coerces it to
+// the predicate string before parsing.
 const matchesPredicate = (item: unknown, arg: string): boolean => {
     if (!arg || !item || typeof item !== 'object') return Boolean(item);
     const obj = item as Record<string, unknown>;
@@ -98,9 +110,12 @@ export const DW_FORMATTERS = new Map<string, Formatter>([
     // meta-key that dispatches to a named formatter with no argument.
     //
     // Collection ops (operate on arrays):
-    ['where',    (v, arg) => Array.isArray(v) && arg ? v.filter(i => matchesPredicate(i, arg)) : v],
+    ['where',    (v, arg) => Array.isArray(v) && arg != null && arg !== ''
+        ? v.filter(i => matchesPredicate(i, typeof arg === 'string' ? arg : String(arg)))
+        : v,
+    ],
     // Value ops (drill / size):
-    ['get',      (v, arg) => arg ? readPath(v, arg) : v],
+    ['get',      (v, arg) => arg ? readPath(v, typeof arg === 'string' ? arg : String(arg)) : v],
     ['length',   v => (Array.isArray(v) || typeof v === 'string') ? v.length : 0],
     // Existing transforms:
     ['count',    v => (Array.isArray(v) || typeof v === 'string') ? v.length : 0],

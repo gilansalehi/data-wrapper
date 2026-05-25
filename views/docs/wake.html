@@ -1,11 +1,12 @@
 <figure data-source="engine.ts" data-region="wake">
-  <figcaption>The lifecycle entry point. <code>wake()</code> walks the subtree with a <code>TreeWalker</code>, skipping nested wrappers, templates, and SVG (per <code>NO_WAKE</code>). Each wired element gets the <code>_live</code> attribute so re-entry is idempotent. Walking happens once; every tokenized attribute is compiled into a subscriber by <code>wire()</code>, so runtime updates never re-parse anything.</figcaption>
+  <figcaption>The lifecycle entry point. <code>wake()</code> walks the subtree with a <code>TreeWalker</code>, skipping nested wrappers, templates, and SVG (per <code>NO_WAKE</code>). Each wired element gets the <code>_live</code> attribute so re-entry is idempotent. Walking happens once; every tokenized attribute is compiled into a subscriber by <code>wire()</code>, so runtime updates never re-parse anything. <code>$data-*</code> attributes on the wrapper itself are computed-value declarations — <code>wire()</code> treats them like any other <code>$</code>-binding; <code>bind()</code> routes the sink through <code>put()</code> so the cascade falls out of the existing pub/sub. No extra wake-time pass required.</figcaption>
   <pre><code>export const wake = (
     root: Element,
     row: Row | null = null,
     wrapper: WrapperNode | null = root.closest(&#x27;data-wrapper&#x27;),
 ) =&gt; {
     if (!wrapper) return;
+
     const nodes = [root];
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
