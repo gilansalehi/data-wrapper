@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
-import { bind, collectDeps, publish, reconcile, subscribe, unsubscribe, unwire, unwake } from '@lib/engine.ts';
+import { bind, publish, reconcile, subscribe, unsubscribe, unwire, unwake } from '@lib/engine.ts';
 import type { Row, Station, Wrapper } from '@lib/engine.ts';
-import { p } from '@lib/utils.ts';
 
 beforeEach(() => {
     document.body.innerHTML = '';
@@ -290,39 +289,3 @@ describe('unwire / unwake', () => {
     });
 });
 
-describe('collectDeps', () => {
-    it('returns the pURL\'s own path for a simple absolute reference', () => {
-        expect(collectDeps(p('/todos'))).toEqual(['todos']);
-        expect(collectDeps(p('/user/name/first'))).toEqual(['user/name/first']);
-    });
-
-    it('walks param values and recursively collects nested pURL channels', () => {
-        // `?where=/filter` references `/filter` as a dynamic predicate
-        const deps = collectDeps(p('/todos?where=/filter'));
-        expect(deps).toEqual(['todos', 'filter']);
-    });
-
-    it('ignores literal param values that aren\'t pURL-shaped', () => {
-        const deps = collectDeps(p('/todos?where=!done&length'));
-        expect(deps).toEqual(['todos']);   // `!done` and `length` are literals
-    });
-
-    it('skips relative paths — they belong to an iteration scope, not the wrapper station', () => {
-        const deps = collectDeps(p('/todos?where=./done'));
-        expect(deps).toEqual(['todos']);   // `./done` resolves per-item, not channel
-    });
-
-    it('collects deps recursively across multiple nesting levels', () => {
-        // `/a` reads `/b` which reads `/c`
-        const deps = collectDeps(p('/a?where=/b?where=/c'));
-        expect(deps).toEqual(['a', 'b', 'c']);
-    });
-
-    it('excludes cross-host pURLs from local channel deps', () => {
-        const deps = collectDeps(p('//other/foo?where=/bar'));
-        // Top-level path is on a different host (not the local wrapper),
-        // so it doesn't contribute. But its params still walk for local
-        // dependencies — `/bar` is local.
-        expect(deps).toEqual(['bar']);
-    });
-});

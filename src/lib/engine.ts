@@ -287,11 +287,9 @@ const HOST_SELF = 'data-wrapper';   // the DWRL_BASE hostname — a plain path's
 // value as its argument; the legacy `?format=name` is a meta-key that
 // applies the named formatter with no argument. Framework-level keys
 // (`key`, `prevent`, `stop`, `immediate`) are reserved and skipped.
-// `collectDeps()` walks the same params for pURL-shaped argument values
-// and returns the absolute local channels the pURL transitively reads —
-// the dep set a binding needs to subscribe to. `collectPayload()` packs
-// the data `@`-events ride with: a full FormData dump from `<form>`, or
-// `{name: value}` from anything else with a `name` attribute.
+// `collectPayload()` packs the data `@`-events ride with: a full
+// FormData dump from `<form>`, or `{name: value}` from anything else
+// with a `name` attribute.
 const RESERVED_PARAMS = new Set(['key', 'prevent', 'stop', 'immediate']);
 
 const formatter = (params: URLSearchParams, wrapper: WrapperNode | null = null): Format => {
@@ -322,28 +320,6 @@ const formatter = (params: URLSearchParams, wrapper: WrapperNode | null = null):
     }
 
     return value => steps.reduce((v, step) => step(v), value);
-};
-
-// Walk a parsed pURL and return every local-wrapper channel it
-// transitively reads — its own path plus every pURL-shaped param
-// value, recursively. Relative paths (`./…`) are scoped to an
-// iteration context, not the wrapper's station, so they don't
-// contribute. Cross-host paths (`//host/…`) are tracked separately
-// and excluded from the local-channel list returned here.
-export const collectDeps = (purl: pURL): string[] => {
-    const deps: string[] = [];
-
-    if (purl.path && !purl.isRel && purl.host === HOST_SELF) {
-        deps.push(purl.path);
-    }
-
-    for (const [, val] of purl.params) {
-        if (val.startsWith('/') || val.startsWith('./')) {
-            deps.push(...collectDeps(p(val)));
-        }
-    }
-
-    return deps;
 };
 
 const collectPayload = (el: Element): DispatchPayload => {
