@@ -21,6 +21,34 @@ Two parts:
 
 # Stable
 
+## Mental Model
+
+Three rules cover most of the surface. If a feature can't be explained
+in terms of them, it's either out of scope or evidence the rules are
+wrong.
+
+1. **State lives in `data-*`.** The DOM holds it; a Proxy types it;
+   DevTools reads and writes it. There is no parallel store, no
+   shadow tree, no in-memory shadow of the DOM. State *is* the DOM
+   attributes.
+
+2. **Bindings are subscribers.** `$prop`, `*directive`, `$data-*`
+   are all the same shape — a function that listens on a channel and
+   writes somewhere. Each is compiled once at `wake()` and dispatched
+   forever; runtime updates never re-parse anything.
+
+3. **Renders are the last step of handling computed values.** A
+   `$text="/active"` and a `$data-active="/todos?where=!done"` are
+   structurally identical; only the sink differs (DOM property vs.
+   back into dataset). The cascade *is* the render — no render
+   phase, no virtual DOM diff, no scheduler. DOM mutations are the
+   leaves of the publish tree; computed values are its interior
+   nodes; every node is one `subscribe()` call.
+
+Rule 3 is the lever. Whenever something looks like it should be a
+"new render path" or a "new evaluation phase," it's almost certainly
+expressible as another subscriber on an existing channel.
+
 ## Core Rule
 
 The DOM is declarative. `data-wrapper` owns the logic. DOM nodes hold
@@ -284,6 +312,14 @@ cost nothing.
 `publish()` iterates a snapshot of the channel, so a subscriber that
 detaches another mid-broadcast can't corrupt the pass.
 
+**One primitive, every binding.** `$text="/name"` is a subscriber
+that writes to `el.textContent`. `$data-active="/todos?where=!done"`
+is a subscriber that writes back into the wrapper's own dataset (via
+`put()`). `*list="/items"` is a subscriber that reconciles DOM
+children. They share a Station, share `subscribe()`, share the
+init-fire-then-on-publish protocol. This is Rule 3 in mechanical
+form: renders and computed writes differ only in their sink.
+
 ## Lists & Reconcile
 
 `*list` is a compiled directive. At wake it captures the list
@@ -306,6 +342,14 @@ value** — a pURL whose evaluation is written back to the matching
 rather than a DOM property. `bind()` returns a setter that routes
 through `put()` for that one prop family; the cascade falls out of
 the existing pub/sub.
+
+The reverse of this rule is what makes the system tick: a DOM
+binding (`$text`, `$class`, `*list`, …) has the *same* shape, just
+with a different sink — `el.textContent`, `el.className`, the
+reconciler. Computed values forward writes back into the publish
+tree upstream of renders; renders consume them downstream. One
+subscriber shape covers both halves; the framework needs no concept
+of "computation phase" vs. "render phase."
 
 ```html
 <data-wrapper data-todos='[…]' data-filter="all"
@@ -392,10 +436,17 @@ omits `write` (or registers as a bare function) is read-once; state
 diverges from storage after wake.
 
 The writeback uses the same `subscribe()` primitive used everywhere
-else, which init-fires the sub with the current value. For
-`localstorage:` the just-read value gets persisted back immediately —
-idempotent. Protocols with expensive or non-idempotent writes (a
-future `api://` POST) should guard internally or expose `read`-only.
+else, which init-fires the sub with the current value. The init
+round-trip is harmless when read and write are symmetric: the
+`localstorage` protocol returns `undefined` on a missing key, and
+its `write(undefined)` is `removeItem` — so the init-write on an
+empty source is a no-op. This is the convention protocol handlers
+should follow: **return `undefined` on miss; treat `write(undefined)`
+as "clear."** A protocol that breaks either side (e.g. returns the
+literal string `"null"` on miss) will see a redundant write on every
+binding setup, and may even corrupt the source. Protocols with
+expensive or non-idempotent writes (a future `api://` POST) should
+guard internally or expose `read`-only.
 
 **Where this shows up.**
 
@@ -444,6 +495,19 @@ that view into having its inline scripts re-created and executed before
 wake binds; `document.currentScript.closest('data-wrapper')` gives the
 script its host wrapper. External `<script src>` is skipped — its async
 fetch would race with wake's binding pass.
+
+**Two-wake sequence.** A wrapper with `src=""` wakes twice: once on
+connect (whatever children are already in markup), then again after
+`load()` swaps `innerHTML`. The wrapper element itself is in *both*
+walks, so any `$data-*` declarations on the wrapper fire on both
+passes — once at connect time, then again after the post-load swap.
+Between the two wakes, `load()` resets the Station and clears
+`_live`, so subscribers re-attach fresh rather than accumulate. The
+canonical pattern for a loaded view with bidirectional protocol
+state — e.g. the todos showcase — relies on this: the connect-time
+wake sets up the binding against an empty source (no-op writes
+through `undefined`); the inline script seeds whatever defaults it
+needs; the second wake picks up the seeded value.
 
 ## Lifecycle Events
 
@@ -619,10 +683,11 @@ a true installable PWA:
 
 ---
 
-## Roadmap
+## Deferred Polish
 
-Deferred items, each tied to a real motivation (not speculative scope).
-They live here, not in the core, until dogfood proves they're earned.
+Known limitations and unbuilt internals, each tied to a real motivation
+(not speculative scope). They live here, not in the core, until dogfood
+proves they're earned.
 
 **Cycle detection in `$data-*` declarations.** A circular graph
 either stabilises via the `prev === next` short-circuit on primitive
