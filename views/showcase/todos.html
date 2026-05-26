@@ -1,45 +1,76 @@
-<section id="todos">
-    <h2>Todos app</h2>
-    <p>
-        A complete CRUD app. State in <code>data-*</code> attributes, actions registered in JS,
-        rows rendered via <code>*list</code>, and per-row badges controlled by <code>*if</code>.
-        Todos persist through <code>localStorage</code>, then render through wrapper state.
-        Open DevTools → Elements and watch the attributes update live.
-    </p>
+<article class="demo" data-to="todosCode" @reflect="demo/reflect">
+    <form @submit="todo/add?prevent">
+        <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off">
+        <button type="submit">Add</button>
+    </form>
 
-    <article class="demo" data-to="todosCode" @reflect="demo/reflect">
-        <data-wrapper id="app" data-filter="all">
+    <ul class="todo-list" *list="/view" data-empty="dw-empty">
+        <template>
+            <li class="todo-item" $class="./status">
+                <input type="checkbox" $checked="./done" @change="todo/toggle" name="id" $value="./id" aria-label="Toggle todo completion">
+                <span $text="./task"></span>
+                <strong class="done-badge" *if="./done">done</strong>
+                <button class="delete-btn" @click="todo/remove" name="id" $value="./id" aria-label="Remove">✕</button>
+            </li>
+        </template>
+    </ul>
 
-            <form @submit="todo/add">
-                <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off">
-                <button type="submit">Add</button>
-            </form>
+    <div class="controls">
+        <span><strong $text="/active?format=count">0</strong> active</span>
+        <div class="filter-btns" role="group" aria-label="Filter todos">
+            <button @click="filter/set" name="filter" value="all">All</button>
+            <button @click="filter/set" name="filter" value="active">Active</button>
+            <button @click="filter/set" name="filter" value="done">Done</button>
+        </div>
+    </div>
 
-            <ul class="todo-list" *list="/view" data-empty="dw-empty">
-                <template>
-                    <li class="todo-item" $class="./status">
-                        <input type="checkbox" $checked="./done" @change="todo/toggle" $value="./id" aria-label="Toggle todo completion">
-                        <span $text="./task"></span>
-                        <strong class="done-badge" *if="./done">done</strong>
-                        <button class="delete-btn" @click="todo/remove" $value="./id" aria-label="Remove">x</button>
-                    </li>
-                </template>
-            </ul>
+    <details>
+        <summary>Live state — inspect data-todos in DevTools or expand here</summary>
+        <pre><code $text="/todos?format=json"></code></pre>
+    </details>
 
-            <div class="controls">
-                <span><strong $text="/active?format=count">0</strong> active</span>
-                <div class="filter-btns" role="group" aria-label="Filter todos">
-                    <button @click="filter/set" name="filter" value="all">All</button>
-                    <button @click="filter/set" name="filter" value="active">Active</button>
-                    <button @click="filter/set" name="filter" value="done">Done</button>
-                </div>
-            </div>
+    <script>
+        const app = document.currentScript.closest('data-wrapper');
 
-            <details>
-                <summary>Live state — inspect data-todos in DevTools or expand here</summary>
-                <pre class="state-pre"><code $text="/todos?format=json"></code></pre>
-            </details>
+        if (localStorage.getItem('todos') === null) {
+            localStorage.setItem('todos', JSON.stringify([
+                { id: 1, task: 'Master the DOM',    status: 'done',   done: true  },
+                { id: 2, task: 'Ship data-wrapper', status: 'active', done: false },
+                { id: 3, task: 'Write the docs',    status: 'active', done: false },
+            ]));
+        }
 
-        </data-wrapper>
-    </article>
-</section>
+        const compute = () => {
+            const todos  = app.state.todos  || [];
+            const filter = app.state.filter || 'all';
+            app.put('active', todos.filter(t => !t.done));
+            app.put('view', todos.filter(t =>
+                filter === 'all' ? true : filter === 'active' ? !t.done : t.done
+            ));
+        };
+
+        app.register({
+            'todo/add': e => {
+                const task = String(e.detail.payload.task ?? '').trim();
+                if (!task) return;
+                app.push('todos', { id: Date.now(), task, status: 'active', done: false });
+                e.target.reset();
+            },
+            'todo/toggle': e => {
+                const id = Number(e.detail.payload.id);
+                app.put('todos', prev => (prev || []).map(t =>
+                    t.id === id ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' } : t
+                ));
+            },
+            'todo/remove': e => {
+                const id = Number(e.detail.payload.id);
+                app.put('todos', prev => (prev || []).filter(t => t.id !== id));
+            },
+            'filter/set': e => app.put('filter', e.detail.payload.filter),
+        });
+
+        app.addEventListener('dw/sync', e => {
+            if (e.detail.key === 'todos' || e.detail.key === 'filter') compute();
+        });
+    </script>
+</article>

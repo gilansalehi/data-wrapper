@@ -183,8 +183,11 @@ export class DataWrapper extends HTMLElement {
     // dynamically imported and its `default` export is invoked with the
     // wrapper as the only argument — handy for handler registration in a
     // separate file. Anything else is fetched as text, replaces `innerHTML`,
-    // and re-wakes the subtree. Either path ends with a `dw/loaded` event
-    // carrying the resolved URL.
+    // and re-wakes the subtree. Append `?run-scripts` to execute the loaded
+    // HTML's inline `<script>` tags before wake binds — `innerHTML` alone
+    // leaves them inert. External `<script src>` is skipped to keep wake's
+    // ordering invariants (async fetch would race with binding). Either path
+    // ends with a `dw/loaded` event carrying the resolved URL.
     async load(src: string | null = this.getAttribute('src')) {
         if (!src) return;
         const url = new URL(src, document.baseURI);
@@ -201,12 +204,30 @@ export class DataWrapper extends HTMLElement {
             this._unsubs = [];
             this._listCache = new Map();
             this.removeAttribute('_live');
+            if (url.searchParams.has('run-scripts')) runScripts(this);
             wake(this, null, this);
         }
         emit('dw/loaded', { src: url.href }, this);
     }
     // #endregion
 }
+
+// Browsers don't execute `<script>` tags inserted via `innerHTML`; replacing
+// each one with a freshly created copy is the standard workaround. Inline-only:
+// `<script src>` would fetch async and race with wake's binding pass. Scripts
+// nested inside descendant wrappers are skipped — those wrappers run their own.
+const runScripts = (wrapper: Element) => {
+    for (const oldScript of wrapper.querySelectorAll('script')) {
+        if (oldScript.hasAttribute('src')) continue;
+        if (oldScript.closest('data-wrapper') !== wrapper) continue;
+        const newScript = document.createElement('script');
+        for (const { name, value } of oldScript.attributes) {
+            newScript.setAttribute(name, value);
+        }
+        newScript.textContent = oldScript.textContent;
+        oldScript.replaceWith(newScript);
+    }
+};
 
 if (typeof customElements !== 'undefined' && !customElements.get('data-wrapper')) {
     customElements.define('data-wrapper', DataWrapper);

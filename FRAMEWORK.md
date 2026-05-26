@@ -436,11 +436,14 @@ subscriptions and `@` listeners), replaces `innerHTML`, resets the
 Station and list cache, clears `_live`, and re-wakes. `dw/loaded` is
 emitted on completion.
 
-**Caveat:** `<script>` tags inside src-loaded HTML do not execute
-(HTML5 `innerHTML` rule). Loaded views must initialize via the inline
-`onload=""` attribute (which fires on the framework's `load` event)
-or via a `.js` controller. This is why `onload=""` is the canonical
-init pattern for HTML partials, not script-tag colocation.
+**Inline scripts opt in via `?run-scripts`.** Browsers don't execute
+`<script>` tags inserted via `innerHTML`, so loaded views are inert by
+default — initialize via `onload=""`, a `.js` controller, or a parent
+that calls `register()`. Append `?run-scripts` to the `src` URL to opt
+that view into having its inline scripts re-created and executed before
+wake binds; `document.currentScript.closest('data-wrapper')` gives the
+script its host wrapper. External `<script src>` is skipped — its async
+fetch would race with wake's binding pass.
 
 ## Lifecycle Events
 

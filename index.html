@@ -35,9 +35,6 @@
     <!-- <data-wrapper id="impossible" src="views/framework/impossible.html">
     </data-wrapper> -->
 
-    <!-- <data-wrapper id="showcase-todos" src="views/showcase/todos.html">
-    </data-wrapper> -->
-
 <data-wrapper id="docs">
     <data-wrapper id="how-to" src="views/framework/how-to.html">
     </data-wrapper>
@@ -52,106 +49,24 @@
 <section id="todos">
 <h2>Todos app</h2>
 
-<p>A complete CRUD app built in HTML. State in <code>data-*</code> attributes, actions registered in JS,
-   rows rendered via <code>*list</code>, and per-row badges controlled by <code>*if</code>.
-   Todos persist through <code>localStorage</code>, then render through wrapper state.
-   Open DevTools → Elements and watch the attributes update live.</p>
+<p>A complete CRUD app built in HTML. Markup and handlers live in a separate file, loaded via
+   <code>src="…?run-scripts"</code>. Todos persist through <code>localStorage</code> using the
+   <code>$data-todos="localstorage://todos"</code> protocol binding — no <code>dw/sync</code>
+   wiring, no save callback. Open DevTools → Elements and watch the attributes update live.</p>
 
-<article class="demo" data-to="todosCode" @reflect="demo/reflect">
-    <data-wrapper id="app" data-filter="all">
-
-        <form @submit="todo/add?prevent">
-            <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off">
-            <button type="submit">Add</button>
-        </form>
-
-        <ul class="todo-list" *list="/view" data-empty="dw-empty">
-            <template>
-                <li class="todo-item" $class="./status">
-                    <input type="checkbox" $checked="./done" @change="todo/toggle" name="id" $value="./id" aria-label="Toggle todo completion">
-                    <span $text="./task"></span>
-                    <strong class="done-badge" *if="./done">done</strong>
-                    <button class="delete-btn" @click="todo/remove" name="id" $value="./id" aria-label="Remove">✕</button>
-                </li>
-            </template>
-        </ul>
-
-        <div class="controls">
-            <span><strong $text="/active?format=count">0</strong> active</span>
-            <div class="filter-btns" role="group" aria-label="Filter todos">
-                <button @click="filter/set" name="filter" value="all">All</button>
-                <button @click="filter/set" name="filter" value="active">Active</button>
-                <button @click="filter/set" name="filter" value="done">Done</button>
-            </div>
-        </div>
-
-        <details>
-            <summary>Live state — inspect data-todos in DevTools or expand here</summary>
-            <pre><code $text="/todos?format=json"></code></pre>
-        </details>
-
-    </data-wrapper>
-</article>
+<data-wrapper id="app" data-filter="all" $data-todos="localstorage://todos"
+              src="views/showcase/todos.html?run-scripts">
+</data-wrapper>
 
 <details>
-    <summary>Full HTML</summary>
+    <summary>Full HTML — markup + inline script, loaded from <code>views/showcase/todos.html</code></summary>
     <pre><code $text="/todosCode"></code></pre>
-    <pre><code>const app = document.getElementById('app');
-const TODOS_STORAGE = 'data-wrapper:todos';
-const SEED_TODOS = [
-  { id: 1, task: 'Master the DOM',    status: 'done',   done: true  },
-  { id: 2, task: 'Ship data-wrapper', status: 'active', done: false },
-  { id: 3, task: 'Write the docs',    status: 'active', done: false },
-];
-
-const loadTodos = () => {
-  try { return JSON.parse(localStorage.getItem(TODOS_STORAGE)) || SEED_TODOS; }
-  catch { return SEED_TODOS; }
-};
-
-const compute = () => {
-  const todos  = app.state.todos  || [];
-  const filter = app.state.filter || 'all';
-  app.put('active', todos.filter(t => !t.done));
-  app.put('view', todos.filter(t =>
-    filter === 'all' ? true : filter === 'active' ? !t.done : t.done
-  ));
-};
-
-app.register({
-  'todo/add': e => {
-    const task = String(e.detail.payload.task ?? '').trim();
-    if (!task) return;
-    app.push('todos', { id: Date.now(), task, status: 'active', done: false });
-    e.target.reset();
-  },
-  'todo/toggle': e => {
-    const id = Number(e.detail.payload.id);
-    app.put('todos', prev => (prev || []).map(t =>
-      t.id === id ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' } : t
-    ));
-  },
-  'todo/remove': e => {
-    const id = Number(e.detail.payload.id);
-    app.put('todos', prev => (prev || []).filter(t => t.id !== id));
-  },
-  'filter/set': e => app.put('filter', e.detail.payload.filter),
-});
-
-app.addEventListener('dw/sync', e => {
-  if (e.detail.key === 'todos') {
-    localStorage.setItem(TODOS_STORAGE, JSON.stringify(app.state.todos || []));
-    compute();
-  }
-  if (e.detail.key === 'filter') compute();
-});
-
-app.put('todos', loadTodos());</code></pre>
 </details>
 <p class="note">
-    Todo data is loaded from <code>localStorage["data-wrapper:todos"]</code> on startup and saved when
-    <code>todos</code> changes. The filter buttons are styled by a plain CSS attribute selector:
-    <code>data-wrapper[data-filter="done"] button[data-val="done"] { font-weight: bold }</code> — no JS.
+    Todo data is read from <code>localStorage["todos"]</code> on attach and written back on every state
+    change — the protocol binding handles both sides. The filter buttons are styled by a plain CSS
+    attribute selector: <code>data-wrapper[data-filter="done"] button[value="done"] { font-weight: bold }</code>
+    — no JS.
 </p>
 </section>
 
@@ -755,59 +670,6 @@ DW_FORMATTERS.set('pluralise', v =>
             demo.put('fullName', `${demo.state.firstName} ${demo.state.lastName}`)
         );
         demo.put('fullName', `${demo.state.firstName} ${demo.state.lastName}`);
-
-        // Todos app
-        const app = document.getElementById('app');
-        const TODOS_STORAGE = 'data-wrapper:todos';
-        const SEED_TODOS = [
-            { id: 1, task: 'Master the DOM',    status: 'done',   done: true  },
-            { id: 2, task: 'Ship data-wrapper', status: 'active', done: false },
-            { id: 3, task: 'Write the docs',    status: 'active', done: false },
-        ];
-
-        const loadTodos = () => {
-            try { return JSON.parse(localStorage.getItem(TODOS_STORAGE)) || SEED_TODOS; }
-            catch { return SEED_TODOS; }
-        };
-
-        const compute = () => {
-            const todos  = app.state.todos  || [];
-            const filter = app.state.filter || 'all';
-            app.put('active', todos.filter(t => !t.done));
-            app.put('view', todos.filter(t =>
-                filter === 'all' ? true : filter === 'active' ? !t.done : t.done
-            ));
-        };
-
-        app.register({
-            'todo/add': e => {
-                const task = String(e.detail.payload.task ?? '').trim();
-                if (!task) return;
-                app.push('todos', { id: Date.now(), task, status: 'active', done: false });
-                e.target.reset();
-            },
-            'todo/toggle': e => {
-                const id = Number(e.detail.payload.id);
-                app.put('todos', prev => (prev || []).map(t =>
-                    t.id === id ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' } : t
-                ));
-            },
-            'todo/remove': e => {
-                const id = Number(e.detail.payload.id);
-                app.put('todos', prev => (prev || []).filter(t => t.id !== id));
-            },
-            'filter/set': e => app.put('filter', e.detail.payload.filter),
-        });
-
-        app.addEventListener('dw/sync', e => {
-            if (e.detail.key === 'todos') {
-                localStorage.setItem(TODOS_STORAGE, JSON.stringify(app.state.todos || []));
-                compute();
-            }
-            if (e.detail.key === 'filter') compute();
-        });
-
-        app.put('todos', loadTodos());
 
     });
 </script>
