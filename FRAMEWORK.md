@@ -355,6 +355,67 @@ stabilizes via `prev === next` on primitive values, or
 stack-overflows on objects). Both land in a future polish stage,
 motivated by real dogfood.
 
+## Source Resolution
+
+Every `$` and `*` binding reads from a **source** — a `BindingSource`
+returned by `resolve(pURL, ctx)`. The token chooses behavior (sink for
+`$`, directive for `*`); the source chooses where values come from.
+`wire()` doesn't branch on source type — both code paths call
+`source.subscribe(sub)` and trust the shape.
+
+```ts
+type BindingSource = {
+    subscribe: (cb: Sub)    => Off;     // fires once on attach, then on each publish
+    write?:    (v: unknown) => void;    // present iff the source is writable
+    escapes:                   boolean; // subscription leaves local scope?
+};
+```
+
+**Two implementations.** `resolve()` returns one of two shapes
+depending on the pURL's protocol:
+
+- **Default (`dwrl:`)** — state-channel source. `subscribe` wraps the
+  framework's `subscribe()` primitive against the appropriate station
+  (the row's for `./relative` paths in a list row; the target wrapper's
+  otherwise). Reactive: fires on every publish.
+- **Non-default (`localstorage://…`, future `url://`, `api://`)** —
+  protocol-handler source from `DW_PROTOCOLS`. `subscribe` fires once
+  with `handler.read(pURL, wrapper)` and returns a no-op `Off` — there
+  is no in-process pub/sub for external storage.
+
+**Bidirectionality is the handler's shape.** A protocol handler
+exposing `write` produces a source with `source.write` set. Wire()
+detects this and composes a writeback subscription on the wrapper's
+matching `data-*` state channel — every state update propagates back
+through `handler.write`. No flag at the binding site. A handler that
+omits `write` (or registers as a bare function) is read-once; state
+diverges from storage after wake.
+
+The writeback uses the same `subscribe()` primitive used everywhere
+else, which init-fires the sub with the current value. For
+`localstorage:` the just-read value gets persisted back immediately —
+idempotent. Protocols with expensive or non-idempotent writes (a
+future `api://` POST) should guard internally or expose `read`-only.
+
+**Where this shows up.**
+
+- `$text="/name"` — default protocol, state-channel source, no write.
+- `$data-active="/todos?where=!done"` — computed value: default protocol,
+  state-channel source, `bind()` routes the sink through `put()`.
+- `$data-todos="localstorage://todos"` — protocol source with `write`,
+  writeback to `data-todos` state channel: storage and state stay in
+  lockstep automatically.
+- `*list="/items"` — default protocol, state-channel source consumed
+  by the `list` directive.
+- `*list="localstorage://snapshot"` — protocol + `*`: the directive
+  fires once with the read value. Read-once is the natural semantic
+  for storage sources; reactive update from external writes requires
+  a cross-tab `storage` event listener (deferred).
+
+The seam keeps `wire()` source-agnostic. Adding `url:`, `session:`,
+`api:` is a registry insert plus a handler implementation — no
+`wire()` change.
+
 ## Extensibility
 
 `DW_DIRECTIVES`, `DW_FORMATTERS`, and `DW_TEMPLATES` are exported
@@ -552,6 +613,47 @@ a true installable PWA:
   stabilises. When built, it should be a no-build worker on the native
   `ServiceWorker` API — a zero-dependency framework warrants nothing
   less.
+
+---
+
+## Roadmap
+
+Deferred items, each tied to a real motivation (not speculative scope).
+They live here, not in the core, until dogfood proves they're earned.
+
+**Cycle detection in `$data-*` declarations.** A circular graph
+either stabilises via the `prev === next` short-circuit on primitive
+values, or stack-overflows on object values. v1 leaves it to runtime;
+the named cycle path (`b → c → b`) ships as a development-only
+diagnostic, likely in the debugger module rather than the core.
+
+**Batched flush / diamond dedup.** A binding bound to two channels
+via formatter arguments re-fires on each input change. No v1
+built-in formatter consumes two pURL args, so the diamond shape
+can't appear in user code yet. Ships when the first custom
+formatter combines channels.
+
+**Wake-time topological order for initial values.** Out-of-order
+`$data-*` declarations cost one redundant initial write. Eventually
+consistent. Cheaper to ship topo sort when dogfood reveals the
+extra write actually matters than to assume it will.
+
+**Multi-channel subscription per binding.** `$text="/todos?where=/filter"`
+currently subscribes only to `/todos`; the `/filter` arg is
+re-resolved on `/todos` fires but the binding doesn't itself listen
+to `/filter`. Pre-existing limitation, not specific to `$data-*`.
+Adding it tangles with row-scope rules (`./` resolves against
+`row.subs`, `/` against `wrapper._subs` — one binding straddling
+both). Designed once with dogfood evidence.
+
+**Richer `where` predicate language.** v1 grammar is `!field`,
+`field`, `field=value` (JSON-parsed RHS). Comparisons, boolean
+compositions, nested paths, IN clauses — extended in Stage 5 polish
+or via custom formatters per app, depending on how often the same
+shapes appear across demos.
+
+**Address-bar sync, `_` token implementation, PWA service worker** —
+each scoped in the sections above; none on the v1 path.
 
 ---
 

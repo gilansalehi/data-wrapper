@@ -169,3 +169,109 @@ export interface DirectiveContext extends pURL {
 export type DirectiveHandler = (ctx: DirectiveContext) => Sub;
 
 export const DW_DIRECTIVES = new Map<string, DirectiveHandler>();
+
+// A protocol resolves a pURL like `localStorage://todos` to a value.
+// Handler shape is the bidirectionality contract: a bare function (or an
+// object with only `read`) is read-once; an object exposing `write` is
+// read-write — wire() composes a writeback automatically when the sink
+// is a wrapper-data-* slot. No flag at the binding site.
+export type ProtocolHandler =
+    | ((purl: pURL, wrapper: Wrapper) => unknown)
+    | {
+        read:   (purl: pURL, wrapper: Wrapper) => unknown,
+        write?: (purl: pURL, value: unknown, wrapper: Wrapper) => void,
+    };
+
+// #region binding-source
+// @docs The read-side contract `wire()` consumes for every `$` and `*`
+// token. `resolve()` (in engine.ts) returns one of these for any pURL — a
+// state-channel source for default-protocol pURLs, a protocol-handler
+// source for non-default ones. Wire() never branches on where the value
+// came from.
+//
+// `subscribe` is universal: it fires once on attach with the current
+// value, then fires again on each publish for reactive sources or never
+// again for one-shot sources. The Off it returns is meaningful for
+// reactive sources, a no-op for one-shot ones — wire() pushes it onto
+// `unsubs` iff `escapes` is set.
+//
+// `write` duck-types bidirectionality. When present, the source can
+// round-trip values back to its origin (the localStorage handler's
+// `write`, a future `url:` handler's hash setter, etc.). Wire() composes
+// a writeback subscription on the wrapper's matching state channel when
+// the sink is wrapper-data-*. No flag at the binding site — the handler's
+// shape is the contract.
+//
+// `escapes` tells wire() the subscription leaves local scope — a row's
+// `/absolute` path subscribing to the wrapper, a `//host/` path crossing
+// wrapper boundaries. Tracked for teardown.
+export type BindingSource = {
+    subscribe: (cb: Sub)    => Off;
+    write?:    (v: unknown) => void;
+    escapes:                   boolean;
+};
+
+// `resolve()` returns both the source and the wrapper that formatters
+// resolve `/path`-shaped param values against. They travel together —
+// a `//host/path` DWRL names another wrapper as the formatter context
+// alongside the source.
+export type Resolution = {
+    source: BindingSource;
+    target: Wrapper;
+};
+// #endregion
+
+export const DW_PROTOCOLS = new Map<string, ProtocolHandler>([
+    // #region protocols
+    // @docs Resolvers for non-DWRL pURLs that appear as `$` and `*`
+    // attribute values (`<data-wrapper $data-todos="localstorage://todos">`,
+    // `<ul *list="localstorage://snapshot">`, ...). `resolve()` looks the
+    // protocol up here and wraps the handler in a `BindingSource` — its
+    // `subscribe` fires once with the read value (one-shot — no
+    // in-process pub/sub from storage); `write`, if exposed, gets carried
+    // through and wire() composes a writeback on the wrapper's matching
+    // state channel for any wrapper-data-* sink.
+    //
+    // **Handler shape is the bidirectionality contract.** A bare function
+    // (or `{read}`-only object) is read-once: wake reads the value into
+    // the sink and that's that. An object exposing `write` is read-write:
+    // every state change on the bound dataset key propagates back through
+    // `write`. No `?sync` flag at the binding site — the shape decides.
+    //
+    // **JSON-round-trip is the storage convention.** Handlers that
+    // persist structured values should `JSON.parse` on read and
+    // `JSON.stringify` on write to match dataset semantics. String-valued
+    // sources (a future `url://?param=...`) can skip the parse but
+    // should accept stringified writes when bidirectional.
+    //
+    // **`write` init-fires once on attach.** The writeback subscription
+    // uses the framework's `subscribe()` primitive, which fires every
+    // sub with its initial value — so the just-read value gets written
+    // back immediately. For `localstorage:` that's idempotent. Protocols
+    // with expensive or non-idempotent writes (a future `api://` POST)
+    // should guard internally or expose `read`-only.
+    //
+    // Keys are lowercase by URL-spec convention — `new URL()`
+    // lowercases the protocol scheme, so we register under the same
+    // form. Devs write `localStorage://` for readability; the parser
+    // normalises it on the way through.
+    //
+    // Custom protocols: `DW_PROTOCOLS.set('api', (purl) => fetch(...))`.
+    ['localstorage', {
+        // `localstorage://todos` → host is `todos`. URL parsing places
+        // the first segment after `://` in `hostname` (lowercased),
+        // not in `pathname`. localStorage keys are flat, so host is
+        // the key. Case-sensitivity caveat: keys are lowercased by URL
+        // parsing — use lowercase localStorage keys to match.
+        read: (purl) => {
+            const raw = localStorage.getItem(purl.host);
+            if (raw == null) return undefined;
+            try { return JSON.parse(raw); } catch { return raw; }
+        },
+        write: (purl, value) => {
+            if (value === undefined) { localStorage.removeItem(purl.host); return; }
+            localStorage.setItem(purl.host, JSON.stringify(value));
+        },
+    }],
+    // #endregion
+]);

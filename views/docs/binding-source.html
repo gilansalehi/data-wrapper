@@ -1,0 +1,17 @@
+<figure data-source="registry.ts" data-region="binding-source">
+  <figcaption>The read-side contract <code>wire()</code> consumes for every <code>$</code> and <code>*</code> token. <code>resolve()</code> (in engine.ts) returns one of these for any pURL — a state-channel source for default-protocol pURLs, a protocol-handler source for non-default ones. Wire() never branches on where the value came from.<code>subscribe</code> is universal: it fires once on attach with the current value, then fires again on each publish for reactive sources or never again for one-shot sources. The Off it returns is meaningful for reactive sources, a no-op for one-shot ones — wire() pushes it onto <code>unsubs</code> iff <code>escapes</code> is set.<code>write</code> duck-types bidirectionality. When present, the source can round-trip values back to its origin (the localStorage handler&#x27;s <code>write</code>, a future <code>url:</code> handler&#x27;s hash setter, etc.). Wire() composes a writeback subscription on the wrapper&#x27;s matching state channel when the sink is wrapper-data-*. No flag at the binding site — the handler&#x27;s shape is the contract.<code>escapes</code> tells wire() the subscription leaves local scope — a row&#x27;s <code>/absolute</code> path subscribing to the wrapper, a <code>//host/</code> path crossing wrapper boundaries. Tracked for teardown.</figcaption>
+  <pre><code>export type BindingSource = {
+    subscribe: (cb: Sub)    =&gt; Off;
+    write?:    (v: unknown) =&gt; void;
+    escapes:                   boolean;
+};
+
+// `resolve()` returns both the source and the wrapper that formatters
+// resolve `/path`-shaped param values against. They travel together —
+// a `//host/path` DWRL names another wrapper as the formatter context
+// alongside the source.
+export type Resolution = {
+    source: BindingSource;
+    target: Wrapper;
+};</code></pre>
+</figure>

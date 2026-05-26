@@ -584,3 +584,81 @@ describe('$data-* computed values', () => {
         expect(el.get('c')).toBe(2);
     });
 });
+
+describe('$ + protocol pURL bindings', () => {
+    const makeWith = (attrs: Record<string, string>, html = ''): TestWrapper => {
+        const el = document.createElement('data-wrapper') as TestWrapper;
+        for (const [name, value] of Object.entries(attrs)) el.setAttribute(name, value);
+        el.innerHTML = html;
+        document.body.appendChild(el);
+        return el;
+    };
+
+    beforeEach(() => {
+        localStorage.clear();
+    });
+
+    it('binds dataset slot to a localStorage value at wake', () => {
+        localStorage.setItem('todos', JSON.stringify([{ id: 1, task: 'one' }]));
+
+        const el = makeWith({ '$data-todos': 'localstorage://todos' });
+
+        expect(el.get('todos')).toEqual([{ id: 1, task: 'one' }]);
+        // The resolved value lands in data-todos via the bind() → put() sink.
+        expect(el.dataset.todos).toBe('[{"id":1,"task":"one"}]');
+    });
+
+    it('missing localStorage key leaves the dataset slot unset', () => {
+        const el = makeWith({ '$data-todos': 'localstorage://todos' });
+
+        // `read()` returned undefined → `put(undefined)` short-circuits
+        // (prev === next === undefined). No data-todos attribute is
+        // created; bindings see undefined state.
+        expect(el.dataset.todos).toBeUndefined();
+        expect(el.get('todos')).toBeUndefined();
+    });
+
+    it('writable handler persists state changes back through the protocol', async () => {
+        const el = makeWith({ '$data-todos': 'localstorage://todos' });
+
+        el.put('todos', [{ id: 1, task: 'new' }]);
+        await tick();
+
+        // Handler shape is the contract: the localstorage handler exposes
+        // `write`, so wire() composes a writeback automatically — no flag.
+        expect(localStorage.getItem('todos')).toBe('[{"id":1,"task":"new"}]');
+    });
+
+    it('round-trips read and writeback through a writable handler', async () => {
+        localStorage.setItem('count', '5');
+
+        const el = makeWith({ '$data-count': 'localstorage://count' });
+
+        expect(el.get('count')).toBe(5);
+
+        el.put('count', 10);
+        await tick();
+
+        expect(localStorage.getItem('count')).toBe('10');
+    });
+
+    it('formatter pipeline composes with protocol reads (and writes)', () => {
+        localStorage.setItem('greeting', JSON.stringify('hello'));
+
+        const el = makeWith({ '$data-greeting': 'localstorage://greeting?format=upper' });
+
+        // The formatter runs on the read value before it lands in state.
+        expect(el.get('greeting')).toBe('HELLO');
+        // The writeback init-fires with the just-put state value, which
+        // is already formatted — state is canonical, storage mirrors it.
+        expect(localStorage.getItem('greeting')).toBe('"HELLO"');
+    });
+
+    it('unknown protocols silently skip (no error, no write)', () => {
+        const el = makeWith({ '$data-config': 'unknown://something' });
+
+        // No handler in DW_PROTOCOLS → resolve() returns null and
+        // wire() skips silently. data-config is never created.
+        expect(el.dataset.config).toBeUndefined();
+    });
+});

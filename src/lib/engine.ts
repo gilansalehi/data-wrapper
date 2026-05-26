@@ -1,5 +1,5 @@
-import { cloneTemplate, DW_DIRECTIVES, DW_FORMATTERS, PROP_ALIASES, resolveTemplate } from './registry.ts';
-import type { DirectiveHandler, DispatchDetail, DispatchPayload, Item, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
+import { cloneTemplate, DW_DIRECTIVES, DW_FORMATTERS, DW_PROTOCOLS, PROP_ALIASES, resolveTemplate } from './registry.ts';
+import type { BindingSource, DirectiveHandler, DispatchDetail, DispatchPayload, Item, ProtocolHandler, Resolution, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
 import { p, on, emit, readPath, type Off, type pURL } from './utils.ts';
 
 export type { Item, ListCache, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
@@ -384,6 +384,56 @@ const resolveHost = (host: string, local: WrapperNode): WrapperNode | null => {
     return null;
 };
 
+// Resolve a parsed pURL to its binding source and formatter target. One
+// hook for every `$` and `*` token: the default (`dwrl:`) protocol gives
+// a state-channel source whose `subscribe` is the framework's pub/sub
+// primitive against the appropriate station — the row's for relative
+// pURLs in a row context, the target wrapper's otherwise. A non-default
+// protocol routes through `DW_PROTOCOLS`: `subscribe` fires once with
+// the handler's read value and returns a noop Off; if the handler
+// exposes `write`, the source carries it and wire() composes a
+// writeback on the wrapper's state channel for the matching dataset key.
+// Returns null for unknown protocols and unresolvable hosts — wire()
+// skips the binding silently.
+const resolve = (
+    dwrl: pURL,
+    ctx: { wrapper: WrapperNode; row: Row | null },
+): Resolution | null => {
+    const { protocol, path, isRel, host } = dwrl;
+    const { wrapper, row } = ctx;
+
+    if (protocol !== 'dwrl:') {
+        const handler = DW_PROTOCOLS.get(protocol.slice(0, -1));
+        if (!handler) return null;
+        const read  = typeof handler === 'function' ? handler : handler.read;
+        const write = typeof handler === 'function' ? undefined : handler.write;
+
+        const source: BindingSource = {
+            subscribe: (cb) => { cb(read(dwrl, wrapper)); return () => {}; },
+            write:     write ? (v) => write(dwrl, v, wrapper) : undefined,
+            escapes:   false,
+        };
+        return { source, target: wrapper };
+    }
+
+    // Default protocol: state channel needs a path to address.
+    if (!path) return null;
+
+    const target = resolveHost(host, wrapper);
+    if (!target) return null;
+
+    const scoped  = row && isRel;
+    const station = scoped ? row.subs : target._subs;
+    const state   = scoped ? row.item : target.state;
+    const escapes = station !== (row ? row.subs : wrapper._subs);
+
+    const source: BindingSource = {
+        subscribe: (cb) => subscribe(station, path, cb, readPath(state, path)),
+        escapes,
+    };
+    return { source, target };
+};
+
 export const wire = (
     el: Element,
     attr: Attr,
@@ -396,7 +446,7 @@ export const wire = (
 
     const dwrl = p(value);
     const { path, params, host } = dwrl;
-    if (!path || !wrapper) return; // set default "debugger path"?
+    if (!wrapper) return;
 
     // Teardown handles live on the element's scope: its *list row, else the wrapper.
     const unsubs = row ? row.unsubs : wrapper._unsubs;
@@ -406,6 +456,7 @@ export const wire = (
         // is re-dispatched onto the named wrapper. The native-event listener
         // stays on the local wrapper either way — the host is not a DOM
         // ancestor of `el` — so its Off is always kept for local teardown.
+        if (!path) return;
         const sink = host === HOST_SELF ? el : resolveHost(host, wrapper);
         if (!sink) return; // named host absent — resolveHost has warned
 
@@ -425,27 +476,32 @@ export const wire = (
         return;
     }
 
-    // `$`/`*` read from the host wrapper — the local one, unless a `//host/`
-    // DWRL names another wrapper by id.
-    const target = resolveHost(host, wrapper);
-    if (!target) return;
-
-    const scoped  = row && dwrl.isRel;
-    const station = scoped ? row.subs                 : target._subs;
-    const initial = scoped ? readPath(row.item, path) : readPath(target.state, path);
-
-    // A binding escapes its scope when it subscribes somewhere other than that
-    // scope's own Station — a `/absolute` path inside a row, or a `//host/`
-    // path into another wrapper. Escapes are tracked for teardown; in-scope
-    // subs are not.
-    const escapes = station !== (row ? row.subs : wrapper._subs);
+    // `$` and `*` both consume a source via `resolve()`. The resolver
+    // returns null for unknown protocols, unresolvable hosts, and
+    // path-less default-protocol pURLs — wire() skips those silently.
+    const r = resolve(dwrl, { wrapper, row });
+    if (!r) return;
+    const { source, target } = r;
 
     if (token === '$') {
         const format = formatter(params, target);
         const set    = bind(el, prop);
+        const sub    = (v: unknown) => set(format(v));
 
-        const off = subscribe(station, path, v => set(format(v)), initial);
-        if (escapes) unsubs.push(off);
+        const off = source.subscribe(sub);
+        if (source.escapes) unsubs.push(off);
+
+        // Writable source + wrapper-data-* sink = bidirectional binding.
+        // Composes a writeback subscription on the wrapper's state channel
+        // for this dataset key. Init-fires once with the value just put
+        // there from the source read — idempotent for localStorage;
+        // other protocols decide their own write semantics. In-scope sub
+        // (subscribes to wrapper._subs), wiped on `load()` like any
+        // state-channel sub — no Off to track.
+        if (source.write && el === wrapper && prop.startsWith('data-')) {
+            const dsKey = prop.slice(5).replace(/-./g, c => c[1].toUpperCase());
+            subscribe(wrapper._subs, dsKey, source.write, readPath(wrapper.state, dsKey));
+        }
         return;
     }
 
@@ -453,8 +509,8 @@ export const wire = (
         const updater = DW_DIRECTIVES.get(prop)?.({ ...dwrl, wrapper, el, row, wake });
         if (!updater) throw new Error(`Did not recognize directive "${prop}"`);
 
-        const off = subscribe(station, path, updater, initial);
-        if (escapes) unsubs.push(off);
+        const off = source.subscribe(updater);
+        if (source.escapes) unsubs.push(off);
         return;
     }
 };
@@ -466,10 +522,10 @@ export const wire = (
 // Each wired element gets the `_live` attribute so re-entry is idempotent.
 // Walking happens once; every tokenized attribute is compiled into a
 // subscriber by `wire()`, so runtime updates never re-parse anything.
-// `$data-*` attributes on the wrapper itself are computed-value
-// declarations — `wire()` treats them like any other `$`-binding;
-// `bind()` routes the sink through `put()` so the cascade falls out of
-// the existing pub/sub. No extra wake-time pass required.
+// `$data-*` attributes on the wrapper itself are computed-value or
+// protocol-bound declarations — `wire()` treats them like any other
+// `$`-binding; `bind()` routes the sink through `put()` so the cascade
+// falls out of the existing pub/sub.
 export const wake = (
     root: Element,
     row: Row | null = null,
