@@ -1,5 +1,5 @@
-<section id="why">
-    <h2>Why Choose Data-Wrapper</h2>
+<section>
+    <h2 @click="why/toggle">Why Data-Wrapper</h2>
 
     <p>
         Most frameworks ask you to move your UI into JavaScript. Components
@@ -20,11 +20,27 @@
         closures. No virtual DOM. No compiler. No build step.
     </p>
 
-    <h3>What you keep</h3>
+    <article class="demo">
+        <data-wrapper data-name="World">
+            <p>Hello, <strong $text="/name"></strong>!</p>
+        </data-wrapper>
+    </article>
+    <pre><code>&lt;data-wrapper data-name="World"&gt;
+  &lt;p&gt;Hello, &lt;strong $text="/name"&gt;&lt;/strong&gt;!&lt;/p&gt;
+&lt;/data-wrapper&gt;</code></pre>
+    <p class="note">
+        That is the whole program. Open DevTools, edit
+        <code>data-name</code>, and watch the heading change. State is the
+        attribute you can see; the binding is the attribute you can read.
+        No script, no build, no install.
+    </p>
+
+    <h3>What you ship</h3>
     <ul>
         <li>
-            <strong>HTML as the source.</strong>
-            The markup you wrote is the page that ships.
+            <strong>The markup you wrote.</strong>
+            No build artifact between source and page. View source shows
+            you the running program.
         </li>
         <li>
             <strong>The browser as the runtime.</strong>
@@ -49,6 +65,14 @@
         <li>A parallel state model that has to stay in sync with the DOM</li>
         <li>Component libraries you have to learn before you can ship anything</li>
     </ul>
+    <p>
+        And the supply chain that comes with all of it. Zero runtime
+        dependencies — no transitive graph to audit, no postinstall
+        scripts, no maintainer you trusted last year who quietly sold
+        their package to someone you don't know. Supply-chain attacks
+        have become routine, and a framework small enough to read
+        end-to-end is a security posture, not just an aesthetic choice.
+    </p>
 
     <h3>Where it fits</h3>
     <p>

@@ -17,6 +17,7 @@
     [&#x27;date&#x27;,     v =&gt; v ? new Date(v as string).toLocaleDateString() : &#x27;&#x27;],
     [&#x27;trim&#x27;,     v =&gt; String(v || &#x27;&#x27;).trim()],
     [&#x27;bool&#x27;,     v =&gt; !!v],
+    [&#x27;not&#x27;,      v =&gt; !v],
     [&#x27;onoff&#x27;,    v =&gt; v ? &#x27;on&#x27; : &#x27;off&#x27;],
     [&#x27;yesno&#x27;,    v =&gt; v ? &#x27;yes&#x27; : &#x27;no&#x27;],</code></pre>
 </figure>

@@ -14,11 +14,11 @@
 
 [id] { scroll-margin-top: 2rem; }
 
-/* ── Heading scale — a modular rhythm the pages currently lack ─ */
+/* ── Heading scale — a modular rhythm the pages currently lack ─
 main h1,
 main h2 {
     font-family: var(--serif);
-}
+} */
 
 header.container h1,
 main h1 {
@@ -93,19 +93,18 @@ figcaption a:hover {
    A bare prose <pre> (direct child of a section) had no styling;
    give it the same dark slab as the .install widget. Scoped to a
    direct child so <details> code-reveal widgets are left alone. */
-
+main section details > pre,
 main section > pre {
     background: var(--ink);
     color: var(--ink-text);
-    border-radius: var(--radius);
     padding: 1.1rem 1.25rem;
-    margin: 1rem 0 1.5rem;
     font-family: var(--mono);
     font-size: .8rem;
     line-height: 1.7;
     overflow-x: auto;
     box-shadow: var(--shadow);
 }
+main section details > pre code,
 main section > pre code {
     background: none;
     padding: 0;

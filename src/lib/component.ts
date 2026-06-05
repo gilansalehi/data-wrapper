@@ -102,7 +102,10 @@ export class DataWrapper extends HTMLElement {
         on('dw/log', console.log, '', this);
         wake(this);
         emit('dw/load', undefined, this);
-        emit('load', undefined, this);   // fires the inline onload="" attribute
+        // Non-bubbling to match native `load` semantics. emit() bubbles, which
+        // would let a nested wrapper's `load` re-trigger ancestors' inline
+        // onload="" handlers — registering the same actions twice.
+        this.dispatchEvent(new Event('load'));
         if (this.hasAttribute('src')) queueMicrotask(() => this.load());
     }
 

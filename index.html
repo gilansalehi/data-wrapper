@@ -29,6 +29,14 @@
 </header>
 
 <main class="container">
+    <data-wrapper id="why"
+        class="collapsible"
+        data-collapsed="false"
+        src="views/framework/why.html"
+        onload="this.register({ 'why/toggle': () => why.put('collapsed', v => v !== 'true' && v !== true) })"
+    >
+    </data-wrapper>
+
     <data-wrapper id="get-started" src="views/framework/get-started.html">
     </data-wrapper>
 
@@ -37,9 +45,6 @@
 
 <data-wrapper id="docs">
     <data-wrapper id="how-to" src="views/framework/how-to.html">
-    </data-wrapper>
-
-    <data-wrapper id="why" src="views/framework/why.html">
     </data-wrapper>
 
 <!-- =====================================================================

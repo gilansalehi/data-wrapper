@@ -13,6 +13,7 @@ const set = (el: Element, prop: string, val: unknown) => {
     }
 };
 
+// two special cases, otherwise just a propAlias lookup and setter binding.
 export const bind = (el: Element, prop: string): Sub => {
     if (prop === 'class') {
         const base = el.className;

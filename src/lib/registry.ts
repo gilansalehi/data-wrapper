@@ -127,6 +127,7 @@ export const DW_FORMATTERS = new Map<string, Formatter>([
     ['date',     v => v ? new Date(v as string).toLocaleDateString() : ''],
     ['trim',     v => String(v || '').trim()],
     ['bool',     v => !!v],
+    ['not',      v => !v],
     ['onoff',    v => v ? 'on' : 'off'],
     ['yesno',    v => v ? 'yes' : 'no'],
     // #endregion
