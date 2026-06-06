@@ -183,32 +183,39 @@ export type ProtocolHandler =
         write?: (purl: pURL, value: unknown, wrapper: Wrapper) => void,
     };
 
-// #region binding-source
-// @docs The read-side contract `wire()` consumes for every `$` and `*`
-// token. `resolve()` (in engine.ts) returns one of these for any pURL — a
-// state-channel source for default-protocol pURLs, a protocol-handler
-// source for non-default ones. Wire() never branches on where the value
-// came from.
+// #region source
+// @docs The contract `wire()` consumes for every `$` and `*` token, and
+// the put: listener consumes for every write. `resolve()` (in engine.ts)
+// returns one of these for any pURL by looking up a Handler — the built-in
+// DEFAULT_HANDLER for default-protocol pURLs, a registered ProtocolHandler
+// for non-default ones. Wire() never branches on where the value came from.
 //
-// `subscribe` is universal: it fires once on attach with the current
-// value, then fires again on each publish for reactive sources or never
-// again for one-shot sources. The Off it returns is meaningful for
-// reactive sources, a no-op for one-shot ones — wire() pushes it onto
-// `unsubs` iff `escapes` is set.
+// All four methods are total. `subscribe` is the read-side stream: it
+// fires once on attach with the current value, then fires again on each
+// publish for reactive sources or never again for one-shot ones. The Off
+// it returns is meaningful for reactive sources, a no-op for one-shot
+// ones — wire() pushes it onto `unsubs` iff `escapes` is set.
 //
-// `write` duck-types bidirectionality. When present, the source can
-// round-trip values back to its origin (the localStorage handler's
-// `write`, a future `url:` handler's hash setter, etc.). Wire() composes
-// a writeback subscription on the wrapper's matching state channel when
-// the sink is wrapper-data-*. No flag at the binding site — the handler's
-// shape is the contract.
+// `read` is a one-shot value getter — symmetry with `write`; rarely used
+// directly since `subscribe` fires once initially. `write` round-trips
+// values back to the source's origin (`wrapper.put` for state-channel,
+// `handler.write` for protocol handlers, noop for handlers that don't
+// expose write).
+//
+// The writeback at engine.ts:478 (when a non-default protocol is sunk
+// into `$data-*` on a wrapper) gates on protocol identity, not on
+// `write` presence — every Source has `write` now, but only non-default
+// protocols opt into bidirectional state sync. Default-protocol sources
+// don't get writeback subscribed, avoiding cycles like `$data-foo="/bar"`
+// where writing back foo would re-trigger bar.
 //
 // `escapes` tells wire() the subscription leaves local scope — a row's
 // `/absolute` path subscribing to the wrapper, a `//host/` path crossing
 // wrapper boundaries. Tracked for teardown.
-export type BindingSource = {
+export type Source = {
+    read:      ()           => unknown;
+    write:     (v: unknown) => void;
     subscribe: (cb: Sub)    => Off;
-    write?:    (v: unknown) => void;
     escapes:                   boolean;
 };
 
@@ -217,7 +224,7 @@ export type BindingSource = {
 // a `//host/path` DWRL names another wrapper as the formatter context
 // alongside the source.
 export type Resolution = {
-    source: BindingSource;
+    source: Source;
     target: Wrapper;
 };
 // #endregion

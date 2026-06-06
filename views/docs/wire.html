@@ -10,51 +10,100 @@ const resolveHost = (host: string, local: WrapperNode): WrapperNode | null =&gt;
     return null;
 };
 
-// Resolve a parsed pURL to its binding source and formatter target. One
-// hook for every `$` and `*` token: the default (`dwrl:`) protocol gives
-// a state-channel source whose `subscribe` is the framework&#x27;s pub/sub
-// primitive against the appropriate station — the row&#x27;s for relative
-// pURLs in a row context, the target wrapper&#x27;s otherwise. A non-default
-// protocol routes through `DW_PROTOCOLS`: `subscribe` fires once with
-// the handler&#x27;s read value and returns a noop Off; if the handler
-// exposes `write`, the source carries it and wire() composes a
-// writeback on the wrapper&#x27;s state channel for the matching dataset key.
-// Returns null for unknown protocols and unresolvable hosts — wire()
-// skips the binding silently.
+// @docs Internal handler interface used by the unified Source pipeline.
+// `DEFAULT_HANDLER` implements the dwrl: protocol (read/write/subscribe
+// against wrapper or row state). `toHandler` bridges registered
+// ProtocolHandler entries from DW_PROTOCOLS into the same shape. The
+// distinction between &quot;state-channel source&quot; and &quot;protocol-handler source&quot;
+// dissolves at the call site — resolve() looks up a handler and wraps its
+// three methods with the bound ctx.
+type HandlerCtx = {
+    wrapper: WrapperNode;     // local wrapper (formatter context, protocol-handler ops)
+    target:  WrapperNode;     // host-resolved wrapper (state-channel ops)
+    row:     Row | null;      // row context if firing element is inside *list
+};
+
+type Handler = {
+    read:      (dwrl: pURL, ctx: HandlerCtx)             =&gt; unknown;
+    write:     (dwrl: pURL, v: unknown, ctx: HandlerCtx) =&gt; void;
+    subscribe: (dwrl: pURL, cb: Sub, ctx: HandlerCtx)    =&gt; Off;
+};
+
+const DEFAULT_HANDLER: Handler = {
+    read: (dwrl, { target, row }) =&gt; {
+        const scoped = row &amp;&amp; dwrl.isRel;
+        return readPath(scoped ? row.item : target.state, dwrl.path);
+    },
+    write: (dwrl, v, { target, row }) =&gt; {
+        const scoped = row &amp;&amp; dwrl.isRel;
+        if (scoped) {
+            // Row-scoped writes via state-channel: identity-keyed immutable
+            // update against the parent array. Pending RFC §8.1 — the put:
+            // listener is what would invoke this and it doesn&#x27;t exist yet.
+            throw new Error(&#x27;row-scoped state-channel write: pending RFC §8.1&#x27;);
+        }
+        target.put(dwrl.path, v);
+    },
+    subscribe: (dwrl, cb, { target, row }) =&gt; {
+        const scoped  = row &amp;&amp; dwrl.isRel;
+        const station = scoped ? row.subs : target._subs;
+        const state   = scoped ? row.item : target.state;
+        return subscribe(station, dwrl.path, cb, readPath(state, dwrl.path));
+    },
+};
+
+// Bridge a registered ProtocolHandler (function or {read, write?}) into the
+// canonical Handler shape. Protocol handlers don&#x27;t track reactivity — their
+// subscribe fires once with the read value and returns a noop. Write is
+// total — handlers that only expose read get a noop write.
+const toHandler = (ph: ProtocolHandler): Handler =&gt; {
+    const read  = typeof ph === &#x27;function&#x27; ? ph : ph.read;
+    const write = typeof ph === &#x27;function&#x27; ? undefined : ph.write;
+    return {
+        read:      (dwrl, { wrapper }) =&gt; read(dwrl, wrapper),
+        write:     write ? (dwrl, v, { wrapper }) =&gt; write(dwrl, v, wrapper) : () =&gt; {},
+        subscribe: (dwrl, cb, { wrapper }) =&gt; { cb(read(dwrl, wrapper)); return () =&gt; {}; },
+    };
+};
+
+// Resolve a parsed pURL to a Source. Looks up the handler (DEFAULT_HANDLER
+// for dwrl:, registered handler from DW_PROTOCOLS otherwise), wraps its
+// three methods with the bound ctx. Returns null for unknown protocols,
+// unresolvable hosts, and path-less default-protocol pURLs — wire() skips
+// those silently.
 const resolve = (
     dwrl: pURL,
     ctx: { wrapper: WrapperNode; row: Row | null },
 ): Resolution | null =&gt; {
-    const { protocol, path, isRel, host } = dwrl;
+    const { protocol, isRel, host } = dwrl;
     const { wrapper, row } = ctx;
 
-    if (protocol !== &#x27;dwrl:&#x27;) {
-        const handler = DW_PROTOCOLS.get(protocol.slice(0, -1));
-        if (!handler) return null;
-        const read  = typeof handler === &#x27;function&#x27; ? handler : handler.read;
-        const write = typeof handler === &#x27;function&#x27; ? undefined : handler.write;
+    const isDefault = protocol === &#x27;dwrl:&#x27;;
 
-        const source: BindingSource = {
-            subscribe: (cb) =&gt; { cb(read(dwrl, wrapper)); return () =&gt; {}; },
-            write:     write ? (v) =&gt; write(dwrl, v, wrapper) : undefined,
-            escapes:   false,
-        };
-        return { source, target: wrapper };
-    }
+    // State-channel sources need a path to address; protocol handlers
+    // encode their addressing differently (e.g. localstorage:// uses host).
+    if (isDefault &amp;&amp; !dwrl.path) return null;
 
-    // Default protocol: state channel needs a path to address.
-    if (!path) return null;
+    const handler = isDefault
+        ? DEFAULT_HANDLER
+        : (() =&gt; {
+            const ph = DW_PROTOCOLS.get(protocol.slice(0, -1));
+            return ph ? toHandler(ph) : null;
+        })();
+    if (!handler) return null;
 
-    const target = resolveHost(host, wrapper);
+    const target = isDefault ? resolveHost(host, wrapper) : wrapper;
     if (!target) return null;
 
-    const scoped  = row &amp;&amp; isRel;
-    const station = scoped ? row.subs : target._subs;
-    const state   = scoped ? row.item : target.state;
+    const scoped  = !!(row &amp;&amp; isRel &amp;&amp; isDefault);
+    const station = scoped ? row!.subs : target._subs;
     const escapes = station !== (row ? row.subs : wrapper._subs);
 
-    const source: BindingSource = {
-        subscribe: (cb) =&gt; subscribe(station, path, cb, readPath(state, path)),
+    const handlerCtx: HandlerCtx = { wrapper, target, row };
+    const source: Source = {
+        read:      ()   =&gt; handler.read(dwrl, handlerCtx),
+        write:     (v)  =&gt; handler.write(dwrl, v, handlerCtx),
+        subscribe: (cb) =&gt; handler.subscribe(dwrl, cb, handlerCtx),
         escapes,
     };
     return { source, target };
@@ -117,14 +166,20 @@ export const wire = (
         const off = source.subscribe(sub);
         if (source.escapes) unsubs.push(off);
 
-        // Writable source + wrapper-data-* sink = bidirectional binding.
-        // Composes a writeback subscription on the wrapper&#x27;s state channel
-        // for this dataset key. Init-fires once with the value just put
-        // there from the source read — idempotent for localStorage;
+        // Non-default-protocol source + wrapper-data-* sink = bidirectional
+        // binding. Composes a writeback subscription on the wrapper&#x27;s state
+        // channel for this dataset key. Init-fires once with the value just
+        // put there from the source read — idempotent for localStorage;
         // other protocols decide their own write semantics. In-scope sub
         // (subscribes to wrapper._subs), wiped on `load()` like any
         // state-channel sub — no Off to track.
-        if (source.write &amp;&amp; el === wrapper &amp;&amp; prop.startsWith(&#x27;data-&#x27;)) {
+        //
+        // Gated on protocol identity, not on `source.write` truthiness:
+        // every Source now has a total `write`, but default-protocol
+        // writeback would mean `$data-foo=&quot;/bar&quot;` re-triggers `bar` whenever
+        // `foo` changes — a cycle. Only non-default protocols explicitly
+        // opt into the bidirectional contract.
+        if (dwrl.protocol !== &#x27;dwrl:&#x27; &amp;&amp; el === wrapper &amp;&amp; prop.startsWith(&#x27;data-&#x27;)) {
             const dsKey = prop.slice(5).replace(/-./g, c =&gt; c[1].toUpperCase());
             subscribe(wrapper._subs, dsKey, source.write, readPath(wrapper.state, dsKey));
         }

@@ -1,5 +1,5 @@
 import { cloneTemplate, DW_DIRECTIVES, DW_FORMATTERS, DW_PROTOCOLS, PROP_ALIASES, resolveTemplate } from './registry.ts';
-import type { BindingSource, DirectiveHandler, DispatchDetail, DispatchPayload, Item, ProtocolHandler, Resolution, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
+import type { DirectiveHandler, DispatchDetail, DispatchPayload, Item, ProtocolHandler, Resolution, Row, Source, Station, Sub, Subs, Wrapper } from './registry.ts';
 import { p, on, emit, readPath, type Off, type pURL } from './utils.ts';
 
 export type { Item, ListCache, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
@@ -138,7 +138,6 @@ export const reconcile = (
     data: Item[],
     cache: Map<unknown, Row>,
     tpl: HTMLTemplateElement,
-    wake: (node: Element, row: Row | null) => void,
     keyProp = 'id',
 ) => {
     const activeIds = new Set<unknown>();
@@ -196,7 +195,6 @@ const listDirective: DirectiveHandler = ({ wrapper, el, key, wake }) => {
     }
 
     const identityKey = key || 'id';
-    const wakeOwned = (node: Element, row: Row | null = null) => wake(node, row, wrapper);
     let emptyNode: Element | null = null;
 
     const clearRows = () => {
@@ -214,7 +212,7 @@ const listDirective: DirectiveHandler = ({ wrapper, el, key, wake }) => {
 
         emptyNode.setAttribute('_empty', '');
         el.appendChild(emptyNode);
-        wakeOwned(emptyNode);
+        wake(emptyNode);
     };
 
     const hideEmpty = () => {
@@ -232,7 +230,7 @@ const listDirective: DirectiveHandler = ({ wrapper, el, key, wake }) => {
         }
 
         hideEmpty();
-        reconcile(el, items, cache, tpl, wakeOwned, identityKey);
+        reconcile(el, items, cache, tpl, identityKey);
     };
 };
 // #endregion
@@ -361,51 +359,100 @@ const resolveHost = (host: string, local: WrapperNode): WrapperNode | null => {
     return null;
 };
 
-// Resolve a parsed pURL to its binding source and formatter target. One
-// hook for every `$` and `*` token: the default (`dwrl:`) protocol gives
-// a state-channel source whose `subscribe` is the framework's pub/sub
-// primitive against the appropriate station — the row's for relative
-// pURLs in a row context, the target wrapper's otherwise. A non-default
-// protocol routes through `DW_PROTOCOLS`: `subscribe` fires once with
-// the handler's read value and returns a noop Off; if the handler
-// exposes `write`, the source carries it and wire() composes a
-// writeback on the wrapper's state channel for the matching dataset key.
-// Returns null for unknown protocols and unresolvable hosts — wire()
-// skips the binding silently.
+// @docs Internal handler interface used by the unified Source pipeline.
+// `DEFAULT_HANDLER` implements the dwrl: protocol (read/write/subscribe
+// against wrapper or row state). `toHandler` bridges registered
+// ProtocolHandler entries from DW_PROTOCOLS into the same shape. The
+// distinction between "state-channel source" and "protocol-handler source"
+// dissolves at the call site — resolve() looks up a handler and wraps its
+// three methods with the bound ctx.
+type HandlerCtx = {
+    wrapper: WrapperNode;     // local wrapper (formatter context, protocol-handler ops)
+    target:  WrapperNode;     // host-resolved wrapper (state-channel ops)
+    row:     Row | null;      // row context if firing element is inside *list
+};
+
+type Handler = {
+    read:      (dwrl: pURL, ctx: HandlerCtx)             => unknown;
+    write:     (dwrl: pURL, v: unknown, ctx: HandlerCtx) => void;
+    subscribe: (dwrl: pURL, cb: Sub, ctx: HandlerCtx)    => Off;
+};
+
+const DEFAULT_HANDLER: Handler = {
+    read: (dwrl, { target, row }) => {
+        const scoped = row && dwrl.isRel;
+        return readPath(scoped ? row.item : target.state, dwrl.path);
+    },
+    write: (dwrl, v, { target, row }) => {
+        const scoped = row && dwrl.isRel;
+        if (scoped) {
+            // Row-scoped writes via state-channel: identity-keyed immutable
+            // update against the parent array. Pending RFC §8.1 — the put:
+            // listener is what would invoke this and it doesn't exist yet.
+            throw new Error('row-scoped state-channel write: pending RFC §8.1');
+        }
+        target.put(dwrl.path, v);
+    },
+    subscribe: (dwrl, cb, { target, row }) => {
+        const scoped  = row && dwrl.isRel;
+        const station = scoped ? row.subs : target._subs;
+        const state   = scoped ? row.item : target.state;
+        return subscribe(station, dwrl.path, cb, readPath(state, dwrl.path));
+    },
+};
+
+// Bridge a registered ProtocolHandler (function or {read, write?}) into the
+// canonical Handler shape. Protocol handlers don't track reactivity — their
+// subscribe fires once with the read value and returns a noop. Write is
+// total — handlers that only expose read get a noop write.
+const toHandler = (ph: ProtocolHandler): Handler => {
+    const read  = typeof ph === 'function' ? ph : ph.read;
+    const write = typeof ph === 'function' ? undefined : ph.write;
+    return {
+        read:      (dwrl, { wrapper }) => read(dwrl, wrapper),
+        write:     write ? (dwrl, v, { wrapper }) => write(dwrl, v, wrapper) : () => {},
+        subscribe: (dwrl, cb, { wrapper }) => { cb(read(dwrl, wrapper)); return () => {}; },
+    };
+};
+
+// Resolve a parsed pURL to a Source. Looks up the handler (DEFAULT_HANDLER
+// for dwrl:, registered handler from DW_PROTOCOLS otherwise), wraps its
+// three methods with the bound ctx. Returns null for unknown protocols,
+// unresolvable hosts, and path-less default-protocol pURLs — wire() skips
+// those silently.
 const resolve = (
     dwrl: pURL,
     ctx: { wrapper: WrapperNode; row: Row | null },
 ): Resolution | null => {
-    const { protocol, path, isRel, host } = dwrl;
+    const { protocol, isRel, host } = dwrl;
     const { wrapper, row } = ctx;
 
-    if (protocol !== 'dwrl:') {
-        const handler = DW_PROTOCOLS.get(protocol.slice(0, -1));
-        if (!handler) return null;
-        const read  = typeof handler === 'function' ? handler : handler.read;
-        const write = typeof handler === 'function' ? undefined : handler.write;
+    const isDefault = protocol === 'dwrl:';
 
-        const source: BindingSource = {
-            subscribe: (cb) => { cb(read(dwrl, wrapper)); return () => {}; },
-            write:     write ? (v) => write(dwrl, v, wrapper) : undefined,
-            escapes:   false,
-        };
-        return { source, target: wrapper };
-    }
+    // State-channel sources need a path to address; protocol handlers
+    // encode their addressing differently (e.g. localstorage:// uses host).
+    if (isDefault && !dwrl.path) return null;
 
-    // Default protocol: state channel needs a path to address.
-    if (!path) return null;
+    const handler = isDefault
+        ? DEFAULT_HANDLER
+        : (() => {
+            const ph = DW_PROTOCOLS.get(protocol.slice(0, -1));
+            return ph ? toHandler(ph) : null;
+        })();
+    if (!handler) return null;
 
-    const target = resolveHost(host, wrapper);
+    const target = isDefault ? resolveHost(host, wrapper) : wrapper;
     if (!target) return null;
 
-    const scoped  = row && isRel;
-    const station = scoped ? row.subs : target._subs;
-    const state   = scoped ? row.item : target.state;
+    const scoped  = !!(row && isRel && isDefault);
+    const station = scoped ? row!.subs : target._subs;
     const escapes = station !== (row ? row.subs : wrapper._subs);
 
-    const source: BindingSource = {
-        subscribe: (cb) => subscribe(station, path, cb, readPath(state, path)),
+    const handlerCtx: HandlerCtx = { wrapper, target, row };
+    const source: Source = {
+        read:      ()   => handler.read(dwrl, handlerCtx),
+        write:     (v)  => handler.write(dwrl, v, handlerCtx),
+        subscribe: (cb) => handler.subscribe(dwrl, cb, handlerCtx),
         escapes,
     };
     return { source, target };
@@ -468,14 +515,20 @@ export const wire = (
         const off = source.subscribe(sub);
         if (source.escapes) unsubs.push(off);
 
-        // Writable source + wrapper-data-* sink = bidirectional binding.
-        // Composes a writeback subscription on the wrapper's state channel
-        // for this dataset key. Init-fires once with the value just put
-        // there from the source read — idempotent for localStorage;
+        // Non-default-protocol source + wrapper-data-* sink = bidirectional
+        // binding. Composes a writeback subscription on the wrapper's state
+        // channel for this dataset key. Init-fires once with the value just
+        // put there from the source read — idempotent for localStorage;
         // other protocols decide their own write semantics. In-scope sub
         // (subscribes to wrapper._subs), wiped on `load()` like any
         // state-channel sub — no Off to track.
-        if (source.write && el === wrapper && prop.startsWith('data-')) {
+        //
+        // Gated on protocol identity, not on `source.write` truthiness:
+        // every Source now has a total `write`, but default-protocol
+        // writeback would mean `$data-foo="/bar"` re-triggers `bar` whenever
+        // `foo` changes — a cycle. Only non-default protocols explicitly
+        // opt into the bidirectional contract.
+        if (dwrl.protocol !== 'dwrl:' && el === wrapper && prop.startsWith('data-')) {
             const dsKey = prop.slice(5).replace(/-./g, c => c[1].toUpperCase());
             subscribe(wrapper._subs, dsKey, source.write, readPath(wrapper.state, dsKey));
         }

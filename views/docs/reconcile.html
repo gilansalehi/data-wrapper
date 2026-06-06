@@ -5,7 +5,6 @@
     data: Item[],
     cache: Map&lt;unknown, Row&gt;,
     tpl: HTMLTemplateElement,
-    wake: (node: Element, row: Row | null) =&gt; void,
     keyProp = &#x27;id&#x27;,
 ) =&gt; {
     const activeIds = new Set&lt;unknown&gt;();

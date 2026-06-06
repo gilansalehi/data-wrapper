@@ -11,7 +11,6 @@
     }
 
     const identityKey = key || &#x27;id&#x27;;
-    const wakeOwned = (node: Element, row: Row | null = null) =&gt; wake(node, row, wrapper);
     let emptyNode: Element | null = null;
 
     const clearRows = () =&gt; {
@@ -29,7 +28,7 @@
 
         emptyNode.setAttribute(&#x27;_empty&#x27;, &#x27;&#x27;);
         el.appendChild(emptyNode);
-        wakeOwned(emptyNode);
+        wake(emptyNode);
     };
 
     const hideEmpty = () =&gt; {
@@ -47,7 +46,7 @@
         }
 
         hideEmpty();
-        reconcile(el, items, cache, tpl, wakeOwned, identityKey);
+        reconcile(el, items, cache, tpl, identityKey);
     };
 };</code></pre>
 </figure>

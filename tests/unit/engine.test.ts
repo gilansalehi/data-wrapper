@@ -159,35 +159,31 @@ describe('reconcile', () => {
         document.body.appendChild(container);
     });
 
-    const wakeText = (node: Element, row: Row | null) => {
-        if (row) node.textContent = String(row.item.label);
-    };
-
     it('appends one node per item', () => {
         reconcile(container, [
             { id: 1, label: 'One' },
             { id: 2, label: 'Two' },
-        ], cache, tpl, wakeText);
+        ], cache, tpl);
 
         expect(container.querySelectorAll('li')).toHaveLength(2);
-        expect(container.textContent).toBe('OneTwo');
+        expect(cache.size).toBe(2);
     });
 
     it('reuses existing cache rows on re-render', () => {
-        reconcile(container, [{ id: 1, label: 'One' }], cache, tpl, wakeText);
+        reconcile(container, [{ id: 1, label: 'One' }], cache, tpl);
         const firstNode = container.firstElementChild;
 
-        reconcile(container, [{ id: 1, label: 'Updated' }], cache, tpl, wakeText);
+        reconcile(container, [{ id: 1, label: 'Updated' }], cache, tpl);
 
         expect(container.firstElementChild).toBe(firstNode);
     });
 
     it('broadcasts updated item values to existing row subs', () => {
-        reconcile(container, [{ id: 1, label: 'One' }], cache, tpl, wakeText);
+        reconcile(container, [{ id: 1, label: 'One' }], cache, tpl);
         const row = cache.get(1)!;
         (row.subs.label ??= []).push(value => { row.node.textContent = String(value); });
 
-        reconcile(container, [{ id: 1, label: 'Updated' }], cache, tpl, wakeText);
+        reconcile(container, [{ id: 1, label: 'Updated' }], cache, tpl);
 
         expect(container.textContent).toBe('Updated');
     });
@@ -196,9 +192,9 @@ describe('reconcile', () => {
         reconcile(container, [
             { id: 1, label: 'One' },
             { id: 2, label: 'Two' },
-        ], cache, tpl, wakeText);
+        ], cache, tpl);
 
-        reconcile(container, [{ id: 2, label: 'Two' }], cache, tpl, wakeText);
+        reconcile(container, [{ id: 2, label: 'Two' }], cache, tpl);
 
         expect(container.querySelectorAll('li')).toHaveLength(1);
         expect(cache.has(1)).toBe(false);
@@ -206,7 +202,7 @@ describe('reconcile', () => {
     });
 
     it('uses item[keyProp] as the cache key', () => {
-        reconcile(container, [{ uuid: 'a-1', label: 'One' }], cache, tpl, wakeText, 'uuid');
+        reconcile(container, [{ uuid: 'a-1', label: 'One' }], cache, tpl, 'uuid');
 
         expect(cache.has('a-1')).toBe(true);
     });
@@ -214,13 +210,13 @@ describe('reconcile', () => {
     it('falls back to JSON.stringify when key is missing', () => {
         const item = { label: 'No id' };
 
-        reconcile(container, [item], cache, tpl, wakeText);
+        reconcile(container, [item], cache, tpl);
 
         expect(cache.has(JSON.stringify(item))).toBe(true);
     });
 
     it('does not manage empty-state DOM', () => {
-        reconcile(container, [], cache, tpl, wakeText);
+        reconcile(container, [], cache, tpl);
 
         expect(container.children).toHaveLength(0);
         expect(cache.size).toBe(0);
@@ -230,21 +226,21 @@ describe('reconcile', () => {
         reconcile(container, [
             { id: 1, label: 'One' },
             { id: 2, label: 'Two' },
-        ], cache, tpl, wakeText);
+        ], cache, tpl);
         let torn = false;
         cache.get(1)!.unsubs.push(() => { torn = true; });
 
-        reconcile(container, [{ id: 2, label: 'Two' }], cache, tpl, wakeText);
+        reconcile(container, [{ id: 2, label: 'Two' }], cache, tpl);
 
         expect(torn).toBe(true);
         expect(cache.has(1)).toBe(false);
     });
 
     it('leaves a surviving row\'s unsubs intact across re-render', () => {
-        reconcile(container, [{ id: 1, label: 'One' }], cache, tpl, wakeText);
+        reconcile(container, [{ id: 1, label: 'One' }], cache, tpl);
         cache.get(1)!.unsubs.push(() => {});
 
-        reconcile(container, [{ id: 1, label: 'Updated' }], cache, tpl, wakeText);
+        reconcile(container, [{ id: 1, label: 'Updated' }], cache, tpl);
 
         expect(cache.get(1)!.unsubs).toHaveLength(1);
     });
