@@ -321,19 +321,30 @@ const formatter = (params: URLSearchParams, wrapper: WrapperNode | null = null):
     return value => steps.reduce((v, step) => step(v), value);
 };
 
+// Two cases where `el.value` is genuinely wrong: checkboxes (boolean state,
+// not the `value=""` attribute string), and `<select multiple>` (array of
+// selected, not just the first). Everything else (text, number, range, date,
+// radio) round-trips via `el.value` and dataset JSON parses on read.
+const elementValue = (el: Element): unknown => {
+    const i = el as HTMLInputElement;
+    if (i.type === 'checkbox')                          return i.checked;
+    if (el instanceof HTMLSelectElement && el.multiple) return [...el.selectedOptions].map(o => o.value);
+    return (el as HTMLInputElement | HTMLTextAreaElement).value;
+};
+
 const collectPayload = (el: Element): DispatchPayload => {
     if (el instanceof HTMLFormElement) {
         const out: DispatchPayload = {};
-        for (const [k, v] of new FormData(el)) {
-            const existing = out[k];
-            if (existing === undefined)       out[k] = v;
-            else if (Array.isArray(existing)) existing.push(v);
-            else                              out[k] = [existing, v];
+        for (const child of el.elements) {
+            const c = child as HTMLInputElement;
+            if (!c.name) continue;
+            if (c.type === 'radio' && !c.checked) continue;   // only the checked radio in a group
+            out[c.name] = elementValue(c);
         }
         return out;
     }
     const ni = el as HTMLInputElement;
-    return ni.name ? { [ni.name]: ni.value } : {};
+    return ni.name ? { [ni.name]: elementValue(ni) } : {};
 };
 // #endregion
 
@@ -469,7 +480,7 @@ export const wire = (
     const prop  = name.slice(1);
 
     const dwrl = p(value);
-    const { path, params, host } = dwrl;
+    const { path, isRel, params, host, protocol } = dwrl;
     if (!wrapper) return;
 
     // Teardown handles live on the element's scope: its *list row, else the wrapper.
@@ -480,6 +491,12 @@ export const wire = (
         // is re-dispatched onto the named wrapper. The native-event listener
         // stays on the local wrapper either way — the host is not a DOM
         // ancestor of `el` — so its Off is always kept for local teardown.
+        //
+        // Non-default protocols (`put:`, future `push:`/`pull:`/`patch:`)
+        // dispatch under the protocol name as the event topic; the wrapper's
+        // auto-registered `put:` listener interprets the detail. Default
+        // protocol (`dwrl:`) dispatches under the path — the legacy
+        // callback-handler topic convention.
         if (!path) return;
         const sink = host === HOST_SELF ? el : resolveHost(host, wrapper);
         if (!sink) return; // named host absent — resolveHost has warned
@@ -492,8 +509,10 @@ export const wire = (
             const detail: DispatchDetail = {
                 originalEvent: e,
                 payload: collectPayload(el),
+                path,
+                isRel,
             };
-            emit(path, detail, sink);
+            emit(protocol === 'dwrl:' ? path : protocol, detail, sink);
         }, el, wrapper);
 
         unsubs.push(off);

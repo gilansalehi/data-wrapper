@@ -56,5 +56,25 @@
             ? (i: unknown) =&gt; !(predicate as (i: unknown) =&gt; boolean)(i)
             : (i: unknown) =&gt; (i as Record&lt;string, unknown&gt;).id !== predicate;
         this.put(key, current.filter(fn));
+    }
+
+    // @docs Handles a `put:` event dispatched by wire&#x27;s `@`-branch when an
+    // attribute uses the `put:` protocol. Extracts the value from the harvested
+    // payload by the path&#x27;s leaf segment (the &quot;single named input&quot; case) or
+    // falls through to the whole payload (the &quot;form&quot; case, multi-key object).
+    //
+    // Relative paths (`put:./done` inside a `*list` row) throw — row-scoped
+    // writes via state-channel are pending RFC §8.1. Until then, users who
+    // try row-relative `put:` get a clear error pointing at the open question.
+    handlePut(e: CustomEvent) {
+        const { path, payload, isRel } = e.detail;
+        if (isRel) {
+            throw new Error(
+                `put: with relative path &quot;./${path}&quot; requires row context — pending RFC §8.1`
+            );
+        }
+        const leaf  = path.split(&#x27;/&#x27;).pop()!;
+        const value = (payload as Record&lt;string, unknown&gt;)[leaf] ?? payload;
+        this.put(path, value);
     }</code></pre>
 </figure>

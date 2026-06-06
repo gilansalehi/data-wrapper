@@ -120,7 +120,7 @@ export const wire = (
     const prop  = name.slice(1);
 
     const dwrl = p(value);
-    const { path, params, host } = dwrl;
+    const { path, isRel, params, host, protocol } = dwrl;
     if (!wrapper) return;
 
     // Teardown handles live on the element&#x27;s scope: its *list row, else the wrapper.
@@ -131,6 +131,12 @@ export const wire = (
         // is re-dispatched onto the named wrapper. The native-event listener
         // stays on the local wrapper either way — the host is not a DOM
         // ancestor of `el` — so its Off is always kept for local teardown.
+        //
+        // Non-default protocols (`put:`, future `push:`/`pull:`/`patch:`)
+        // dispatch under the protocol name as the event topic; the wrapper&#x27;s
+        // auto-registered `put:` listener interprets the detail. Default
+        // protocol (`dwrl:`) dispatches under the path — the legacy
+        // callback-handler topic convention.
         if (!path) return;
         const sink = host === HOST_SELF ? el : resolveHost(host, wrapper);
         if (!sink) return; // named host absent — resolveHost has warned
@@ -143,8 +149,10 @@ export const wire = (
             const detail: DispatchDetail = {
                 originalEvent: e,
                 payload: collectPayload(el),
+                path,
+                isRel,
             };
-            emit(path, detail, sink);
+            emit(protocol === &#x27;dwrl:&#x27; ? path : protocol, detail, sink);
         }, el, wrapper);
 
         unsubs.push(off);

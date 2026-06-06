@@ -100,6 +100,15 @@ export class DataWrapper extends HTMLElement {
     connectedCallback() {
         this._observer.observe(this, { attributes: true, attributeOldValue: true });
         on('dw/log', console.log, '', this);
+        // `put:` is the write-direction protocol on `@`-events (RFC §5-§7).
+        // wire() emits `put:` (as the literal event topic) when an `@`-pURL
+        // has protocol `put:`; this listener consumes it and writes the
+        // harvested value at the parsed path. Filtered by closest-wrapper so
+        // nested wrappers don't double-handle.
+        on('put:', (e) => {
+            if ((e.target as Element).closest('data-wrapper') !== this) return; // <-- will this block put://host to a different wrapper?
+            this.handlePut(e as CustomEvent);
+        }, '', this);
         wake(this);
         emit('dw/load', undefined, this);
         // Non-bubbling to match native `load` semantics. emit() bubbles, which
@@ -178,6 +187,26 @@ export class DataWrapper extends HTMLElement {
             ? (i: unknown) => !(predicate as (i: unknown) => boolean)(i)
             : (i: unknown) => (i as Record<string, unknown>).id !== predicate;
         this.put(key, current.filter(fn));
+    }
+
+    // @docs Handles a `put:` event dispatched by wire's `@`-branch when an
+    // attribute uses the `put:` protocol. Extracts the value from the harvested
+    // payload by the path's leaf segment (the "single named input" case) or
+    // falls through to the whole payload (the "form" case, multi-key object).
+    //
+    // Relative paths (`put:./done` inside a `*list` row) throw — row-scoped
+    // writes via state-channel are pending RFC §8.1. Until then, users who
+    // try row-relative `put:` get a clear error pointing at the open question.
+    handlePut(e: CustomEvent) {
+        const { path, payload, isRel } = e.detail;
+        if (isRel) {
+            throw new Error(
+                `put: with relative path "./${path}" requires row context — pending RFC §8.1`
+            );
+        }
+        const leaf  = path.split('/').pop()!;
+        const value = (payload as Record<string, unknown>)[leaf] ?? payload;
+        this.put(path, value);
     }
     // #endregion
 

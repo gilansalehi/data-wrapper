@@ -21,10 +21,12 @@ export type ListCache = Map<Element, Map<unknown, Row>>;
 // events owned by nested wrappers, then emits the topic named on the
 // declaring element along with a `DispatchDetail`. Adding handlers to
 // dynamically-inserted DOM costs nothing — the listener is already installed.
-export type DispatchPayload = Record<string, FormDataEntryValue | FormDataEntryValue[]>;
+export type DispatchPayload = Record<string, unknown>;
 export type DispatchDetail  = {
     originalEvent: Event;
     payload:       DispatchPayload;
+    path:          string;  // parsed pURL path — write target for put:/push:/pull:/patch: protocols
+    isRel:         boolean; // pURL was relative (`./`) — listener uses this to detect row-scoped intent
 };
 export type DispatchEvent = CustomEvent<DispatchDetail>;
 // #endregion

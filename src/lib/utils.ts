@@ -21,11 +21,24 @@ export type pURL = {
 }; // returnTypeOf pURL; <-- possible? More concise...
 
 export const pURL = (dwrlString: string): pURL => {
-    const isRel = dwrlString.startsWith('./');
-    const url   = new URL(dwrlString.slice(isRel ? 1 : 0), DWRL_BASE);
+    let isRel = dwrlString.startsWith('./');
+    const url = new URL(dwrlString.slice(isRel ? 1 : 0), DWRL_BASE);
+
+    // Pathname may or may not start with `/` depending on whether the URL
+    // parses with authority semantics (regular base, or `proto://host/path`)
+    // or as an opaque non-special scheme (e.g. `put:./done`, `put:done`).
+    // Normalize either way.
+    let path = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
+
+    // Opaque URLs preserve a leading `./` in pathname; treat as relative
+    // (same semantic as the bare `./done` input prefix above).
+    if (path.startsWith('./')) {
+        isRel = true;
+        path  = path.slice(2);
+    }
 
     const purl: pURL = {
-        path:     url.pathname.slice(1),
+        path,
         isRel,
         key:      url.searchParams.get('key') ?? undefined,
         params:   url.searchParams,
