@@ -1,6 +1,41 @@
 # RFC: Symmetric `Source` + `put:` write protocol
 
-**Status:** Draft — awaiting approval.
+**Status:** Implemented.
+
+**What landed differently from the spec:**
+- **`isRel` added to `DispatchDetail`** alongside `path` (RFC §5 sketch
+  only had `path`). Without it, `handlePut` can't distinguish
+  `put:./done` from `put:done`/`put:/done` for row-relative routing.
+  One-field addition, documented in the type.
+- **`pURL()` parser fix** for opaque-scheme URLs. §8.4 originally said
+  "no parser changes needed" — that was wrong. Two-line fix in
+  `utils.ts`: handle pathnames that don't start with `/` (the opaque
+  case), and detect a preserved `./` prefix in pathname as the
+  relativity signal. Required for `put:done` (would have eaten the
+  leading `d` via `slice(1)`) and `put:./done` (would have routed to
+  `state[""]` from `/done` after the bad slice).
+- **Sink resolution in wire's @-branch** got an empty-host check —
+  `(host === HOST_SELF || !host) ? el : resolveHost(...)`. The opaque-
+  URL case for non-default protocols produces `host=""`, which the
+  original `=== HOST_SELF` check would route through `resolveHost("")`
+  → null → silent bail. Sink is now `el` for both default-protocol
+  topics and local-wrapper non-default protocols, preserving `e.target`
+  for the `handlePut` DOM walk.
+- **§8.1 (row resolution) landed via `_key` DOM marker** set by
+  `reconcile` + DOM walk in `handlePut`. No WeakMap, no parallel JS
+  cache. The walk reads the `_key` attribute on the row root and
+  re-parses the containing `*list` attribute for `arrayPath` and
+  `keyProp`, then does an identity-keyed immutable update through
+  `wrapper.put` so the existing `publishAxis` cascade fans the change
+  back to row subscribers.
+
+**Test/build status as of merge:** 182/182 tests passing · bundle
+24.81 KB ESM / 14.60 KB IIFE-min · no deprecations.
+
+**Open RFC questions still deferred:**
+- §8.2 (`put:` on forms — replace vs patch semantics): currently
+  replaces. Revisit when `patch:` lands.
+- §8.5 (formatter-on-write `@` pURLs): future phase.
 
 ## Motivation
 

@@ -9,12 +9,32 @@ release notes; the site around it doesn't undersell what shipped.
 
 ---
 
+## Recently shipped
+
+- [x] **JS-free state writes via `put:` protocol** — see
+  `RFC-bidirectional-bindings.md`. Controlled inputs collapse from
+  `$value + name + @change + register handler` to
+  `$value + @change="put:/path"` (or `put:./path` inside `*list` rows).
+  Includes:
+  - **Symmetric `Source`** (read/write/subscribe all total).
+  - **Generalized `resolve()`** via `Handler` + `DEFAULT_HANDLER` and
+    `toHandler` bridge for `DW_PROTOCOLS`.
+  - **`$data-*` writeback gated on protocol** at engine.ts:478 — closes
+    the cycle hole that symmetric `write` would otherwise open.
+  - **`wakeOwned` indirection dropped.**
+  - **`pURL()` parser fix** for opaque-scheme URLs (`put:./done`,
+    `put:done`, `put:/done` all parse correctly).
+  - **Element-aware `collectPayload`** (two cases: checkbox, multi-select).
+  - **Row identity markers** (`_key` set by reconcile) drive row-relative
+    writes without WeakMaps or parallel JS caches.
+  - **POC live** at `views/showcase/put.html`.
+
 ## Framework code
 
-- [ ] **Fix failing unit test.** `tests/unit/component.test.ts:570` —
-  `$data-* computed values > warns once per key when DevTools edits a
-  computed-bound attribute`. Confirm it's a real defect (warn isn't
-  firing) vs. a timing assertion that needs `tick()`. Fix accordingly.
+- [x] **Fix failing unit test.** `tests/unit/component.test.ts:570` —
+  passes reliably after Phase 1/2. Was a timing assertion that now lands
+  in order with the surrounding changes; keep an eye on it across future
+  test-runner versions.
 
 - [ ] **Document the `load` / `dw/load` bubbling split in FRAMEWORK.md.**
   The Lifecycle Events table (line 518) lists `load` as bubbling; after
@@ -25,6 +45,21 @@ release notes; the site around it doesn't undersell what shipped.
 - [ ] **Resolve any remaining `NOTE` comments in `src/lib/`.** Earlier
   pass concluded most were misinformed and got stashed; confirm none
   are flagging real defects before declaring the surface stable.
+
+- [ ] **Targeted tests for the `put:` surface.** `put:` dispatch shape
+  (path + isRel in detail), `elementValue` cases (checkbox, multi-select,
+  default), `handlePut` absolute + row-relative branches, reconcile sets
+  `_key`. Soft: dogfood via `put.html` has covered the happy paths.
+
+- [ ] **Migrate `views/showcase/todos.html` to `put:`** — acceptance
+  test for the design end-to-end against an existing demo. Collapse
+  the toggle/remove/filter handlers; keep cascade-needing logic
+  (`status` derivation) imperative or move to a render-time formatter.
+
+- [ ] **Optional: reconcile diff-before-publish.** Current row update
+  loop (engine.ts:167-170) republishes every channel on the row when any
+  field changes, not just the changed ones. Defer unless dogfood shows
+  it matters.
 
 ## Site
 

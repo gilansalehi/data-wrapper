@@ -158,6 +158,11 @@ export const reconcile = (
                 subs: {},
                 unsubs: [],
             };
+            // Identity marker for the put: listener's row-relative branch
+            // (RFC §8.1). DOM-only lookup — handlePut walks `closest('[_key]')`
+            // from the firing element to find the containing row, no
+            // WeakMap or parallel JS cache needed.
+            row.node.setAttribute('_key', String(id));
             cache.set(id, row);
             isNew = true;
             newRows.push(row);
@@ -498,7 +503,12 @@ export const wire = (
         // protocol (`dwrl:`) dispatches under the path — the legacy
         // callback-handler topic convention.
         if (!path) return;
-        const sink = host === HOST_SELF ? el : resolveHost(host, wrapper);
+        // Empty host (opaque non-default protocols like `put:./done`) and
+        // HOST_SELF (default-protocol same-wrapper topics) both dispatch from
+        // `el`: the event bubbles to the wrapper, and `e.target` is the
+        // firing element — what `handlePut`'s `closest('[_key]')` walk needs
+        // to find the row context for relative paths.
+        const sink = (host === HOST_SELF || !host) ? el : resolveHost(host, wrapper);
         if (!sink) return; // named host absent — resolveHost has warned
 
         const off = on(prop, (e) => {

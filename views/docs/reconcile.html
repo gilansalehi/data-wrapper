@@ -25,6 +25,11 @@
                 subs: {},
                 unsubs: [],
             };
+            // Identity marker for the put: listener&#x27;s row-relative branch
+            // (RFC §8.1). DOM-only lookup — handlePut walks `closest(&#x27;[_key]&#x27;)`
+            // from the firing element to find the containing row, no
+            // WeakMap or parallel JS cache needed.
+            row.node.setAttribute(&#x27;_key&#x27;, String(id));
             cache.set(id, row);
             isNew = true;
             newRows.push(row);

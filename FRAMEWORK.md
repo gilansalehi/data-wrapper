@@ -96,8 +96,12 @@ debugging).
   lookup rather than ancestry. Shipped for `$`/`*` (see Roadmap →
   host). A plain `/key` carries the default host `data-wrapper`,
   meaning "the closest ancestor wrapper."
-- `topic/name` — action topic for `@` tokens. Becomes the
-  `CustomEvent` name.
+- `topic/name` — action topic for `@` tokens (default protocol).
+  Becomes the `CustomEvent` name.
+- `put:/key`, `put:./key`, `put://id/key` — write-direction pURL on `@`
+  tokens. Dispatches under the protocol name `put:` (the wrapper's
+  auto-registered listener handles it). The path is the destination
+  for the write; same `./` / `/` / `//host/` scoping rules as above.
 
 ### Stable query conventions
 
@@ -142,6 +146,9 @@ The wrapper's path-aware API:
 | `wrapper.patch(path, o)` | Merge `o` into the object at `path`                    |
 | `wrapper.push(path, x)`  | Append `x` to the array at `path`                      |
 | `wrapper.pull(path, p)`  | Filter `p` out of the array at `path`                  |
+| `wrapper.handlePut(e)`   | Default `put:` event handler (see @ Event Dispatch).   |
+|                          | Auto-registered by `connectedCallback`; override via   |
+|                          | `register({'put:': cb})` to layer custom behavior.     |
 
 **Fan-out semantics.** State is a tree; a write at path P affects
 exactly the channels on P's vertical axis — P itself, its ancestors
@@ -182,22 +189,27 @@ navigation      ~  registered handler dispatch
 ```
 
 The pURL path becomes the action name (`event.type` on the dispatched
-CustomEvent). Query params are reserved for dispatch options —
-`?prevent`, `?stop`, `?immediate` — applied to the originalEvent
-before dispatch. They aren't echoed into `detail`: they're declarative
-side effects, not runtime information the handler needs.
+CustomEvent) **for default-protocol pURLs**. Non-default protocols
+(`put:`, future `push:`/`pull:`/`patch:`) dispatch under the protocol
+name as the event topic instead — `@change="put:./done"` emits `put:`
+(literal, including the colon), and the wrapper's auto-registered
+`put:` listener interprets the detail. Query params are still reserved
+for dispatch options — `?prevent`, `?stop`, `?immediate` — applied to
+the originalEvent before dispatch.
 
-`event.detail` carries the minimum: `originalEvent` and `payload`.
-Everything else is already on the event natively:
+`event.detail` carries the minimum: `originalEvent`, `payload`, `path`,
+and `isRel`. Everything else is already on the event natively:
 
-| Want…          | Read…                                         |
-| -------------- | --------------------------------------------- |
-| action name    | `event.type`                                  |
-| actionTarget   | `event.target`                                |
-| wrapper        | `event.currentTarget`                         |
-| native event   | `event.detail.originalEvent`                  |
-| was prevented? | `event.detail.originalEvent.defaultPrevented` |
-| form data      | `event.detail.payload`                        |
+| Want…              | Read…                                         |
+| ------------------ | --------------------------------------------- |
+| action name        | `event.type`                                  |
+| actionTarget       | `event.target`                                |
+| wrapper            | `event.currentTarget`                         |
+| native event       | `event.detail.originalEvent`                  |
+| was prevented?     | `event.detail.originalEvent.defaultPrevented` |
+| form data          | `event.detail.payload`                        |
+| parsed pURL path   | `event.detail.path`                           |
+| relativity flag    | `event.detail.isRel`                          |
 
 Three buckets — **path, options, payload** — are kept non-overlapping
 on purpose. Query strings carry framework flags only; payload comes
@@ -206,12 +218,64 @@ don't contribute to payload. To ship data with an action, give the
 element `name` and `value`. That matches native HTML form semantics:
 unnamed controls don't submit, named ones do.
 
-If the actionTarget is a `<form>`, payload is its FormData. Otherwise
-it's the actionTarget's own `{name: value}` if it has one. Repeated
-names become arrays.
+If the actionTarget is a `<form>`, payload is the harvest of its named
+controls. Otherwise it's the actionTarget's own `{name: value}` if it
+has one. The harvest is element-aware — checkboxes contribute their
+`checked` state (boolean, not the `value=""` attribute string),
+`<select multiple>` contributes an array of selected option values,
+and unchecked checkboxes contribute `false` rather than being omitted
+(form-submit's presence-as-truth semantic is wrong for live state).
 
 Nested `@event` declarations of the same event type all fire in DOM
 order, per native bubbling. `?stop` is the escape hatch.
+
+### `put:` — JS-free state writes
+
+The `put:` protocol on an `@` attribute makes a control write its value
+back to state without a registered handler. The wrapper auto-registers
+a `put:` listener that consumes the dispatched event and performs the
+write. The pURL path declares the destination; the harvested payload
+supplies the value.
+
+```html
+<input $value="/message" @input="put:/message">
+<input type="checkbox" $checked="/agreed" name="agreed" @change="put:/agreed">
+<form @submit="put:/draft?prevent">
+  <input name="title">
+  <input name="body">
+</form>
+<button @click="put:/filter" name="filter" value="active">Active</button>
+```
+
+| Form                       | Behavior                                                              |
+| -------------------------- | --------------------------------------------------------------------- |
+| `put:/key`                 | Write to `state.key` at the local wrapper.                            |
+| `put:key`                  | Same — bare path, treated as wrapper-scoped.                          |
+| `put:./key`                | Row-relative. Inside a `*list` row, identity-keyed update against the |
+|                            | source array via the row's `_key` marker (see Lists & Reconcile).     |
+| `put://other-wrapper/key`  | Cross-wrapper write — dispatches on the named wrapper, its own        |
+|                            | `put:` listener handles the write against its state.                  |
+
+**Extraction.** The wrapper's `put:` handler reads `payload[leaf]` where
+`leaf` is the path's last segment. If the payload has no matching key
+(the multi-key form case), the whole payload is written instead.
+Concretely:
+
+- `put:/message` with `payload = {message: "hi"}` → `state.message = "hi"`.
+- `put:/draft` with form `payload = {title, body}` → `state.draft = {title, body}`.
+- `put:./done` inside a row with `payload = {done: true}` → identity-keyed
+  update against the wrapper's source array; row item's `done` field flips.
+
+**Why named controls.** `put:` reuses the same `name=` participation flag
+HTML form submission already uses — unnamed controls contribute nothing
+to the payload, so leaf-lookup fails and the listener writes `{}` over
+the target. `name=` stays plain HTML; no path syntax in `name=`.
+
+**Coexists with the legacy callback pattern.** `@change="todo/toggle"`
+still emits the topic `todo/toggle` and any `register()`'d handler
+fires as before. `put:` is the explicit opt-in for the 90% case of
+"mirror this control to state"; `@event="topic"` handlers stay for
+the 10% that needs transformation, validation, or multi-key cascades.
 
 ## Event Primitives
 
@@ -328,10 +392,21 @@ identity key (`?key=`, defaulting to `id`).
 
 Reconciliation reuses rows by identity, fans out updates over the
 row's channels, removes stale rows — unwiring any escaped
-subscriptions they held — and wakes new rows after insertion. The DOM node is rendered output; the row record is
-framework state. This split is the reason lists update without
-re-parsing the template and without forcing rerenders of unchanged
-rows.
+subscriptions they held — and wakes new rows after insertion. The DOM
+node is rendered output; the row record is framework state. This split
+is the reason lists update without re-parsing the template and without
+forcing rerenders of unchanged rows.
+
+**Row identity markers.** Each freshly-cloned row gets a `_key="<id>"`
+attribute set during reconcile — the same value the cache map keys on.
+This is what makes row-relative `put:` writes (`put:./done` inside a
+row) resolvable without a parallel JS lookup table: `handlePut`'s
+relative-path branch walks `closest('[_key]')` from the firing element
+to the row, reads the `_key` attribute to identify which item to
+update, and parses the containing `*list` attribute for the array path
+and keyProp. The immutable update routes through `wrapper.put(arrayPath,
+...)`, so the existing `publishAxis` cascade re-broadcasts to every row
+subscriber — no special-case re-render path.
 
 ## Computed Values
 
@@ -401,39 +476,59 @@ motivated by real dogfood.
 
 ## Source Resolution
 
-Every `$` and `*` binding reads from a **source** — a `BindingSource`
-returned by `resolve(pURL, ctx)`. The token chooses behavior (sink for
-`$`, directive for `*`); the source chooses where values come from.
-`wire()` doesn't branch on source type — both code paths call
+Every `$` and `*` binding reads from a **source** — a `Source` returned
+by `resolve(pURL, ctx)`. The token chooses behavior (sink for `$`,
+directive for `*`); the source chooses where values come from. `wire()`
+doesn't branch on source type — both code paths call
 `source.subscribe(sub)` and trust the shape.
 
 ```ts
-type BindingSource = {
-    subscribe: (cb: Sub)    => Off;     // fires once on attach, then on each publish
-    write?:    (v: unknown) => void;    // present iff the source is writable
-    escapes:                   boolean; // subscription leaves local scope?
+type Source = {
+    read:      ()           => unknown;  // one-shot getter (symmetry with write)
+    write:     (v: unknown) => void;     // total — every source can be written
+    subscribe: (cb: Sub)    => Off;      // fires once on attach, then on each publish
+    escapes:                   boolean;  // subscription leaves local scope?
 };
 ```
 
-**Two implementations.** `resolve()` returns one of two shapes
-depending on the pURL's protocol:
+**One pipeline.** `resolve()` looks up a `Handler` and wraps its three
+methods with the bound ctx. The default `dwrl:` protocol is itself a
+handler (`DEFAULT_HANDLER`) that reads/writes the wrapper's dataset and
+subscribes against its station. Non-default protocols (`localstorage://`,
+future `url://`, `api://`) bridge through `toHandler(...)` into the same
+canonical shape. The distinction between "state-channel source" and
+"protocol-handler source" exists only as different `Handler`
+implementations; the call site sees one `Source` interface.
 
-- **Default (`dwrl:`)** — state-channel source. `subscribe` wraps the
-  framework's `subscribe()` primitive against the appropriate station
-  (the row's for `./relative` paths in a list row; the target wrapper's
-  otherwise). Reactive: fires on every publish.
-- **Non-default (`localstorage://…`, future `url://`, `api://`)** —
-  protocol-handler source from `DW_PROTOCOLS`. `subscribe` fires once
-  with `handler.read(pURL, wrapper)` and returns a no-op `Off` — there
-  is no in-process pub/sub for external storage.
+**Handler interface.**
 
-**Bidirectionality is the handler's shape.** A protocol handler
-exposing `write` produces a source with `source.write` set. Wire()
-detects this and composes a writeback subscription on the wrapper's
-matching `data-*` state channel — every state update propagates back
-through `handler.write`. No flag at the binding site. A handler that
-omits `write` (or registers as a bare function) is read-once; state
-diverges from storage after wake.
+```ts
+type Handler = {
+    read:      (dwrl, ctx) => unknown;
+    write:     (dwrl, v, ctx) => void;
+    subscribe: (dwrl, cb, ctx) => Off;
+};
+```
+
+- **`DEFAULT_HANDLER`** — state-channel. `read` and `write` route through
+  the appropriate state and `put()` (the wrapper's, or the row's identity-
+  keyed update for `./relative` paths in a list row). `subscribe` wraps
+  the framework's `subscribe()` primitive against the matching station.
+  Reactive: fires on every publish.
+- **`DW_PROTOCOLS` entries** — bridged via `toHandler`. `subscribe` fires
+  once with `handler.read(pURL, wrapper)` and returns a no-op `Off` —
+  there is no in-process pub/sub for external storage. `write` delegates
+  to the handler's optional `write` (or no-op if the handler is read-only).
+
+**Bidirectionality is gated by protocol identity, not source shape.**
+Every `Source` now has a total `write`, so the writeback subscription at
+`wire()` can't gate on `source.write` truthiness — every default-protocol
+binding would loop (`$data-foo="/bar"` re-triggering `bar` whenever `foo`
+changes). The gate is the protocol: only non-default protocols compose
+the writeback subscription on the wrapper's matching `data-*` state
+channel. A protocol handler exposing `write` lights up bidirectional
+state sync; a handler that omits `write` (or registers as a bare
+function) is read-once and `state` diverges from storage after wake.
 
 The writeback uses the same `subscribe()` primitive used everywhere
 else, which init-fires the sub with the current value. The init
@@ -450,15 +545,15 @@ guard internally or expose `read`-only.
 
 **Where this shows up.**
 
-- `$text="/name"` — default protocol, state-channel source, no write.
+- `$text="/name"` — default protocol, no writeback subscription.
 - `$data-active="/todos?where=!done"` — computed value: default protocol,
-  state-channel source, `bind()` routes the sink through `put()`.
-- `$data-todos="localstorage://todos"` — protocol source with `write`,
-  writeback to `data-todos` state channel: storage and state stay in
-  lockstep automatically.
-- `*list="/items"` — default protocol, state-channel source consumed
-  by the `list` directive.
-- `*list="localstorage://snapshot"` — protocol + `*`: the directive
+  `bind()` routes the sink through `put()`. No writeback (default
+  protocol) — the binding is one-way: `/todos` → `/active`.
+- `$data-todos="localstorage://todos"` — non-default protocol with
+  `write`; writeback fires on every `data-todos` change. Storage and
+  state stay in lockstep automatically.
+- `*list="/items"` — default protocol, consumed by the `list` directive.
+- `*list="localstorage://snapshot"` — non-default protocol; the directive
   fires once with the read value. Read-once is the natural semantic
   for storage sources; reactive update from external writes requires
   a cross-tab `storage` event listener (deferred).
@@ -515,12 +610,20 @@ The framework emits a small set on the wrapper. Each bubbles. The
 wrapper is reachable via `event.target`; `detail` carries only what
 isn't derivable from the dispatch context.
 
-| Event       | When                                | `detail`           |
-| ----------- | ----------------------------------- | ------------------ |
-| `load`      | Wrapper connected and woken         | `undefined`        |
-| `dw/load`   | Alias for `load`, slash-namespaced  | `undefined`        |
-| `dw/sync`   | A state key changed                 | `{ key: string }`  |
-| `dw/loaded` | `src` fetch finished                | `{ src: string }`  |
+| Event       | When                                | `detail`                           |
+| ----------- | ----------------------------------- | ---------------------------------- |
+| `load`      | Wrapper connected and woken         | `undefined`                        |
+| `dw/load`   | Alias for `load`, slash-namespaced  | `undefined`                        |
+| `dw/sync`   | A state key changed                 | `{ key: string }`                  |
+| `dw/loaded` | `src` fetch finished                | `{ src: string }`                  |
+| `put:`      | A `put:` pURL on `@` dispatched     | `DispatchDetail` (see @ Dispatch)  |
+
+`put:` is auto-listened-for by every wrapper; the framework's listener
+calls `handlePut(e)` which extracts the value from the payload and
+writes through `this.put(path, value)` (absolute) or an identity-keyed
+immutable update against the parent array (`./relative` row paths).
+Users can `register({'put:': cb})` to layer additional behavior atop
+the default — both fire, in order.
 
 `load` exists alongside `dw/load` so the browser-native inline
 `onload=""` attribute fires. The framework's preferred form is

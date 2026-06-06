@@ -1,4 +1,4 @@
-import { emit, on, readPath, writePath, type Off } from './utils.ts';
+import { emit, on, p, readPath, writePath, type Off } from './utils.ts';
 import { wake, publishAxis, unwake } from './engine.ts';
 import type { ListCache, Station } from './engine.ts';
 
@@ -194,19 +194,46 @@ export class DataWrapper extends HTMLElement {
     // payload by the path's leaf segment (the "single named input" case) or
     // falls through to the whole payload (the "form" case, multi-key object).
     //
-    // Relative paths (`put:./done` inside a `*list` row) throw — row-scoped
-    // writes via state-channel are pending RFC §8.1. Until then, users who
-    // try row-relative `put:` get a clear error pointing at the open question.
+    // Absolute paths write through `this.put` directly. Relative paths
+    // (`put:./done` inside a `*list` row) walk the DOM to find the row via
+    // its `_key` marker (set by `reconcile`) and the containing `*list`
+    // attribute, then perform an identity-keyed immutable update against
+    // the wrapper's source array. The existing `publishAxis` cascade fans
+    // the change back through every row subscriber automatically.
     handlePut(e: CustomEvent) {
         const { path, payload, isRel } = e.detail;
-        if (isRel) {
-            throw new Error(
-                `put: with relative path "./${path}" requires row context — pending RFC §8.1`
-            );
-        }
         const leaf  = path.split('/').pop()!;
         const value = (payload as Record<string, unknown>)[leaf] ?? payload;
-        this.put(path, value);
+
+        if (!isRel) {
+            this.put(path, value);
+            return;
+        }
+
+        // Row-relative branch: identity-keyed update through wrapper.put so
+        // the publishAxis cascade re-broadcasts to row subscribers.
+        const rowNode = (e.target as Element).closest('[_key]');
+        if (!rowNode) {
+            throw new Error(`put:./${path} fired outside a *list row context`);
+        }
+        const listEl  = rowNode.parentElement;
+        const listAtt = listEl && [...listEl.attributes].find(a => a.name.startsWith('*list'));
+        if (!listAtt) {
+            throw new Error(`put:./${path} row not inside a *list container`);
+        }
+        const lst       = p(listAtt.value);
+        const arrayPath = lst.path;
+        const keyProp   = lst.key || 'id';
+        const rowKey    = rowNode.getAttribute('_key')!;
+
+        this.put(arrayPath, (prev: unknown) =>
+            ((prev as Record<string, unknown>[]) || []).map(item => {
+                if (String(item[keyProp]) !== rowKey) return item;
+                const next = { ...item };
+                writePath(next, path, value);
+                return next;
+            })
+        );
     }
     // #endregion
 

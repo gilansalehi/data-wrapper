@@ -138,7 +138,12 @@ export const wire = (
         // protocol (`dwrl:`) dispatches under the path — the legacy
         // callback-handler topic convention.
         if (!path) return;
-        const sink = host === HOST_SELF ? el : resolveHost(host, wrapper);
+        // Empty host (opaque non-default protocols like `put:./done`) and
+        // HOST_SELF (default-protocol same-wrapper topics) both dispatch from
+        // `el`: the event bubbles to the wrapper, and `e.target` is the
+        // firing element — what `handlePut`&#x27;s `closest(&#x27;[_key]&#x27;)` walk needs
+        // to find the row context for relative paths.
+        const sink = (host === HOST_SELF || !host) ? el : resolveHost(host, wrapper);
         if (!sink) return; // named host absent — resolveHost has warned
 
         const off = on(prop, (e) =&gt; {

@@ -57,7 +57,10 @@
                 e.target.reset();
             },
             'todo/toggle': e => {
-                const id = Number(e.detail.payload.id);
+                // Element-aware `collectPayload` returns `el.checked` (boolean)
+                // for checkboxes; the row id lives on `e.target.value` (set by
+                // `$value="./id"`). Migration to `put:./done` is on the roadmap.
+                const id = Number(e.target.value);
                 app.put('todos', prev => (prev || []).map(t =>
                     t.id === id ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' } : t
                 ));
