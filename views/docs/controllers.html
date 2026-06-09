@@ -1,0 +1,31 @@
+<figure data-source="component.ts" data-region="controllers">
+  <figcaption><code>&lt;script type=&quot;dw/controller&quot;&gt;</code> is the canonical, framework-owned mechanism for inline init code in a loaded or inline-rendered wrapper. It runs after <code>wake()</code> with <code>this === wrapper</code>, plus a prepended intro that binds the wrapper&#x27;s state-API methods so destructure-from-<code>this</code> preserves the binding (the methods are prototype methods; destructure alone would strip <code>this</code>). Errors at load-time propagate through the <code>load()</code> rejection; at connect time, they&#x27;re caught and logged until dw/error lifecycle wiring lands.</figcaption>
+  <pre><code>    private collectControllers(root: Element | DocumentFragment): HTMLScriptElement[] {
+        const scripts = [...root.querySelectorAll(&#x27;script[type=&quot;dw/controller&quot;]&#x27;)] as HTMLScriptElement[];
+        return scripts.filter(s =&gt; {
+            // Inline (root === this): controller&#x27;s closest data-wrapper must
+            // be `this` (not a nested descendant). Fragment: closest must be
+            // null (no nested wrapper between script and fragment root).
+            const ancestor = s.closest(&#x27;data-wrapper&#x27;);
+            return root === this ? ancestor === this : ancestor === null;
+        });
+    }
+
+    private async runControllers(scripts: HTMLScriptElement[]) {
+        for (const [i, s] of scripts.entries()) {
+            const intro = (
+                &#x27;const wrapper  = this;&#x27; +
+                &#x27;const state    = this.state;&#x27; +
+                &#x27;const put      = this.put.bind(this);&#x27; +
+                &#x27;const patch    = this.patch.bind(this);&#x27; +
+                &#x27;const push     = this.push.bind(this);&#x27; +
+                &#x27;const pull     = this.pull.bind(this);&#x27; +
+                &#x27;const register = this.register.bind(this);&#x27; +
+                &#x27;const get      = this.get.bind(this);&#x27;
+            );
+            const sourceURL = `\n//# sourceURL=dw:${this.id || &#x27;anon&#x27;}:${i}`;
+            const fn = new Function(`&#x27;use strict&#x27;;\n${intro}\n${s.textContent ?? &#x27;&#x27;}${sourceURL}`);
+            await fn.call(this);
+        }
+    }</code></pre>
+</figure>

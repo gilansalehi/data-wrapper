@@ -1,5 +1,5 @@
 <figure data-source="component.ts" data-region="load">
-  <figcaption>Loads content into the wrapper. A <code>.js</code> or <code>.mjs</code> source is dynamically imported and its <code>default</code> export is invoked with the wrapper as the only argument — handy for handler registration in a separate file. Anything else is fetched as text, replaces <code>innerHTML</code>, and re-wakes the subtree. Append <code>?run-scripts</code> to execute the loaded HTML&#x27;s inline <code>&lt;script&gt;</code> tags before wake binds — <code>innerHTML</code> alone leaves them inert. External <code>&lt;script src&gt;</code> is skipped to keep wake&#x27;s ordering invariants (async fetch would race with binding). Either path ends with a <code>dw/loaded</code> event carrying the resolved URL.</figcaption>
+  <figcaption>Loads content into the wrapper. A <code>.js</code> or <code>.mjs</code> source is dynamically imported and its <code>default</code> export is invoked with the wrapper as the only argument — handy for handler registration in a separate file. Anything else is fetched as text, parsed into a fragment, and re-wakes the subtree. <code>&lt;script type=&quot;dw/controller&quot;&gt;</code> blocks are collected, removed from the fragment, and executed (after wake) with the wrapper as their <code>this</code> context. Append <code>?run-scripts</code> to also execute ordinary inline <code>&lt;script&gt;</code> tags before wake binds — <code>innerHTML</code> alone leaves them inert. External <code>&lt;script src&gt;</code> is skipped to keep wake&#x27;s ordering invariants. Either path ends with <code>dw/loaded</code>.</figcaption>
   <pre><code>    async load(src: string | null = this.getAttribute(&#x27;src&#x27;)) {
         if (!src) return;
         const url = new URL(src, document.baseURI);
@@ -10,14 +10,28 @@
         } else {
             const res = await fetch(url);
             if (!res.ok) throw new Error(`load ${url.href}: ${res.status}`);
+
+            const html = await res.text();
+            const tpl  = document.createElement(&#x27;template&#x27;);
+            tpl.innerHTML = html;
+
+            // Pull this wrapper&#x27;s own controllers out of the fragment before
+            // insertion — they shouldn&#x27;t render and shouldn&#x27;t be picked up by
+            // the legacy `runScripts()` pass. Nested-wrapper-owned controllers
+            // stay; they execute when that nested wrapper loads.
+            const controllers = this.collectControllers(tpl.content);
+            controllers.forEach(s =&gt; s.remove());
+
             unwake(this);
-            this.innerHTML = await res.text();
+            this.innerHTML = &#x27;&#x27;;
+            this.append(tpl.content);
             this._subs = {};
             this._unsubs = [];
             this._listCache = new Map();
             this.removeAttribute(&#x27;_live&#x27;);
             if (url.searchParams.has(&#x27;run-scripts&#x27;)) runScripts(this);
             wake(this, null, this);
+            await this.runControllers(controllers);
         }
         emit(&#x27;dw/loaded&#x27;, { src: url.href }, this);
     }</code></pre>

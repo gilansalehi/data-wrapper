@@ -109,12 +109,25 @@ export class DataWrapper extends HTMLElement {
             if ((e.target as Element).closest('data-wrapper') !== this) return; // <-- will this block put://host to a different wrapper?
             this.handlePut(e as CustomEvent);
         }, '', this);
+
+        // Collect & remove this wrapper's own `<script type="dw/controller">`
+        // children before wake, so they don't render and so wake skips them
+        // naturally. Nested-wrapper-owned controllers are excluded — they run
+        // when that nested wrapper connects.
+        const controllers = this.collectControllers(this);
+        controllers.forEach(s => s.remove());
+
         wake(this);
         emit('dw/load', undefined, this);
         // Non-bubbling to match native `load` semantics. emit() bubbles, which
         // would let a nested wrapper's `load` re-trigger ancestors' inline
         // onload="" handlers — registering the same actions twice.
         this.dispatchEvent(new Event('load'));
+
+        // Fire-and-forget: `connectedCallback` can't be awaited by the browser.
+        // Errors land in the console until lifecycle-event work adds dw/error.
+        this.runControllers(controllers).catch(err => console.error('dw/controller error:', err));
+
         if (this.hasAttribute('src')) queueMicrotask(() => this.load());
     }
 
@@ -241,12 +254,13 @@ export class DataWrapper extends HTMLElement {
     // @docs Loads content into the wrapper. A `.js` or `.mjs` source is
     // dynamically imported and its `default` export is invoked with the
     // wrapper as the only argument — handy for handler registration in a
-    // separate file. Anything else is fetched as text, replaces `innerHTML`,
-    // and re-wakes the subtree. Append `?run-scripts` to execute the loaded
-    // HTML's inline `<script>` tags before wake binds — `innerHTML` alone
-    // leaves them inert. External `<script src>` is skipped to keep wake's
-    // ordering invariants (async fetch would race with binding). Either path
-    // ends with a `dw/loaded` event carrying the resolved URL.
+    // separate file. Anything else is fetched as text, parsed into a fragment,
+    // and re-wakes the subtree. `<script type="dw/controller">` blocks are
+    // collected, removed from the fragment, and executed (after wake) with
+    // the wrapper as their `this` context. Append `?run-scripts` to also
+    // execute ordinary inline `<script>` tags before wake binds —
+    // `innerHTML` alone leaves them inert. External `<script src>` is skipped
+    // to keep wake's ordering invariants. Either path ends with `dw/loaded`.
     async load(src: string | null = this.getAttribute('src')) {
         if (!src) return;
         const url = new URL(src, document.baseURI);
@@ -257,16 +271,69 @@ export class DataWrapper extends HTMLElement {
         } else {
             const res = await fetch(url);
             if (!res.ok) throw new Error(`load ${url.href}: ${res.status}`);
+
+            const html = await res.text();
+            const tpl  = document.createElement('template');
+            tpl.innerHTML = html;
+
+            // Pull this wrapper's own controllers out of the fragment before
+            // insertion — they shouldn't render and shouldn't be picked up by
+            // the legacy `runScripts()` pass. Nested-wrapper-owned controllers
+            // stay; they execute when that nested wrapper loads.
+            const controllers = this.collectControllers(tpl.content);
+            controllers.forEach(s => s.remove());
+
             unwake(this);
-            this.innerHTML = await res.text();
+            this.innerHTML = '';
+            this.append(tpl.content);
             this._subs = {};
             this._unsubs = [];
             this._listCache = new Map();
             this.removeAttribute('_live');
             if (url.searchParams.has('run-scripts')) runScripts(this);
             wake(this, null, this);
+            await this.runControllers(controllers);
         }
         emit('dw/loaded', { src: url.href }, this);
+    }
+    // #endregion
+
+    // #region controllers
+    // @docs `<script type="dw/controller">` is the canonical, framework-owned
+    // mechanism for inline init code in a loaded or inline-rendered wrapper.
+    // It runs after `wake()` with `this === wrapper`, plus a prepended intro
+    // that binds the wrapper's state-API methods so destructure-from-`this`
+    // preserves the binding (the methods are prototype methods; destructure
+    // alone would strip `this`). Errors at load-time propagate through the
+    // `load()` rejection; at connect time, they're caught and logged until
+    // dw/error lifecycle wiring lands.
+    private collectControllers(root: Element | DocumentFragment): HTMLScriptElement[] {
+        const scripts = [...root.querySelectorAll('script[type="dw/controller"]')] as HTMLScriptElement[];
+        return scripts.filter(s => {
+            // Inline (root === this): controller's closest data-wrapper must
+            // be `this` (not a nested descendant). Fragment: closest must be
+            // null (no nested wrapper between script and fragment root).
+            const ancestor = s.closest('data-wrapper');
+            return root === this ? ancestor === this : ancestor === null;
+        });
+    }
+
+    private async runControllers(scripts: HTMLScriptElement[]) {
+        for (const [i, s] of scripts.entries()) {
+            const intro = (
+                'const wrapper  = this;' +
+                'const state    = this.state;' +
+                'const put      = this.put.bind(this);' +
+                'const patch    = this.patch.bind(this);' +
+                'const push     = this.push.bind(this);' +
+                'const pull     = this.pull.bind(this);' +
+                'const register = this.register.bind(this);' +
+                'const get      = this.get.bind(this);'
+            );
+            const sourceURL = `\n//# sourceURL=dw:${this.id || 'anon'}:${i}`;
+            const fn = new Function(`'use strict';\n${intro}\n${s.textContent ?? ''}${sourceURL}`);
+            await fn.call(this);
+        }
     }
     // #endregion
 }
@@ -275,9 +342,14 @@ export class DataWrapper extends HTMLElement {
 // each one with a freshly created copy is the standard workaround. Inline-only:
 // `<script src>` would fetch async and race with wake's binding pass. Scripts
 // nested inside descendant wrappers are skipped — those wrappers run their own.
+// `type="dw/controller"` scripts are also skipped: those are handled by the
+// dedicated `runControllers()` path. In normal flow they're already removed
+// from the DOM before `runScripts()` runs; the filter is defense-in-depth in
+// case anyone calls `runScripts()` directly on a controller-bearing subtree.
 const runScripts = (wrapper: Element) => {
     for (const oldScript of wrapper.querySelectorAll('script')) {
         if (oldScript.hasAttribute('src')) continue;
+        if (oldScript.getAttribute('type') === 'dw/controller') continue;
         if (oldScript.closest('data-wrapper') !== wrapper) continue;
         const newScript = document.createElement('script');
         for (const { name, value } of oldScript.attributes) {
