@@ -54,9 +54,11 @@ expressible as another subscriber on an existing channel.
 The DOM is declarative. `data-wrapper` owns the logic. DOM nodes hold
 attributes and rendered output. Runtime framework state lives on the
 wrapper. Framework-namespaced DOM markers use underscore-prefixed
-attributes (`_live`, `_empty`, `_debug`) — visible flags, not
-subscription storage. `_live` and `_empty` are framework-written;
-`_debug` is the one user-facing flag in this namespace.
+attributes (`_live`, `_empty`, `_key`, `_debug`) — visible flags, not
+subscription storage. `_live`, `_empty`, and `_key` are framework-
+written; `_debug` is the one user-facing flag in this namespace.
+`_key` carries each `*list` row's identity for `put:./relative`
+writeback lookup (see Lists & Reconcile).
 
 ## Reserved Attribute Sigils
 
@@ -105,8 +107,19 @@ debugging).
 
 ### Stable query conventions
 
-- `?format=name` — pipe through `DW_FORMATTERS`. Repeated keys compose
-  left-to-right. Captured once at wake by tokens that opt in.
+- `?format=name` — pipe through `DW_FORMATTERS` with no arg. Repeated
+  keys compose left-to-right.
+- `?<formatter>=<arg>` — same as above with an arg passed to the
+  formatter. The formatter name itself is the query key; the value is
+  whatever the formatter consumes. Examples: `?where=!done`,
+  `?onoff=done:active`, `?get=user/name`. Multiple formatters in one
+  pURL just stack params: `?where=!done&length`.
+- `?<formatter>=/path` — pURL-shaped arg. The framework resolves
+  `/path` against the wrapper at fire time and hands the resolved
+  *value* to the formatter (not the literal string). Example:
+  `?where=/filter` reads `state.filter` and uses its current value as
+  the `where` predicate. Resolution is read-only at fire time — see
+  Computed Values tradeoffs on multi-channel subscription.
 - `?key=name` — row identity for `*list` (defaults to `'id'`).
 - **Booleans** — presence wins. `?prevent` and `?prevent=true` are
   equivalent. To turn off, omit. No custom value parsing.
@@ -184,7 +197,7 @@ navigation.
 ```txt
 form action     ~  @event purl
 submitter       ~  actionTarget
-FormData        ~  payload
+named harvest   ~  payload   (element-aware, not FormData; see below)
 navigation      ~  registered handler dispatch
 ```
 
@@ -466,13 +479,24 @@ the binding re-evaluates and overwrites the external edit. The
 user's edit is honored for as long as the upstream is stable; the
 declaration wins as soon as anything moves.
 
-**Tradeoffs.** v1 doesn't carry batched flush (a diamond
-`/d ← /b, /c ← /a` would fire `/d` twice — but no v1 formatter
-consumes two pURL args, so the diamond shape can't appear yet),
-nor wake-time cycle detection (a circular `$data-*` graph either
-stabilizes via `prev === next` on primitive values, or
-stack-overflows on objects). Both land in a future polish stage,
-motivated by real dogfood.
+**Tradeoffs.**
+
+- **Single-channel subscription.** A `$data-*` binding subscribes to its
+  main path only. Formatter pURL args (`?where=/filter`) *resolve*
+  against the wrapper at fire time but don't *subscribe* to their
+  channel. So `$data-view="/todos?where=/filter"` recomputes when
+  `/todos` changes but stays stale when `/filter` changes. Workarounds:
+  re-publish the main channel from a `dw/sync` listener, or compute the
+  multi-source value imperatively. Lifting this to true multi-channel
+  subscription is a known roadmap item.
+- **No batched flush.** A diamond — `/d` reading both `/b` and `/c`, both
+  derived from `/a` — fires `/d` twice on a `/a` write. Bounded but
+  redundant.
+- **No wake-time cycle detection.** A circular `$data-*` graph either
+  stabilizes via `prev === next` on primitive values or stack-overflows
+  on objects.
+
+All three land in a future polish stage, motivated by real dogfood.
 
 ## Source Resolution
 
@@ -564,10 +588,24 @@ The seam keeps `wire()` source-agnostic. Adding `url:`, `session:`,
 
 ## Extensibility
 
-`DW_DIRECTIVES`, `DW_FORMATTERS`, and `DW_TEMPLATES` are exported
-`Map`s. User code adds entries or overrides built-ins with
+`DW_DIRECTIVES`, `DW_FORMATTERS`, `DW_PROTOCOLS`, and `DW_TEMPLATES`
+are exported `Map`s. User code adds entries or overrides built-ins with
 `Map.set()`. Last write wins. Templates declared in the document
 (`<template id="…">`) take precedence over registered ones.
+
+- `DW_DIRECTIVES` — structural directives keyed by name (`list`, `if`).
+  Custom directives compile their pURL once and return a subscriber.
+- `DW_FORMATTERS` — value-transform pipeline pieces. Built-ins include
+  `where`, `get`, `length`, `currency`, `date`, `upper`, `lower`,
+  `bool`, `onoff`, `yesno`, and more. Custom formatters land app-
+  specific transforms without changing the framework.
+- `DW_PROTOCOLS` — non-default protocol handlers for pURLs. Built-in:
+  `localstorage`. Each handler exposes `read` and optionally `write`;
+  `toHandler()` adapts these into the framework's canonical `Handler`
+  interface at resolution time (see Source Resolution).
+- `DW_TEMPLATES` — declared `<template id>` lookup table used by
+  `data-empty="…"` and other directives that resolve a name to a
+  template. Document-declared templates override registered ones.
 
 The Map-as-registry choice trades type safety for ergonomics:
 overriding `count` or `currency` is one line of app code, no
@@ -606,17 +644,21 @@ needs; the second wake picks up the seeded value.
 
 ## Lifecycle Events
 
-The framework emits a small set on the wrapper. Each bubbles. The
-wrapper is reachable via `event.target`; `detail` carries only what
-isn't derivable from the dispatch context.
+The framework emits a small set on the wrapper. All bubble *except*
+`load`, which is dispatched non-bubbling to match the native
+`HTMLElement.onload` semantic — a nested wrapper's `load` shouldn't
+re-trigger an ancestor's inline `onload=""` handler. `dw/load` is the
+bubbling alias for catching descendant connects. The wrapper is
+reachable via `event.target`; `detail` carries only what isn't
+derivable from the dispatch context.
 
-| Event       | When                                | `detail`                           |
-| ----------- | ----------------------------------- | ---------------------------------- |
-| `load`      | Wrapper connected and woken         | `undefined`                        |
-| `dw/load`   | Alias for `load`, slash-namespaced  | `undefined`                        |
-| `dw/sync`   | A state key changed                 | `{ key: string }`                  |
-| `dw/loaded` | `src` fetch finished                | `{ src: string }`                  |
-| `put:`      | A `put:` pURL on `@` dispatched     | `DispatchDetail` (see @ Dispatch)  |
+| Event       | Bubbles? | When                                | `detail`                           |
+| ----------- | -------- | ----------------------------------- | ---------------------------------- |
+| `load`      | no       | Wrapper connected and woken         | `undefined`                        |
+| `dw/load`   | yes      | Bubbling alias for `load`           | `undefined`                        |
+| `dw/sync`   | yes      | A state key changed                 | `{ key: string }`                  |
+| `dw/loaded` | yes      | `src` fetch finished                | `{ src: string }`                  |
+| `put:`      | yes      | A `put:` pURL on `@` dispatched     | `DispatchDetail` (see @ Dispatch)  |
 
 `put:` is auto-listened-for by every wrapper; the framework's listener
 calls `handlePut(e)` which extracts the value from the payload and
@@ -697,16 +739,28 @@ Provisional. Spec first, code second.
   needs no extra teardown. One caveat: a host-`@` handler's
   `event.target` is the host wrapper, not the origin element — origin
   travels in `event.detail.originalEvent`.
-- **`protocol`** — `api://path` for fetch-driven injectors. Other
-  protocols TBD. *(Still roadmap.)*
+- **`protocol`** — **shipped** as an extension surface via
+  `DW_PROTOCOLS` and the canonical `Handler` interface. Built-ins:
+  `dwrl:` (default, state-channel), `localstorage://` (storage with
+  bidirectional writeback when the handler exposes `write`), and `put:`
+  on `@`-tokens (write-direction protocol, auto-handled by every
+  wrapper). Future: `url:`/`session:`/`api:` registered handlers,
+  cross-tab reactive bridges via `storage` events, and additional
+  write-direction protocols (`push:`, `pull:`, `patch:`) for array
+  operations.
 
 ## pURL query-param conventions
 
-Stable: `?format=`, `?key=`, the boolean rule, and `@` dispatch
+Shipped (see Stable → pURLs → Stable query conventions): `?format=`,
+the `?<formatter>=<arg>` form, the pURL-shaped arg
+(`?where=/filter`), `?key=`, the boolean rule, and `@` dispatch
 options. Open:
 
-- Parametrized formatters: `?format=date:short`, `?format=currency:EUR`.
-- Custom user options. The query string is currently
+- **Compound-arg formatters** under `?format=name`: `?format=date:short`,
+  `?format=currency:EUR`. The current `?<formatter>=<arg>` form (one
+  arg) covers most needs; `?format=name:arg` would be a parallel shape
+  for callers that prefer the `format=` prefix.
+- **Custom user options.** The query string is currently
   framework-reserved on every token. Opening it to user-defined params
   would need a discrimination rule (prefix? explicit allowlist?).
 
@@ -719,13 +773,22 @@ Stable: `prevent`, `stop`, `immediate`. Tentative:
 
 ## `@` payload modes
 
-Stable default: form-FormData for `<form>` actionTargets; `{name:
-value}` otherwise; repeats become arrays. Future opt-in:
+Stable default (shipped): element-aware harvest. For `<form>`
+actionTargets, iterate `el.elements`, harvest each named control via
+type-appropriate accessor (`el.checked` for checkbox, array for
+`<select multiple>`, `el.value` otherwise). For single elements,
+`{name: value}` from the actionTarget. Unchecked checkboxes contribute
+`false`, not omission (form-submit's presence-as-truth is wrong for
+live state).
+
+Future opt-in modes via `?payload=`:
 
 - `?payload=subtree` — collect named controls from the actionTarget's
   subtree even when it isn't a `<form>`.
 - `?payload=scope` — collect from the closest form-like ancestor.
-- `?payload=none` — explicit empty payload.
+- `?payload=none` — explicit empty payload (skip harvest entirely).
+- `?payload=formdata` — opt back into legacy FormData semantics for
+  the rare case where presence-as-truth is actually wanted.
 
 ## `_` token (Injector)
 

@@ -130,7 +130,15 @@ export const DW_FORMATTERS = new Map<string, Formatter>([
     ['trim',     v => String(v || '').trim()],
     ['bool',     v => !!v],
     ['not',      v => !v],
-    ['onoff',    v => v ? 'on' : 'off'],
+    // `?format=onoff` → 'on' / 'off'. `?onoff=truthyLabel:falsyLabel` →
+    // user-supplied labels (e.g. `?onoff=done:active` for the todos toggle).
+    // The param-name form receives the arg; the legacy `?format=onoff` form
+    // calls with no arg and gets the original on/off labels.
+    ['onoff',    (v, arg) => {
+        if (arg == null || arg === '') return v ? 'on' : 'off';
+        const [t, f = ''] = String(arg).split(':');
+        return v ? t : f;
+    }],
     ['yesno',    v => v ? 'yes' : 'no'],
     // #endregion
 ]);

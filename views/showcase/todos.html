@@ -6,8 +6,8 @@
 
     <ul class="todo-list" *list="/view" data-empty="dw-empty">
         <template>
-            <li class="todo-item" $class="./status">
-                <input type="checkbox" $checked="./done" @change="todo/toggle" name="id" $value="./id" aria-label="Toggle todo completion">
+            <li class="todo-item" $class="./done?onoff=done:active">
+                <input type="checkbox" $checked="./done" name="done" @change="put:./done" aria-label="Toggle todo completion">
                 <span $text="./task"></span>
                 <strong class="done-badge" *if="./done">done</strong>
                 <button class="delete-btn" @click="todo/remove" name="id" $value="./id" aria-label="Remove">✕</button>
@@ -18,9 +18,9 @@
     <div class="controls">
         <span><strong $text="/active?format=count">0</strong> active</span>
         <div class="filter-btns" role="group" aria-label="Filter todos">
-            <button @click="filter/set" name="filter" value="all">All</button>
-            <button @click="filter/set" name="filter" value="active">Active</button>
-            <button @click="filter/set" name="filter" value="done">Done</button>
+            <button @click="put:/filter" name="filter" value="all">All</button>
+            <button @click="put:/filter" name="filter" value="active">Active</button>
+            <button @click="put:/filter" name="filter" value="done">Done</button>
         </div>
     </div>
 
@@ -34,9 +34,9 @@
 
         if (localStorage.getItem('todos') === null) {
             localStorage.setItem('todos', JSON.stringify([
-                { id: 1, task: 'Master the DOM',    status: 'done',   done: true  },
-                { id: 2, task: 'Ship data-wrapper', status: 'active', done: false },
-                { id: 3, task: 'Write the docs',    status: 'active', done: false },
+                { id: 1, task: 'Master the DOM',    done: true  },
+                { id: 2, task: 'Ship data-wrapper', done: false },
+                { id: 3, task: 'Write the docs',    done: false },
             ]));
         }
 
@@ -49,30 +49,38 @@
             ));
         };
 
+        // What remains as JS: the operations the `put:` protocol can't yet
+        // express. `todo/add` needs `push:` (append to array); `todo/remove`
+        // needs `pull:` (filter array). Both are reserved on the roadmap.
+        // Checkbox toggle and filter selection are now declarative via
+        // `put:./done` and `put:/filter` on `@change`/`@click`.
         app.register({
             'todo/add': e => {
                 const task = String(e.detail.payload.task ?? '').trim();
                 if (!task) return;
-                app.push('todos', { id: Date.now(), task, status: 'active', done: false });
+                app.push('todos', { id: Date.now(), task, done: false });
                 e.target.reset();
-            },
-            'todo/toggle': e => {
-                // Element-aware `collectPayload` returns `el.checked` (boolean)
-                // for checkboxes; the row id lives on `e.target.value` (set by
-                // `$value="./id"`). Migration to `put:./done` is on the roadmap.
-                const id = Number(e.target.value);
-                app.put('todos', prev => (prev || []).map(t =>
-                    t.id === id ? { ...t, done: !t.done, status: !t.done ? 'done' : 'active' } : t
-                ));
             },
             'todo/remove': e => {
                 const id = Number(e.detail.payload.id);
                 app.put('todos', prev => (prev || []).filter(t => t.id !== id));
             },
-            'filter/set': e => app.put('filter', e.detail.payload.filter),
         });
 
         app.addEventListener('dw/sync', e => {
+            // Row-relative `put:./done` writes to /view (the *list source),
+            // not /todos (the canonical store). Cascade row-level edits back
+            // to /todos so derived state (/active, /view) recomputes.
+            if (e.detail.key === 'view') {
+                const view  = app.state.view  || [];
+                const todos = app.state.todos || [];
+                const updated = todos.map(t => {
+                    const v = view.find(x => x.id === t.id);
+                    return v && v.done !== t.done ? { ...t, done: v.done } : t;
+                });
+                if (updated.some((t, i) => t !== todos[i])) app.put('todos', updated);
+                return;
+            }
             if (e.detail.key === 'todos' || e.detail.key === 'filter') compute();
         });
     </script>
