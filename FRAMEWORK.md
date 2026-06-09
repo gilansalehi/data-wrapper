@@ -677,7 +677,11 @@ derivable from the dispatch context.
   loaded). It's the symmetric "fully alive" signal — code that wants to
   wait until controllers have set up listeners and seeded state should
   listen for this one regardless of how the wrapper got its content.
-  In `load()` it fires immediately after `dw/loaded`.
+  In `load()` it fires immediately after `dw/loaded`. **Wrappers with
+  `src=""` suppress their connect-time `dw/ready`** — the auto-fired
+  `load()` will emit it once content + controllers have settled, so
+  listeners get exactly one "fully alive" signal per wrapper rather
+  than two (a misleading one before load and a real one after).
 - `dw/sync` fires on every `put` / `patch` / `push` / `pull` /
   Proxy-set / MutationObserver-driven state change; `detail.key` is the
   affected root key.

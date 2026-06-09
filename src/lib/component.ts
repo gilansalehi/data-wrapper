@@ -127,8 +127,11 @@ export class DataWrapper extends HTMLElement {
         // Fire-and-forget: `connectedCallback` can't be awaited by the browser.
         // Resolution emits `dw/ready`; rejection emits `dw/error` so consumers
         // have a real event to subscribe to instead of console-only failures.
+        // For wrappers with `src=""`, skip the connect-time `dw/ready` — the
+        // auto-fired `load()` will emit its own once content + controllers
+        // settle. Listeners get one "fully alive" signal per wrapper, not two.
         this.runControllers(controllers)
-            .then (()  => emit('dw/ready', undefined, this))
+            .then (()  => { if (!this.hasAttribute('src')) emit('dw/ready', undefined, this); })
             .catch(err => emit('dw/error', { error: err }, this));
 
         if (this.hasAttribute('src')) queueMicrotask(() => this.load());
