@@ -4,35 +4,44 @@
         if (!src) return;
         const url = new URL(src, document.baseURI);
 
-        if (/\.m?js$/.test(url.pathname)) {
-            const mod = await import(url.href);
-            await mod.default?.(this);
-        } else {
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`load ${url.href}: ${res.status}`);
+        try {
+            if (/\.m?js$/.test(url.pathname)) {
+                const mod = await import(url.href);
+                await mod.default?.(this);
+            } else {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`load ${url.href}: ${res.status}`);
 
-            const html = await res.text();
-            const tpl  = document.createElement(&#x27;template&#x27;);
-            tpl.innerHTML = html;
+                const html = await res.text();
+                const tpl  = document.createElement(&#x27;template&#x27;);
+                tpl.innerHTML = html;
 
-            // Pull this wrapper&#x27;s own controllers out of the fragment before
-            // insertion — they shouldn&#x27;t render and shouldn&#x27;t be picked up by
-            // the legacy `runScripts()` pass. Nested-wrapper-owned controllers
-            // stay; they execute when that nested wrapper loads.
-            const controllers = this.collectControllers(tpl.content);
-            controllers.forEach(s =&gt; s.remove());
+                // Pull this wrapper&#x27;s own controllers out of the fragment before
+                // insertion — they shouldn&#x27;t render and shouldn&#x27;t be picked up
+                // by the legacy `runScripts()` pass. Nested-wrapper-owned
+                // controllers stay; they execute when that nested wrapper loads.
+                const controllers = this.collectControllers(tpl.content);
+                controllers.forEach(s =&gt; s.remove());
 
-            unwake(this);
-            this.innerHTML = &#x27;&#x27;;
-            this.append(tpl.content);
-            this._subs = {};
-            this._unsubs = [];
-            this._listCache = new Map();
-            this.removeAttribute(&#x27;_live&#x27;);
-            if (url.searchParams.has(&#x27;run-scripts&#x27;)) runScripts(this);
-            wake(this, null, this);
-            await this.runControllers(controllers);
+                unwake(this);
+                this.innerHTML = &#x27;&#x27;;
+                this.append(tpl.content);
+                this._subs = {};
+                this._unsubs = [];
+                this._listCache = new Map();
+                this.removeAttribute(&#x27;_live&#x27;);
+                if (url.searchParams.has(&#x27;run-scripts&#x27;)) runScripts(this);
+                wake(this, null, this);
+                await this.runControllers(controllers);
+            }
+        } catch (err) {
+            emit(&#x27;dw/error&#x27;, { src: url.href, error: err }, this);
+            throw err;
         }
+        // `dw/loaded` = the fetch + swap completed. `dw/ready` = the wrapper is
+        // fully alive, including any awaited controllers. Both fire in order
+        // so consumers can pick the granularity they need.
         emit(&#x27;dw/loaded&#x27;, { src: url.href }, this);
+        emit(&#x27;dw/ready&#x27;,  undefined,        this);
     }</code></pre>
 </figure>

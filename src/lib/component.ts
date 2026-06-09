@@ -125,14 +125,18 @@ export class DataWrapper extends HTMLElement {
         this.dispatchEvent(new Event('load'));
 
         // Fire-and-forget: `connectedCallback` can't be awaited by the browser.
-        // Errors land in the console until lifecycle-event work adds dw/error.
-        this.runControllers(controllers).catch(err => console.error('dw/controller error:', err));
+        // Resolution emits `dw/ready`; rejection emits `dw/error` so consumers
+        // have a real event to subscribe to instead of console-only failures.
+        this.runControllers(controllers)
+            .then (()  => emit('dw/ready', undefined, this))
+            .catch(err => emit('dw/error', { error: err }, this));
 
         if (this.hasAttribute('src')) queueMicrotask(() => this.load());
     }
 
     disconnectedCallback() {
         this._observer.disconnect();
+        emit('dw/disconnect', undefined, this);
     }
 
     // #region state-api
@@ -265,36 +269,45 @@ export class DataWrapper extends HTMLElement {
         if (!src) return;
         const url = new URL(src, document.baseURI);
 
-        if (/\.m?js$/.test(url.pathname)) {
-            const mod = await import(url.href);
-            await mod.default?.(this);
-        } else {
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`load ${url.href}: ${res.status}`);
+        try {
+            if (/\.m?js$/.test(url.pathname)) {
+                const mod = await import(url.href);
+                await mod.default?.(this);
+            } else {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`load ${url.href}: ${res.status}`);
 
-            const html = await res.text();
-            const tpl  = document.createElement('template');
-            tpl.innerHTML = html;
+                const html = await res.text();
+                const tpl  = document.createElement('template');
+                tpl.innerHTML = html;
 
-            // Pull this wrapper's own controllers out of the fragment before
-            // insertion — they shouldn't render and shouldn't be picked up by
-            // the legacy `runScripts()` pass. Nested-wrapper-owned controllers
-            // stay; they execute when that nested wrapper loads.
-            const controllers = this.collectControllers(tpl.content);
-            controllers.forEach(s => s.remove());
+                // Pull this wrapper's own controllers out of the fragment before
+                // insertion — they shouldn't render and shouldn't be picked up
+                // by the legacy `runScripts()` pass. Nested-wrapper-owned
+                // controllers stay; they execute when that nested wrapper loads.
+                const controllers = this.collectControllers(tpl.content);
+                controllers.forEach(s => s.remove());
 
-            unwake(this);
-            this.innerHTML = '';
-            this.append(tpl.content);
-            this._subs = {};
-            this._unsubs = [];
-            this._listCache = new Map();
-            this.removeAttribute('_live');
-            if (url.searchParams.has('run-scripts')) runScripts(this);
-            wake(this, null, this);
-            await this.runControllers(controllers);
+                unwake(this);
+                this.innerHTML = '';
+                this.append(tpl.content);
+                this._subs = {};
+                this._unsubs = [];
+                this._listCache = new Map();
+                this.removeAttribute('_live');
+                if (url.searchParams.has('run-scripts')) runScripts(this);
+                wake(this, null, this);
+                await this.runControllers(controllers);
+            }
+        } catch (err) {
+            emit('dw/error', { src: url.href, error: err }, this);
+            throw err;
         }
+        // `dw/loaded` = the fetch + swap completed. `dw/ready` = the wrapper is
+        // fully alive, including any awaited controllers. Both fire in order
+        // so consumers can pick the granularity they need.
         emit('dw/loaded', { src: url.href }, this);
+        emit('dw/ready',  undefined,        this);
     }
     // #endregion
 

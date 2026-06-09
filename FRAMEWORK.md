@@ -652,20 +652,51 @@ bubbling alias for catching descendant connects. The wrapper is
 reachable via `event.target`; `detail` carries only what isn't
 derivable from the dispatch context.
 
-| Event       | Bubbles? | When                                | `detail`                           |
-| ----------- | -------- | ----------------------------------- | ---------------------------------- |
-| `load`      | no       | Wrapper connected and woken         | `undefined`                        |
-| `dw/load`   | yes      | Bubbling alias for `load`           | `undefined`                        |
-| `dw/sync`   | yes      | A state key changed                 | `{ key: string }`                  |
-| `dw/loaded` | yes      | `src` fetch finished                | `{ src: string }`                  |
-| `put:`      | yes      | A `put:` pURL on `@` dispatched     | `DispatchDetail` (see @ Dispatch)  |
+| Event           | Bubbles? | When                                            | `detail`                          |
+| --------------- | -------- | ----------------------------------------------- | --------------------------------- |
+| `load`          | no       | Wrapper connected and woken                     | `undefined`                       |
+| `dw/load`       | yes      | Bubbling alias for `load`                       | `undefined`                       |
+| `dw/loaded`     | yes      | `src` fetch + content swap finished             | `{ src: string }`                 |
+| `dw/ready`      | yes      | Wrapper fully alive: wake + controllers done    | `undefined`                       |
+| `dw/sync`       | yes      | A state key changed                             | `{ key: string }`                 |
+| `dw/error`      | yes      | Load fetch failed, or a controller threw        | `{ src?: string, error: unknown }`|
+| `dw/disconnect` | yes      | `disconnectedCallback` fired                    | `undefined`                       |
+| `put:`          | yes      | A `put:` pURL on `@` dispatched                 | `DispatchDetail` (see @ Dispatch) |
 
-`put:` is auto-listened-for by every wrapper; the framework's listener
-calls `handlePut(e)` which extracts the value from the payload and
-writes through `this.put(path, value)` (absolute) or an identity-keyed
-immutable update against the parent array (`./relative` row paths).
-Users can `register({'put:': cb})` to layer additional behavior atop
-the default — both fire, in order.
+**Picking the right event.**
+
+- `load` / `dw/load` fire **after `wake()`** in `connectedCallback`. They
+  do not wait for `dw/controller` scripts to finish — they signal "the
+  wrapper's bindings are wired and the markup it had at connect time is
+  alive." Use them for the lowest-latency "wrapper is here" signal,
+  including inside an `onload=""` attribute that needs the native event.
+- `dw/loaded` fires **after the fetch + swap** in `load()`. Specific to
+  `src=""` loads; `detail.src` carries the resolved URL.
+- `dw/ready` fires **after `dw/controller` scripts complete**, both at
+  connect time (for inline wrappers) and after `load()` (for `src`-
+  loaded). It's the symmetric "fully alive" signal — code that wants to
+  wait until controllers have set up listeners and seeded state should
+  listen for this one regardless of how the wrapper got its content.
+  In `load()` it fires immediately after `dw/loaded`.
+- `dw/sync` fires on every `put` / `patch` / `push` / `pull` /
+  Proxy-set / MutationObserver-driven state change; `detail.key` is the
+  affected root key.
+- `dw/error` fires when load or controller execution fails.
+  `detail.src` is the URL when known (load-time failure); omitted for
+  connect-time controller failures. `error` is the thrown value. The
+  error still propagates through `load()`'s rejection if you wanted to
+  `.catch()` it directly; `dw/error` lets observers react without
+  promise plumbing.
+- `dw/disconnect` fires from `disconnectedCallback`. Useful for cleanup
+  observers that need to release external resources tied to the
+  wrapper. Bubbles, but won't reach DOM ancestors that have already
+  been detached themselves (parents are gone by then).
+- `put:` is auto-listened-for by every wrapper; the framework's listener
+  calls `handlePut(e)` which extracts the value from the payload and
+  writes through `this.put(path, value)` (absolute) or an identity-keyed
+  immutable update against the parent array (`./relative` row paths).
+  Users can `register({'put:': cb})` to layer additional behavior atop
+  the default — both fire, in order.
 
 `load` exists alongside `dw/load` so the browser-native inline
 `onload=""` attribute fires. The framework's preferred form is
