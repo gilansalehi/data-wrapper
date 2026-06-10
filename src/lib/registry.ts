@@ -281,9 +281,17 @@ export const DW_PROTOCOLS = new Map<string, ProtocolHandler>([
         // not in `pathname`. localStorage keys are flat, so host is
         // the key. Case-sensitivity caveat: keys are lowercased by URL
         // parsing — use lowercase localStorage keys to match.
-        read: (purl) => {
+        //
+        // On a missing key, fall back to the wrapper's current state at
+        // the matching dataset slot — the inline `data-<host>="…"` default.
+        // This makes the seeded-default pattern declarative: declare the
+        // initial value on the wrapper, bind `$data-<host>="localstorage://<host>"`,
+        // and the framework seeds storage on first load while honoring saved
+        // state on subsequent loads. Convention: storage host string matches
+        // the dataset key (after URL hostname lowercasing).
+        read: (purl, wrapper) => {
             const raw = localStorage.getItem(purl.host);
-            if (raw == null) return undefined;
+            if (raw == null) return wrapper.state[purl.host];
             try { return JSON.parse(raw); } catch { return raw; }
         },
         write: (purl, value) => {

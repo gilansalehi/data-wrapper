@@ -1,0 +1,93 @@
+<article class="demo">
+    <form @submit="todo/add?prevent">
+        <input type="text" name="task" placeholder="What needs doing?" required autocomplete="off">
+        <button type="submit">Add</button>
+    </form>
+
+    <ul class="todo-list" *list="/view" data-empty="dw-empty">
+        <template>
+            <li class="todo-item" $class="./done?onoff=done:active">
+                <input type="checkbox" $checked="./done" name="done" @change="put:./done" aria-label="Toggle todo completion">
+                <span $text="./task"></span>
+                <strong class="done-badge" *if="./done">done</strong>
+                <button class="delete-btn" @click="todo/remove" name="id" $value="./id" aria-label="Remove">✕</button>
+            </li>
+        </template>
+    </ul>
+
+    <div class="controls">
+        <span><strong $text="/active?format=count">0</strong> active</span>
+        <div class="filter-btns" role="group" aria-label="Filter todos">
+            <button @click="put:/filter" name="filter" value="all">All</button>
+            <button @click="put:/filter" name="filter" value="active">Active</button>
+            <button @click="put:/filter" name="filter" value="done">Done</button>
+        </div>
+    </div>
+
+    <details>
+        <summary>Live state — inspect <code>data-todos</code> in DevTools or expand here</summary>
+        <pre><code $text="/todos?format=json"></code></pre>
+    </details>
+
+    <script type="dw/controller">
+        // `this` is the wrapper. `put`, `patch`, `push`, `pull`, `register`,
+        // `get`, and `state` are pre-bound shortcuts. No `?run-scripts` URL
+        // flag, no `document.currentScript.closest('data-wrapper')` dance —
+        // the framework owns the execution window and the context.
+        //
+        // Initial todos data lives on the loading wrapper as an inline
+        // `data-todos='[…]'` default. The `$data-todos="localstorage://todos"`
+        // protocol binding seeds storage from that default on first load and
+        // honors saved state on subsequent loads — no JS seeding required.
+
+        // Derived state — only /view needs imperative recomputation.
+        //
+        // /active is declared on the loading wrapper as a `$data-*` computed
+        // value: `$data-active="/todos?where=!done"`. The framework keeps it
+        // in sync whenever /todos changes; no JS involved.
+        //
+        // /view is multi-channel (depends on /todos AND /filter). `$data-*`
+        // computed values are single-channel today (they subscribe to the
+        // main path only, not to formatter pURL args), so the cascade lives
+        // in the dw/sync listener below. See FRAMEWORK.md → Computed Values
+        // tradeoffs.
+        const compute = () => {
+            const todos  = state.todos  || [];
+            const filter = state.filter || 'all';
+            put('view', todos.filter(t =>
+                filter === 'all' ? true : filter === 'active' ? !t.done : t.done
+            ));
+        };
+
+        // Two handlers remain — the operations `put:` can't (yet) express:
+        // pushing a new item onto an array, and filtering by id.
+        register({
+            'todo/add': e => {
+                const task = String(e.detail.payload.task ?? '').trim();
+                if (!task) return;
+                push('todos', { id: Date.now(), task, done: false });
+                e.target.reset();
+            },
+            'todo/remove': e => {
+                const id = Number(e.detail.payload.id);
+                put('todos', prev => (prev || []).filter(t => t.id !== id));
+            },
+        });
+
+        // Row-relative `put:./done` writes into /view (the *list source);
+        // cascade back to /todos so derived state recomputes correctly.
+        this.addEventListener('dw/sync', e => {
+            if (e.detail.key === 'view') {
+                const view  = state.view  || [];
+                const todos = state.todos || [];
+                const updated = todos.map(t => {
+                    const v = view.find(x => x.id === t.id);
+                    return v && v.done !== t.done ? { ...t, done: v.done } : t;
+                });
+                if (updated.some((t, i) => t !== todos[i])) put('todos', updated);
+                return;
+            }
+            if (e.detail.key === 'todos' || e.detail.key === 'filter') compute();
+        });
+    </script>
+</article>

@@ -6,9 +6,17 @@
         // not in `pathname`. localStorage keys are flat, so host is
         // the key. Case-sensitivity caveat: keys are lowercased by URL
         // parsing — use lowercase localStorage keys to match.
-        read: (purl) =&gt; {
+        //
+        // On a missing key, fall back to the wrapper&#x27;s current state at
+        // the matching dataset slot — the inline `data-&lt;host&gt;=&quot;…&quot;` default.
+        // This makes the seeded-default pattern declarative: declare the
+        // initial value on the wrapper, bind `$data-&lt;host&gt;=&quot;localstorage://&lt;host&gt;&quot;`,
+        // and the framework seeds storage on first load while honoring saved
+        // state on subsequent loads. Convention: storage host string matches
+        // the dataset key (after URL hostname lowercasing).
+        read: (purl, wrapper) =&gt; {
             const raw = localStorage.getItem(purl.host);
-            if (raw == null) return undefined;
+            if (raw == null) return wrapper.state[purl.host];
             try { return JSON.parse(raw); } catch { return raw; }
         },
         write: (purl, value) =&gt; {

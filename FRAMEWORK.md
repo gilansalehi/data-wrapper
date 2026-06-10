@@ -616,31 +616,132 @@ configuration object, no plugin lifecycle.
 A wrapper with `src="<url>"` calls `load()` on connect. For `.js` /
 `.mjs`, it dynamic-imports and calls `default(wrapper)`. For HTML, it
 fetches, tears down the outgoing subtree (`unwake` — releasing escaped
-subscriptions and `@` listeners), replaces `innerHTML`, resets the
-Station and list cache, clears `_live`, and re-wakes. `dw/loaded` is
-emitted on completion.
+subscriptions and `@` listeners), swaps `innerHTML`, resets the
+Station and list cache, clears `_live`, re-wakes, and executes any
+`<script type="dw/controller">` blocks. `dw/loaded` is emitted on
+fetch+swap completion; `dw/ready` is emitted after controllers finish.
 
-**Inline scripts opt in via `?run-scripts`.** Browsers don't execute
-`<script>` tags inserted via `innerHTML`, so loaded views are inert by
-default — initialize via `onload=""`, a `.js` controller, or a parent
-that calls `register()`. Append `?run-scripts` to the `src` URL to opt
-that view into having its inline scripts re-created and executed before
-wake binds; `document.currentScript.closest('data-wrapper')` gives the
-script its host wrapper. External `<script src>` is skipped — its async
-fetch would race with wake's binding pass.
+### Inline init: pick the right tool
 
-**Two-wake sequence.** A wrapper with `src=""` wakes twice: once on
-connect (whatever children are already in markup), then again after
-`load()` swaps `innerHTML`. The wrapper element itself is in *both*
-walks, so any `$data-*` declarations on the wrapper fire on both
-passes — once at connect time, then again after the post-load swap.
-Between the two wakes, `load()` resets the Station and clears
-`_live`, so subscribers re-attach fresh rather than accumulate. The
-canonical pattern for a loaded view with bidirectional protocol
-state — e.g. the todos showcase — relies on this: the connect-time
-wake sets up the binding against an empty source (no-op writes
-through `undefined`); the inline script seeds whatever defaults it
-needs; the second wake picks up the seeded value.
+A loaded view's authoring options for init code:
+
+- **`<script type="dw/controller">`** — the canonical, framework-owned
+  inline controller. Runs by default (no URL flag). Executes after
+  `wake()` with `this === wrapper` and pre-bound shortcuts (`put`,
+  `patch`, `push`, `pull`, `register`, `get`, `state`) supplied by an
+  intro the framework prepends. Removed from the rendered DOM after
+  execution. Multiple blocks run in document order. Errors emit
+  `dw/error`. Use for the vast majority of view-local init code.
+- **`onload=""` attribute** on the wrapper — for one-liners.
+  `this` inside is the wrapper. Survives because it's a regular
+  HTML attribute the browser fires.
+- **`.js` / `.mjs` controller via `src=""`** — for code that needs
+  ES module imports or wants to live in its own file. The module's
+  default export is called with the wrapper as the only argument.
+- **`?run-scripts`** — legacy whole-file escape hatch. Append to the
+  `src` URL to also execute *ordinary* `<script>` tags (still
+  inserted via `innerHTML`-replacement). External `<script src>` is
+  still skipped (async fetch would race with wake's binding pass).
+  Reach for this only when migrating existing code that uses the
+  `document.currentScript.closest('data-wrapper')` pattern, or when
+  you genuinely need pre-wake execution. New code should use
+  `dw/controller` blocks instead.
+
+### `dw/controller` execution model
+
+The framework collects controller scripts from the loaded fragment (or
+from initial children for inline wrappers), removes them from the DOM
+before wake, then executes each via `new Function()` with the wrapper
+bound as `this`. The generated function's body prepends a one-line
+intro that binds wrapper methods so destructure-from-`this` keeps the
+binding alive:
+
+```js
+// What the framework injects (visible in DevTools VM source thanks to
+// `//# sourceURL=dw:<id>:<index>` appended to each controller).
+const wrapper  = this;
+const state    = this.state;
+const put      = this.put.bind(this);
+const patch    = this.patch.bind(this);
+const push     = this.push.bind(this);
+const pull     = this.pull.bind(this);
+const register = this.register.bind(this);
+const get      = this.get.bind(this);
+// — user controller code runs after this point —
+```
+
+Authors can use either form interchangeably:
+
+```js
+this.register({ foo: () => this.put('clicked', true) });
+// or, equivalently, using the destructured shortcuts:
+register({ foo: () => put('clicked', true) });
+```
+
+Controllers run **after** `wake()` so `put()` calls inside reach live
+`$`-binding subscribers immediately. Sequential await between
+controllers; if one throws, subsequent controllers don't run, and the
+error becomes `dw/error` (load-time controllers also reject the
+`load()` promise).
+
+Nested-wrapper-owned controllers are *not* executed by an outer wake:
+`<data-wrapper><script type="dw/controller">…</script></data-wrapper>`
+has its inner controller filtered out at collection time (`closest('data-wrapper') !== this`) and runs when the inner wrapper itself connects.
+
+### Single-file component pattern
+
+Once `dw/controller` is in the picture, a loaded HTML file can be a
+self-contained component — markup, controller, and (eventually) scoped
+styles via `@scope` all in one file:
+
+```html
+<!-- views/showcase/activate-account.html -->
+<button @click="activate?prevent">Activate</button>
+<p $text="/status"></p>
+
+<script type="dw/controller">
+    put('status', 'idle');
+    register({
+        activate: () => put('status', 'active')
+    });
+</script>
+```
+
+Loaded the same way whether referenced via `src=""` or written inline
+in the document:
+
+```html
+<data-wrapper src="/views/showcase/activate-account.html"></data-wrapper>
+```
+
+```html
+<data-wrapper id="x">
+    <!-- same content as the file above -->
+</data-wrapper>
+```
+
+Same context, same behavior — controllers execute under the same
+machinery in both paths.
+
+### Two-wake sequence
+
+A wrapper with `src=""` wakes twice: once on connect (whatever children
+are already in markup), then again after `load()` swaps `innerHTML`.
+The wrapper element itself is in *both* walks, so any `$data-*`
+declarations on the wrapper fire on both passes — once at connect time,
+then again after the post-load swap. Between the two wakes, `load()`
+resets the Station and clears `_live`, so subscribers re-attach fresh
+rather than accumulate. The canonical pattern for a loaded view with
+bidirectional protocol state — e.g. the todos showcase — relies on
+this: the connect-time wake sets up the binding against an empty source
+(no-op writes through `undefined`); the inline script seeds whatever
+defaults it needs; the second wake picks up the seeded value.
+
+Connect-time controllers on a wrapper with `src=""` *do* run (any inline
+children's controllers fire as that markup is woken), but the wrapper
+suppresses its connect-time `dw/ready` so the auto-fired `load()` can
+emit it after content + controllers fully settle. Listeners get one
+"fully alive" signal per wrapper, not two.
 
 ## Lifecycle Events
 
