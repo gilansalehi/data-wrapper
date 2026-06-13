@@ -1,0 +1,55 @@
+<script type="module" data-component="todos">
+    export let filter = 'all';
+    export let task = '';
+    export let todos = [];
+
+    export const addTodo = e => {
+        todos = [...todos, { task, done: false, id: Date.now() }]
+    };
+
+    export const removeTodo = e => {
+        const { id } = e.detail.payload;
+        todos = todos.filter(item => item.id !== id);
+    };
+
+    export const setFilter = e => filter = e.detail.value;
+
+    export const filteredTodos = todos.filter(todo => {
+        return filter === 'all'   ? true
+            : filter === 'active' ? !todo.done
+            : todo.done
+    });
+</script>
+
+<section id="todosWidget">
+    <form @submit="addTodo?prevent">
+        <input type="text" placeholder="What's up?" required autocomplete="off" />
+        <button type="submit">Add</button>
+    </form>
+
+    <ul class="todo-list">
+        <template *for="todo of filterdTodos">
+            <li>
+                <input type="checkbox" $check="todo.done" @change="toggleTodo" />
+                <span $text="todo.task"></span>
+                <strong class="done-badge" *if="todo.done">done</strong>
+                <button class="delete-btn" @click="removeTodo" name="id" $value="todo.id" aria-label="Remove">✕</button>
+            </li>
+        </template>
+    </ul>
+
+    <div class="controls">
+        <span><strong $text="/active?format=count">0</strong> active</span>
+        <div class="filter-btns" role="group" aria-label="Filter todos">
+            <button @click="setFilter" value="all">All</button>
+            <button @click="setFilter" value="active">Active</button>
+            <button @click="setFilter" value="done">Done</button>
+        </div>
+    </div>
+</section>
+
+<style>
+    @scope {
+        /* ... */
+    }
+</style>
