@@ -20,6 +20,11 @@ type Output = {
     value: unknown;
 };
 
+type ActiveAction = {
+    refs:    number;
+    handler: EventListener;
+};
+
 const own = (obj: object, key: PropertyKey) =>
     Object.prototype.hasOwnProperty.call(obj, key);
 
@@ -42,6 +47,7 @@ export class ComponentRuntime {
     readonly context: ComponentContext;
 
     private readonly outputs = new Map<string, Output>();
+    private readonly actions = new Map<string, ActiveAction>();
     private readonly abort   = new AbortController();
     private flushing = false;
     private pending  = false;
@@ -64,12 +70,14 @@ export class ComponentRuntime {
         return own(this.module, name);
     }
 
-    source(name: string, escapes = false): Source {
+    source(name: string): Source {
         return {
             read:      ()   => this.read(name),
             write:     ()   => {},
             subscribe: (cb) => this.subscribe(name, cb),
-            escapes,
+            // The component Station is separate from wrapper and row Stations,
+            // so every binding must retain its Off for structural teardown.
+            escapes: true,
         };
     }
 
@@ -132,6 +140,37 @@ export class ComponentRuntime {
         return this.boundary(() => action(event, this.context));
     }
 
+    activateAction(name: string): Off | null {
+        if (typeof this.module[name] !== 'function') return null;
+
+        let active = this.actions.get(name);
+        if (!active) {
+            const handler: EventListener = event => {
+                const target = event.target;
+                if (
+                    this.root.matches('data-wrapper')
+                    && target instanceof Element
+                    && target.closest('data-wrapper') !== this.root
+                ) return;
+
+                this.runAction(name, event);
+            };
+            active = { refs: 0, handler };
+            this.actions.set(name, active);
+            this.root.addEventListener(name, handler);
+        }
+        active.refs += 1;
+
+        let live = true;
+        return () => {
+            if (!live) return;
+            live = false;
+            if (--active!.refs > 0) return;
+            this.root.removeEventListener(name, active!.handler);
+            this.actions.delete(name);
+        };
+    }
+
     transaction<Args extends unknown[], Result>(
         fn: (...args: Args) => Result,
     ): (...args: Args) => Result {
@@ -143,6 +182,10 @@ export class ComponentRuntime {
         this.destroyed = true;
         this.abort.abort();
         this.outputs.clear();
+        for (const [name, active] of this.actions) {
+            this.root.removeEventListener(name, active.handler);
+        }
+        this.actions.clear();
         for (const name in this.station) delete this.station[name];
     }
 

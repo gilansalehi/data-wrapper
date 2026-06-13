@@ -1,5 +1,5 @@
 <figure data-source="engine.ts" data-region="wire">
-  <figcaption>The token dispatch. <code>wire()</code> runs once per tokenized attribute and turns it into a subscriber. <code>$prop</code> binds state to a DOM property, <code>*directive</code> invokes a registered structural directive, <code>@event</code> delegates a native DOM event to an emitted topic. A <code>//host/path</code> DWRL retargets the binding to a wrapper named by id rather than the local one — <code>$</code>/<code>*</code> read its state, <code>@</code> dispatches its topic onto it. A subscription that escapes the element&#x27;s own scope — a <code>/absolute</code> path inside a <code>*list</code> row, a <code>//host/</code> path, or any <code>@</code> listener — has its <code>Off</code> recorded on the scope&#x27;s <code>unsubs</code> so eviction can tear it down. Three tokens, one function, no runtime parsing past wake.</figcaption>
+  <figcaption>The token dispatch. <code>wire()</code> runs once per tokenized attribute and turns it into a subscriber. <code>$prop</code> binds a Source to a DOM property, <code>*directive</code> invokes a registered structural directive, and <code>@event</code> delegates a native DOM event to an emitted topic. In a loaded component, a bare <code>$</code> name resolves to a matching module export and a bare <code>@</code> topic activates a matching exported function. Explicit pURLs keep their existing wrapper, row, protocol, and cross-wrapper meanings. A subscription that escapes the element&#x27;s own scope has its <code>Off</code> recorded on the scope&#x27;s <code>unsubs</code> so eviction can tear it down. Three tokens, one function, no runtime parsing past wake.</figcaption>
   <pre><code>// Resolve a DWRL host to its wrapper. The default sentinel keeps the local
 // wrapper; a named host is looked up by id and must already be upgraded.
 const resolveHost = (host: string, local: WrapperNode): WrapperNode | null =&gt; {
@@ -161,13 +161,22 @@ export const wire = (
         }, el, wrapper);
 
         unsubs.push(off);
+        if (BARE_NAME.test(value)) {
+            const actionOff = wrapper._component?.activateAction(path);
+            if (actionOff) unsubs.push(actionOff);
+        }
         return;
     }
 
     // `$` and `*` both consume a source via `resolve()`. The resolver
     // returns null for unknown protocols, unresolvable hosts, and
     // path-less default-protocol pURLs — wire() skips those silently.
-    const r = resolve(dwrl, { wrapper, row });
+    const componentSource = token === &#x27;$&#x27;
+        &amp;&amp; BARE_NAME.test(value)
+        &amp;&amp; wrapper._component?.has(path)
+        ? { source: wrapper._component.source(path), target: wrapper }
+        : null;
+    const r = componentSource ?? resolve(dwrl, { wrapper, row });
     if (!r) return;
     const { source, target } = r;
 

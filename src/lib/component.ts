@@ -1,6 +1,7 @@
 import { emit, on, p, readPath, writePath, type Off } from './utils.ts';
 import { wake, publishAxis, unwake } from './engine.ts';
 import type { ListCache, Station } from './engine.ts';
+import { ComponentRuntime, type ComponentModule } from './component-runtime.ts';
 
 export class DataWrapper extends HTMLElement {
     declare state:      Record<string, unknown>;
@@ -9,6 +10,7 @@ export class DataWrapper extends HTMLElement {
     declare _isSyncing: boolean;
     declare _listCache: ListCache;
     declare _observer:  MutationObserver;
+    declare _component?: ComponentRuntime;
 
     constructor() {
         super();
@@ -258,16 +260,15 @@ export class DataWrapper extends HTMLElement {
     // #endregion
 
     // #region load
-    // @docs Loads content into the wrapper. A `.js` or `.mjs` source is
-    // dynamically imported and its `default` export is invoked with the
-    // wrapper as the only argument — handy for handler registration in a
-    // separate file. Anything else is fetched as text, parsed into a fragment,
-    // and re-wakes the subtree. `<script type="dw/controller">` blocks are
-    // collected, removed from the fragment, and executed (after wake) with
-    // the wrapper as their `this` context. Append `?run-scripts` to also
-    // execute ordinary inline `<script>` tags before wake binds —
-    // `innerHTML` alone leaves them inert. External `<script src>` is skipped
-    // to keep wake's ordering invariants. Either path ends with `dw/loaded`.
+    // @docs Loads content into the wrapper. Loaded HTML may contain one owned
+    // inline `<script type="module" data-component>` block. The loader removes
+    // it, imports it through a unique Blob URL, and attaches a component runtime
+    // before wake so bare `$` outputs and `@` actions can resolve its live
+    // exports. Legacy `<script type="dw/controller">` blocks are still removed
+    // and executed after wake with the wrapper as `this`. Append `?run-scripts`
+    // to also execute ordinary inline scripts before wake. A `.js` or `.mjs`
+    // source still imports and invokes its default export with the wrapper.
+    // Every successful path ends with `dw/loaded`, then `dw/ready`.
     async load(src: string | null = this.getAttribute('src')) {
         if (!src) return;
         const url = new URL(src, document.baseURI);
@@ -290,6 +291,18 @@ export class DataWrapper extends HTMLElement {
                 // controllers stay; they execute when that nested wrapper loads.
                 const controllers = this.collectControllers(tpl.content);
                 controllers.forEach(s => s.remove());
+                const componentScripts = this.collectComponentModules(tpl.content);
+                if (componentScripts.length > 1) {
+                    throw new Error('Only one inline component module is supported per loaded view');
+                }
+                const componentScript = componentScripts[0];
+                if (componentScript?.hasAttribute('src')) {
+                    throw new Error('External component modules are not supported yet');
+                }
+                componentScript?.remove();
+                const componentModule = componentScript
+                    ? await this.importComponentModule(componentScript, url)
+                    : undefined;
 
                 unwake(this);
                 this.innerHTML = '';
@@ -297,6 +310,9 @@ export class DataWrapper extends HTMLElement {
                 this._subs = {};
                 this._unsubs = [];
                 this._listCache = new Map();
+                this._component = componentModule
+                    ? new ComponentRuntime(this, componentModule)
+                    : undefined;
                 this.removeAttribute('_live');
                 if (url.searchParams.has('run-scripts')) runScripts(this);
                 wake(this, null, this);
@@ -314,15 +330,39 @@ export class DataWrapper extends HTMLElement {
     }
     // #endregion
 
+    private collectComponentModules(root: DocumentFragment): HTMLScriptElement[] {
+        const scripts = [
+            ...root.querySelectorAll('script[type="module"][data-component]'),
+        ] as HTMLScriptElement[];
+        return scripts.filter(script => script.closest('data-wrapper') === null);
+    }
+
+    private async importComponentModule(
+        script: HTMLScriptElement,
+        source: URL,
+    ): Promise<ComponentModule> {
+        const label = script.dataset.component || this.id || 'anonymous';
+        const sourceURL = `\n//# sourceURL=${source.href}#${label}`;
+        const blob = new Blob([script.textContent ?? '', sourceURL], {
+            type: 'text/javascript',
+        });
+        const blobURL = URL.createObjectURL(blob);
+        try {
+            return await import(blobURL) as ComponentModule;
+        } finally {
+            URL.revokeObjectURL(blobURL);
+        }
+    }
+
     // #region controllers
-    // @docs `<script type="dw/controller">` is the canonical, framework-owned
+    // @docs `<script type="dw/controller">` is the legacy framework-owned
     // mechanism for inline init code in a loaded or inline-rendered wrapper.
-    // It runs after `wake()` with `this === wrapper`, plus a prepended intro
-    // that binds the wrapper's state-API methods so destructure-from-`this`
-    // preserves the binding (the methods are prototype methods; destructure
-    // alone would strip `this`). Errors at load-time propagate through the
-    // `load()` rejection; at connect time, they're caught and logged until
-    // dw/error lifecycle wiring lands.
+    // It remains supported while loaded component modules become the preferred
+    // convention. Controllers run after `wake()` with `this === wrapper`, plus
+    // a prepended intro that binds the wrapper's state-API methods so
+    // destructure-from-`this` preserves the binding. Errors at load time
+    // propagate through the `load()` rejection; connect-time errors emit
+    // `dw/error`.
     private collectControllers(root: Element | DocumentFragment): HTMLScriptElement[] {
         const scripts = [...root.querySelectorAll('script[type="dw/controller"]')] as HTMLScriptElement[];
         return scripts.filter(s => {

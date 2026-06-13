@@ -15,6 +15,12 @@ export type Item = Record<string, unknown>;
 export type Row = { node: Element; item: Item; subs: Station; unsubs: Off[] };
 export type ListCache = Map<Element, Map<unknown, Row>>;
 
+export type ComponentBindingRuntime = {
+    has:            (name: string) => boolean;
+    source:         (name: string) => Source;
+    activateAction: (name: string) => Off | null;
+};
+
 // #region event-dispatch
 // @docs One delegated listener per `@event` token, attached to the wrapper.
 // Native browser bubbling carries the event up; the listener filters out
@@ -47,6 +53,7 @@ export type Wrapper = HTMLElement & {
     _listCache:   ListCache;
     _unsubs:      Off[];
     _isSyncing?:  boolean;
+    _component?:  ComponentBindingRuntime;
     put:          (key: string, val: unknown | ((prev: unknown) => unknown)) => void;
 };
 // #endregion

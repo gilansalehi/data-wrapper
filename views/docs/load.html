@@ -1,5 +1,5 @@
 <figure data-source="component.ts" data-region="load">
-  <figcaption>Loads content into the wrapper. A <code>.js</code> or <code>.mjs</code> source is dynamically imported and its <code>default</code> export is invoked with the wrapper as the only argument — handy for handler registration in a separate file. Anything else is fetched as text, parsed into a fragment, and re-wakes the subtree. <code>&lt;script type=&quot;dw/controller&quot;&gt;</code> blocks are collected, removed from the fragment, and executed (after wake) with the wrapper as their <code>this</code> context. Append <code>?run-scripts</code> to also execute ordinary inline <code>&lt;script&gt;</code> tags before wake binds — <code>innerHTML</code> alone leaves them inert. External <code>&lt;script src&gt;</code> is skipped to keep wake&#x27;s ordering invariants. Either path ends with <code>dw/loaded</code>.</figcaption>
+  <figcaption>Loads content into the wrapper. Loaded HTML may contain one owned inline <code>&lt;script type=&quot;module&quot; data-component&gt;</code> block. The loader removes it, imports it through a unique Blob URL, and attaches a component runtime before wake so bare <code>$</code> outputs and <code>@</code> actions can resolve its live exports. Legacy <code>&lt;script type=&quot;dw/controller&quot;&gt;</code> blocks are still removed and executed after wake with the wrapper as <code>this</code>. Append <code>?run-scripts</code> to also execute ordinary inline scripts before wake. A <code>.js</code> or <code>.mjs</code> source still imports and invokes its default export with the wrapper. Every successful path ends with <code>dw/loaded</code>, then <code>dw/ready</code>.</figcaption>
   <pre><code>    async load(src: string | null = this.getAttribute(&#x27;src&#x27;)) {
         if (!src) return;
         const url = new URL(src, document.baseURI);
@@ -22,6 +22,18 @@
                 // controllers stay; they execute when that nested wrapper loads.
                 const controllers = this.collectControllers(tpl.content);
                 controllers.forEach(s =&gt; s.remove());
+                const componentScripts = this.collectComponentModules(tpl.content);
+                if (componentScripts.length &gt; 1) {
+                    throw new Error(&#x27;Only one inline component module is supported per loaded view&#x27;);
+                }
+                const componentScript = componentScripts[0];
+                if (componentScript?.hasAttribute(&#x27;src&#x27;)) {
+                    throw new Error(&#x27;External component modules are not supported yet&#x27;);
+                }
+                componentScript?.remove();
+                const componentModule = componentScript
+                    ? await this.importComponentModule(componentScript, url)
+                    : undefined;
 
                 unwake(this);
                 this.innerHTML = &#x27;&#x27;;
@@ -29,6 +41,9 @@
                 this._subs = {};
                 this._unsubs = [];
                 this._listCache = new Map();
+                this._component = componentModule
+                    ? new ComponentRuntime(this, componentModule)
+                    : undefined;
                 this.removeAttribute(&#x27;_live&#x27;);
                 if (url.searchParams.has(&#x27;run-scripts&#x27;)) runScripts(this);
                 wake(this, null, this);

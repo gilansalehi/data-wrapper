@@ -1,0 +1,17 @@
+<script type="module" data-component="counter">
+    export let count = 0;
+
+    export function doubled() {
+        return count * 2;
+    }
+
+    export function increment(event) {
+        count += Number(event.detail.payload.amount);
+    }
+</script>
+
+<section class="component-counter">
+    <button @click="increment?prevent" name="amount" value="1">Increment</button>
+    <output data-output="count" $text="count"></output>
+    <output data-output="doubled" $text="doubled"></output>
+</section>

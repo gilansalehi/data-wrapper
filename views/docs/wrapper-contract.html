@@ -6,6 +6,7 @@
     _listCache:   ListCache;
     _unsubs:      Off[];
     _isSyncing?:  boolean;
+    _component?:  ComponentBindingRuntime;
     put:          (key: string, val: unknown | ((prev: unknown) =&gt; unknown)) =&gt; void;
 };</code></pre>
 </figure>

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, spyOn } from '@tests/helpers.ts';
 import { DW_DIRECTIVES } from '@lib/registry.ts';
 import { wake, publish, unwire } from '@lib/engine.ts';
 import type { Row, Sub, Wrapper } from '@lib/engine.ts';
+import { ComponentRuntime } from '@lib/component-runtime.ts';
 
 type TestWrapper = Wrapper & HTMLElement;
 
@@ -33,6 +34,61 @@ beforeEach(() => {
 });
 
 describe('wake bindings', () => {
+    it('resolves an exported bare name through the component runtime', () => {
+        let title = 'Module title';
+        const wrapper = makeWrapper();
+        wrapper.state.title = 'Wrapper title';
+        wrapper.innerHTML = '<span $text="title"></span>';
+        const runtime = new ComponentRuntime(wrapper, {
+            get title() { return title; },
+        });
+        wrapper._component = runtime;
+
+        wake(wrapper);
+        title = 'Updated module title';
+        runtime.flush();
+
+        expect(wrapper.querySelector('span')?.textContent).toBe('Updated module title');
+        expect(runtime.station.title).toHaveLength(1);
+        expect(wrapper._subs.title).toBeUndefined();
+    });
+
+    it('applies formatter pipelines to component outputs', () => {
+        const wrapper = makeWrapper();
+        wrapper.innerHTML = '<span $text="title?upper"></span>';
+        wrapper._component = new ComponentRuntime(wrapper, { title: 'module title' });
+
+        wake(wrapper);
+
+        expect(wrapper.querySelector('span')?.textContent).toBe('MODULE TITLE');
+    });
+
+    it('keeps explicit pURLs routed to wrapper state when an export has the same name', () => {
+        const wrapper = makeWrapper();
+        wrapper.state.title = 'Wrapper title';
+        wrapper.innerHTML = '<span $text="/title"></span>';
+        const runtime = new ComponentRuntime(wrapper, { title: 'Module title' });
+        wrapper._component = runtime;
+
+        wake(wrapper);
+
+        expect(wrapper.querySelector('span')?.textContent).toBe('Wrapper title');
+        expect(wrapper._subs.title).toHaveLength(1);
+        expect(runtime.station.title).toBeUndefined();
+    });
+
+    it('keeps missing bare exports routed to legacy wrapper state', () => {
+        const wrapper = makeWrapper();
+        wrapper.state.title = 'Wrapper title';
+        wrapper.innerHTML = '<span $text="title"></span>';
+        wrapper._component = new ComponentRuntime(wrapper, { count: 0 });
+
+        wake(wrapper);
+
+        expect(wrapper.querySelector('span')?.textContent).toBe('Wrapper title');
+        expect(wrapper._subs.title).toHaveLength(1);
+    });
+
     it('registers and runs wrapper-scoped $ bindings', () => {
         const wrapper = appendWrapper('<span $text="/name"></span>');
         wrapper.state.name = 'Ali';
@@ -230,6 +286,42 @@ describe('wake row bindings', () => {
 });
 
 describe('wake directives and events', () => {
+    it('invokes an exported bare action and flushes component outputs', () => {
+        let count = 0;
+        const wrapper = makeWrapper();
+        wrapper.innerHTML = `
+            <button @click="increment?prevent" name="amount" value="2"></button>
+            <output $text="count"></output>
+        `;
+        wrapper._component = new ComponentRuntime(wrapper, {
+            get count() { return count; },
+            increment(event: CustomEvent) {
+                count += Number(event.detail.payload.amount);
+            },
+        });
+
+        wake(wrapper);
+        const button = wrapper.querySelector('button') as HTMLButtonElement;
+        const click = new Event('click', { bubbles: true, cancelable: true });
+        button.dispatchEvent(click);
+
+        expect(click.defaultPrevented).toBe(true);
+        expect(wrapper.querySelector('output')?.textContent).toBe('2');
+    });
+
+    it('keeps a missing exported action available to legacy topic listeners', () => {
+        const wrapper = makeWrapper();
+        wrapper.innerHTML = '<button @click="legacy"></button>';
+        wrapper._component = new ComponentRuntime(wrapper, { count: 0 });
+        let calls = 0;
+        wrapper.addEventListener('legacy', () => { calls += 1; });
+
+        wake(wrapper);
+        (wrapper.querySelector('button') as HTMLButtonElement).click();
+
+        expect(calls).toBe(1);
+    });
+
     it('remounts built-in *if nodes with current wrapper-scoped bindings', () => {
         const wrapper = appendWrapper('<p $text="/message"></p>');
         wrapper.querySelector('p')!.setAttribute('*if', '/show');

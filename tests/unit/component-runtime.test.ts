@@ -162,6 +162,62 @@ describe('ComponentRuntime outputs', () => {
 });
 
 describe('ComponentRuntime managed boundaries', () => {
+    it('activates exported actions through their existing event topics', () => {
+        let count = 0;
+        const componentRoot = root();
+        const runtime = new ComponentRuntime(componentRoot, {
+            increment(event: CustomEvent) {
+                count += Number(event.detail.payload.amount);
+            },
+        });
+        const off = runtime.activateAction('increment');
+
+        componentRoot.dispatchEvent(new CustomEvent('increment', {
+            detail: { payload: { amount: 2 } },
+        }));
+        off?.();
+        componentRoot.dispatchEvent(new CustomEvent('increment', {
+            detail: { payload: { amount: 2 } },
+        }));
+
+        expect(count).toBe(2);
+    });
+
+    it('reference-counts duplicate action activations', () => {
+        let calls = 0;
+        const componentRoot = root();
+        const runtime = new ComponentRuntime(componentRoot, {
+            increment() { calls += 1; },
+        });
+        const offFirst  = runtime.activateAction('increment')!;
+        const offSecond = runtime.activateAction('increment')!;
+
+        componentRoot.dispatchEvent(new CustomEvent('increment'));
+        offFirst();
+        componentRoot.dispatchEvent(new CustomEvent('increment'));
+        offSecond();
+        componentRoot.dispatchEvent(new CustomEvent('increment'));
+
+        expect(calls).toBe(2);
+    });
+
+    it('ignores action topics owned by nested wrappers', () => {
+        let calls = 0;
+        const componentRoot = root();
+        const nested = root();
+        const button = document.createElement('button');
+        nested.appendChild(button);
+        componentRoot.appendChild(nested);
+        const runtime = new ComponentRuntime(componentRoot, {
+            increment() { calls += 1; },
+        });
+        runtime.activateAction('increment');
+
+        button.dispatchEvent(new CustomEvent('increment', { bubbles: true }));
+
+        expect(calls).toBe(0);
+    });
+
     it('flushes after a synchronous exported action', () => {
         let count = 0;
         const runtime = new ComponentRuntime(root(), {
@@ -300,6 +356,7 @@ describe('ComponentRuntime managed boundaries', () => {
     it('throws clearly when an action export is missing or not a function', () => {
         const runtime = new ComponentRuntime(root(), { count: 0 });
 
+        expect(runtime.activateAction('count')).toBeNull();
         expect(() => runtime.runAction('count', event()))
             .toThrow(/action "count" is not an exported function/);
     });
