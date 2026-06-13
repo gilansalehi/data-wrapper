@@ -83,3 +83,28 @@ test.describe('Loaded component lifecycle', () => {
         await expect(component.locator('[data-output="status"]')).toHaveText('mounted');
     });
 });
+
+test.describe('Loaded component structural directives', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto('/tests/fixtures/component-structural.html');
+        await expect(page.locator('data-wrapper li')).toHaveText('One');
+    });
+
+    test('updates bare *if from an exported action', async ({ page }) => {
+        const wrapper = page.locator('data-wrapper');
+
+        await expect(wrapper.locator('[data-note]')).toHaveCount(0);
+        await wrapper.getByRole('button', { name: 'Toggle' }).click();
+        await expect(wrapper.locator('[data-note]')).toHaveText('Visible');
+        await wrapper.getByRole('button', { name: 'Toggle' }).click();
+        await expect(wrapper.locator('[data-note]')).toHaveCount(0);
+    });
+
+    test('updates bare *list while preserving row-relative bindings', async ({ page }) => {
+        const wrapper = page.locator('data-wrapper');
+
+        await wrapper.getByRole('button', { name: 'Add' }).click();
+
+        await expect(wrapper.locator('li')).toHaveText(['One', 'Item 2']);
+    });
+});

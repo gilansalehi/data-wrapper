@@ -359,12 +359,12 @@ const collectPayload = (el: Element): DispatchPayload => {
 // turns it into a subscriber. `$prop` binds a Source to a DOM property,
 // `*directive` invokes a registered structural directive, and `@event`
 // delegates a native DOM event to an emitted topic. In a loaded component,
-// a bare `$` name resolves to a matching module export and a bare `@` topic
-// activates a matching exported function. Explicit pURLs keep their existing
-// wrapper, row, protocol, and cross-wrapper meanings. A subscription that
-// escapes the element's own scope has its `Off` recorded on the scope's
-// `unsubs` so eviction can tear it down. Three tokens, one function, no
-// runtime parsing past wake.
+// bare `$` and `*` names resolve to matching module exports, and a bare `@`
+// topic activates a matching exported function. Explicit pURLs keep their
+// existing wrapper, row, protocol, and cross-wrapper meanings. A subscription
+// that escapes the element's own scope has its `Off` recorded on the scope's
+// `unsubs` so eviction can tear it down. Three tokens, one function, no runtime
+// parsing past wake.
 
 // Resolve a DWRL host to its wrapper. The default sentinel keeps the local
 // wrapper; a named host is looked up by id and must already be upgraded.
@@ -537,7 +537,7 @@ export const wire = (
     // `$` and `*` both consume a source via `resolve()`. The resolver
     // returns null for unknown protocols, unresolvable hosts, and
     // path-less default-protocol pURLs — wire() skips those silently.
-    const componentSource = token === '$'
+    const componentSource = (token === '$' || token === '*')
         && BARE_NAME.test(value)
         && wrapper._component?.has(path)
         ? { source: wrapper._component.source(path), target: wrapper }

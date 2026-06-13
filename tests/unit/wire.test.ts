@@ -286,6 +286,72 @@ describe('wake row bindings', () => {
 });
 
 describe('wake directives and events', () => {
+    it('resolves a bare * directive through the component runtime', () => {
+        let visible = false;
+        const wrapper = makeWrapper();
+        wrapper.innerHTML = '<p>Shown</p>';
+        wrapper.querySelector('p')!.setAttribute('*if', 'visible');
+        const runtime = new ComponentRuntime(wrapper, {
+            get visible() { return visible; },
+        });
+        wrapper._component = runtime;
+        document.body.appendChild(wrapper);
+
+        wake(wrapper);
+        expect(wrapper.querySelector('p')).toBeNull();
+
+        visible = true;
+        runtime.flush();
+
+        expect(wrapper.querySelector('p')?.textContent).toBe('Shown');
+        expect(runtime.station.visible).toHaveLength(1);
+        expect(wrapper._subs.visible).toBeUndefined();
+    });
+
+    it('keeps an explicit * pURL routed to wrapper state', () => {
+        const wrapper = makeWrapper();
+        wrapper.innerHTML = '<p>Wrapper</p>';
+        wrapper.querySelector('p')!.setAttribute('*if', '/visible');
+        wrapper.state.visible = false;
+        const runtime = new ComponentRuntime(wrapper, { visible: true });
+        wrapper._component = runtime;
+        document.body.appendChild(wrapper);
+
+        wake(wrapper);
+
+        expect(wrapper.querySelector('p')).toBeNull();
+        expect(wrapper._subs.visible).toHaveLength(1);
+        expect(runtime.station.visible).toBeUndefined();
+    });
+
+    it('renders a component-backed *list with row-relative bindings', () => {
+        let items = [{ id: 1, label: 'One' }];
+        const wrapper = makeWrapper();
+        wrapper.innerHTML = `
+            <ul>
+                <template><li $text="./label"></li></template>
+            </ul>
+        `;
+        wrapper.querySelector('ul')!.setAttribute('*list', 'items');
+        const runtime = new ComponentRuntime(wrapper, {
+            get items() { return items; },
+        });
+        wrapper._component = runtime;
+        document.body.appendChild(wrapper);
+
+        wake(wrapper);
+        items = [
+            { id: 1, label: 'Updated' },
+            { id: 2, label: 'Two' },
+        ];
+        runtime.flush();
+
+        expect([...wrapper.querySelectorAll('li')].map(li => li.textContent))
+            .toEqual(['Updated', 'Two']);
+        expect(runtime.station.items).toHaveLength(1);
+        expect(wrapper._subs.items).toBeUndefined();
+    });
+
     it('invokes an exported bare action and flushes component outputs', () => {
         let count = 0;
         const wrapper = makeWrapper();
