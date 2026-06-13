@@ -1,5 +1,5 @@
 <figure data-source="component.ts" data-region="load">
-  <figcaption>Loads content into the wrapper. Loaded HTML may contain one owned inline <code>&lt;script type=&quot;module&quot; data-component&gt;</code> block. The loader removes it, imports it through a unique Blob URL, and attaches a component runtime before wake so bare <code>$</code> outputs and <code>@</code> actions can resolve its live exports. Legacy <code>&lt;script type=&quot;dw/controller&quot;&gt;</code> blocks are still removed and executed after wake with the wrapper as <code>this</code>. Append <code>?run-scripts</code> to also execute ordinary inline scripts before wake. A <code>.js</code> or <code>.mjs</code> source still imports and invokes its default export with the wrapper. Every successful path ends with <code>dw/loaded</code>, then <code>dw/ready</code>.</figcaption>
+  <figcaption>Loads content into the wrapper. Loaded HTML may contain one owned inline <code>&lt;script type=&quot;module&quot; data-component&gt;</code> block. The loader removes it, imports it through a unique Blob URL, and attaches a component runtime before wake so bare <code>$</code> outputs and <code>@</code> actions can resolve its live exports. Append <code>?run-scripts</code> to also execute ordinary inline scripts before wake. A <code>.js</code> or <code>.mjs</code> source still imports and invokes its default export with the wrapper. Every successful path ends with <code>dw/loaded</code>, then <code>dw/ready</code>.</figcaption>
   <pre><code>    async load(src: string | null = this.getAttribute(&#x27;src&#x27;)) {
         if (!src) return;
         const url = new URL(src, document.baseURI);
@@ -16,12 +16,6 @@
                 const tpl  = document.createElement(&#x27;template&#x27;);
                 tpl.innerHTML = html;
 
-                // Pull this wrapper&#x27;s own controllers out of the fragment before
-                // insertion — they shouldn&#x27;t render and shouldn&#x27;t be picked up
-                // by the legacy `runScripts()` pass. Nested-wrapper-owned
-                // controllers stay; they execute when that nested wrapper loads.
-                const controllers = this.collectControllers(tpl.content);
-                controllers.forEach(s =&gt; s.remove());
                 const componentScripts = this.collectComponentModules(tpl.content);
                 if (componentScripts.length &gt; 1) {
                     throw new Error(&#x27;Only one inline component module is supported per loaded view&#x27;);
@@ -47,15 +41,13 @@
                 this.removeAttribute(&#x27;_live&#x27;);
                 if (url.searchParams.has(&#x27;run-scripts&#x27;)) runScripts(this);
                 wake(this, null, this);
-                await this.runControllers(controllers);
             }
         } catch (err) {
             emit(&#x27;dw/error&#x27;, { src: url.href, error: err }, this);
             throw err;
         }
         // `dw/loaded` = the fetch + swap completed. `dw/ready` = the wrapper is
-        // fully alive, including any awaited controllers. Both fire in order
-        // so consumers can pick the granularity they need.
+        // fully alive. Both fire in order so consumers can pick granularity.
         emit(&#x27;dw/loaded&#x27;, { src: url.href }, this);
         emit(&#x27;dw/ready&#x27;,  undefined,        this);
     }</code></pre>
