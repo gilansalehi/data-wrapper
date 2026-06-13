@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach, spyOn } from '@tests/helpers.ts';
+import { ComponentRuntime } from '@lib/component-runtime.ts';
 import '@lib/component.ts';
 
 interface TestWrapper extends HTMLElement {
     state: Record<string, unknown>;
+    _component?: ComponentRuntime;
     load(src?: string | null): Promise<void>;
 }
 
@@ -60,6 +62,21 @@ describe('connect lifecycle', () => {
 
         expect(fired).toBe(true);
     });
+
+    it('destroys an attached component runtime when disconnected', async () => {
+        const wrapper = make();
+        let destroyed = 0;
+        wrapper._component = new ComponentRuntime(wrapper, {
+            destroy() { destroyed += 1; },
+        });
+
+        wrapper.remove();
+        await tick();
+
+        expect(destroyed).toBe(1);
+        expect(wrapper._component).toBeUndefined();
+    });
+
 });
 
 describe('load lifecycle', () => {
@@ -85,6 +102,21 @@ describe('load lifecycle', () => {
         await wrapper.load('http://localhost/test.html');
 
         expect(wrapper.querySelector('p')?.textContent).toBe('yes');
+    });
+
+    it('destroys the previous component runtime before replacing loaded HTML', async () => {
+        mockResponse(`<p>replacement</p>`);
+        const wrapper = make();
+        let destroyed = 0;
+        wrapper._component = new ComponentRuntime(wrapper, {
+            destroy() { destroyed += 1; },
+        });
+
+        await wrapper.load('http://localhost/test.html');
+
+        expect(destroyed).toBe(1);
+        expect(wrapper._component).toBeUndefined();
+        expect(wrapper.textContent).toContain('replacement');
     });
 
     it('emits dw/loaded before dw/ready in the auto-load path', async () => {

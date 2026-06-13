@@ -1,12 +1,17 @@
 <figure data-source="component.ts" data-region="state-api">
-  <figcaption>Public surface for reading and writing wrapper state. Every mutation routes through <code>put()</code>, which short-circuits no-op writes and emits <code>dw/sync</code> so subscribers fan out exactly once.<ul><li><code>get</code> reads a path from state (single segment or slash-separated),</li><li><code>patch</code> does a shallow merge,</li><li><code>push</code> appends,</li><li><code>pull</code> filters by id or predicate,</li><li><code>register</code> attaches event handlers scoped to the wrapper.</li></ul></figcaption>
-  <pre><code>    register(actions: Record&lt;string, EventListener&gt;) {
+  <figcaption>Public surface for reading and writing wrapper state. Every mutation routes through <code>put()</code>, which short-circuits no-op writes and emits <code>dw/sync</code> so subscribers fan out exactly once.<ul><li><code>get</code> reads a path from state (single segment or slash-separated),</li><li><code>patch</code> does a shallow merge,</li><li><code>push</code> appends,</li><li><code>pull</code> filters by id or predicate,</li><li><code>register</code> attaches event handlers scoped to the wrapper and returns</li></ul>one cleanup that removes the registered batch.</figcaption>
+  <pre><code>    register(actions: Record&lt;string, EventListener&gt;): Off {
+        const offs: Off[] = [];
         for (const [eventType, cb] of Object.entries(actions)) {
-            on(eventType, (e) =&gt; {
+            offs.push(on(eventType, (e) =&gt; {
                 if ((e.target as Element).closest(&#x27;data-wrapper&#x27;) !== this) return;
                 cb(e);
-            }, &#x27;&#x27;, this);
+            }, &#x27;&#x27;, this));
         }
+        return () =&gt; {
+            for (const off of offs) off();
+            offs.length = 0;
+        };
     }
 
     get(path: string): unknown {

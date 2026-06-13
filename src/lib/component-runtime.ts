@@ -8,6 +8,8 @@ export type ComponentTransaction = <Args extends unknown[], Result>(
     fn: (...args: Args) => Result,
 ) => (...args: Args) => Result;
 
+export type ComponentCleanup = () => void | Promise<void>;
+
 export type ComponentContext = Readonly<{
     root:        Element;
     signal:      AbortSignal;
@@ -40,6 +42,9 @@ const isThenable = (value: unknown): value is PromiseLike<unknown> =>
 // values through a Station. Actions and transactions are managed flush
 // boundaries, so module-local `export let` state reaches subscribers without a
 // copied state object or dependency graph.
+// `mount(context)` runs after the loaded DOM is awake and may return a cleanup.
+// Destruction aborts the context signal, removes runtime-owned subscriptions
+// and actions, runs mount cleanup, then invokes `destroy(context)` exactly once.
 export class ComponentRuntime {
     readonly root:    Element;
     readonly module:  ComponentModule;
@@ -49,9 +54,12 @@ export class ComponentRuntime {
     private readonly outputs = new Map<string, Output>();
     private readonly actions = new Map<string, ActiveAction>();
     private readonly abort   = new AbortController();
+    private readonly cleanups: ComponentCleanup[] = [];
     private flushing = false;
     private pending  = false;
     private destroyed = false;
+    private mounting?: Promise<void>;
+    private destroying?: Promise<void>;
 
     constructor(root: Element, module: ComponentModule) {
         this.root   = root;
@@ -177,8 +185,16 @@ export class ComponentRuntime {
         return (...args: Args) => this.boundary(() => fn(...args));
     }
 
-    destroy(): void {
-        if (this.destroyed) return;
+    mount(): Promise<void> {
+        if (this.mounting) return this.mounting;
+        if (this.destroyed) return Promise.resolve();
+
+        this.mounting = this.runMount();
+        return this.mounting;
+    }
+
+    destroy(): Promise<void> {
+        if (this.destroying) return this.destroying;
         this.destroyed = true;
         this.abort.abort();
         this.outputs.clear();
@@ -187,6 +203,9 @@ export class ComponentRuntime {
         }
         this.actions.clear();
         for (const name in this.station) delete this.station[name];
+
+        this.destroying = this.runDestroy();
+        return this.destroying;
     }
 
     private reader(name: string): () => unknown {
@@ -212,5 +231,54 @@ export class ComponentRuntime {
 
         if (!isThenable(result)) return result;
         return Promise.resolve(result).finally(() => this.flush()) as Result;
+    }
+
+    private async runMount(): Promise<void> {
+        const hook = this.module.mount;
+        if (hook === undefined) return;
+        if (typeof hook !== 'function') {
+            throw new Error('Component lifecycle export "mount" is not a function');
+        }
+
+        const cleanup = await this.boundary(() => hook(this.context));
+        if (cleanup === undefined) return;
+        if (typeof cleanup !== 'function') {
+            throw new Error('Component lifecycle export "mount" must return a cleanup function or nothing');
+        }
+
+        this.cleanups.push(cleanup as ComponentCleanup);
+    }
+
+    private async runDestroy(): Promise<void> {
+        try {
+            await this.mounting;
+        } catch {
+            // A mount error is reported by the loader. Destruction still owns
+            // any cleanup mount registered before failing.
+        }
+
+        let firstError: unknown;
+        for (const cleanup of this.cleanups.splice(0).reverse()) {
+            try {
+                await cleanup();
+            } catch (error) {
+                firstError ??= error;
+            }
+        }
+
+        const hook = this.module.destroy;
+        if (hook !== undefined) {
+            if (typeof hook !== 'function') {
+                firstError ??= new Error('Component lifecycle export "destroy" is not a function');
+            } else {
+                try {
+                    await hook(this.context);
+                } catch (error) {
+                    firstError ??= error;
+                }
+            }
+        }
+
+        if (firstError !== undefined) throw firstError;
     }
 }

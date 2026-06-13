@@ -1,13 +1,14 @@
 import { describe, it, expect, beforeEach } from '@tests/helpers.ts';
 import { DW_DIRECTIVES } from '@lib/registry.ts';
 import type { Station, Sub } from '@lib/engine.ts';
+import type { Off } from '@lib/utils.ts';
 // DataWrapper is registered as a side-effect of the import
 import '@lib/component.ts';
 
 interface TestWrapper extends HTMLElement {
     state: Record<string, unknown>;
     _subs: Station;
-    register(actions: Record<string, EventListener>): void;
+    register(actions: Record<string, EventListener>): Off;
     get(path: string): unknown;
     put(key: string, val: unknown | ((prev: unknown) => unknown)): void;
     patch(key: string, obj: Record<string, unknown>): void;
@@ -215,6 +216,22 @@ describe('register', () => {
         el.dispatchEvent(new CustomEvent('topic'));
 
         expect(calls).toBe(2);
+    });
+
+    it('returns a batch cleanup that removes every registered handler', () => {
+        const el = make();
+        let calls = 0;
+        const off = el.register({
+            first:  () => { calls += 1; },
+            second: () => { calls += 1; },
+        });
+
+        off();
+        off();
+        el.dispatchEvent(new CustomEvent('first'));
+        el.dispatchEvent(new CustomEvent('second'));
+
+        expect(calls).toBe(0);
     });
 });
 

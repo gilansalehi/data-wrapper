@@ -361,3 +361,90 @@ describe('ComponentRuntime managed boundaries', () => {
             .toThrow(/action "count" is not an exported function/);
     });
 });
+
+describe('ComponentRuntime lifecycle', () => {
+    it('runs mount with the stable context and flushes its changes', async () => {
+        let status = 'idle';
+        let received: unknown;
+        const runtime = new ComponentRuntime(root(), {
+            get status() { return status; },
+            mount(context: unknown) {
+                received = context;
+                status = 'mounted';
+            },
+        });
+        const seen: unknown[] = [];
+        runtime.subscribe('status', value => seen.push(value));
+
+        await runtime.mount();
+
+        expect(received).toBe(runtime.context);
+        expect(seen).toEqual(['idle', 'mounted']);
+    });
+
+    it('runs mount cleanup before destroy and only destroys once', async () => {
+        const order: string[] = [];
+        const runtime = new ComponentRuntime(root(), {
+            mount() {
+                order.push('mount');
+                return () => { order.push('cleanup'); };
+            },
+            destroy() {
+                order.push('destroy');
+            },
+        });
+
+        await runtime.mount();
+        await runtime.destroy();
+        await runtime.destroy();
+
+        expect(order).toEqual(['mount', 'cleanup', 'destroy']);
+        expect(runtime.context.signal.aborted).toBe(true);
+    });
+
+    it('awaits async mount cleanup during destroy', async () => {
+        const order: string[] = [];
+        const runtime = new ComponentRuntime(root(), {
+            async mount() {
+                order.push('mount');
+                return async () => {
+                    await Promise.resolve();
+                    order.push('cleanup');
+                };
+            },
+            destroy() {
+                order.push('destroy');
+            },
+        });
+
+        await runtime.mount();
+        await runtime.destroy();
+
+        expect(order).toEqual(['mount', 'cleanup', 'destroy']);
+    });
+
+    it('continues destruction after cleanup failure and reports the first error', async () => {
+        const order: string[] = [];
+        const runtime = new ComponentRuntime(root(), {
+            mount() {
+                return () => { order.push('cleanup'); throw new Error('cleanup failed'); };
+            },
+            destroy() {
+                order.push('destroy');
+            },
+        });
+
+        await runtime.mount();
+
+        await expect(runtime.destroy()).rejects.toThrow('cleanup failed');
+        expect(order).toEqual(['cleanup', 'destroy']);
+    });
+
+    it('rejects invalid lifecycle export shapes clearly', async () => {
+        const invalidMount = new ComponentRuntime(root(), { mount: 'nope' });
+        const invalidDestroy = new ComponentRuntime(root(), { destroy: 'nope' });
+
+        await expect(invalidMount.mount()).rejects.toThrow(/export "mount" is not a function/);
+        await expect(invalidDestroy.destroy()).rejects.toThrow(/export "destroy" is not a function/);
+    });
+});

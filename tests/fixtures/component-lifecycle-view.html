@@ -1,0 +1,17 @@
+<script type="module" data-component="lifecycle">
+    export let status = 'created';
+
+    export function mount({ root }) {
+        status = 'mounted';
+        root.dataset.mounts = String(Number(root.dataset.mounts || 0) + 1);
+        return () => {
+            root.dataset.cleaned = 'yes';
+        };
+    }
+
+    export function destroy({ root }) {
+        root.dataset.destroyed = 'yes';
+    }
+</script>
+
+<output data-output="status" $text="status"></output>

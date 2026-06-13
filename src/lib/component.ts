@@ -11,6 +11,8 @@ export class DataWrapper extends HTMLElement {
     declare _listCache: ListCache;
     declare _observer:  MutationObserver;
     declare _component?: ComponentRuntime;
+    declare _loadedSrc?: string;
+    declare _destroying?: Promise<void>;
 
     constructor() {
         super();
@@ -120,16 +122,23 @@ export class DataWrapper extends HTMLElement {
         this.dispatchEvent(new Event('load'));
 
         // Keep ready asynchronous so listeners observe the stable ordering
-        // `dw/load` → native `load` → `dw/ready`. Wrappers with `src=""` skip
-        // connect-time ready; load() emits it after the fetched view is alive.
-        if (!this.hasAttribute('src')) {
+        // `dw/load` → native `load` → `dw/ready`. A reconnect also reloads the
+        // last component-backed HTML source, including sources passed directly
+        // to load(), so a runtime destroyed on disconnect is recreated.
+        const src = this.getAttribute('src') || this._loadedSrc;
+        if (!src) {
             queueMicrotask(() => emit('dw/ready', undefined, this));
+        } else {
+            queueMicrotask(() => this.load(src));
         }
-        if (this.hasAttribute('src')) queueMicrotask(() => this.load());
     }
 
     disconnectedCallback() {
         this._observer.disconnect();
+        if (this._component) unwake(this);
+        void this.destroyComponent().catch(error => {
+            emit('dw/error', { phase: 'destroy', error }, this);
+        });
         emit('dw/disconnect', undefined, this);
     }
 
@@ -141,14 +150,20 @@ export class DataWrapper extends HTMLElement {
     //  - `patch` does a shallow merge,
     //  - `push` appends,
     //  - `pull` filters by id or predicate,
-    //  - `register` attaches event handlers scoped to the wrapper.
-    register(actions: Record<string, EventListener>) {
+    //  - `register` attaches event handlers scoped to the wrapper and returns
+    //    one cleanup that removes the registered batch.
+    register(actions: Record<string, EventListener>): Off {
+        const offs: Off[] = [];
         for (const [eventType, cb] of Object.entries(actions)) {
-            on(eventType, (e) => {
+            offs.push(on(eventType, (e) => {
                 if ((e.target as Element).closest('data-wrapper') !== this) return;
                 cb(e);
-            }, '', this);
+            }, '', this));
         }
+        return () => {
+            for (const off of offs) off();
+            offs.length = 0;
+        };
     }
 
     get(path: string): unknown {
@@ -253,13 +268,15 @@ export class DataWrapper extends HTMLElement {
     // inline `<script type="module" data-component>` block. The loader removes
     // it, imports it through a unique Blob URL, and attaches a component runtime
     // before wake so bare `$` outputs and `@` actions can resolve its live
-    // exports. Append `?run-scripts` to also execute ordinary inline scripts
-    // before wake. A `.js` or `.mjs` source still imports and invokes its
-    // default export with the wrapper. Every successful path ends with
-    // `dw/loaded`, then `dw/ready`.
+    // exports. The runtime's `mount(context)` hook runs after wake; reload and
+    // disconnect destroy the previous runtime. Append `?run-scripts` to also
+    // execute ordinary inline scripts before wake. A `.js` or `.mjs` source
+    // still imports and invokes its default export with the wrapper. Every
+    // successful path ends with `dw/loaded`, then `dw/ready`.
     async load(src: string | null = this.getAttribute('src')) {
         if (!src) return;
         const url = new URL(src, document.baseURI);
+        let nextComponent: ComponentRuntime | undefined;
 
         try {
             if (/\.m?js$/.test(url.pathname)) {
@@ -287,19 +304,36 @@ export class DataWrapper extends HTMLElement {
                     : undefined;
 
                 unwake(this);
+                await this.destroyComponent();
                 this.innerHTML = '';
                 this.append(tpl.content);
                 this._subs = {};
                 this._unsubs = [];
                 this._listCache = new Map();
-                this._component = componentModule
+                nextComponent = componentModule
                     ? new ComponentRuntime(this, componentModule)
                     : undefined;
+                this._component = nextComponent;
                 this.removeAttribute('_live');
                 if (url.searchParams.has('run-scripts')) runScripts(this);
                 wake(this, null, this);
+                await nextComponent?.mount();
+                this._loadedSrc = componentModule ? url.href : undefined;
             }
         } catch (err) {
+            if (nextComponent && this._component === nextComponent) {
+                unwake(this);
+                this._component = undefined;
+                try {
+                    await nextComponent.destroy();
+                } catch (destroyError) {
+                    emit('dw/error', {
+                        phase: 'destroy',
+                        src: url.href,
+                        error: destroyError,
+                    }, this);
+                }
+            }
             emit('dw/error', { src: url.href, error: err }, this);
             throw err;
         }
@@ -332,6 +366,19 @@ export class DataWrapper extends HTMLElement {
         } finally {
             URL.revokeObjectURL(blobURL);
         }
+    }
+
+    private destroyComponent(): Promise<void> {
+        if (this._destroying) return this._destroying;
+        const component = this._component;
+        this._component = undefined;
+        if (!component) return Promise.resolve();
+
+        const destroying = component.destroy().finally(() => {
+            if (this._destroying === destroying) this._destroying = undefined;
+        });
+        this._destroying = destroying;
+        return destroying;
     }
 
 }

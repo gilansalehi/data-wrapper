@@ -35,3 +35,51 @@ test.describe('Loaded component modules', () => {
         await expect(page.locator('script[data-component]')).toHaveCount(0);
     });
 });
+
+test.describe('Loaded component lifecycle', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto('/tests/fixtures/component-lifecycle.html');
+        await expect(page.locator('[data-output="status"]')).toHaveText('mounted');
+    });
+
+    test('mounts after wake and destroys the previous runtime before reload', async ({ page }) => {
+        const component = page.locator('#component');
+
+        await expect(component).toHaveAttribute('data-mounts', '1');
+        await page.locator('#component').evaluate((wrapper: HTMLElement & {
+            load(src: string): Promise<void>;
+        }) => wrapper.load('/tests/fixtures/component-lifecycle-view.html'));
+
+        await expect(component).toHaveAttribute('data-cleaned', 'yes');
+        await expect(component).toHaveAttribute('data-destroyed', 'yes');
+        await expect(component).toHaveAttribute('data-mounts', '2');
+        await expect(component.locator('[data-output="status"]')).toHaveText('mounted');
+    });
+
+    test('destroys the runtime when its wrapper disconnects', async ({ page }) => {
+        const state = await page.locator('#component').evaluate(async wrapper => {
+            wrapper.remove();
+            await new Promise(resolve => setTimeout(resolve, 0));
+            return { ...((wrapper as HTMLElement).dataset) };
+        });
+
+        expect(state.cleaned).toBe('yes');
+        expect(state.destroyed).toBe('yes');
+    });
+
+    test('recreates a manually loaded component after reconnect', async ({ page }) => {
+        const component = page.locator('#component');
+
+        await component.evaluate(wrapper => {
+            wrapper.removeAttribute('src');
+            const parent = wrapper.parentElement!;
+            wrapper.remove();
+            parent.appendChild(wrapper);
+        });
+
+        await expect(component).toHaveAttribute('data-cleaned', 'yes');
+        await expect(component).toHaveAttribute('data-destroyed', 'yes');
+        await expect(component).toHaveAttribute('data-mounts', '2');
+        await expect(component.locator('[data-output="status"]')).toHaveText('mounted');
+    });
+});
