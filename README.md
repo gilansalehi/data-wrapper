@@ -1,119 +1,112 @@
 # data-wrapper
 
-Zero-dependency, HTML-first reactivity built on a single Web Component. State
-lives in `data-*` attributes; three tokens wire the rest.
+Zero-dependency, HTML-first reactivity built on a single Web Component.
+Components are plain ES modules; views bind to their live exports through
+three tokens.
 
 ```html
 <script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"></script>
-
-<data-wrapper data-count="0">
-  <button @click="dec">−</button>
-  <output $text="/count"></output>
-  <button @click="inc">+</button>
-</data-wrapper>
-
-<script type="module">
-  const counter = document.querySelector('data-wrapper');
-  counter.register({
-    inc: () => counter.put('count', n => Number(n) + 1),
-    dec: () => counter.put('count', n => Number(n) - 1),
-  });
-</script>
+<data-wrapper src="counter.html"></data-wrapper>
 ```
-
-No build step, no virtual DOM, no JSX. Open DevTools and watch `data-count`
-change.
-
-## Mental model
-
-The DOM is declarative. The `<data-wrapper>` element owns the logic.
-
-| Token | Direction         | Purpose                                                 |
-| ----- | ----------------- | ------------------------------------------------------- |
-| `$`   | state → DOM       | `$prop="/path"` sets `el[prop] = value`                 |
-| `*`   | state → structure | `*directive="/path"` runs a structural directive        |
-| `@`   | event → handler   | `@event="topic"` delegates a native event to a topic    |
-
-Paths are parsed by the browser's native `new URL()`:
-
-- `/key` — wrapper-root state
-- `./key` — item-scoped (inside `*list` templates)
-- `?format=name` — applies a named formatter; chain with `&format=…`
-- `?key=field` — overrides the identity key for `*list` reconciliation
-
-## State API
-
-```js
-wrapper.put('count', 1);                  // set, or n => n + 1
-wrapper.patch('user', { name: 'Ali' });   // shallow merge
-wrapper.push('todos', { id: 1, … });      // array append
-wrapper.pull('todos', t => t.done);       // array filter (or by id)
-wrapper.register({ 'topic': handler });   // event topic handlers
-```
-
-Every mutation routes through `put()`, writes through a `Proxy` into
-`dataset`, broadcasts to compiled subscribers, and emits `data:sync`. External
-`data-*` attribute changes in DevTools or via JS go through the same pipeline
-via `MutationObserver`.
-
-## Lists
 
 ```html
-<ul *list="/todos" data-empty="dw-empty">
-  <template>
-    <li $class="./status">
-      <input type="checkbox" $checked="./done" @change="todo/toggle">
-      <span $text="./task"></span>
-    </li>
-  </template>
+<!-- counter.html -->
+<script type="module" data-component="counter">
+    export let count = 0;
+    export const doubled = () => count * 2;
+    export function inc(event) { count += Number(event.target.value); }
+</script>
+
+<button @click="inc?prevent" value="1">+1</button>
+<output $text="count"></output>
+<output $text="doubled"></output>
+```
+
+No build step, no virtual DOM, no JSX. Mutate `count` inside an action; every
+binding that reads it updates on the next flush.
+
+## Three tokens
+
+| Token | Direction         | Purpose                                            |
+| ----- | ----------------- | -------------------------------------------------- |
+| `$`   | state → DOM       | `$prop="name"` sets `el[prop]` to a module export  |
+| `*`   | state → structure | `*directive="name"` runs a structural directive    |
+| `@`   | event → action    | `@event="name"` calls a module function on event   |
+
+Binding values resolve in priority order:
+
+- **Bare name** (`view`) looks up a component export
+- **Relative path** (`./done`) reads from the surrounding `*list` row's item
+
+## Directives on `<template>`
+
+`*list` and `*if` live on `<template>` elements — the template's body is what
+renders.
+
+```html
+<ul>
+    <template *list="view">
+        <li $class="./done?onoff=done:active">
+            <span $text="./task"></span>
+            <template *if="./done">
+                <strong>done</strong>
+            </template>
+        </li>
+    </template>
 </ul>
 ```
 
-`*list` reconciles by item identity (default key `id`), reuses existing rows,
-and broadcasts updated values into already-compiled row subscribers. Empty
-state renders a referenced `<template>` or one of the built-ins (`dw-empty`,
-`dw-missing`, `dw-loading`, `dw-error`).
+`*list` reconciles by item identity (default key `id`, override with
+`?key=field`). Existing rows update in place; new rows wake; missing rows tear
+down.
 
-## Loading from `src`
+## State as DOM
+
+`<data-wrapper>` keeps a `Proxy` over its own `data-*` attributes and watches
+external edits via `MutationObserver`. Use `$data-*` on the wrapper to project
+a component export onto its dataset so CSS attribute selectors can react:
 
 ```html
-<data-wrapper src="/controllers/widget.js" data-name=""></data-wrapper>
-<data-wrapper src="/views/section.html"></data-wrapper>
+<data-wrapper id="nav" src="nav.html" $data-nav-open="open"></data-wrapper>
 ```
 
-A `.js` / `.mjs` source is imported and its `default` export is called with
-the wrapper. An HTML source replaces `innerHTML` and re-wakes.
+```css
+#nav[data-nav-open="true"] .hamburger { /* … */ }
+```
+
+Open DevTools and watch the attribute flip with state.
 
 ## Built-in formatters
 
-`count`, `fallback`, `json`, `upper`, `lower`, `currency`, `date`, `trim`,
-`bool`, `onoff`, `yesno`. Register your own via `DW_FORMATTERS.set(name, fn)`.
+`onoff` — `?onoff=truthy:falsy` picks one label or the other. Register more
+through `DW_FORMATTERS.set(name, fn)`.
 
 ## Project layout
 
 ```
 src/lib/
-  component.ts   custom element, state Proxy, MutationObserver, register/put/patch/push/pull
-  wire.ts        wake() + wire() — compiles attributes into subscribers
-  engine.ts      bind / watch / broadcast / reconcile / *list directive
-  registry.ts    types, formatters, prop aliases, directive registry, built-in templates
-  utils.ts       q / emit / on / delegateCb
+    utils.ts       pURL parser, readPath, DOM helpers
+    engine.ts      station primitives, wake/wire/bind, reconcile, *list/*if
+    component.ts   ComponentRuntime — output cache, action delegation, flush
+    element.ts     <data-wrapper> custom element + load()
+    index.ts       re-exports
 ```
-
-`FRAMEWORK.md` documents the render lifecycle, subscription model, and
-architectural pressure points.
 
 ## Scripts
 
 ```sh
 bun install
-bun run serve         # dev server (serve.ts)
-bun run build         # ESM + minified IIFE in /dist
-bun run typecheck     # tsc --noEmit
-bun run test:unit     # bun test tests/unit/
-bun run test:e2e      # playwright (builds first)
-bun run review        # typecheck + unit + e2e
+bun run serve       # dev server
+bun run build       # ESM + minified IIFE in /dist
+bun run typecheck   # tsc --noEmit
 ```
+
+## Status
+
+Alpha. The PoC supports component modules with synchronous reads and actions.
+Async actions, `mount`/`destroy` lifecycle hooks, pURL `/wrapperState` paths,
+cross-wrapper addressing, custom protocols, and the wrapper-side state API
+(`register`/`put`/`patch`/`push`/`pull`) are tracked features, not yet built.
 
 ## License
 

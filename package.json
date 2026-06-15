@@ -15,7 +15,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "bun build ./src/lib2/index.ts --outfile ./dist/data-wrapper.js --format esm --target browser && bun build ./src/lib2/index.ts --outfile ./dist/data-wrapper.min.js --format iife --minify --target browser",
+    "build": "bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.js --format esm --target browser && bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.min.js --format iife --minify --target browser",
     "serve": "bun serve.ts",
     "typecheck": "tsc --noEmit"
   },
