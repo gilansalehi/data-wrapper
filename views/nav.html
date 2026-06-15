@@ -1,37 +1,30 @@
+<script type="module" data-component="nav">
+    export let open = false;
+
+    export function toggle()      { open = !open; }
+    export function close()       { open = false; }
+    export function toggleTheme() { window.theme?.toggle(); }
+</script>
+
 <header class="sticky header theme-ink">
     <div class="container header__kicker">&lt;data-wrapper&gt; : the no-framework framework</div>
 </header>
 
-<button @click="nav/toggle" class="nav-hamburger" aria-label="Toggle navigation">
+<button @click="toggle" class="nav-hamburger" aria-label="Toggle navigation">
     <hr><hr><hr>
 </button>
-<div class="nav-backdrop" $class="/navOpen?format=onoff" data-enter="fade" @click="nav/close" aria-hidden="true"></div>
+<div class="nav-backdrop" $class="open?onoff=on:off" data-enter="fade" @click="close" aria-hidden="true"></div>
 
-<dialog $open="/navOpen?format=bool" data-enter="slide from-right" aria-label="Site navigation">
+<dialog $open="open" data-enter="slide from-right" aria-label="Site navigation">
     <header class="nav-header">
         <strong>data-wrapper</strong>
-        <button @click="nav/close" class="nav-close" aria-label="Close navigation">✕</button>
+        <button @click="close" class="nav-close" aria-label="Close navigation">✕</button>
     </header>
     <nav class="nav-links" aria-label="Page sections">
         <span class="nav-section-label">Demos</span>
-        <a href="#todos"      @click="nav/close">Todos app</a>
-        <a href="#start"      @click="nav/close">Counter</a>
-        <a href="#events"     @click="nav/close">Events</a>
-        <a href="#patterns"       @click="nav/close">Patterns</a>
-        <a href="#loading"        @click="nav/close">Loading</a>
-        <a href="#password-meter" @click="nav/close">Password meter</a>
-        <span class="nav-section-label">Reference</span>
-        <a href="#tokens"     @click="nav/close">Tokens</a>
-        <a href="#bindings"   @click="nav/close">Bindings ($)</a>
-        <a href="#formatters" @click="nav/close">Formatters</a>
-        <a href="#state-api"  @click="nav/close">State API</a>
-        <a href="#dwrl"       @click="nav/close">DWRL</a>
-        <a href="#config"     @click="nav/close">Configuration</a>
-        <span class="nav-section-label">Site</span>
-        <a href="/framework.html" @click="nav/close">Why data-wrapper?</a>
-        <a href="/documentation.html" @click="nav/close">Generated docs</a>
+        <a href="#todos" @click="close">Todos app</a>
     </nav>
     <footer class="nav-footer">
-        <button @click="theme/toggle" class="theme-toggle">◐ Toggle theme</button>
+        <button @click="toggleTheme" class="theme-toggle">◐ Toggle theme</button>
     </footer>
 </dialog>

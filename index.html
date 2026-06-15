@@ -13,13 +13,7 @@
 </head>
 <body>
 
-<data-wrapper id="nav" src="/views/nav.html" data-nav-open="false"
-    onload="this.register({
-        'nav/toggle':   () => this.put('navOpen', v => !v),
-        'nav/close':    () => this.put('navOpen', false),
-        'theme/toggle': () => window.theme?.toggle(),
-    })">
-</data-wrapper>
+<data-wrapper id="nav" src="/views/nav.html" $data-nav-open="open"></data-wrapper>
 
 <header>
     <data-wrapper src="/views/framework/hero.html"></data-wrapper>
