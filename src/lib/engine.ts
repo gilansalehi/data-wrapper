@@ -1,5 +1,5 @@
 import { cloneTemplate, DW_DIRECTIVES, DW_FORMATTERS, DW_PROTOCOLS, PROP_ALIASES, resolveTemplate } from './registry.ts';
-import type { DirectiveHandler, DispatchDetail, DispatchPayload, Item, ProtocolHandler, Resolution, Row, Source, Station, Sub, Subs, Wrapper } from './registry.ts';
+import type { DirectiveHandler, DispatchDetail, Item, ProtocolHandler, Resolution, Row, Source, Station, Sub, Subs, Wrapper } from './registry.ts';
 import { p, on, emit, readPath, type Off, type pURL } from './utils.ts';
 
 export type { Item, ListCache, Row, Station, Sub, Subs, Wrapper } from './registry.ts';
@@ -292,9 +292,6 @@ const BARE_NAME = /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:[?#].*)?$/;
 // value as its argument; the legacy `?format=name` is a meta-key that
 // applies the named formatter with no argument. Framework-level keys
 // (`key`, `prevent`, `stop`, `immediate`) are reserved and skipped.
-// `collectPayload()` packs the data `@`-events ride with: a full
-// FormData dump from `<form>`, or `{name: value}` from anything else
-// with a `name` attribute.
 const RESERVED_PARAMS = new Set(['key', 'prevent', 'stop', 'immediate']);
 
 const formatter = (params: URLSearchParams, wrapper: WrapperNode | null = null): Format => {
@@ -327,31 +324,6 @@ const formatter = (params: URLSearchParams, wrapper: WrapperNode | null = null):
     return value => steps.reduce((v, step) => step(v), value);
 };
 
-// Two cases where `el.value` is genuinely wrong: checkboxes (boolean state,
-// not the `value=""` attribute string), and `<select multiple>` (array of
-// selected, not just the first). Everything else (text, number, range, date,
-// radio) round-trips via `el.value` and dataset JSON parses on read.
-const elementValue = (el: Element): unknown => {
-    const i = el as HTMLInputElement;
-    if (i.type === 'checkbox')                          return i.checked;
-    if (el instanceof HTMLSelectElement && el.multiple) return [...el.selectedOptions].map(o => o.value);
-    return (el as HTMLInputElement | HTMLTextAreaElement).value;
-};
-
-const collectPayload = (el: Element): DispatchPayload => {
-    if (el instanceof HTMLFormElement) {
-        const out: DispatchPayload = {};
-        for (const child of el.elements) {
-            const c = child as HTMLInputElement;
-            if (!c.name) continue;
-            if (c.type === 'radio' && !c.checked) continue;   // only the checked radio in a group
-            out[c.name] = elementValue(c);
-        }
-        return out;
-    }
-    const ni = el as HTMLInputElement;
-    return ni.name ? { [ni.name]: elementValue(ni) } : {};
-};
 // #endregion
 
 // #region wire
@@ -486,7 +458,7 @@ export const wire = (
     const prop  = name.slice(1);
 
     const dwrl = p(value);
-    const { path, isRel, params, host, protocol } = dwrl;
+    const { path, isRel, params, host } = dwrl;
     if (!wrapper) return;
 
     // Teardown handles live on the element's scope: its *list row, else the wrapper.
@@ -494,23 +466,12 @@ export const wire = (
 
     if (token === '@') {
         // A plain topic bubbles from the declaring element; a `//host/` topic
-        // is re-dispatched onto the named wrapper. The native-event listener
-        // stays on the local wrapper either way — the host is not a DOM
-        // ancestor of `el` — so its Off is always kept for local teardown.
-        //
-        // Non-default protocols (`put:`, future `push:`/`pull:`/`patch:`)
-        // dispatch under the protocol name as the event topic; the wrapper's
-        // auto-registered `put:` listener interprets the detail. Default
-        // protocol (`dwrl:`) dispatches under the path — the legacy
-        // callback-handler topic convention.
+        // re-dispatches onto the named wrapper. The native-event listener
+        // stays on the local wrapper either way, so its Off is always kept
+        // for local teardown.
         if (!path) return;
-        // Empty host (opaque non-default protocols like `put:./done`) and
-        // HOST_SELF (default-protocol same-wrapper topics) both dispatch from
-        // `el`: the event bubbles to the wrapper, and `e.target` is the
-        // firing element — what `handlePut`'s `closest('[_key]')` walk needs
-        // to find the row context for relative paths.
         const sink = (host === HOST_SELF || !host) ? el : resolveHost(host, wrapper);
-        if (!sink) return; // named host absent — resolveHost has warned
+        if (!sink) return;
 
         const off = on(prop, (e) => {
             if (params.has('prevent'))   e.preventDefault();
@@ -519,11 +480,11 @@ export const wire = (
 
             const detail: DispatchDetail = {
                 originalEvent: e,
-                payload: collectPayload(el),
                 path,
                 isRel,
+                item: row?.item,
             };
-            emit(protocol === 'dwrl:' ? path : protocol, detail, sink);
+            emit(path, detail, sink);
         }, el, wrapper);
 
         unsubs.push(off);

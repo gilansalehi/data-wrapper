@@ -167,17 +167,17 @@ describe('ComponentRuntime managed boundaries', () => {
         const componentRoot = root();
         const runtime = new ComponentRuntime(componentRoot, {
             increment(event: CustomEvent) {
-                count += Number(event.detail.payload.amount);
+                count += Number(event.detail.amount);
             },
         });
         const off = runtime.activateAction('increment');
 
         componentRoot.dispatchEvent(new CustomEvent('increment', {
-            detail: { payload: { amount: 2 } },
+            detail: { amount: 2 },
         }));
         off?.();
         componentRoot.dispatchEvent(new CustomEvent('increment', {
-            detail: { payload: { amount: 2 } },
+            detail: { amount: 2 },
         }));
 
         expect(count).toBe(2);

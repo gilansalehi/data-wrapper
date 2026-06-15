@@ -1,55 +1,67 @@
 <script type="module" data-component="todos">
     export let filter = 'all';
-    export let task = '';
-    export let todos = [];
+    export let todos = [
+        { id: 1, task: 'Master the DOM',    done: true  },
+        { id: 2, task: 'Ship data-wrapper', done: false },
+        { id: 3, task: 'Write the docs',    done: false },
+    ];
 
-    export const addTodo = e => {
-        todos = [...todos, { task, done: false, id: Date.now() }]
-    };
+    export const view = () => todos.filter(t =>
+          filter === 'all'    ? true
+        : filter === 'active' ? !t.done
+        :                        t.done
+    );
 
-    export const removeTodo = e => {
-        const { id } = e.detail.payload;
-        todos = todos.filter(item => item.id !== id);
-    };
+    export const activeCount = () => todos.filter(t => !t.done).length;
 
-    export const setFilter = e => filter = e.detail.value;
+    export function addTodo(event) {
+        const form = event.target;
+        const task = form.task.value.trim();
+        if (!task) return;
+        todos = [...todos, { id: Date.now(), task, done: false }];
+        form.reset();
+    }
 
-    export const filteredTodos = todos.filter(todo => {
-        return filter === 'all'   ? true
-            : filter === 'active' ? !todo.done
-            : todo.done
-    });
+    export function removeTodo(event) {
+        const { item } = event.detail;
+        todos = todos.filter(t => t.id !== item.id);
+    }
+
+    export function toggleTodo(event) {
+        const { item } = event.detail;
+        todos = todos.map(t =>
+            t.id === item.id ? { ...t, done: event.target.checked } : t
+        );
+    }
+
+    export function setFilter(event) {
+        filter = event.target.value;
+    }
 </script>
 
-<section id="todosWidget">
+<article class="demo" data-to="todosCode" @reflect="demo/reflect">
     <form @submit="addTodo?prevent">
-        <input type="text" placeholder="What's up?" required autocomplete="off" />
+        <input name="task" type="text" placeholder="What needs doing?" required autocomplete="off">
         <button type="submit">Add</button>
     </form>
 
-    <ul class="todo-list">
-        <template *for="todo of filterdTodos">
-            <li>
-                <input type="checkbox" $check="todo.done" @change="toggleTodo" />
-                <span $text="todo.task"></span>
-                <strong class="done-badge" *if="todo.done">done</strong>
-                <button class="delete-btn" @click="removeTodo" name="id" $value="todo.id" aria-label="Remove">✕</button>
+    <ul class="todo-list" *list="view" data-empty="dw-empty">
+        <template>
+            <li class="todo-item" $class="./done?onoff=done:active">
+                <input type="checkbox" $checked="./done" @change="toggleTodo" aria-label="Toggle todo completion">
+                <span $text="./task"></span>
+                <strong class="done-badge" *if="./done">done</strong>
+                <button class="delete-btn" @click="removeTodo" aria-label="Remove">✕</button>
             </li>
         </template>
     </ul>
 
     <div class="controls">
-        <span><strong $text="/active?format=count">0</strong> active</span>
+        <span><strong $text="activeCount">0</strong> active</span>
         <div class="filter-btns" role="group" aria-label="Filter todos">
             <button @click="setFilter" value="all">All</button>
             <button @click="setFilter" value="active">Active</button>
             <button @click="setFilter" value="done">Done</button>
         </div>
     </div>
-</section>
-
-<style>
-    @scope {
-        /* ... */
-    }
-</style>
+</article>

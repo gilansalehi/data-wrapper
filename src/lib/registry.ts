@@ -27,12 +27,15 @@ export type ComponentBindingRuntime = {
 // events owned by nested wrappers, then emits the topic named on the
 // declaring element along with a `DispatchDetail`. Adding handlers to
 // dynamically-inserted DOM costs nothing — the listener is already installed.
-export type DispatchPayload = Record<string, unknown>;
+// Component actions read the originating DOM event directly through standard
+// accessors (`event.target.value`, `event.target.checked`, `new FormData(form)`)
+// — no framework-side harvest. `item` rides the detail when the event fires
+// inside a `*list` row, so row-scoped handlers don't have to walk the DOM.
 export type DispatchDetail  = {
     originalEvent: Event;
-    payload:       DispatchPayload;
-    path:          string;  // parsed pURL path — write target for put:/push:/pull:/patch: protocols
-    isRel:         boolean; // pURL was relative (`./`) — listener uses this to detect row-scoped intent
+    path:          string;  // parsed pURL path
+    isRel:         boolean; // pURL was relative (`./`)
+    item?:         Item;    // row item when the @-event fired inside a *list row
 };
 export type DispatchEvent = CustomEvent<DispatchDetail>;
 // #endregion

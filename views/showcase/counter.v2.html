@@ -6,12 +6,12 @@
     }
 
     export function increment(event) {
-        count += Number(event.detail.payload.amount);
+        count += Number(event.target.value);
     }
 </script>
 
 <section class="component-counter">
-    <button @click="increment?prevent" name="amount" value="1">Increment</button>
+    <button @click="increment?prevent" value="1">Increment</button>
     <output data-output="count" $text="count"></output>
     <output data-output="doubled" $text="doubled"></output>
 </section>

@@ -1,5 +1,5 @@
 <figure data-source="engine.ts" data-region="pURL">
-  <figcaption>pURL drives the framework&#x27;s wire surface — <code>pURL()</code> in <code>utils.ts</code> does the parsing; these helpers consume the result. <code>formatter()</code> compiles a pURL&#x27;s query string into a left-to-right pipeline at wake time, so runtime updates never look up formatters again. Each <code>?key=value</code> is dispatched as a formatter named by the key with the value as its argument; the legacy <code>?format=name</code> is a meta-key that applies the named formatter with no argument. Framework-level keys (<code>key</code>, <code>prevent</code>, <code>stop</code>, <code>immediate</code>) are reserved and skipped. <code>collectPayload()</code> packs the data <code>@</code>-events ride with: a full FormData dump from <code>&lt;form&gt;</code>, or <code>{name: value}</code> from anything else with a <code>name</code> attribute.</figcaption>
+  <figcaption>pURL drives the framework&#x27;s wire surface — <code>pURL()</code> in <code>utils.ts</code> does the parsing; these helpers consume the result. <code>formatter()</code> compiles a pURL&#x27;s query string into a left-to-right pipeline at wake time, so runtime updates never look up formatters again. Each <code>?key=value</code> is dispatched as a formatter named by the key with the value as its argument; the legacy <code>?format=name</code> is a meta-key that applies the named formatter with no argument. Framework-level keys (<code>key</code>, <code>prevent</code>, <code>stop</code>, <code>immediate</code>) are reserved and skipped.</figcaption>
   <pre><code>const RESERVED_PARAMS = new Set([&#x27;key&#x27;, &#x27;prevent&#x27;, &#x27;stop&#x27;, &#x27;immediate&#x27;]);
 
 const formatter = (params: URLSearchParams, wrapper: WrapperNode | null = null): Format =&gt; {
@@ -30,31 +30,5 @@ const formatter = (params: URLSearchParams, wrapper: WrapperNode | null = null):
     }
 
     return value =&gt; steps.reduce((v, step) =&gt; step(v), value);
-};
-
-// Two cases where `el.value` is genuinely wrong: checkboxes (boolean state,
-// not the `value=&quot;&quot;` attribute string), and `&lt;select multiple&gt;` (array of
-// selected, not just the first). Everything else (text, number, range, date,
-// radio) round-trips via `el.value` and dataset JSON parses on read.
-const elementValue = (el: Element): unknown =&gt; {
-    const i = el as HTMLInputElement;
-    if (i.type === &#x27;checkbox&#x27;)                          return i.checked;
-    if (el instanceof HTMLSelectElement &amp;&amp; el.multiple) return [...el.selectedOptions].map(o =&gt; o.value);
-    return (el as HTMLInputElement | HTMLTextAreaElement).value;
-};
-
-const collectPayload = (el: Element): DispatchPayload =&gt; {
-    if (el instanceof HTMLFormElement) {
-        const out: DispatchPayload = {};
-        for (const child of el.elements) {
-            const c = child as HTMLInputElement;
-            if (!c.name) continue;
-            if (c.type === &#x27;radio&#x27; &amp;&amp; !c.checked) continue;   // only the checked radio in a group
-            out[c.name] = elementValue(c);
-        }
-        return out;
-    }
-    const ni = el as HTMLInputElement;
-    return ni.name ? { [ni.name]: elementValue(ni) } : {};
 };</code></pre>
 </figure>

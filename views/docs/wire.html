@@ -120,7 +120,7 @@ export const wire = (
     const prop  = name.slice(1);
 
     const dwrl = p(value);
-    const { path, isRel, params, host, protocol } = dwrl;
+    const { path, isRel, params, host } = dwrl;
     if (!wrapper) return;
 
     // Teardown handles live on the element&#x27;s scope: its *list row, else the wrapper.
@@ -128,23 +128,12 @@ export const wire = (
 
     if (token === &#x27;@&#x27;) {
         // A plain topic bubbles from the declaring element; a `//host/` topic
-        // is re-dispatched onto the named wrapper. The native-event listener
-        // stays on the local wrapper either way — the host is not a DOM
-        // ancestor of `el` — so its Off is always kept for local teardown.
-        //
-        // Non-default protocols (`put:`, future `push:`/`pull:`/`patch:`)
-        // dispatch under the protocol name as the event topic; the wrapper&#x27;s
-        // auto-registered `put:` listener interprets the detail. Default
-        // protocol (`dwrl:`) dispatches under the path — the legacy
-        // callback-handler topic convention.
+        // re-dispatches onto the named wrapper. The native-event listener
+        // stays on the local wrapper either way, so its Off is always kept
+        // for local teardown.
         if (!path) return;
-        // Empty host (opaque non-default protocols like `put:./done`) and
-        // HOST_SELF (default-protocol same-wrapper topics) both dispatch from
-        // `el`: the event bubbles to the wrapper, and `e.target` is the
-        // firing element — what `handlePut`&#x27;s `closest(&#x27;[_key]&#x27;)` walk needs
-        // to find the row context for relative paths.
         const sink = (host === HOST_SELF || !host) ? el : resolveHost(host, wrapper);
-        if (!sink) return; // named host absent — resolveHost has warned
+        if (!sink) return;
 
         const off = on(prop, (e) =&gt; {
             if (params.has(&#x27;prevent&#x27;))   e.preventDefault();
@@ -153,11 +142,11 @@ export const wire = (
 
             const detail: DispatchDetail = {
                 originalEvent: e,
-                payload: collectPayload(el),
                 path,
                 isRel,
+                item: row?.item,
             };
-            emit(protocol === &#x27;dwrl:&#x27; ? path : protocol, detail, sink);
+            emit(path, detail, sink);
         }, el, wrapper);
 
         unsubs.push(off);

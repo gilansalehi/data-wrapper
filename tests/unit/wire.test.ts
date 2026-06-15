@@ -356,13 +356,13 @@ describe('wake directives and events', () => {
         let count = 0;
         const wrapper = makeWrapper();
         wrapper.innerHTML = `
-            <button @click="increment?prevent" name="amount" value="2"></button>
+            <button @click="increment?prevent" value="2"></button>
             <output $text="count"></output>
         `;
         wrapper._component = new ComponentRuntime(wrapper, {
             get count() { return count; },
-            increment(event: CustomEvent) {
-                count += Number(event.detail.payload.amount);
+            increment(event: Event) {
+                count += Number((event.target as HTMLButtonElement).value);
             },
         });
 

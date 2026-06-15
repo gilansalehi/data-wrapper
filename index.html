@@ -54,28 +54,19 @@
 <section id="todos">
 <h2>Todos app</h2>
 
-<p>A complete CRUD app built in HTML. Markup and handlers live in a separate file, loaded via
-   <code>src="…?run-scripts"</code>. Todos persist through <code>localStorage</code> using the
-   <code>$data-todos="localstorage://todos"</code> protocol binding — no <code>dw/sync</code>
-   wiring, no save callback. Open DevTools → Elements and watch the attributes update live.</p>
+<p>A complete CRUD app built as a component module. The loaded view holds one
+   <code>&lt;script type="module" data-component&gt;</code>; its <code>export let</code>
+   declarations are the live state, exported functions are actions, and the runtime
+   wires bare names like <code>*list="view"</code> and <code>@click="setFilter"</code>
+   straight to those exports. No <code>register()</code>, no <code>dw/sync</code>,
+   no callback handlers — just a module.</p>
 
-<data-wrapper id="app"
-    data-filter="all"
-    $data-todos="localstorage://todos"
-    src="views/showcase/todos.html?run-scripts"
->
-</data-wrapper>
+<data-wrapper id="app" src="views/showcase/todos.v3.html"></data-wrapper>
 
 <details>
-    <summary>Full HTML — markup + inline script, loaded from <code>views/showcase/todos.html</code></summary>
+    <summary>Full source — <code>views/showcase/todos.v3.html</code></summary>
     <pre><code $text="/todosCode"></code></pre>
 </details>
-<p class="note">
-    Todo data is read from <code>localStorage["todos"]</code> on attach and written back on every state
-    change — the protocol binding handles both sides. The filter buttons are styled by a plain CSS
-    attribute selector: <code>data-wrapper[data-filter="done"] button[value="done"] { font-weight: bold }</code>
-    — no JS.
-</p>
 </section>
 
 
