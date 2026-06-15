@@ -39,18 +39,18 @@
     }
 </script>
 
-<article class="demo" data-to="todosCode" @reflect="demo/reflect">
+<article class="demo">
     <form @submit="addTodo?prevent">
         <input name="task" type="text" placeholder="What needs doing?" required autocomplete="off">
         <button type="submit">Add</button>
     </form>
 
-    <ul class="todo-list" *list="view" data-empty="dw-empty">
-        <template>
+    <ul class="todo-list">
+        <template *list="view">
             <li class="todo-item" $class="./done?onoff=done:active">
                 <input type="checkbox" $checked="./done" @change="toggleTodo" aria-label="Toggle todo completion">
                 <span $text="./task"></span>
-                <strong class="done-badge" *if="./done">done</strong>
+                <template *if="./done"><strong class="done-badge">done</strong></template>
                 <button class="delete-btn" @click="removeTodo" aria-label="Remove">✕</button>
             </li>
         </template>
