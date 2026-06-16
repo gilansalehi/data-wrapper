@@ -19,6 +19,7 @@ export type ComponentBindingRuntime = {
     has:            (name: string) => boolean;
     source:         (name: string) => Source;
     activateAction: (name: string) => Off | null;
+    destroy:        () => void;
 };
 
 export type Wrapper = HTMLElement & {
@@ -257,13 +258,15 @@ const reconcile = (
 
 // `*list` lives on the <template>. The template's body is the row; the
 // template's parent is the container. The template itself never renders.
-const listDirective: DirectiveHandler = ({ wrapper, el, key }) => {
+const listDirective: DirectiveHandler = ({ wrapper, el, params }) => {
     const tpl       = el as HTMLTemplateElement;
     const container = tpl.parentElement;
     if (!container) return () => {};
 
     let cache = wrapper._listCache.get(container);
     if (!cache) { cache = new Map(); wrapper._listCache.set(container, cache); }
+
+    const keyProp = params.get('key') || 'id';
 
     return value => {
         const items = Array.isArray(value) ? value : [];
@@ -272,7 +275,7 @@ const listDirective: DirectiveHandler = ({ wrapper, el, key }) => {
             cache.clear();
             return;
         }
-        reconcile(container, items, cache, tpl, key || 'id');
+        reconcile(container, items, cache, tpl, keyProp);
     };
 };
 

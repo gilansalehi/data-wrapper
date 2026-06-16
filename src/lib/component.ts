@@ -12,12 +12,13 @@ type Output = { read: () => unknown; value: unknown };
 
 // Synchronizes a loaded module's exports with active DOM sinks.
 // Each subscribed output is read on every flush; changes publish through the
-// component's own Station. Actions run inside a sync flush boundary so module
+// component's own Station. Actions run inside a flush boundary so module
 // mutations reach subscribers without dependency tracking.
 //
-// TODO: async boundary (return-value Promise → flush again on resolve)
 // TODO: mount(ctx) / destroy(ctx) lifecycle hook dispatch + cleanup collection
 export class ComponentRuntime {
+    static readonly all = new Set<ComponentRuntime>();
+
     readonly root:    Element;
     readonly module:  ComponentModule;
     readonly station: Station = {};
@@ -31,7 +32,8 @@ export class ComponentRuntime {
     constructor(root: Element, module: ComponentModule) {
         this.root    = root;
         this.module  = module;
-        this.context = Object.freeze({ root, flush: () => this.flush() });
+        this.context = Object.freeze({ root, flush });
+        ComponentRuntime.all.add(this);
     }
 
     has(name: string): boolean {
@@ -92,15 +94,16 @@ export class ComponentRuntime {
 
         let active = this.actions.get(name);
         if (!active) {
-            const fn = this.module[name] as (e: Event, ctx: ComponentContext) => unknown;
+            // wire's @event invocation goes through the same `action` helper devs
+            // use for cross-module mutators. One primitive, two call sites.
+            const wrapped = action(this.module[name] as (...args: unknown[]) => unknown);
             const handler: EventListener = e => {
                 if (
                     this.root.matches('data-wrapper')
                     && e.target instanceof Element
                     && e.target.closest('data-wrapper') !== this.root
                 ) return;
-                try { fn(e, this.context); }
-                finally { this.flush(); }
+                wrapped(e, this.context);
             };
             active = { refs: 0, handler };
             this.actions.set(name, active);
@@ -116,6 +119,7 @@ export class ComponentRuntime {
     }
 
     destroy(): void {
+        ComponentRuntime.all.delete(this);
         this.outputs.clear();
         for (const [name, a] of this.actions) this.root.removeEventListener(name, a.handler);
         this.actions.clear();
@@ -128,4 +132,60 @@ export class ComponentRuntime {
             return typeof v === 'function' ? v(this.context) : v;
         };
     }
+}
+
+// --- Public reactivity API ---------------------------------------------------
+
+// Flush every active runtime synchronously: each runtime re-reads its active
+// outputs and publishes changed values via Object.is. Devs call this directly
+// when their mutation happens outside an `action()`-wrapped call.
+export const flush = (): void => {
+    for (const r of ComponentRuntime.all) r.flush();
+};
+
+// Microtask coalescing: nested action calls within the same task collapse into
+// a single flush at the end of the microtask drain. Prevents O(N) flushes from
+// N nested actions and makes async-action timing predictable.
+let _scheduled = false;
+const _scheduleFlush = () => {
+    if (_scheduled) return;
+    _scheduled = true;
+    queueMicrotask(() => { _scheduled = false; flush(); });
+};
+
+// Marker symbol so action(action(fn)) is idempotent — wire()'s implicit wrap
+// over a dev-wrapped export doesn't re-wrap.
+const ACTION = Symbol('dw:action');
+
+type Fn = (...args: unknown[]) => unknown;
+
+// `action(fn)` wraps a function so every call schedules a global flush after
+// it returns; if the call returns a Promise, the flush also runs after the
+// Promise resolves. `action({a, b})` wraps each value in the object and returns
+// a new object of the same shape — convenient for batching state-module exports.
+//
+// Double-wrap protection via the ACTION marker; double-flush prevention via
+// microtask coalescing. Devs can call action() inside other actions without
+// fear of N+1 flushes.
+export function action<F extends Fn>(fn: F): F;
+export function action<T extends Record<string, Fn>>(obj: T): T;
+export function action(input: Fn | Record<string, Fn>): Fn | Record<string, Fn> {
+    if (typeof input === 'function') {
+        if ((input as Fn & { [ACTION]?: true })[ACTION]) return input;
+        const wrapped = ((...args: unknown[]) => {
+            let result;
+            try { result = (input as Fn)(...args); }
+            finally { _scheduleFlush(); }
+            if (result instanceof Promise) result.finally(_scheduleFlush);
+            return result;
+        }) as Fn & { [ACTION]: true };
+        wrapped[ACTION] = true;
+        return wrapped;
+    }
+    if (input && typeof input === 'object') {
+        const out: Record<string, Fn> = {};
+        for (const k of Object.keys(input)) out[k] = action(input[k]);
+        return out;
+    }
+    throw new TypeError('action() expects a function or an object of functions');
 }

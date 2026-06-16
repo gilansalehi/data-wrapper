@@ -101,12 +101,32 @@ bun run build       # ESM + minified IIFE in /dist
 bun run typecheck   # tsc --noEmit
 ```
 
+## State across components
+
+State that's shared between components lives in plain ES modules. Mark
+exported mutators with `action()` so calls from anywhere trigger a re-derive:
+
+```js
+// /state/todos.js
+import { action } from 'data-wrapper';
+
+export let todos = [];
+export const { addTodo, removeTodo } = action({
+    addTodo:    item => { todos = [...todos, item]; },
+    removeTodo: id   => { todos = todos.filter(t => t.id !== id); },
+});
+```
+
+See [STATE.md](./STATE.md) for the full guide — local state, shared state,
+async actions, manual `flush()`, and the idempotence rules.
+
 ## Status
 
-Alpha. The PoC supports component modules with synchronous reads and actions.
-Async actions, `mount`/`destroy` lifecycle hooks, pURL `/wrapperState` paths,
-cross-wrapper addressing, custom protocols, and the wrapper-side state API
-(`register`/`put`/`patch`/`push`/`pull`) are tracked features, not yet built.
+Alpha. Component modules support local state via `export let`, cross-module
+shared state via `action()`/`flush()`, sync and async actions, and the
+`*list` / `*if` directives on `<template>`. `mount(ctx)` / `destroy(ctx)`
+lifecycle hooks, pURL `/wrapperState` paths, cross-wrapper addressing, and
+custom protocols are tracked features, not yet built.
 
 ## License
 
