@@ -3,11 +3,13 @@
 </script>
 
 <section class="demo theme-demo">
-    <h2>Cross-module state</h2>
-    <p>This button and the nav-sidebar's <em>Toggle theme</em> button both
-       call the same <code>toggleTheme()</code> action, imported from
-       <code>/state/theme.js</code>. Click either — the page recolors, both
-       displays stay in sync, and the value survives reload.</p>
-    <p>Current theme: <strong $text="theme"></strong></p>
-    <button @click="toggleTheme">Flip theme</button>
+    <h2>Component module imports</h2>
+    <p><code>@view/theme</code> exports the live theme binding and action.
+       The component below imports both by module name; either button updates
+       both views and the navigation control.</p>
+
+    <p>Source module: <strong $text="theme"></strong></p>
+    <button @click="toggleTheme">Toggle from source</button>
+
+    <data-wrapper src="/views/showcase/theme-import.html"></data-wrapper>
 </section>

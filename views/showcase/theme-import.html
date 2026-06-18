@@ -1,0 +1,8 @@
+<script type="module" data-component data-module="@view/theme-import">
+    export { theme, toggleTheme } from '@view/theme';
+</script>
+
+<div class="module-import-demo">
+    <p>Imported from <code>@view/theme</code>: <strong $text="theme"></strong></p>
+    <button @click="toggleTheme">Toggle from importer</button>
+</div>

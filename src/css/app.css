@@ -53,6 +53,12 @@ p  { text-wrap: pretty; } */
     & p:last-child  { margin-bottom: 0; }
 }
 
+.module-import-demo {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: var(--border);
+}
+
 /* ── Badge — semantic on/off states (see atoms.css for generic .chip) ── */
 
 .badge {

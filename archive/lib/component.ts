@@ -301,7 +301,6 @@ export class DataWrapper extends HTMLElement {
     ): Promise<ComponentModule> {
         const label = script.dataset.component || this.id || 'anonymous';
         const sourceURL = `\n//# sourceURL=${source.href}#${label}`;
-        // prepend here?
         const blob = new Blob([script.textContent ?? '', sourceURL], {
             type: 'text/javascript',
         });
