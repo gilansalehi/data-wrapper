@@ -1,5 +1,6 @@
-// Dev / test static file server — used by playwright.config.ts webServer
-// Serves the project root; Bun.file infers Content-Type from extension.
+// Dev / test static file server. Serves the project root; Bun.file infers
+// Content-Type from extension. No special routes — view modules are handled
+// client-side by the framework via import maps.
 
 const server = Bun.serve({
     port: 3000,
@@ -8,9 +9,7 @@ const server = Bun.serve({
         const path = url.pathname === '/' ? '/index.html' : url.pathname;
         const file = Bun.file('.' + path);
 
-        if (!(await file.exists())) {
-            return new Response('Not found', { status: 404 });
-        }
+        if (!(await file.exists())) return new Response('Not found', { status: 404 });
 
         return new Response(file, {
             headers: {

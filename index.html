@@ -6,7 +6,17 @@
     <title>data-wrapper — HTML-first reactivity</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="manifest" href="/site.webmanifest">
-    <script src="/src/js/theme.js"></script>
+    <script type="importmap">{"imports":{"state/":"/state/"}}</script>
+    <script>
+        // Apply saved theme synchronously to avoid flash. The /state/theme.js
+        // module reads this attribute when first imported by any component.
+        (() => {
+            try {
+                const v = localStorage.getItem('data-wrapper:theme');
+                if (v === 'light' || v === 'dark') document.documentElement.dataset.theme = v;
+            } catch {}
+        })();
+    </script>
     <link rel="stylesheet" href="/src/css/index.css">
     <script src="/dist/data-wrapper.js" type="module"></script>
     <script src="/src/js/main.js" type="module"></script>
@@ -20,7 +30,8 @@
 </header>
 
 <main class="container">
-    <data-wrapper src="views/showcase/todos.v3.html"></data-wrapper>
+    <data-wrapper src="/views/showcase/theme.html"></data-wrapper>
+    <data-wrapper src="/views/showcase/todos.v3.html"></data-wrapper>
 </main>
 </body>
 </html>

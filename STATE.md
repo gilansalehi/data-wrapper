@@ -1,19 +1,21 @@
 # State in data-wrapper
 
 State lives in component modules. Each loaded view can carry one
-`<script type="module" data-component>` block; its `export let` declarations
-are reactive cells, its exported functions either run as event handlers or
-mutate state when called from elsewhere.
+`<script type="module" data-component data-module="...">` block; its
+`export let` declarations are reactive cells, its exported functions either
+run as event handlers or mutate state when called from elsewhere.
 
 There are exactly two reactivity primitives: **`action()`** (a function
 wrapper) and **`flush()`** (a manual flush trigger). That's it.
 
-## Component-local state
+## Component module state
 
-State that belongs to one component lives in its module:
+A view is a single HTML file: markup plus an inline `<script type="module"
+data-component>`. Named exports are directly available to its template.
 
 ```html
-<script type="module" data-component="counter">
+<!-- counter.html -->
+<script type="module" data-component data-module="@view/counter">
     export let count = 0;
     export const doubled = () => count * 2;
     export function inc(e) { count += Number(e.target.value); }
@@ -27,6 +29,35 @@ State that belongs to one component lives in its module:
 You don't import `action()` here. The framework wraps `@event`-bound handlers
 in an action boundary automatically — when `inc` runs, every binding that
 reads `count` (directly or through `doubled`) re-derives and updates.
+
+If you'd rather keep the markup and JS in separate files, point at an external
+module via
+`<script type="module" data-component data-module="@view/counter" src="./counter.js">`.
+
+## Per-mount instance state
+
+The default export is an optional factory. It runs once per mounted wrapper
+and returns an instance binding scope:
+
+```html
+<script type="module" data-component data-module="@view/instance-counter">
+    export const title = 'Counter';
+
+    export default () => {
+        let count = 0;
+        return {
+            get count() { return count; },
+            doubled: () => count * 2,
+            inc() { count += 1; },
+        };
+    };
+</script>
+```
+
+Bindings check the instance first and named exports second. This keeps module
+exports available while allowing repeated mounts, list-owned views, or other
+consumers to carry independent closure state. The default factory does not
+need to repeat named exports in its return value.
 
 ## Shared state across components
 
@@ -52,7 +83,7 @@ Consuming components import what they need:
 
 ```html
 <!-- /views/todo-list.html -->
-<script type="module" data-component="list">
+<script type="module" data-component data-module="@view/todo-list">
     import { todos, filter } from '/state/todos.js';
     export const view = () => todos.filter(t =>
         filter === 'all' ? true : filter === 'done' ? t.done : !t.done
@@ -68,7 +99,7 @@ Consuming components import what they need:
 
 ```html
 <!-- /views/todo-form.html -->
-<script type="module" data-component="form">
+<script type="module" data-component data-module="@view/todo-form">
     import { addTodo } from '/state/todos.js';
     export function submit(e) {
         addTodo({ id: Date.now(), task: e.target.task.value, done: false });
@@ -85,6 +116,13 @@ When `submit` calls `addTodo`, the action wrapper schedules a flush across
 every active runtime. The list re-derives `view`, reconciles the new row, and
 renders. ESM live bindings ensure both modules see the latest `todos` value
 without any synchronization code.
+
+An imported name is private to the importing module unless it is exported
+again. To expose shared state directly to a template, re-export it:
+
+```js
+export { todos, addTodo } from '/state/todos.js';
+```
 
 ## `action()` accepts a function or an object
 

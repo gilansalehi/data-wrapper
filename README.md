@@ -11,7 +11,7 @@ three tokens.
 
 ```html
 <!-- counter.html -->
-<script type="module" data-component="counter">
+<script type="module" data-component data-module="@view/counter">
     export let count = 0;
     export const doubled = () => count * 2;
     export function inc(event) { count += Number(event.target.value); }
@@ -22,8 +22,9 @@ three tokens.
 <output $text="doubled"></output>
 ```
 
-No build step, no virtual DOM, no JSX. Mutate `count` inside an action; every
-binding that reads it updates on the next flush.
+No build step, no virtual DOM, no JSX. Named exports are the template's normal
+binding scope. Mutate `count` inside an action; every binding that reads it
+updates on the next flush.
 
 ## Three tokens
 
@@ -35,8 +36,37 @@ binding that reads it updates on the next flush.
 
 Binding values resolve in priority order:
 
-- **Bare name** (`view`) looks up a component export
+- **Bare name** (`view`) checks the per-mount instance, then named module exports
 - **Relative path** (`./done`) reads from the surrounding `*list` row's item
+
+The default export is optional. When a view needs state unique to each mounted
+wrapper, it may export a factory whose returned object overlays the module
+scope:
+
+```js
+export const label = 'Counter';
+
+export default () => {
+    let count = 0;
+    return {
+        get count() { return count; },
+        increment() { count += 1; },
+    };
+};
+```
+
+Here `count` and `increment` are per-instance, while `label` comes from the
+module. If both scopes define the same name, the instance value wins.
+
+`data-module` gives the component module a stable import name:
+
+```js
+import { open } from '@view/nav';
+```
+
+The loader maps that name to the component's Blob URL before importing it.
+Repeated mounts reuse the same module namespace and invoke the optional
+default factory once per wrapper.
 
 ## Directives on `<template>`
 
@@ -87,10 +117,12 @@ through `DW_FORMATTERS.set(name, fn)`.
 src/lib/
     utils.ts       pURL parser, readPath, DOM helpers
     engine.ts      station primitives, wake/wire/bind, reconcile, *list/*if
-    component.ts   ComponentRuntime — output cache, action delegation, flush
+    component.ts   ComponentRuntime, action(), flush()
     element.ts     <data-wrapper> custom element + load()
     index.ts       re-exports
 ```
+
+The whole framework is ~13 KB unminified, ~8 KB minified, zero dependencies.
 
 ## Scripts
 
@@ -122,11 +154,12 @@ async actions, manual `flush()`, and the idempotence rules.
 
 ## Status
 
-Alpha. Component modules support local state via `export let`, cross-module
-shared state via `action()`/`flush()`, sync and async actions, and the
-`*list` / `*if` directives on `<template>`. `mount(ctx)` / `destroy(ctx)`
-lifecycle hooks, pURL `/wrapperState` paths, cross-wrapper addressing, and
-custom protocols are tracked features, not yet built.
+Alpha. Component modules support state via named exports, optional per-mount
+factory state, cross-module shared state via `action()`/`flush()`, sync and
+async actions, and the `*list` / `*if` directives on `<template>`.
+`mount(ctx)` / `destroy(ctx)` lifecycle hooks, pURL `/wrapperState` paths,
+cross-wrapper addressing, and custom protocols are tracked features, not yet
+built.
 
 ## License
 

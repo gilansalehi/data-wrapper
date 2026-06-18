@@ -1,0 +1,13 @@
+<script type="module" data-component data-module="@view/theme">
+    export { theme, toggleTheme } from 'state/theme.js';
+</script>
+
+<section class="demo theme-demo">
+    <h2>Cross-module state</h2>
+    <p>This button and the nav-sidebar's <em>Toggle theme</em> button both
+       call the same <code>toggleTheme()</code> action, imported from
+       <code>/state/theme.js</code>. Click either — the page recolors, both
+       displays stay in sync, and the value survives reload.</p>
+    <p>Current theme: <strong $text="theme"></strong></p>
+    <button @click="toggleTheme">Flip theme</button>
+</section>

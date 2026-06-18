@@ -1,9 +1,6 @@
-<script type="module" data-component="counter">
+<script type="module" data-component data-module="@view/counter">
     export let count = 0;
-
-    export function doubled() {
-        return count * 2;
-    }
+    export const doubled = () => count * 2;
 
     export function increment(event) {
         count += Number(event.target.value);

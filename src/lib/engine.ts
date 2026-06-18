@@ -23,8 +23,6 @@ export type ComponentBindingRuntime = {
 };
 
 export type Wrapper = HTMLElement & {
-    state:        Record<string, unknown>;
-    _subs:        Station;
     _unsubs:      Off[];
     _listCache:   ListCache;
     _component?:  ComponentBindingRuntime;

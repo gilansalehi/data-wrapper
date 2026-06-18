@@ -1,43 +1,43 @@
 import { publish, subscribe, type Source, type Station, type Sub } from './engine.ts';
 import type { Off } from './utils.ts';
 
+// Named exports are the shared module scope. A default-export factory may
+// return an instance scope for one mounted wrapper; instance names shadow
+// module names.
 export type ComponentModule = Readonly<Record<string, unknown>>;
-
-export type ComponentContext = Readonly<{
-    root:  Element;
-    flush: () => void;
-}>;
+export type ComponentInstance = Readonly<Record<string, unknown>>;
 
 type Output = { read: () => unknown; value: unknown };
 
-// Synchronizes a loaded module's exports with active DOM sinks.
-// Each subscribed output is read on every flush; changes publish through the
-// component's own Station. Actions run inside a flush boundary so module
-// mutations reach subscribers without dependency tracking.
-//
-// TODO: mount(ctx) / destroy(ctx) lifecycle hook dispatch + cleanup collection
+const own = (obj: object, key: PropertyKey) =>
+    Object.prototype.hasOwnProperty.call(obj, key);
+
+// Synchronizes a component module and optional instance with active DOM sinks.
+// Each subscribed output is re-read on every flush; changes publish through
+// the runtime's Station. Actions run inside a flush boundary so mutations
+// reach subscribers without dependency tracking.
 export class ComponentRuntime {
     static readonly all = new Set<ComponentRuntime>();
 
-    readonly root:    Element;
-    readonly module:  ComponentModule;
-    readonly station: Station = {};
-    readonly context: ComponentContext;
+    readonly root:     Element;
+    readonly module:   ComponentModule;
+    readonly instance?: ComponentInstance;
+    readonly station:  Station = {};
 
     private readonly outputs = new Map<string, Output>();
     private readonly actions = new Map<string, { refs: number; handler: EventListener }>();
     private flushing = false;
     private pending  = false;
 
-    constructor(root: Element, module: ComponentModule) {
-        this.root    = root;
-        this.module  = module;
-        this.context = Object.freeze({ root, flush });
+    constructor(root: Element, module: ComponentModule, instance?: ComponentInstance) {
+        this.root     = root;
+        this.module   = module;
+        this.instance = instance;
         ComponentRuntime.all.add(this);
     }
 
     has(name: string): boolean {
-        return Object.prototype.hasOwnProperty.call(this.module, name);
+        return this.hasInstance(name) || (name !== 'default' && own(this.module, name));
     }
 
     source(name: string): Source {
@@ -90,20 +90,27 @@ export class ComponentRuntime {
     }
 
     activateAction(name: string): Off | null {
-        if (typeof this.module[name] !== 'function') return null;
+        const value = this.value(name);
+        if (typeof value !== 'function') return null;
 
         let active = this.actions.get(name);
         if (!active) {
             // wire's @event invocation goes through the same `action` helper devs
             // use for cross-module mutators. One primitive, two call sites.
-            const wrapped = action(this.module[name] as (...args: unknown[]) => unknown);
+            const wrapped = action((...args: unknown[]) => {
+                const current = this.value(name);
+                if (typeof current !== 'function') {
+                    throw new Error(`Component action "${name}" is no longer a function`);
+                }
+                return current(...args);
+            });
             const handler: EventListener = e => {
                 if (
                     this.root.matches('data-wrapper')
                     && e.target instanceof Element
                     && e.target.closest('data-wrapper') !== this.root
                 ) return;
-                wrapped(e, this.context);
+                wrapped(e);
             };
             active = { refs: 0, handler };
             this.actions.set(name, active);
@@ -126,10 +133,23 @@ export class ComponentRuntime {
         for (const k in this.station) delete this.station[k];
     }
 
+    private hasInstance(name: string): boolean {
+        return !!this.instance && own(this.instance, name);
+    }
+
+    private value(name: string): unknown {
+        return this.hasInstance(name) ? this.instance![name] : this.module[name];
+    }
+
+    // Namespace access preserves ESM live bindings; instance access triggers
+    // any getter returned by the factory. Reader functions run with no args.
     private reader(name: string): () => unknown {
+        if (!this.has(name)) {
+            throw new Error(`Component binding "${name}" is not exported`);
+        }
         return () => {
-            const v = this.module[name];
-            return typeof v === 'function' ? v(this.context) : v;
+            const v = this.value(name);
+            return typeof v === 'function' ? (v as () => unknown)() : v;
         };
     }
 }
@@ -144,8 +164,7 @@ export const flush = (): void => {
 };
 
 // Microtask coalescing: nested action calls within the same task collapse into
-// a single flush at the end of the microtask drain. Prevents O(N) flushes from
-// N nested actions and makes async-action timing predictable.
+// a single flush at the end of the microtask drain.
 let _scheduled = false;
 const _scheduleFlush = () => {
     if (_scheduled) return;
@@ -153,20 +172,16 @@ const _scheduleFlush = () => {
     queueMicrotask(() => { _scheduled = false; flush(); });
 };
 
-// Marker symbol so action(action(fn)) is idempotent — wire()'s implicit wrap
-// over a dev-wrapped export doesn't re-wrap.
 const ACTION = Symbol('dw:action');
-
 type Fn = (...args: unknown[]) => unknown;
 
 // `action(fn)` wraps a function so every call schedules a global flush after
 // it returns; if the call returns a Promise, the flush also runs after the
-// Promise resolves. `action({a, b})` wraps each value in the object and returns
-// a new object of the same shape — convenient for batching state-module exports.
+// Promise resolves. `action({a, b})` wraps each value in the object and
+// returns a new object of the same shape.
 //
 // Double-wrap protection via the ACTION marker; double-flush prevention via
-// microtask coalescing. Devs can call action() inside other actions without
-// fear of N+1 flushes.
+// microtask coalescing.
 export function action<F extends Fn>(fn: F): F;
 export function action<T extends Record<string, Fn>>(obj: T): T;
 export function action(input: Fn | Record<string, Fn>): Fn | Record<string, Fn> {

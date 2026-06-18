@@ -1,9 +1,10 @@
-<script type="module" data-component="nav">
+<script type="module" data-component data-module="@view/nav">
+    export { theme, toggleTheme } from 'state/theme.js';
+
     export let open = false;
 
-    export function toggle()      { open = !open; }
-    export function close()       { open = false; }
-    export function toggleTheme() { window.theme?.toggle(); }
+    export function toggle() { open = !open; }
+    export function close()  { open = false; }
 </script>
 
 <header class="sticky header theme-ink">
@@ -26,6 +27,6 @@
         <a href="#todos" @click="close">Todos app</a>
     </nav>
     <footer class="nav-footer">
-        <button @click="toggleTheme" class="theme-toggle">◐ Toggle theme</button>
+        <button @click="toggleTheme" class="theme-toggle">◐ Toggle theme (<span $text="theme"></span>)</button>
     </footer>
 </dialog>
