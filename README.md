@@ -90,22 +90,6 @@ renders.
 `?key=field`). Existing rows update in place; new rows wake; missing rows tear
 down.
 
-## State as DOM
-
-`<data-wrapper>` keeps a `Proxy` over its own `data-*` attributes and watches
-external edits via `MutationObserver`. Use `$data-*` on the wrapper to project
-a component export onto its dataset so CSS attribute selectors can react:
-
-```html
-<data-wrapper id="nav" src="nav.html" $data-nav-open="open"></data-wrapper>
-```
-
-```css
-#nav[data-nav-open="true"] .hamburger { /* … */ }
-```
-
-Open DevTools and watch the attribute flip with state.
-
 ## Built-in formatters
 
 `onoff` — `?onoff=truthy:falsy` picks one label or the other. Register more
@@ -121,8 +105,6 @@ src/lib/
     element.ts     <data-wrapper> custom element + load()
     index.ts       re-exports
 ```
-
-The whole framework is ~13 KB unminified, ~8 KB minified, zero dependencies.
 
 ## Scripts
 
@@ -148,18 +130,6 @@ export const { addTodo, removeTodo } = action({
     removeTodo: id   => { todos = todos.filter(t => t.id !== id); },
 });
 ```
-
-See [STATE.md](./STATE.md) for the full guide — local state, shared state,
-async actions, manual `flush()`, and the idempotence rules.
-
-## Status
-
-Alpha. Component modules support state via named exports, optional per-mount
-factory state, cross-module shared state via `action()`/`flush()`, sync and
-async actions, and the `*list` / `*if` directives on `<template>`.
-`mount(ctx)` / `destroy(ctx)` lifecycle hooks, pURL `/wrapperState` paths,
-cross-wrapper addressing, and custom protocols are tracked features, not yet
-built.
 
 ## License
 
