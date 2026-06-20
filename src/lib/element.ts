@@ -11,7 +11,51 @@ type ComponentModuleRecord = {
     module:  Promise<ComponentModule>;
 };
 
+type ImportShim = (specifier: string) => Promise<ComponentModule>;
+type ShimGlobal = typeof globalThis & { importShim?: ImportShim };
+
 const componentModules = new Map<string, ComponentModuleRecord>();
+let shimPromise: Promise<ImportShim> | undefined;
+
+const shimSource = () =>
+    document.querySelector<HTMLScriptElement>('script[data-shim-src]')?.dataset.shimSrc;
+
+const loadShim = (): Promise<ImportShim> => {
+    const global = globalThis as ShimGlobal;
+    if (global.importShim) return Promise.resolve(global.importShim);
+    if (shimPromise) return shimPromise;
+
+    const src = shimSource();
+    if (!src) return Promise.reject(new Error('No data-shim-src configured'));
+
+    shimPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.onload = () => global.importShim
+            ? resolve(global.importShim)
+            : reject(new Error(`Module shim ${src} did not expose importShim()`));
+        script.onerror = () => reject(new Error(`Failed to load module shim ${src}`));
+        document.head.append(script);
+    });
+    return shimPromise;
+};
+
+const isResolutionError = (error: unknown): error is TypeError =>
+    error instanceof TypeError
+    && /bare specifier|resolve(?: module)? specifier|does not resolve to a valid URL/i.test(error.message);
+
+const importMappedModule = async (name: string): Promise<ComponentModule> => {
+    const global = globalThis as ShimGlobal;
+    if (global.importShim) return global.importShim(name);
+
+    try {
+        return await import(name) as ComponentModule;
+    } catch (error) {
+        if (!shimSource() || !isResolutionError(error)) throw error;
+        return (await loadShim())(name);
+    }
+};
 
 const importComponent = (
     script: HTMLScriptElement,
@@ -45,7 +89,7 @@ const importComponent = (
     importMap.textContent = JSON.stringify({ imports: { [name]: moduleURL } });
     document.head.append(importMap);
 
-    const module = import(name) as Promise<ComponentModule>;
+    const module = importMappedModule(name);
     componentModules.set(name, { viewURL: viewURL.href, module });
     return module;
 };
