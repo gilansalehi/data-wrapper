@@ -1,0 +1,128 @@
+<script type="module" data-component data-module="@view/orders">
+    export let orders = [
+        { id: 1, customer: 'Ada Lovelace', status: 'priority', lines: [
+            { id: 'a', sku: 'PEN-BLK', name: 'Black gel pens', qty: 2, packed: true },
+            { id: 'b', sku: 'INK-BLU', name: 'Blue ink refills', qty: 1, packed: false },
+        ]},
+        { id: 2, customer: 'Grace Hopper', status: 'standard', lines: [
+            { id: 'c', sku: 'TAPE-12', name: 'Label tape', qty: 4, packed: false },
+            { id: 'd', sku: 'CLIP-25', name: 'Cable clips', qty: 3, packed: true },
+        ]},
+    ];
+
+    let nextOrderId = 3;
+    let nextLineId  = 5;
+
+    export const orderCount = () => orders.length;
+    export const lineCount = () =>
+        orders.reduce((sum, order) => sum + order.lines.length, 0);
+    export const packedCount = () =>
+        orders.reduce(
+            (sum, order) => sum + order.lines.filter(line => line.packed).length,
+            0
+        );
+
+    export function addOrder() {
+        const id = nextOrderId++;
+        orders = [
+            ...orders,
+            {
+                id,
+                customer: `New customer ${id}`,
+                status: id % 2 ? 'priority' : 'standard',
+                lines: [
+                    {
+                        id: `n${nextLineId++}`,
+                        sku: `NEW-${id}`,
+                        name: 'Starter kit',
+                        qty: 1,
+                        packed: false,
+                    },
+                ],
+            },
+        ];
+    }
+
+    export function addLine(event) {
+        const order = event.detail.item;
+        const id = nextLineId++;
+        orders = orders.map(entry =>
+            entry.id === order.id
+                ? {
+                    ...entry,
+                    lines: [
+                        ...entry.lines,
+                        {
+                            id: `n${id}`,
+                            sku: `ADD-${id}`,
+                            name: 'Extra supplies',
+                            qty: 1 + (entry.lines.length % 4),
+                            packed: false,
+                        },
+                    ],
+                }
+                : entry
+        );
+    }
+
+    export function removeOrder(event) {
+        const order = event.detail.item;
+        orders = orders.filter(entry => entry.id !== order.id);
+    }
+
+    export function togglePacked(event) {
+        const line = event.detail.item;
+        orders = orders.map(order => ({
+            ...order,
+            lines: order.lines.map(entry =>
+                entry.id === line.id
+                    ? { ...entry, packed: event.target.checked }
+                    : entry
+            ),
+        }));
+    }
+</script>
+
+<section class="demo orders-demo">
+    <header class="orders-head">
+        <div>
+            <h2>Nested binding contexts</h2>
+            <p>Each order creates a row context, and each line item creates another one.</p>
+        </div>
+        <button @click="addOrder">Add order</button>
+    </header>
+
+    <div class="order-stats" aria-label="Order totals">
+        <span><strong $text="orderCount"></strong> orders</span>
+        <span><strong $text="lineCount"></strong> lines</span>
+        <span><strong $text="packedCount"></strong> packed</span>
+    </div>
+
+    <div class="order-list">
+        <template *list="orders">
+            <article class="order-card" $data-status="./status">
+                <header class="order-card-head">
+                    <div>
+                        <h3 $text="./customer"></h3>
+                        <span class="order-status" $text="./status"></span>
+                    </div>
+                    <div class="order-actions">
+                        <button @click="addLine">Add line</button>
+                        <button class="delete-btn" @click="removeOrder" aria-label="Remove order">✕</button>
+                    </div>
+                </header>
+
+                <ul class="line-list">
+                    <template *list="./lines">
+                        <li class="line-item" $class="./packed?onoff=packed:open">
+                            <input type="checkbox" $checked="./packed" @change="togglePacked" aria-label="Toggle packed">
+                            <code $text="./sku"></code>
+                            <span $text="./name"></span>
+                            <strong class="line-qty">× <span $text="./qty"></span></strong>
+                        </li>
+                    </template>
+                </ul>
+            </article>
+        </template>
+    </div>
+</section>

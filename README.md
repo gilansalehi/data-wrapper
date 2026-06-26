@@ -26,6 +26,14 @@ No build step, no virtual DOM, no JSX. Named exports are the component's normal
 state surface. Mutate `count` inside an action; every binding that reads it
 updates on the next flush.
 
+The core model is deliberately small:
+
+```txt
+ES modules compose application state
+binding contexts compose template-local row data
+DOM bindings are effects subscribed to resolved sources
+```
+
 ## Three tokens
 
 | Token | Direction         | Purpose                                            |
@@ -34,9 +42,9 @@ updates on the next flush.
 | `*`   | binding → layout  | `*directive="name"` runs a structural directive    |
 | `@`   | event → action    | `@event="name"` calls a module function on event   |
 
-Bindings resolve against the current component context:
+Bindings resolve against the current binding context:
 
-- **Bare name** (`view`) checks the per-mount instance, then named module exports
+- **Bare name** (`view`) checks the per-wrapper instance, then named module exports
 - **Relative path** (`./done`) reads from the nearest surrounding `*list` item
 
 The default export is optional. When a view needs state unique to each mounted
@@ -75,6 +83,37 @@ The loader maps that name to the component's Blob URL before importing it.
 Repeated mounts reuse the same module namespace and invoke the optional
 default factory once per wrapper.
 
+## Binding contexts
+
+Every wrapper starts a root binding context backed by its `ComponentRuntime`.
+Each `*list` item pushes a nested row context. Bindings are wired under the
+context where their DOM node wakes.
+
+```txt
+wrapper component
+  order row
+    line row
+      DOM binding
+```
+
+That lets nested lists compose naturally:
+
+```html
+<template *list="orders">
+    <h3 $text="./customer"></h3>
+
+    <template *list="./lines">
+        <span $text="./sku"></span>
+        <span $text="./qty"></span>
+    </template>
+</template>
+```
+
+The outer `./customer` binding reads from the order row. The inner `./sku` and
+`./qty` bindings read from the line row. Component actions still resolve from
+the wrapper module, and row events include the nearest item on
+`event.detail.item`.
+
 ## Directives on `<template>`
 
 `*list` and `*if` live on `<template>` elements — the template's body is what
@@ -93,10 +132,10 @@ renders.
 </ul>
 ```
 
-`*list` reads an array from the component context, reconciles by item identity
-(default key `id`, override with `?key=field`), and creates a nested binding
-context for each rendered item. Existing items update in place; new items wake;
-missing items tear down.
+`*list` reads an array from the current binding context, reconciles by item
+identity (default key `id`, override with `?key=field`), and creates a nested
+binding context for each rendered item. Existing items update in place; new
+items wake; missing items tear down.
 
 ## Built-in formatters
 
@@ -108,7 +147,7 @@ through `DW_FORMATTERS.set(name, fn)`.
 ```
 src/lib/
     utils.ts       binding parser, readPath, DOM helpers
-    engine.ts      station primitives, wake/wire/bind, reconcile, *list/*if
+    engine.ts      binding contexts, wake/wire/bind, reconcile, *list/*if
     component.ts   ComponentRuntime, action(), flush()
     element.ts     <data-wrapper> custom element + load()
     index.ts       re-exports
@@ -125,8 +164,12 @@ bun run typecheck   # tsc --noEmit
 
 ## State across components
 
-State that's shared between components lives in plain ES modules. Mark
-exported mutators with `action()` so calls from anywhere trigger a re-derive:
+State that's shared between components lives in plain ES modules. Component
+modules can import and re-export other module bindings, and the template does
+not need to know where a binding originally came from.
+
+Mark exported mutators with `action()` so calls from anywhere trigger a
+re-derive:
 
 ```js
 // /state/todos.js
