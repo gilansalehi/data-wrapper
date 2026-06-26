@@ -1,0 +1,43 @@
+<script type="module" data-component data-module="@docs/install"></script>
+
+<section class="doc-section" id="install">
+    <h2>Install &amp; scripts</h2>
+
+    <h3>From a CDN</h3>
+    <pre><code>&lt;script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"&gt;&lt;/script&gt;</code></pre>
+
+    <h3>From npm</h3>
+    <pre><code>npm install data-wrapper
+# or
+bun add data-wrapper</code></pre>
+
+    <pre><code>import 'data-wrapper';
+
+// or as ESM, for re-exporting action/flush/types:
+import { action, flush } from 'data-wrapper';</code></pre>
+
+    <h3>Development scripts</h3>
+    <pre><code>bun install
+bun run serve       # dev server on port 3000
+bun run build       # ESM + minified IIFE in /dist
+bun run typecheck   # tsc --noEmit</code></pre>
+
+    <h3>Project layout</h3>
+    <pre><code>src/lib/
+    utils.ts       binding parser, readPath, DOM helpers
+    engine.ts      binding contexts, wake/wire/bind, reconcile, *list/*if
+    component.ts   ComponentRuntime, action(), flush()
+    element.ts     &lt;data-wrapper&gt; custom element + load()
+    index.ts       re-exports</code></pre>
+
+    <h3>Browser support</h3>
+    <p>
+        Modern evergreen browsers with native ES modules, custom elements,
+        and import maps. The framework script accepts a
+        <code>data-shim-src</code> attribute pointing at
+        <code>es-module-shims</code>; the shim loads only when native
+        resolution fails:
+    </p>
+    <pre><code>&lt;script src="/dist/data-wrapper.js" type="module"
+        data-shim-src="https://ga.jspm.io/npm:es-module-shims@2/dist/es-module-shims.js"&gt;&lt;/script&gt;</code></pre>
+</section>

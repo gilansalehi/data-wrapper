@@ -1,0 +1,49 @@
+<script type="module" data-component data-module="@docs/factory"></script>
+
+<section class="doc-section" id="factory">
+    <h2>Module scope vs. default factory</h2>
+
+    <p>
+        Named exports are the component's <em>shared</em> state surface — one
+        per module, regardless of how many wrappers mount it. That's the right
+        default for things like app-wide theme or auth state.
+    </p>
+
+    <p>
+        When a view needs state unique to each mounted wrapper, the module may
+        also export a <strong>default factory</strong>. The factory receives
+        the wrapper's load URL plus parsed query parameters and returns an
+        object that overlays the module scope. If the same name appears in
+        both, the instance value wins.
+    </p>
+
+    <pre><code>export const label = 'Counter';
+
+export default ({ wrapper, url, params }) =&gt; {
+    let count = Number(params.get('start') ?? 0);
+    return {
+        get count() { return count; },
+        increment() { count += 1; },
+    };
+};</code></pre>
+
+    <pre><code>&lt;data-wrapper src="counter.html?start=5"&gt;&lt;/data-wrapper&gt;</code></pre>
+
+    <p>
+        Here <code>count</code> and <code>increment</code> are per-wrapper
+        bindings, while <code>label</code> comes from the shared module scope.
+        Query parameters configure each wrapper independently without creating
+        another module instance.
+    </p>
+
+    <h3>The <code>ComponentContext</code> shape</h3>
+    <p>The factory's single argument is a frozen object:</p>
+    <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Purpose</th></tr></thead>
+        <tbody>
+            <tr><td><code>wrapper</code></td><td><code>HTMLElement</code></td><td>The mounted <code>&lt;data-wrapper&gt;</code> element itself.</td></tr>
+            <tr><td><code>url</code></td><td><code>URL</code></td><td>The full resolved <code>src</code> URL.</td></tr>
+            <tr><td><code>params</code></td><td><code>URLSearchParams</code></td><td>Parsed query parameters from the <code>src</code>.</td></tr>
+        </tbody>
+    </table>
+</section>

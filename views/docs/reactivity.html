@@ -1,0 +1,104 @@
+<script type="module" data-component data-module="@docs/reactivity">
+    import { flush } from '/dist/data-wrapper.js';
+
+    export let ticks = 0;
+    let timer;
+
+    export function startTimer() {
+        if (timer) return;
+        timer = setInterval(() => {
+            ticks += 1;
+            flush();          // outside an action — flush manually
+        }, 1000);
+    }
+
+    export function stopTimer() {
+        clearInterval(timer);
+        timer = undefined;
+    }
+</script>
+
+<section class="doc-section" id="reactivity">
+    <h2>Reactivity model</h2>
+
+    <p>
+        The framework has exactly two primitives — <code>action()</code>, a
+        function wrapper, and <code>flush()</code>, a manual flush trigger.
+        Every <code>@event</code> binding is auto-wrapped, so most components
+        never have to call either directly.
+    </p>
+
+    <h3>The action boundary</h3>
+    <p>
+        When an action runs, every active <code>ComponentRuntime</code>
+        re-reads its subscribed outputs and publishes the ones that changed
+        (compared with <code>Object.is</code>). Calls coalesce inside a
+        microtask, so a chain of nested action invocations triggers one flush
+        at the end, not one per call.
+    </p>
+
+    <h3><code>action()</code></h3>
+    <p>
+        Wrap functions that mutate module state but get called from outside
+        an <code>@event</code> boundary — imported writers, timer callbacks,
+        WebSocket handlers, anything async that runs after the next
+        microtask.
+    </p>
+
+    <pre><code>import { action } from 'data-wrapper';
+
+// single function
+export const setFilter = action(f =&gt; { filter = f; });
+
+// object — wraps each value, returns the same shape
+export const { addTodo, removeTodo } = action({
+    addTodo:    item =&gt; { todos = [...todos, item]; },
+    removeTodo: id   =&gt; { todos = todos.filter(t =&gt; t.id !== id); },
+});</code></pre>
+
+    <p>
+        <code>action()</code> is idempotent — wrapping an already-wrapped
+        function returns it unchanged, so passing the same writer through
+        multiple layers doesn't multiply flushes.
+    </p>
+
+    <h3>Async actions</h3>
+    <p>
+        If the wrapped function returns a Promise, the action flushes again
+        when the promise resolves. The synchronous portion's mutations
+        publish before the first <code>await</code>; post-await mutations
+        publish when the chain settles.
+    </p>
+
+    <pre><code>export const loadItems = action(async () =&gt; {
+    loading = true;
+    items   = await fetch('/items').then(r =&gt; r.json());
+    loading = false;
+});</code></pre>
+
+    <h3><code>flush()</code> as an escape hatch</h3>
+    <p>
+        For mutations that can't be wrapped at the call site — a
+        <code>setInterval</code>, a third-party event listener — call
+        <code>flush()</code> manually after the mutation.
+    </p>
+
+    <pre><code>import { flush } from 'data-wrapper';
+
+setInterval(() =&gt; {
+    clock = new Date();
+    flush();
+}, 1000);</code></pre>
+
+    <h3>Live demo</h3>
+    <p>
+        This timer is set up by a factory and uses <code>flush()</code>
+        manually because <code>setInterval</code> escapes the action
+        boundary.
+    </p>
+    <div class="demo">
+        <button @click="startTimer">Start</button>
+        <button @click="stopTimer">Stop</button>
+        <p>Ticks: <strong $text="ticks">0</strong></p>
+    </div>
+</section>

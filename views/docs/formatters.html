@@ -1,0 +1,50 @@
+<script type="module" data-component data-module="@docs/formatters">
+    export let flag = true;
+    export function toggle() { flag = !flag; }
+</script>
+
+<section class="doc-section" id="formatters">
+    <h2>Built-in formatters</h2>
+
+    <p>
+        Append <code>?formatter=arg</code> to any <code>$</code> binding to
+        pipe the value through a transformer. Today the framework ships one
+        built-in formatter; more will follow before 1.0.
+    </p>
+
+    <table>
+        <thead><tr><th>Name</th><th>Syntax</th><th>Effect</th></tr></thead>
+        <tbody>
+            <tr>
+                <td><code>onoff</code></td>
+                <td><code>?onoff=truthy:falsy</code></td>
+                <td>
+                    Picks one of two labels based on the bound value's
+                    truthiness. Bare <code>?onoff</code> falls back to
+                    <code>on</code>/<code>off</code>.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Live</h3>
+    <div class="demo">
+        <button @click="toggle">Toggle</button>
+        <p>
+            Status: <strong $text="flag?onoff=ready:waiting">ready</strong>
+        </p>
+    </div>
+
+    <h3>Custom formatters</h3>
+    <p>Register your own formatter at startup:</p>
+    <pre><code>import { DW_FORMATTERS } from 'data-wrapper';
+
+DW_FORMATTERS.set('currency', v =&gt;
+    new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+    }).format(Number(v) || 0)
+);
+
+// Use: &lt;span $text="price?currency"&gt;&lt;/span&gt;</code></pre>
+</section>

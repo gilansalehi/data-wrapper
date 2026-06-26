@@ -1,0 +1,68 @@
+<script type="module" data-component data-module="@docs/directives">
+    export let items = [
+        { id: 1, label: 'Read the docs',     done: true  },
+        { id: 2, label: 'Try the directives', done: false },
+        { id: 3, label: 'Build something',   done: false },
+    ];
+
+    export function toggle(event) {
+        const { item } = event.detail;
+        items = items.map(i => i.id === item.id ? { ...i, done: !i.done } : i);
+    }
+</script>
+
+<section class="doc-section" id="directives">
+    <h2>Directives on <code>&lt;template&gt;</code></h2>
+
+    <p>
+        <code>*list</code> and <code>*if</code> live on
+        <code>&lt;template&gt;</code> elements — the template's body is what
+        renders, and the template itself never appears in the document.
+    </p>
+
+    <pre><code>&lt;ul&gt;
+    &lt;template *list="view"&gt;
+        &lt;li $class="./done?onoff=done:active"&gt;
+            &lt;span $text="./task"&gt;&lt;/span&gt;
+            &lt;template *if="./done"&gt;
+                &lt;strong&gt;done&lt;/strong&gt;
+            &lt;/template&gt;
+        &lt;/li&gt;
+    &lt;/template&gt;
+&lt;/ul&gt;</code></pre>
+
+    <h3>Behavior</h3>
+    <ul>
+        <li>
+            <code>*list</code> reads an array from the current binding
+            context, reconciles by item identity (default key
+            <code>id</code>, override with <code>?key=field</code>), and
+            creates a nested binding context for each rendered item.
+        </li>
+        <li>
+            Existing items update in place; new items wake; missing items
+            tear down.
+        </li>
+        <li>
+            <code>*if</code> shows its body when the bound value is truthy
+            and removes it when falsy. The body wakes under the current
+            context, so <code>./</code> bindings inside still see the
+            surrounding row.
+        </li>
+    </ul>
+
+    <h3>Live demo</h3>
+    <p>Click an item to toggle its done state.</p>
+    <ul class="demo-list">
+        <template *list="items">
+            <li>
+                <button @click="toggle">
+                    <span $text="./label"></span>
+                    <template *if="./done">
+                        <small>✓</small>
+                    </template>
+                </button>
+            </li>
+        </template>
+    </ul>
+</section>

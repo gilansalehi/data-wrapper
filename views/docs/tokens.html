@@ -1,0 +1,48 @@
+<script type="module" data-component data-module="@docs/tokens">
+    export let count = 0;
+    export const inc = (event) => { count += Number(event.target.value); };
+</script>
+
+<section class="doc-section" id="tokens">
+    <h2>Three tokens</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Token</th>
+                <th>Direction</th>
+                <th>Purpose</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>$</code></td>
+                <td>binding → DOM</td>
+                <td><code>$prop="name"</code> sets <code>el[prop]</code> from a binding</td>
+            </tr>
+            <tr>
+                <td><code>*</code></td>
+                <td>binding → layout</td>
+                <td><code>*directive="name"</code> runs a structural directive</td>
+            </tr>
+            <tr>
+                <td><code>@</code></td>
+                <td>event → action</td>
+                <td><code>@event="name"</code> calls a module function on event</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>Bindings resolve against the current binding context:</p>
+    <ul>
+        <li><strong>Bare name</strong> (<code>view</code>) checks the per-wrapper instance, then named module exports.</li>
+        <li><strong>Relative path</strong> (<code>./done</code>) reads from the nearest surrounding <code>*list</code> item.</li>
+    </ul>
+
+    <p>Live counter (mounted as part of this very doc page):</p>
+    <div class="demo">
+        <button @click="inc" value="1">+1</button>
+        <button @click="inc" value="5">+5</button>
+        <output $text="count">0</output>
+    </div>
+</section>

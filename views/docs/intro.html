@@ -1,0 +1,36 @@
+<script type="module" data-component data-module="@docs/intro"></script>
+
+<section class="doc-section" id="intro">
+    <h2>data-wrapper</h2>
+    <p class="lead">
+        Zero-dependency, HTML-first reactivity built on a single Web Component.
+        Components are plain ES modules; views bind DOM effects to their live
+        exports through three tokens.
+    </p>
+
+    <pre><code>&lt;script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"&gt;&lt;/script&gt;
+&lt;data-wrapper src="counter.html"&gt;&lt;/data-wrapper&gt;</code></pre>
+
+    <pre><code>&lt;!-- counter.html --&gt;
+&lt;script type="module" data-component data-module="@view/counter"&gt;
+    export let count = 0;
+    export const doubled = () =&gt; count * 2;
+    export function inc(event) { count += Number(event.target.value); }
+&lt;/script&gt;
+
+&lt;button @click="inc?prevent" value="1"&gt;+1&lt;/button&gt;
+&lt;output $text="count"&gt;&lt;/output&gt;
+&lt;output $text="doubled"&gt;&lt;/output&gt;</code></pre>
+
+    <p>
+        No build step, no virtual DOM, no JSX. Named exports are the
+        component's normal state surface. Mutate <code>count</code> inside an
+        action; every binding that reads it updates on the next flush.
+    </p>
+
+    <p>The core model is deliberately small:</p>
+
+    <pre><code>ES modules compose application state
+binding contexts compose template-local row data
+DOM bindings are effects subscribed to resolved sources</code></pre>
+</section>
