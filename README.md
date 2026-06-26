@@ -1,8 +1,8 @@
 # data-wrapper
 
 Zero-dependency, HTML-first reactivity built on a single Web Component.
-Components are plain ES modules; views bind to their live exports through
-three tokens.
+Components are plain ES modules; views bind DOM effects to their live exports
+through three tokens.
 
 ```html
 <script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"></script>
@@ -22,32 +22,33 @@ three tokens.
 <output $text="doubled"></output>
 ```
 
-No build step, no virtual DOM, no JSX. Named exports are the template's normal
-binding scope. Mutate `count` inside an action; every binding that reads it
+No build step, no virtual DOM, no JSX. Named exports are the component's normal
+state surface. Mutate `count` inside an action; every binding that reads it
 updates on the next flush.
 
 ## Three tokens
 
 | Token | Direction         | Purpose                                            |
 | ----- | ----------------- | -------------------------------------------------- |
-| `$`   | state → DOM       | `$prop="name"` sets `el[prop]` to a module export  |
-| `*`   | state → structure | `*directive="name"` runs a structural directive    |
+| `$`   | binding → DOM     | `$prop="name"` sets `el[prop]` from a binding      |
+| `*`   | binding → layout  | `*directive="name"` runs a structural directive    |
 | `@`   | event → action    | `@event="name"` calls a module function on event   |
 
-Binding values resolve in priority order:
+Bindings resolve against the current component context:
 
 - **Bare name** (`view`) checks the per-mount instance, then named module exports
-- **Relative path** (`./done`) reads from the surrounding `*list` row's item
+- **Relative path** (`./done`) reads from the nearest surrounding `*list` item
 
 The default export is optional. When a view needs state unique to each mounted
 wrapper, it may export a factory whose returned object overlays the module
-scope:
+scope. The factory receives the wrapper's full load URL and parsed query
+parameters:
 
 ```js
 export const label = 'Counter';
 
-export default () => {
-    let count = 0;
+export default ({ wrapper, url, params }) => {
+    let count = Number(params.get('start') ?? 0);
     return {
         get count() { return count; },
         increment() { count += 1; },
@@ -55,8 +56,14 @@ export default () => {
 };
 ```
 
-Here `count` and `increment` are per-instance, while `label` comes from the
-module. If both scopes define the same name, the instance value wins.
+```html
+<data-wrapper src="counter.html?start=5"></data-wrapper>
+```
+
+Here `count` and `increment` are per-wrapper bindings, while `label` comes from
+the module. If both surfaces define the same name, the instance value wins.
+Query parameters configure each wrapper independently without creating another
+module instance.
 
 `data-module` gives the component module a stable import name:
 
@@ -86,9 +93,10 @@ renders.
 </ul>
 ```
 
-`*list` reconciles by item identity (default key `id`, override with
-`?key=field`). Existing rows update in place; new rows wake; missing rows tear
-down.
+`*list` reads an array from the component context, reconciles by item identity
+(default key `id`, override with `?key=field`), and creates a nested binding
+context for each rendered item. Existing items update in place; new items wake;
+missing items tear down.
 
 ## Built-in formatters
 
@@ -99,7 +107,7 @@ through `DW_FORMATTERS.set(name, fn)`.
 
 ```
 src/lib/
-    utils.ts       pURL parser, readPath, DOM helpers
+    utils.ts       binding parser, readPath, DOM helpers
     engine.ts      station primitives, wake/wire/bind, reconcile, *list/*if
     component.ts   ComponentRuntime, action(), flush()
     element.ts     <data-wrapper> custom element + load()

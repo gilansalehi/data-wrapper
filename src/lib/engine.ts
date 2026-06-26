@@ -9,6 +9,12 @@ export type Item     = Record<string, unknown>;
 export type Row      = { node: Element; item: Item; subs: Station; unsubs: Off[] };
 export type ListCache = Map<Element, Map<unknown, Row>>;
 
+export type BindingContext = {
+    root:    Wrapper;
+    current: Row | null;
+    parent:  BindingContext | null;
+};
+
 export type Source = {
     read:      ()        => unknown;
     subscribe: (cb: Sub) => Off;
@@ -36,13 +42,31 @@ export type DispatchDetail = {
 };
 
 export interface DirectiveContext extends pURL {
-    wrapper: Wrapper;
-    el:      Element;
-    row?:    Row | null;
-    wake:    (node: Element, row?: Row | null, wrapper?: Wrapper | null) => void;
+    ctx:  BindingContext;
+    el:   Element;
+    wake: (node: Element, ctx: BindingContext) => void;
 }
 export type DirectiveHandler = (ctx: DirectiveContext) => Sub;
 export type Formatter        = (value: unknown, arg?: unknown) => unknown;
+
+export const rootContext = (root: Wrapper): BindingContext =>
+    ({ root, current: null, parent: null });
+
+export const childContext = (parent: BindingContext, row: Row): BindingContext =>
+    ({ root: parent.root, current: row, parent });
+
+export const nearestRow = (ctx: BindingContext): Row | null => {
+    for (let c: BindingContext | null = ctx; c; c = c.parent)
+        if (c.current) return c.current;
+    return null;
+};
+
+export const ownerUnsubs = (ctx: BindingContext): Off[] =>
+    ctx.current ? ctx.current.unsubs : ctx.root._unsubs;
+
+export const own = (ctx: BindingContext, off: Off) => {
+    ownerUnsubs(ctx).push(off);
+};
 
 // --- station primitives ------------------------------------------------------
 
@@ -127,19 +151,19 @@ const rowSource = (row: Row, path: string): Source => ({
 });
 
 export const wire = (
-    el:      Element,
-    attr:    Attr,
-    row:     Row | null = null,
-    wrapper: Wrapper | null = el.closest('data-wrapper') as Wrapper | null,
+    el:   Element,
+    attr: Attr,
+    ctx:  BindingContext,
 ) => {
-    if (!wrapper) return;
     const { name, value } = attr;
     const token = name[0];
     const prop  = name.slice(1);
     const dwrl  = p(value);
     const { path, isRel, params } = dwrl;
+    const wrapper = ctx.root;
+    const row     = nearestRow(ctx);
 
-    const unsubs = row ? row.unsubs : wrapper._unsubs;
+    const unsubs = ownerUnsubs(ctx);
 
     if (token === '@') {
         if (!path) return;
@@ -178,7 +202,7 @@ export const wire = (
     if (token === '*') {
         const factory = DW_DIRECTIVES.get(prop);
         if (!factory) throw new Error(`Unknown directive *${prop}`);
-        const updater = factory({ ...dwrl, wrapper, el, row, wake });
+        const updater = factory({ ...dwrl, ctx, el, wake });
         const off     = source.subscribe(updater);
         if (source.escapes) unsubs.push(off);
         return;
@@ -186,11 +210,9 @@ export const wire = (
 };
 
 export const wake = (
-    root:    Element,
-    row:     Row | null = null,
-    wrapper: Wrapper | null = root.closest('data-wrapper') as Wrapper | null,
+    root: Element,
+    ctx:  BindingContext,
 ) => {
-    if (!wrapper) return;
     const nodes: Element[] = [root];
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
         acceptNode: n => NO_WAKE.includes((n as Element).tagName)
@@ -205,7 +227,7 @@ export const wake = (
         const attrs = [...el.attributes].filter(a => TOKENS.includes(a.name[0]));
         if (!attrs.length) continue;
         el.setAttribute(LIVE, '');
-        for (const a of attrs) wire(el, a, row, wrapper);
+        for (const a of attrs) wire(el, a, ctx);
     }
 };
 
@@ -220,6 +242,7 @@ const reconcile = (
     cache:     Map<unknown, Row>,
     tpl:       HTMLTemplateElement,
     keyProp:   string,
+    ctx:       BindingContext,
 ) => {
     const active = new Set<unknown>();
     const frag   = document.createDocumentFragment();
@@ -251,18 +274,25 @@ const reconcile = (
     }
 
     container.appendChild(frag);
-    for (const row of fresh) wake(row.node, row);
+    for (const row of fresh) wake(row.node, childContext(ctx, row));
 };
 
 // `*list` lives on the <template>. The template's body is the row; the
 // template's parent is the container. The template itself never renders.
-const listDirective: DirectiveHandler = ({ wrapper, el, params }) => {
+const listDirective: DirectiveHandler = ({ ctx, el, params }) => {
     const tpl       = el as HTMLTemplateElement;
     const container = tpl.parentElement;
     if (!container) return () => {};
 
+    const wrapper = ctx.root;
     let cache = wrapper._listCache.get(container);
     if (!cache) { cache = new Map(); wrapper._listCache.set(container, cache); }
+
+    own(ctx, () => {
+        for (const row of cache.values()) { unwire(row.unsubs); row.node.remove(); }
+        cache.clear();
+        wrapper._listCache.delete(container);
+    });
 
     const keyProp = params.get('key') || 'id';
 
@@ -273,13 +303,13 @@ const listDirective: DirectiveHandler = ({ wrapper, el, params }) => {
             cache.clear();
             return;
         }
-        reconcile(container, items, cache, tpl, keyProp);
+        reconcile(container, items, cache, tpl, keyProp, ctx);
     };
 };
 
 // `*if` also lives on the <template>. Truthy → clone the body in place; falsy →
 // remove it. An anchor comment marks the slot so re-show appends at the same point.
-const ifDirective: DirectiveHandler = ({ wrapper, el, row }) => {
+const ifDirective: DirectiveHandler = ({ ctx, el }) => {
     const tpl    = el as HTMLTemplateElement;
     const anchor = document.createComment('dw-if');
     tpl.replaceWith(anchor);
@@ -290,20 +320,13 @@ const ifDirective: DirectiveHandler = ({ wrapper, el, row }) => {
             live = cloneTemplate(tpl);
             if (!live) return;
             anchor.parentNode!.insertBefore(live, anchor);
-            wake(live, row ?? null, wrapper);
+            wake(live, ctx);
         } else if (!value && live) {
-            unwireSubtreeIfRow(live, row);
             live.remove();
             live = null;
         }
     };
 };
-
-// When *if is inside a *list row, the cloned subtree's bindings live on
-// row.unsubs — we only need to tear those down if the row outlives the if.
-// Row teardown clears row.unsubs itself, so this is a no-op stub for PoC.
-// TODO: track per-clone unsubs once we support escaping subs from *if clones.
-const unwireSubtreeIfRow = (_clone: Element, _row: Row | null | undefined) => {};
 
 DW_DIRECTIVES.set('list', listDirective);
 DW_DIRECTIVES.set('if',   ifDirective);

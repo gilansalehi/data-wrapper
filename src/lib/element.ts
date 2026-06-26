@@ -1,6 +1,8 @@
-import { wake, unwake, type ListCache, type Wrapper } from './engine.ts';
+import { rootContext, wake, unwake, type ListCache, type Wrapper } from './engine.ts';
 import {
     ComponentRuntime,
+    type ComponentContext,
+    type ComponentFactory,
     type ComponentInstance,
     type ComponentModule,
 } from './component.ts';
@@ -16,6 +18,13 @@ type ShimGlobal = typeof globalThis & { importShim?: ImportShim };
 
 const componentModules = new Map<string, ComponentModuleRecord>();
 let shimPromise: Promise<ImportShim> | undefined;
+
+const canonicalViewURL = (url: URL) => {
+    const canonical = new URL(url);
+    canonical.search = '';
+    canonical.hash = '';
+    return canonical.href;
+};
 
 const shimSource = () =>
     document.querySelector<HTMLScriptElement>('script[data-shim-src]')?.dataset.shimSrc;
@@ -62,13 +71,14 @@ const importComponent = (
     viewURL: URL,
 ): Promise<ComponentModule> => {
     const name = script.dataset.module?.trim();
+    const owner = canonicalViewURL(viewURL);
     if (!name) {
         throw new Error(`Component module ${viewURL.href} requires a data-module name`);
     }
 
     const existing = componentModules.get(name);
     if (existing) {
-        if (existing.viewURL !== viewURL.href) {
+        if (existing.viewURL !== owner) {
             throw new Error(
                 `Duplicate data-module "${name}" in ${viewURL.href}; ` +
                 `already registered by ${existing.viewURL}`
@@ -90,7 +100,7 @@ const importComponent = (
     document.head.append(importMap);
 
     const module = importMappedModule(name);
-    componentModules.set(name, { viewURL: viewURL.href, module });
+    componentModules.set(name, { viewURL: owner, module });
     return module;
 };
 
@@ -108,7 +118,7 @@ export class DataWrapper extends HTMLElement {
     connectedCallback() {
         const src = this.getAttribute('src');
         if (src) load(this, src).catch(err => console.error(`<data-wrapper src="${src}">`, err));
-        else wake(this);
+        else wake(this, rootContext(this));
     }
 
     disconnectedCallback() {
@@ -143,7 +153,12 @@ export const load = async (wrapper: Wrapper, src: string) => {
             if (typeof factory !== 'function') {
                 throw new Error(`Component module ${url.href} default export must be a factory function`);
             }
-            const created = factory(wrapper);
+            const context: ComponentContext = Object.freeze({
+                wrapper,
+                url,
+                params: url.searchParams,
+            });
+            const created = (factory as ComponentFactory)(context);
             if (created != null && typeof created !== 'object') {
                 throw new Error(`Component module ${url.href} factory must return an object or nothing`);
             }
@@ -160,7 +175,7 @@ export const load = async (wrapper: Wrapper, src: string) => {
     wrapper._component = componentModule
         ? new ComponentRuntime(wrapper, componentModule, instance)
         : undefined;
-    wake(wrapper);
+    wake(wrapper, rootContext(wrapper));
 };
 
 if (typeof customElements !== 'undefined' && !customElements.get('data-wrapper')) {

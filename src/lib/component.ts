@@ -6,6 +6,13 @@ import type { Off } from './utils.ts';
 // module names.
 export type ComponentModule = Readonly<Record<string, unknown>>;
 export type ComponentInstance = Readonly<Record<string, unknown>>;
+export type ComponentContext = Readonly<{
+    wrapper: HTMLElement;
+    url:     URL;
+    params:  URLSearchParams;
+}>;
+export type ComponentFactory =
+    (context: ComponentContext) => ComponentInstance | void;
 
 type Output = { read: () => unknown; value: unknown };
 
