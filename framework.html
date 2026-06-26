@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>data-wrapper — docs</title>
+    <title>data-wrapper — framework guide</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="manifest" href="/site.webmanifest">
     <script type="importmap">{"imports":{"state/":"/state/"}}</script>
@@ -40,6 +40,10 @@
                              border-radius: 4px; margin: 1rem 0; }
         .doc-section .demo-list { list-style: none; padding: 0; }
         .doc-section .demo-list button { display: block; width: 100%; text-align: left; }
+        .showcase-block { margin: 1rem 0 2rem; padding: 1rem; border: 1px dashed var(--border, #ddd);
+                          border-radius: 4px; background: var(--demo-bg, #fafafa); }
+        .showcase-block > h3 { margin-top: 0; font-size: 1rem; color: var(--muted, #666);
+                               text-transform: uppercase; letter-spacing: .04em; }
         @media (max-width: 768px) {
             .docs-layout { grid-template-columns: 1fr; }
             .docs-toc { position: static; border-right: 0;
@@ -57,7 +61,7 @@
 <main class="docs-layout">
     <aside class="docs-toc" aria-label="Documentation sections">
         <h1>data-wrapper</h1>
-        <p class="docs-subtitle">HTML-first reactivity</p>
+        <p class="docs-subtitle">HTML-first reactivity — full guide</p>
         <nav>
             <ol>
                 <li><a href="#intro">Intro</a></li>
@@ -74,7 +78,7 @@
             </ol>
         </nav>
         <p class="docs-sidefoot">
-            <a href="/">← back to demos</a>
+            <a href="/">← back home</a>
         </p>
     </aside>
 
@@ -83,9 +87,25 @@
         <data-wrapper src="/views/docs/install.html"></data-wrapper>
         <data-wrapper src="/views/docs/tokens.html"></data-wrapper>
         <data-wrapper src="/views/docs/factory.html"></data-wrapper>
+
         <data-wrapper src="/views/docs/modules.html"></data-wrapper>
+        <section class="showcase-block" id="theme-showcase">
+            <h3>Showcase — cross-module state</h3>
+            <data-wrapper src="/views/showcase/theme.html"></data-wrapper>
+        </section>
+
         <data-wrapper src="/views/docs/contexts.html"></data-wrapper>
+        <section class="showcase-block" id="orders-showcase">
+            <h3>Showcase — nested lists</h3>
+            <data-wrapper src="/views/showcase/orders.html"></data-wrapper>
+        </section>
+
         <data-wrapper src="/views/docs/directives.html"></data-wrapper>
+        <section class="showcase-block" id="todos">
+            <h3>Showcase — todos app</h3>
+            <data-wrapper src="/views/showcase/todos.v3.html"></data-wrapper>
+        </section>
+
         <data-wrapper src="/views/docs/events.html"></data-wrapper>
         <data-wrapper src="/views/docs/reactivity.html"></data-wrapper>
         <data-wrapper src="/views/docs/formatters.html"></data-wrapper>

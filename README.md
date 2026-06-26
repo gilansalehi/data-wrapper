@@ -28,17 +28,18 @@ action; every binding that reads it updates on the next flush.
 ## Docs
 
 The full documentation is a set of views in this repo at `views/docs/`,
-mounted by `docs.html`. Run the dev server and open `/docs.html` in a
-browser:
+mounted by `framework.html` alongside the showcase components they describe.
+Run the dev server and open `/framework.html` in a browser:
 
 ```sh
 bun install
 bun run serve
-# then open http://localhost:3000/docs.html
+# then open http://localhost:3000/framework.html
 ```
 
 The docs themselves use the same component-module pattern they document —
-each section is a `<data-wrapper>` over a single view file.
+each section is a `<data-wrapper>` over a single view file, with showcase
+components interleaved so each concept is followed by a live working example.
 
 ## Sections
 
