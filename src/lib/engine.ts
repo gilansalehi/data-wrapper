@@ -13,12 +13,12 @@ export type BindingContext = {
     root:    Wrapper;
     current: Row | null;
     parent:  BindingContext | null;
+    unsubs:  Off[];
 };
 
 export type Source = {
     read:      ()        => unknown;
     subscribe: (cb: Sub) => Off;
-    escapes:                boolean; // sub lives outside the element's natural scope
 };
 
 export type ComponentBindingRuntime = {
@@ -50,10 +50,13 @@ export type DirectiveHandler = (ctx: DirectiveContext) => Sub;
 export type Formatter        = (value: unknown, arg?: unknown) => unknown;
 
 export const rootContext = (root: Wrapper): BindingContext =>
-    ({ root, current: null, parent: null });
+    ({ root, current: null, parent: null, unsubs: root._unsubs });
 
 export const childContext = (parent: BindingContext, row: Row): BindingContext =>
-    ({ root: parent.root, current: row, parent });
+    ({ root: parent.root, current: row, parent, unsubs: row.unsubs });
+
+const blockContext = (parent: BindingContext, unsubs: Off[]): BindingContext =>
+    ({ root: parent.root, current: null, parent, unsubs });
 
 export const nearestRow = (ctx: BindingContext): Row | null => {
     for (let c: BindingContext | null = ctx; c; c = c.parent)
@@ -62,7 +65,7 @@ export const nearestRow = (ctx: BindingContext): Row | null => {
 };
 
 export const ownerUnsubs = (ctx: BindingContext): Off[] =>
-    ctx.current ? ctx.current.unsubs : ctx.root._unsubs;
+    ctx.unsubs;
 
 export const own = (ctx: BindingContext, off: Off) => {
     ownerUnsubs(ctx).push(off);
@@ -147,7 +150,6 @@ const formatter = (params: URLSearchParams) => {
 const rowSource = (row: Row, path: string): Source => ({
     read:      ()   => readPath(row.item, path),
     subscribe: (cb) => subscribe(row.subs, path, cb, readPath(row.item, path)),
-    escapes:        false,
 });
 
 export const wire = (
@@ -163,8 +165,6 @@ export const wire = (
     const wrapper = ctx.root;
     const row     = nearestRow(ctx);
 
-    const unsubs = ownerUnsubs(ctx);
-
     if (token === '@') {
         if (!path) return;
         const off = on(prop, (e: Event) => {
@@ -174,11 +174,11 @@ export const wire = (
             const detail: DispatchDetail = { originalEvent: e, path, isRel, item: row?.item };
             emit(path, detail, el);
         }, el);
-        unsubs.push(off);
+        own(ctx, off);
 
         if (BARE_NAME.test(value)) {
             const actionOff = wrapper._component?.activateAction(path);
-            if (actionOff) unsubs.push(actionOff);
+            if (actionOff) own(ctx, actionOff);
         }
         return;
     }
@@ -195,7 +195,7 @@ export const wire = (
         const format = formatter(params);
         const set    = bind(el, prop);
         const off    = source.subscribe(v => set(format(v)));
-        if (source.escapes) unsubs.push(off);
+        own(ctx, off);
         return;
     }
 
@@ -204,7 +204,7 @@ export const wire = (
         if (!factory) throw new Error(`Unknown directive *${prop}`);
         const updater = factory({ ...dwrl, ctx, el, wake });
         const off     = source.subscribe(updater);
-        if (source.escapes) unsubs.push(off);
+        own(ctx, off);
         return;
     }
 };
@@ -315,15 +315,25 @@ const ifDirective: DirectiveHandler = ({ ctx, el }) => {
     tpl.replaceWith(anchor);
 
     let live: Element | null = null;
+    let liveUnsubs: Off[] = [];
+
+    const disposeLive = () => {
+        unwire(liveUnsubs);
+        live?.remove();
+        live = null;
+        liveUnsubs = [];
+    };
+    own(ctx, disposeLive);
+
     return value => {
         if (value && !live) {
             live = cloneTemplate(tpl);
             if (!live) return;
+            liveUnsubs = [];
             anchor.parentNode!.insertBefore(live, anchor);
-            wake(live, ctx);
+            wake(live, blockContext(ctx, liveUnsubs));
         } else if (!value && live) {
-            live.remove();
-            live = null;
+            disposeLive();
         }
     };
 };

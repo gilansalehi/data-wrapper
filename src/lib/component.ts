@@ -51,7 +51,6 @@ export class ComponentRuntime {
         return {
             read:      ()   => this.read(name),
             subscribe: (cb) => this.subscribe(name, cb),
-            escapes:        true,
         };
     }
 
