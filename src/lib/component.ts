@@ -10,6 +10,7 @@ export type ComponentContext = Readonly<{
     wrapper: HTMLElement;
     url:     URL;
     params:  URLSearchParams;
+    cleanup: (off: Off) => void;
 }>;
 export type ComponentFactory =
     (context: ComponentContext) => ComponentInstance | void;

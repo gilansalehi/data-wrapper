@@ -32,6 +32,7 @@ export type Wrapper = HTMLElement & {
     _unsubs:      Off[];
     _listCache:   ListCache;
     _component?:  ComponentBindingRuntime;
+    _loadedSrc?:  string;
 };
 
 export type DispatchDetail = {
@@ -245,8 +246,8 @@ const reconcile = (
     ctx:       BindingContext,
 ) => {
     const active = new Set<unknown>();
-    const frag   = document.createDocumentFragment();
     const fresh: Row[] = [];
+    let cursor: ChildNode | null = tpl.nextSibling;
 
     for (const item of data) {
         const id = item[keyProp] ?? JSON.stringify(item);
@@ -263,7 +264,9 @@ const reconcile = (
             row.item = item;
             for (const ch in row.subs) publish(row.subs, ch, readPath(item, ch));
         }
-        frag.appendChild(row.node);
+        if (row.node !== cursor && row.node.nextSibling !== cursor)
+            container.insertBefore(row.node, cursor);
+        cursor = row.node.nextSibling;
     }
 
     for (const [id, row] of cache) {
@@ -273,7 +276,6 @@ const reconcile = (
         cache.delete(id);
     }
 
-    container.appendChild(frag);
     for (const row of fresh) wake(row.node, childContext(ctx, row));
 };
 

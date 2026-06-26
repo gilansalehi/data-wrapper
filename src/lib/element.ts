@@ -1,4 +1,4 @@
-import { rootContext, wake, unwake, type ListCache, type Wrapper } from './engine.ts';
+import { rootContext, unwake, wake, type ListCache, type Wrapper } from './engine.ts';
 import {
     ComponentRuntime,
     type ComponentContext,
@@ -108,6 +108,8 @@ export class DataWrapper extends HTMLElement {
     declare _unsubs:     Off[];
     declare _listCache:  ListCache;
     declare _component?: ComponentRuntime;
+    declare _loadedSrc?: string;
+    private _disconnectQueued = false;
 
     constructor() {
         super();
@@ -117,14 +119,24 @@ export class DataWrapper extends HTMLElement {
 
     connectedCallback() {
         const src = this.getAttribute('src');
-        if (src) load(this, src).catch(err => console.error(`<data-wrapper src="${src}">`, err));
+        if (src) {
+            if (this._loadedSrc === src) return;
+            load(this, src).catch(err => console.error(`<data-wrapper src="${src}">`, err));
+        }
         else wake(this, rootContext(this));
     }
 
     disconnectedCallback() {
-        unwake(this);
-        this._component?.destroy();
-        this._component = undefined;
+        if (this._disconnectQueued) return;
+        this._disconnectQueued = true;
+        queueMicrotask(() => {
+            this._disconnectQueued = false;
+            if (this.isConnected) return;
+            unwake(this);
+            this._component?.destroy();
+            this._component = undefined;
+            this._loadedSrc = undefined;
+        });
     }
 }
 
@@ -145,6 +157,7 @@ export const load = async (wrapper: Wrapper, src: string) => {
 
     let componentModule: ComponentModule | undefined;
     let instance: ComponentInstance | undefined;
+    const factoryUnsubs: Off[] = [];
     if (script) {
         script.remove();
         componentModule = await importComponent(script, url);
@@ -153,16 +166,22 @@ export const load = async (wrapper: Wrapper, src: string) => {
             if (typeof factory !== 'function') {
                 throw new Error(`Component module ${url.href} default export must be a factory function`);
             }
-            const context: ComponentContext = Object.freeze({
-                wrapper,
-                url,
-                params: url.searchParams,
-            });
-            const created = (factory as ComponentFactory)(context);
-            if (created != null && typeof created !== 'object') {
-                throw new Error(`Component module ${url.href} factory must return an object or nothing`);
+            try {
+                const context: ComponentContext = Object.freeze({
+                    wrapper,
+                    url,
+                    params: url.searchParams,
+                    cleanup: off => factoryUnsubs.push(off),
+                });
+                const created = (factory as ComponentFactory)(context);
+                if (created != null && typeof created !== 'object') {
+                    throw new Error(`Component module ${url.href} factory must return an object or nothing`);
+                }
+                instance = created as ComponentInstance | undefined;
+            } catch (error) {
+                for (const off of factoryUnsubs.splice(0)) off();
+                throw error;
             }
-            instance = created as ComponentInstance | undefined;
         }
     }
 
@@ -170,11 +189,12 @@ export const load = async (wrapper: Wrapper, src: string) => {
     wrapper._component?.destroy();
     wrapper.innerHTML = '';
     wrapper.append(tpl.content);
-    wrapper._unsubs    = [];
+    wrapper._unsubs    = factoryUnsubs;
     wrapper._listCache = new Map();
     wrapper._component = componentModule
         ? new ComponentRuntime(wrapper, componentModule, instance)
         : undefined;
+    wrapper._loadedSrc = src;
     wake(wrapper, rootContext(wrapper));
 };
 
