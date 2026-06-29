@@ -1,10 +1,21 @@
-import { rootContext, unwake, wake, type ListCache, type Wrapper } from './engine.ts';
+import {
+    isBareBindingPath,
+    resolveSource,
+    rootContext,
+    setWrapperLoader,
+    unwake,
+    wake,
+    type BindingContext,
+    type ListCache,
+    type Wrapper,
+} from './engine.ts';
 import {
     ComponentRuntime,
     type ComponentContext,
     type ComponentFactory,
     type ComponentInstance,
     type ComponentModule,
+    type ComponentProps,
 } from './component.ts';
 import type { Off } from './utils.ts';
 
@@ -108,7 +119,9 @@ export class DataWrapper extends HTMLElement {
     declare _unsubs:     Off[];
     declare _listCache:  ListCache;
     declare _component?: ComponentRuntime;
+    declare _parentContext?: BindingContext;
     declare _loadedSrc?: string;
+    declare _loadingSrc?: string;
     private _disconnectQueued = false;
 
     constructor() {
@@ -118,12 +131,7 @@ export class DataWrapper extends HTMLElement {
     }
 
     connectedCallback() {
-        const src = this.getAttribute('src');
-        if (src) {
-            if (this._loadedSrc === src) return;
-            load(this, src).catch(err => console.error(`<data-wrapper src="${src}">`, err));
-        }
-        else wake(this, rootContext(this));
+        wake(this, rootContext(this));
     }
 
     disconnectedCallback() {
@@ -135,68 +143,110 @@ export class DataWrapper extends HTMLElement {
             unwake(this);
             this._component?.destroy();
             this._component = undefined;
+            this._parentContext = undefined;
             this._loadedSrc = undefined;
+            this._loadingSrc = undefined;
         });
     }
 }
 
-export const load = async (wrapper: Wrapper, src: string) => {
-    const url  = new URL(src, document.baseURI);
-    const res  = await fetch(url);
-    const html = await res.text();
-    const tpl  = document.createElement('template');
-    tpl.innerHTML = html;
+const projectedProps = (wrapper: Wrapper, url: URL): ComponentProps => {
+    const parentCtx = wrapper._parentContext;
+    const props: Record<string, () => unknown> = {};
+    if (!parentCtx) return Object.freeze(props);
 
-    const scripts = tpl.content.querySelectorAll<HTMLScriptElement>(
-        'script[type="module"][data-component]'
-    );
-    if (scripts.length > 1) {
-        throw new Error(`Component view ${url.href} may contain only one data-component module`);
+    for (const [propName, value] of url.searchParams) {
+        const sourceName = value || propName;
+        if (!isBareBindingPath(sourceName)) {
+            throw new Error(
+                `Unable to resolve prop "${propName}" for ${url.href}: ` +
+                `parent binding "${sourceName}" is not a bare binding name`
+            );
+        }
+
+        const source = resolveSource(parentCtx, sourceName, false, sourceName);
+        if (!source) {
+            throw new Error(
+                `Unable to resolve prop "${propName}" for ${url.href}: ` +
+                `parent binding "${sourceName}" was not found`
+            );
+        }
+        props[propName] = source.read;
     }
-    const script = scripts[0];
 
-    let componentModule: ComponentModule | undefined;
-    let instance: ComponentInstance | undefined;
-    const factoryUnsubs: Off[] = [];
-    if (script) {
-        script.remove();
-        componentModule = await importComponent(script, url);
-        const factory = componentModule.default;
-        if (factory !== undefined) {
-            if (typeof factory !== 'function') {
-                throw new Error(`Component module ${url.href} default export must be a factory function`);
-            }
-            try {
-                const context: ComponentContext = Object.freeze({
-                    wrapper,
-                    url,
-                    params: url.searchParams,
-                    cleanup: off => factoryUnsubs.push(off),
-                });
-                const created = (factory as ComponentFactory)(context);
-                if (created != null && typeof created !== 'object') {
-                    throw new Error(`Component module ${url.href} factory must return an object or nothing`);
+    return Object.freeze(props);
+};
+
+export const load = async (wrapper: Wrapper, src: string) => {
+    if (wrapper._loadedSrc === src || wrapper._loadingSrc === src) return;
+    wrapper._loadingSrc = src;
+
+    const url  = new URL(src, document.baseURI);
+    try {
+        const props = projectedProps(wrapper, url);
+        const res  = await fetch(url);
+        const html = await res.text();
+        const tpl  = document.createElement('template');
+        tpl.innerHTML = html;
+
+        const scripts = tpl.content.querySelectorAll<HTMLScriptElement>(
+            'script[type="module"][data-component]'
+        );
+        if (scripts.length > 1) {
+            throw new Error(`Component view ${url.href} may contain only one data-component module`);
+        }
+        const script = scripts[0];
+
+        let componentModule: ComponentModule | undefined;
+        let instance: ComponentInstance | undefined;
+        const factoryUnsubs: Off[] = [];
+        if (script) {
+            script.remove();
+            componentModule = await importComponent(script, url);
+            const factory = componentModule.default;
+            if (factory !== undefined) {
+                if (typeof factory !== 'function') {
+                    throw new Error(`Component module ${url.href} default export must be a factory function`);
                 }
-                instance = created as ComponentInstance | undefined;
-            } catch (error) {
-                for (const off of factoryUnsubs.splice(0)) off();
-                throw error;
+                try {
+                    const context: ComponentContext = Object.freeze({
+                        wrapper,
+                        url,
+                        params: url.searchParams,
+                        props,
+                        cleanup: off => factoryUnsubs.push(off),
+                    });
+                    const created = (factory as ComponentFactory)(context);
+                    if (created != null && typeof created !== 'object') {
+                        throw new Error(`Component module ${url.href} factory must return an object or nothing`);
+                    }
+                    instance = created as ComponentInstance | undefined;
+                } catch (error) {
+                    for (const off of factoryUnsubs.splice(0)) off();
+                    throw error;
+                }
             }
         }
-    }
 
-    unwake(wrapper);
-    wrapper._component?.destroy();
-    wrapper.innerHTML = '';
-    wrapper.append(tpl.content);
-    wrapper._unsubs    = factoryUnsubs;
-    wrapper._listCache = new Map();
-    wrapper._component = componentModule
-        ? new ComponentRuntime(wrapper, componentModule, instance)
-        : undefined;
-    wrapper._loadedSrc = src;
-    wake(wrapper, rootContext(wrapper));
+        unwake(wrapper);
+        wrapper._component?.destroy();
+        wrapper.innerHTML = '';
+        wrapper.append(tpl.content);
+        wrapper._unsubs    = factoryUnsubs;
+        wrapper._listCache = new Map();
+        wrapper._component = componentModule || Object.keys(props).length
+            ? new ComponentRuntime(wrapper, componentModule ?? {}, instance, props)
+            : undefined;
+        wrapper._loadedSrc = src;
+        wake(wrapper, rootContext(wrapper));
+    } finally {
+        if (wrapper._loadingSrc === src) wrapper._loadingSrc = undefined;
+    }
 };
+
+setWrapperLoader((wrapper, src) => {
+    load(wrapper, src).catch(err => console.error(`<data-wrapper src="${src}">`, err));
+});
 
 if (typeof customElements !== 'undefined' && !customElements.get('data-wrapper')) {
     customElements.define('data-wrapper', DataWrapper);

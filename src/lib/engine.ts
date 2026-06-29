@@ -29,10 +29,12 @@ export type ComponentBindingRuntime = {
 };
 
 export type Wrapper = HTMLElement & {
-    _unsubs:      Off[];
-    _listCache:   ListCache;
-    _component?:  ComponentBindingRuntime;
-    _loadedSrc?:  string;
+    _unsubs:         Off[];
+    _listCache:      ListCache;
+    _component?:     ComponentBindingRuntime;
+    _parentContext?: BindingContext;
+    _loadedSrc?:     string;
+    _loadingSrc?:    string;
 };
 
 export type DispatchDetail = {
@@ -132,10 +134,22 @@ export const bind = (el: Element, prop: string): Sub => {
 
 // --- wire / wake -------------------------------------------------------------
 
-const TOKENS    = '@$*';
-const NO_WAKE   = ['DATA-WRAPPER', 'SVG'];
-const LIVE      = '_live';
-const BARE_NAME = /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:[?#].*)?$/;
+const TOKENS       = '@$*';
+const WRAPPER_TAG  = 'DATA-WRAPPER';
+const SVG_TAG      = 'SVG';
+const LIVE         = '_live';
+const BARE_PATH    = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+const BARE_BINDING = /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:[?#].*)?$/;
+type WrapperLoader = (wrapper: Wrapper, src: string) => void;
+
+let wrapperLoader: WrapperLoader | undefined;
+
+export const setWrapperLoader = (loader: WrapperLoader) => {
+    wrapperLoader = loader;
+};
+
+export const isBareBindingPath = (path: string): boolean =>
+    BARE_PATH.test(path);
 
 const formatter = (params: URLSearchParams) => {
     const steps: ((v: unknown) => unknown)[] = [];
@@ -152,6 +166,22 @@ const rowSource = (row: Row, path: string): Source => ({
     read:      ()   => readPath(row.item, path),
     subscribe: (cb) => subscribe(row.subs, path, cb, readPath(row.item, path)),
 });
+
+const hasOwn = (obj: object, key: PropertyKey) =>
+    Object.prototype.hasOwnProperty.call(obj, key);
+
+export const resolveSource = (
+    ctx:   BindingContext,
+    path:  string,
+    isRel: boolean,
+    raw?:  string,
+): Source | null => {
+    const row = nearestRow(ctx);
+    if (isRel) return row ? rowSource(row, path) : null;
+    if ((raw !== undefined && !BARE_BINDING.test(raw)) || !BARE_PATH.test(path)) return null;
+    if (row && hasOwn(row.item, path)) return rowSource(row, path);
+    return ctx.root._component?.has(path) ? ctx.root._component.source(path) : null;
+};
 
 export const wire = (
     el:   Element,
@@ -177,19 +207,16 @@ export const wire = (
         }, el);
         own(ctx, off);
 
-        if (BARE_NAME.test(value)) {
+        if (BARE_BINDING.test(value)) {
             const actionOff = wrapper._component?.activateAction(path);
             if (actionOff) own(ctx, actionOff);
         }
         return;
     }
 
-    // PoC: $ and * only resolve bare names (component exports) or `./key` (row item).
+    // PoC: $ and * resolve bare names local-first or `./key` from the nearest row.
     // TODO: pURL branches (`/wrapperState`, `//host/path`) restored in v1.
-    const source: Source | null =
-        BARE_NAME.test(value) && wrapper._component?.has(path) ? wrapper._component.source(path)
-      : row && isRel                                          ? rowSource(row, path)
-      :                                                         null;
+    const source = resolveSource(ctx, path, isRel, value);
     if (!source) return;
 
     if (token === '$') {
@@ -214,22 +241,50 @@ export const wake = (
     root: Element,
     ctx:  BindingContext,
 ) => {
-    const nodes: Element[] = [root];
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
-        acceptNode: n => NO_WAKE.includes((n as Element).tagName)
-            ? NodeFilter.FILTER_REJECT
-            : NodeFilter.FILTER_ACCEPT,
-    });
-    let n: Node | null;
-    while ((n = walker.nextNode())) nodes.push(n as Element);
-
-    for (const el of nodes) {
-        if (el.hasAttribute(LIVE)) continue;
+    const wireOwnAttrs = (el: Element) => {
+        if (el.hasAttribute(LIVE)) return;
         const attrs = [...el.attributes].filter(a => TOKENS.includes(a.name[0]));
-        if (!attrs.length) continue;
+        if (!attrs.length) return;
         el.setAttribute(LIVE, '');
         for (const a of attrs) wire(el, a, ctx);
-    }
+    };
+
+    const hasWrapperAncestor = (el: Element): boolean =>
+        !!el.parentElement?.closest('data-wrapper');
+
+    const visit = (el: Element) => {
+        if (el.tagName === SVG_TAG) return;
+
+        const isWrapper = el.tagName === WRAPPER_TAG;
+        const selfRootWrapper = isWrapper && ctx.root === el;
+        const nestedWrapper = isWrapper && !selfRootWrapper;
+
+        if (isWrapper) {
+            const wrapper = el as Wrapper;
+            const src = wrapper.getAttribute('src');
+
+            if (!nestedWrapper && src && hasWrapperAncestor(wrapper) && !wrapper._parentContext) {
+                return;
+            }
+
+            wireOwnAttrs(el);
+
+            if (nestedWrapper) wrapper._parentContext = ctx;
+
+            if (src && wrapper._loadedSrc !== src) {
+                if (wrapper._loadingSrc !== src) wrapperLoader?.(wrapper, src);
+                return;
+            }
+
+            if (nestedWrapper) return;
+        } else {
+            wireOwnAttrs(el);
+        }
+
+        for (const child of [...el.children]) visit(child);
+    };
+
+    visit(root);
 };
 
 // --- *list + *if (directives on <template>) ----------------------------------
@@ -264,7 +319,10 @@ const reconcile = (
             row.item = item;
             for (const ch in row.subs) publish(row.subs, ch, readPath(item, ch));
         }
-        if (row.node !== cursor && row.node.nextSibling !== cursor)
+        if (
+            row.node.parentNode !== container
+            || (row.node !== cursor && row.node.nextSibling !== cursor)
+        )
             container.insertBefore(row.node, cursor);
         cursor = row.node.nextSibling;
     }

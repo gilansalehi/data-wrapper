@@ -6,10 +6,12 @@ import type { Off } from './utils.ts';
 // module names.
 export type ComponentModule = Readonly<Record<string, unknown>>;
 export type ComponentInstance = Readonly<Record<string, unknown>>;
+export type ComponentProps = Readonly<Record<string, () => unknown>>;
 export type ComponentContext = Readonly<{
     wrapper: HTMLElement;
     url:     URL;
     params:  URLSearchParams;
+    props:   ComponentProps;
     cleanup: (off: Off) => void;
 }>;
 export type ComponentFactory =
@@ -30,6 +32,7 @@ export class ComponentRuntime {
     readonly root:     Element;
     readonly module:   ComponentModule;
     readonly instance?: ComponentInstance;
+    readonly props:    ComponentProps;
     readonly station:  Station = {};
 
     private readonly outputs = new Map<string, Output>();
@@ -37,15 +40,23 @@ export class ComponentRuntime {
     private flushing = false;
     private pending  = false;
 
-    constructor(root: Element, module: ComponentModule, instance?: ComponentInstance) {
+    constructor(
+        root: Element,
+        module: ComponentModule,
+        instance?: ComponentInstance,
+        props: ComponentProps = Object.freeze({}),
+    ) {
         this.root     = root;
         this.module   = module;
         this.instance = instance;
+        this.props    = props;
         ComponentRuntime.all.add(this);
     }
 
     has(name: string): boolean {
-        return this.hasInstance(name) || (name !== 'default' && own(this.module, name));
+        return this.hasInstance(name)
+            || this.hasProp(name)
+            || (name !== 'default' && own(this.module, name));
     }
 
     source(name: string): Source {
@@ -144,8 +155,14 @@ export class ComponentRuntime {
         return !!this.instance && own(this.instance, name);
     }
 
+    private hasProp(name: string): boolean {
+        return own(this.props, name);
+    }
+
     private value(name: string): unknown {
-        return this.hasInstance(name) ? this.instance![name] : this.module[name];
+        return this.hasInstance(name) ? this.instance![name]
+             : this.hasProp(name)     ? this.props[name]
+             :                          this.module[name];
     }
 
     // Namespace access preserves ESM live bindings; instance access triggers
