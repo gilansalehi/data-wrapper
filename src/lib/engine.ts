@@ -144,6 +144,7 @@ const NO_WAKE   = ['DATA-WRAPPER', 'SVG'];
 const LIVE      = '_live';
 const BARE_PATH = /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:\/[a-zA-Z_$][a-zA-Z0-9_$]*)*$/;
 const BARE_BINDING = /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:\/[a-zA-Z_$][a-zA-Z0-9_$]*)*(?:[?#].*)?$/;
+type BindingResolution = { source: Source | null; missed: boolean };
 
 const formatter = (params: URLSearchParams) => {
     const steps: ((v: unknown) => unknown)[] = [];
@@ -189,6 +190,36 @@ export const resolveSource = (
     return null;
 };
 
+const staticSource = (value: unknown): Source => ({
+    read:      () => value,
+    subscribe: cb => { cb(value); return () => {}; },
+});
+
+const isReservedBinding = (raw: string): boolean =>
+    raw.startsWith('../') || raw.startsWith('/');
+
+const canFallbackToStatic = (raw: string, path: string): boolean =>
+    BARE_BINDING.test(raw) || (raw.startsWith('./') && BARE_PATH.test(path));
+
+const resolveBinding = (
+    ctx:   BindingContext,
+    path:  string,
+    isRel: boolean,
+    raw:   string,
+): BindingResolution => {
+    if (isReservedBinding(raw)) return { source: null, missed: false };
+
+    const source = resolveSource(ctx, path, isRel, raw);
+    if (source) return { source, missed: false };
+
+    if (!canFallbackToStatic(raw, path)) return { source: null, missed: false };
+    return { source: staticSource(path), missed: true };
+};
+
+const warnStaticFallback = (value: string) => {
+    console.warn(`data-wrapper: unresolved binding "${value}" rendered as a static literal`);
+};
+
 export const wire = (
     el:   Element,
     attr: Attr,
@@ -221,8 +252,9 @@ export const wire = (
 
     // PoC: $ and * resolve bare names local-first or `./key` from the nearest row.
     // TODO: pURL branches (`/wrapperState`, `//host/path`) restored in v1.
-    const source = resolveSource(ctx, path, isRel, value);
+    const { source, missed } = resolveBinding(ctx, path, isRel, value);
     if (!source) return;
+    if (missed) warnStaticFallback(value);
 
     if (token === '$') {
         const format = formatter(params);

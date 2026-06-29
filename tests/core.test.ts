@@ -1,7 +1,7 @@
-// Core contract — the rock-solid tenets the lib commits to, independent of the
-// in-flight 004 / scope-refactor work. Each test drives the public surface (a
-// ComponentRuntime + wake + the real DOM, or action/flush) and asserts observable
-// behavior only, so the implementation underneath stays free to change.
+// Core mechanics — reactivity and the structural directives: the rock-solid
+// tenets that tests/resolution.test.ts does not cover. Driven through the public
+// surface (ComponentRuntime + wake + action/flush + real DOM); assertions are
+// observable behavior only, so the implementation underneath stays free to change.
 import { test, expect } from 'bun:test';
 import {
     ComponentRuntime,
@@ -26,32 +26,8 @@ const mount = (
     return el;
 };
 
-const click = (el: Element) =>
-    el.dispatchEvent(new Event('click', { bubbles: true }));
-
-// --- the three tokens + the scope model --------------------------------------
-
-test('$ binds a component module export into the DOM', () => {
-    const el = mount('<output $text="label"></output>', { label: 'hello' });
-    expect(el.querySelector('output')?.textContent).toBe('hello');
-});
-
-test('a factory instance binding shadows a module export of the same name', () => {
-    const el = mount(
-        '<output $text="label"></output>',
-        { label: 'module' },
-        { label: 'instance' },
-    );
-    expect(el.querySelector('output')?.textContent).toBe('instance');
-});
-
-test('`./key` reads the row item inside *list', () => {
-    const el = mount(
-        '<ul><template *list="items"><li $text="./label"></li></template></ul>',
-        { items: [{ id: 1, label: 'a' }, { id: 2, label: 'b' }] },
-    );
-    expect([...el.querySelectorAll('li')].map(li => li.textContent)).toEqual(['a', 'b']);
-});
+const rowText = (el: Wrapper) =>
+    [...el.querySelectorAll('li')].map(li => li.textContent);
 
 // --- reactivity --------------------------------------------------------------
 
@@ -66,17 +42,7 @@ test('mutating state in an action updates the bound DOM on flush', () => {
     expect(el.querySelector('output')?.textContent).toBe('1');
 });
 
-// --- events ------------------------------------------------------------------
-
-test('@event invokes the matching component action', () => {
-    let hits = 0;
-    const el = mount('<button @click="hit"></button>', { hit: () => { hits += 1; } });
-
-    click(el.querySelector('button')!);
-    expect(hits).toBe(1);
-});
-
-// --- structural directive ----------------------------------------------------
+// --- structural directives ---------------------------------------------------
 
 test('*if adds its body when truthy and removes it when falsy', () => {
     let show = true;
@@ -90,4 +56,18 @@ test('*if adds its body when truthy and removes it when falsy', () => {
     toggle();
     flush();
     expect(el.querySelector('.body')).toBeNull();
+});
+
+test('*list updates a row in place and removes a dropped row', () => {
+    let items = [{ id: 1, label: 'a' }, { id: 2, label: 'b' }];
+    const setItems = action((next: typeof items) => { items = next; });
+    const el = mount(
+        '<ul><template *list="items"><li $text="./label"></li></template></ul>',
+        { get items() { return items; }, setItems },
+    );
+    expect(rowText(el)).toEqual(['a', 'b']);
+
+    setItems([{ id: 1, label: 'A' }]);
+    flush();
+    expect(rowText(el)).toEqual(['A']);
 });
