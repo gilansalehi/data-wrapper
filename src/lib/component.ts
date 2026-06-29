@@ -1,4 +1,4 @@
-import { publish, subscribe, type Source, type Station, type Sub } from './engine.ts';
+import { publish, subscribe, type Source, type SourceScope, type Station, type Sub } from './engine.ts';
 import type { Off } from './utils.ts';
 
 // Named exports are the shared module scope. A default-export factory may
@@ -6,12 +6,10 @@ import type { Off } from './utils.ts';
 // module names.
 export type ComponentModule = Readonly<Record<string, unknown>>;
 export type ComponentInstance = Readonly<Record<string, unknown>>;
-export type ComponentProps = Readonly<Record<string, () => unknown>>;
 export type ComponentContext = Readonly<{
     wrapper: HTMLElement;
     url:     URL;
     params:  URLSearchParams;
-    props:   ComponentProps;
     cleanup: (off: Off) => void;
 }>;
 export type ComponentFactory =
@@ -26,13 +24,12 @@ const own = (obj: object, key: PropertyKey) =>
 // Each subscribed output is re-read on every flush; changes publish through
 // the runtime's Station. Actions run inside a flush boundary so mutations
 // reach subscribers without dependency tracking.
-export class ComponentRuntime {
+export class ComponentRuntime implements SourceScope {
     static readonly all = new Set<ComponentRuntime>();
 
     readonly root:     Element;
     readonly module:   ComponentModule;
     readonly instance?: ComponentInstance;
-    readonly props:    ComponentProps;
     readonly station:  Station = {};
 
     private readonly outputs = new Map<string, Output>();
@@ -40,26 +37,19 @@ export class ComponentRuntime {
     private flushing = false;
     private pending  = false;
 
-    constructor(
-        root: Element,
-        module: ComponentModule,
-        instance?: ComponentInstance,
-        props: ComponentProps = Object.freeze({}),
-    ) {
+    constructor(root: Element, module: ComponentModule, instance?: ComponentInstance) {
         this.root     = root;
         this.module   = module;
         this.instance = instance;
-        this.props    = props;
         ComponentRuntime.all.add(this);
     }
 
     has(name: string): boolean {
-        return this.hasInstance(name)
-            || this.hasProp(name)
-            || (name !== 'default' && own(this.module, name));
+        return this.hasInstance(name) || (name !== 'default' && own(this.module, name));
     }
 
-    source(name: string): Source {
+    source(name: string): Source | null {
+        if (!this.has(name)) return null;
         return {
             read:      ()   => this.read(name),
             subscribe: (cb) => this.subscribe(name, cb),
@@ -155,14 +145,8 @@ export class ComponentRuntime {
         return !!this.instance && own(this.instance, name);
     }
 
-    private hasProp(name: string): boolean {
-        return own(this.props, name);
-    }
-
     private value(name: string): unknown {
-        return this.hasInstance(name) ? this.instance![name]
-             : this.hasProp(name)     ? this.props[name]
-             :                          this.module[name];
+        return this.hasInstance(name) ? this.instance![name] : this.module[name];
     }
 
     // Namespace access preserves ESM live bindings; instance access triggers

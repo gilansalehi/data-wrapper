@@ -10,8 +10,8 @@ export type Row      = { node: Element; item: Item; subs: Station; unsubs: Off[]
 export type ListCache = Map<Element, Map<unknown, Row>>;
 
 export type BindingContext = {
-    root:    Wrapper;
-    current: Row | null;
+    wrapper: Wrapper;
+    scope:   SourceScope | null;
     parent:  BindingContext | null;
     unsubs:  Off[];
 };
@@ -21,20 +21,22 @@ export type Source = {
     subscribe: (cb: Sub) => Off;
 };
 
-export type ComponentBindingRuntime = {
+export type SourceScope = {
+    source: (path: string) => Source | null;
+    item?:  () => Item | undefined;
+};
+
+export type ComponentBindingRuntime = SourceScope & {
     has:            (name: string) => boolean;
-    source:         (name: string) => Source;
     activateAction: (name: string) => Off | null;
     destroy:        () => void;
 };
 
 export type Wrapper = HTMLElement & {
-    _unsubs:         Off[];
-    _listCache:      ListCache;
-    _component?:     ComponentBindingRuntime;
-    _parentContext?: BindingContext;
-    _loadedSrc?:     string;
-    _loadingSrc?:    string;
+    _unsubs:     Off[];
+    _listCache:  ListCache;
+    _component?: ComponentBindingRuntime;
+    _loadedSrc?: string;
 };
 
 export type DispatchDetail = {
@@ -52,20 +54,23 @@ export interface DirectiveContext extends pURL {
 export type DirectiveHandler = (ctx: DirectiveContext) => Sub;
 export type Formatter        = (value: unknown, arg?: unknown) => unknown;
 
-export const rootContext = (root: Wrapper): BindingContext =>
-    ({ root, current: null, parent: null, unsubs: root._unsubs });
+export const rootContext = (wrapper: Wrapper): BindingContext =>
+    ({ wrapper, scope: wrapper._component ?? null, parent: null, unsubs: wrapper._unsubs });
 
 export const childContext = (parent: BindingContext, row: Row): BindingContext =>
-    ({ root: parent.root, current: row, parent, unsubs: row.unsubs });
+    ({ wrapper: parent.wrapper, scope: rowScope(row), parent, unsubs: row.unsubs });
 
 const blockContext = (parent: BindingContext, unsubs: Off[]): BindingContext =>
-    ({ root: parent.root, current: null, parent, unsubs });
+    ({ wrapper: parent.wrapper, scope: null, parent, unsubs });
 
-export const nearestRow = (ctx: BindingContext): Row | null => {
+const nearestItemScope = (ctx: BindingContext): SourceScope | null => {
     for (let c: BindingContext | null = ctx; c; c = c.parent)
-        if (c.current) return c.current;
+        if (c.scope?.item) return c.scope;
     return null;
 };
+
+export const nearestItem = (ctx: BindingContext): Item | undefined =>
+    nearestItemScope(ctx)?.item?.();
 
 export const ownerUnsubs = (ctx: BindingContext): Off[] =>
     ctx.unsubs;
@@ -134,22 +139,11 @@ export const bind = (el: Element, prop: string): Sub => {
 
 // --- wire / wake -------------------------------------------------------------
 
-const TOKENS       = '@$*';
-const WRAPPER_TAG  = 'DATA-WRAPPER';
-const SVG_TAG      = 'SVG';
-const LIVE         = '_live';
-const BARE_PATH    = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
-const BARE_BINDING = /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:[?#].*)?$/;
-type WrapperLoader = (wrapper: Wrapper, src: string) => void;
-
-let wrapperLoader: WrapperLoader | undefined;
-
-export const setWrapperLoader = (loader: WrapperLoader) => {
-    wrapperLoader = loader;
-};
-
-export const isBareBindingPath = (path: string): boolean =>
-    BARE_PATH.test(path);
+const TOKENS    = '@$*';
+const NO_WAKE   = ['DATA-WRAPPER', 'SVG'];
+const LIVE      = '_live';
+const BARE_PATH = /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:\/[a-zA-Z_$][a-zA-Z0-9_$]*)*$/;
+const BARE_BINDING = /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:\/[a-zA-Z_$][a-zA-Z0-9_$]*)*(?:[?#].*)?$/;
 
 const formatter = (params: URLSearchParams) => {
     const steps: ((v: unknown) => unknown)[] = [];
@@ -167,8 +161,16 @@ const rowSource = (row: Row, path: string): Source => ({
     subscribe: (cb) => subscribe(row.subs, path, cb, readPath(row.item, path)),
 });
 
+const firstPathSegment = (path: string): string =>
+    path.split('/')[0] ?? '';
+
 const hasOwn = (obj: object, key: PropertyKey) =>
     Object.prototype.hasOwnProperty.call(obj, key);
+
+const rowScope = (row: Row): SourceScope => ({
+    source: path => hasOwn(row.item, firstPathSegment(path)) ? rowSource(row, path) : null,
+    item:   () => row.item,
+});
 
 export const resolveSource = (
     ctx:   BindingContext,
@@ -176,11 +178,15 @@ export const resolveSource = (
     isRel: boolean,
     raw?:  string,
 ): Source | null => {
-    const row = nearestRow(ctx);
-    if (isRel) return row ? rowSource(row, path) : null;
-    if ((raw !== undefined && !BARE_BINDING.test(raw)) || !BARE_PATH.test(path)) return null;
-    if (row && hasOwn(row.item, path)) return rowSource(row, path);
-    return ctx.root._component?.has(path) ? ctx.root._component.source(path) : null;
+    if (!BARE_PATH.test(path)) return null;
+    if (isRel) return nearestItemScope(ctx)?.source(path) ?? null;
+    if (raw !== undefined && !BARE_BINDING.test(raw)) return null;
+
+    for (let c: BindingContext | null = ctx; c; c = c.parent) {
+        const source = c.scope?.source(path);
+        if (source) return source;
+    }
+    return null;
 };
 
 export const wire = (
@@ -193,8 +199,7 @@ export const wire = (
     const prop  = name.slice(1);
     const dwrl  = p(value);
     const { path, isRel, params } = dwrl;
-    const wrapper = ctx.root;
-    const row     = nearestRow(ctx);
+    const wrapper = ctx.wrapper;
 
     if (token === '@') {
         if (!path) return;
@@ -202,7 +207,7 @@ export const wire = (
             if (params.has('prevent'))   e.preventDefault();
             if (params.has('stop'))      e.stopPropagation();
             if (params.has('immediate')) e.stopImmediatePropagation();
-            const detail: DispatchDetail = { originalEvent: e, path, isRel, item: row?.item };
+            const detail: DispatchDetail = { originalEvent: e, path, isRel, item: nearestItem(ctx) };
             emit(path, detail, el);
         }, el);
         own(ctx, off);
@@ -241,50 +246,22 @@ export const wake = (
     root: Element,
     ctx:  BindingContext,
 ) => {
-    const wireOwnAttrs = (el: Element) => {
-        if (el.hasAttribute(LIVE)) return;
+    const nodes: Element[] = [root];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
+        acceptNode: n => NO_WAKE.includes((n as Element).tagName)
+            ? NodeFilter.FILTER_REJECT
+            : NodeFilter.FILTER_ACCEPT,
+    });
+    let n: Node | null;
+    while ((n = walker.nextNode())) nodes.push(n as Element);
+
+    for (const el of nodes) {
+        if (el.hasAttribute(LIVE)) continue;
         const attrs = [...el.attributes].filter(a => TOKENS.includes(a.name[0]));
-        if (!attrs.length) return;
+        if (!attrs.length) continue;
         el.setAttribute(LIVE, '');
         for (const a of attrs) wire(el, a, ctx);
-    };
-
-    const hasWrapperAncestor = (el: Element): boolean =>
-        !!el.parentElement?.closest('data-wrapper');
-
-    const visit = (el: Element) => {
-        if (el.tagName === SVG_TAG) return;
-
-        const isWrapper = el.tagName === WRAPPER_TAG;
-        const selfRootWrapper = isWrapper && ctx.root === el;
-        const nestedWrapper = isWrapper && !selfRootWrapper;
-
-        if (isWrapper) {
-            const wrapper = el as Wrapper;
-            const src = wrapper.getAttribute('src');
-
-            if (!nestedWrapper && src && hasWrapperAncestor(wrapper) && !wrapper._parentContext) {
-                return;
-            }
-
-            wireOwnAttrs(el);
-
-            if (nestedWrapper) wrapper._parentContext = ctx;
-
-            if (src && wrapper._loadedSrc !== src) {
-                if (wrapper._loadingSrc !== src) wrapperLoader?.(wrapper, src);
-                return;
-            }
-
-            if (nestedWrapper) return;
-        } else {
-            wireOwnAttrs(el);
-        }
-
-        for (const child of [...el.children]) visit(child);
-    };
-
-    visit(root);
+    }
 };
 
 // --- *list + *if (directives on <template>) ----------------------------------
@@ -319,10 +296,7 @@ const reconcile = (
             row.item = item;
             for (const ch in row.subs) publish(row.subs, ch, readPath(item, ch));
         }
-        if (
-            row.node.parentNode !== container
-            || (row.node !== cursor && row.node.nextSibling !== cursor)
-        )
+        if (row.node !== cursor && row.node.nextSibling !== cursor)
             container.insertBefore(row.node, cursor);
         cursor = row.node.nextSibling;
     }
@@ -344,7 +318,7 @@ const listDirective: DirectiveHandler = ({ ctx, el, params }) => {
     const container = tpl.parentElement;
     if (!container) return () => {};
 
-    const wrapper = ctx.root;
+    const wrapper = ctx.wrapper;
     let cache = wrapper._listCache.get(container);
     if (!cache) { cache = new Map(); wrapper._listCache.set(container, cache); }
 
