@@ -1,5 +1,7 @@
 # Ticket 012: README and Reference Docs Accuracy Pass
 
+**README PASS COMPLETE.**
+
 ## Goal
 
 Bring the README and any companion reference docs into line with current code
@@ -23,8 +25,8 @@ implementation in places. Specifically:
 - `action()` and `flush()` are mentioned briefly at the bottom; the cross-
   runtime broadcast semantics and the async Promise chain behavior are not
   documented.
-- The list of built-in formatters needs to match what's actually shipped
-  (currently only `onoff`, expanded in ticket 014).
+- The list of built-in formatters needs to match what's actually shipped after
+  ticket 013.
 - No "Known Limitations" section, so the `*if` cleanup gap (ticket 001)
   and reserved binding syntax (ticket 010) are invisible to readers.
 
@@ -70,3 +72,8 @@ from the README alone.
   - "What happens when my `*if` toggles repeatedly?"
 - No documented feature is missing from the code; no shipped feature is
   missing from the docs.
+
+## Status
+
+The README accuracy pass is complete. The public-facing `views/docs/*.html`
+tone pass remains to be done in small reviewable chunks.
