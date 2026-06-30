@@ -1,6 +1,11 @@
 <script type="module" data-module="@docs/events">
     export let lastClick = 'none';
     export let formSubmitted = 0;
+    export let todos = [
+        { id: 1, task: 'Review event bindings' },
+        { id: 2, task: 'Use row details' },
+        { id: 3, task: 'Ship the docs' },
+    ];
 
     export function reportClick(event) {
         lastClick = event.target.value || event.target.textContent.trim();
@@ -9,23 +14,53 @@
     export function recordSubmit(event) {
         formSubmitted += 1;
     }
+
+    export function removeTodo(event) {
+        const { item } = event.detail;
+        todos = todos.filter(todo => todo.id !== item.id);
+    }
 </script>
 
 <section class="doc-section" id="events">
-    <h2>Events and action modifiers</h2>
+    <h2>Events</h2>
 
     <p>
-        <code>@event="action"</code> wires a native DOM event on the element
-        to a function exported from the component module. When the event
-        fires, the action runs inside a <em>flush boundary</em>: any state
-        mutation it makes is published to subscribers after it returns.
+        An <code>@</code> binding connects a browser event to a function
+        exported by the component module. The part after <code>@</code> is the
+        native event name, and the value is the exported function to call.
     </p>
 
-    <h3>Event modifiers</h3>
+    <pre><code data-title="counter.html">&lt;script type="module" data-module="@view/counter"&gt;
+    export let count = 0;
+
+    export function increment(event) {
+        count += Number(event.target.value);
+    }
+&lt;/script&gt;
+
+&lt;button @click="increment" value="1"&gt;+1&lt;/button&gt;
+&lt;output $text="count"&gt;&lt;/output&gt;</code></pre>
+
     <p>
-        Append URL-style parameters to control the native event before the
-        action runs. Multiple modifiers can be combined with
-        <code>&amp;</code>.
+        When the button is clicked, data-wrapper calls
+        <code>increment</code>. Event-bound functions run inside the component
+        flush boundary, so state changes are published to connected bindings
+        after the function returns.
+    </p>
+
+    <p>
+        The function receives a <code>CustomEvent</code> from data-wrapper. The
+        original browser event is available as
+        <code>event.detail.originalEvent</code>. The event target is still the
+        element where the <code>@</code> binding was declared, so common reads
+        such as <code>event.target.value</code> work as expected.
+    </p>
+
+    <h3>Modifiers</h3>
+    <p>
+        Add URL-style parameters to the right side of the binding when you need
+        to control the native browser event before the exported function runs.
+        Multiple modifiers can be combined with <code>&amp;</code>.
     </p>
 
     <table>
@@ -49,30 +84,75 @@
         </tbody>
     </table>
 
-    <pre><code>&lt;!-- form that doesn't navigate, button that doesn't bubble --&gt;
+    <pre><code data-title="form.html">&lt;script type="module" data-module="@view/form"&gt;
+    export function save(event) {
+        const form = event.target;
+        form.reset();
+    }
+
+    export function cancel(event) {
+        event.target.form?.reset();
+    }
+&lt;/script&gt;
+
 &lt;form @submit="save?prevent"&gt;
+    &lt;input name="title"&gt;
+    &lt;button type="submit"&gt;Save&lt;/button&gt;
     &lt;button @click="cancel?prevent&amp;stop"&gt;Cancel&lt;/button&gt;
 &lt;/form&gt;</code></pre>
 
     <h3>Row event details</h3>
     <p>
-        When an <code>@event</code> binding fires inside a <code>*list</code>
-        row, the dispatched <code>CustomEvent</code> carries the row's item:
+        When an event binding fires inside a <code>*list</code> row, the event
+        detail includes the nearest row item. That makes row actions such as
+        remove, toggle, or edit straightforward.
     </p>
-    <pre><code>export function removeTodo(event) {
-    const { item } = event.detail;
-    todos = todos.filter(t =&gt; t.id !== item.id);
-}</code></pre>
+
+    <pre><code data-title="todos.html">&lt;script type="module" data-module="@view/todos"&gt;
+    export let todos = [
+        { id: 1, task: 'Review event bindings' },
+        { id: 2, task: 'Use row details' },
+    ];
+
+    export function removeTodo(event) {
+        const { item } = event.detail;
+        todos = todos.filter(todo =&gt; todo.id !== item.id);
+    }
+&lt;/script&gt;
+
+&lt;template *list="todos"&gt;
+    &lt;button @click="removeTodo"&gt;
+        Remove &lt;span $text="./task"&gt;&lt;/span&gt;
+    &lt;/button&gt;
+&lt;/template&gt;</code></pre>
+
+    <p>
+        The row item is captured from the binding context where the event
+        listener was wired. If the button is inside nested lists,
+        <code>event.detail.item</code> is the nearest row item.
+    </p>
 
     <h3>Live demo</h3>
     <div class="demo">
-        <button @click="reportClick" value="A">Button A</button>
-        <button @click="reportClick" value="B">Button B</button>
-        <p>Last click: <strong $text="lastClick">none</strong></p>
+        <p>
+            <button @click="reportClick" value="A">Button A</button>
+            <button @click="reportClick" value="B">Button B</button>
+            Last click: <strong $text="lastClick">none</strong>
+        </p>
 
         <form @submit="recordSubmit?prevent">
-            <button type="submit">Submit (prevented)</button>
+            <button type="submit">Submit with prevent</button>
         </form>
         <p>Submissions handled: <strong $text="formSubmitted">0</strong></p>
+
+        <ul class="demo-list">
+            <template *list="todos">
+                <li>
+                    <button @click="removeTodo">
+                        Remove <span $text="./task"></span>
+                    </button>
+                </li>
+            </template>
+        </ul>
     </div>
 </section>
