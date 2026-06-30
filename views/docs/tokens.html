@@ -1,8 +1,3 @@
-<script type="module" data-component data-module="@docs/tokens">
-    export let count = 0;
-    export const inc = (event) => { count += Number(event.target.value); };
-</script>
-
 <section class="doc-section" id="tokens">
     <h2>Three tokens</h2>
 
@@ -41,25 +36,78 @@
     </table>
 
     <p>
-        The value on the right side of the attribute is a binding name. Most of
-        the time, that name points to a value or function exported by the
-        component module. Inside a <code>*list</code>, the same syntax can also
-        read from the current row item.
+        The value on the right side of the attribute is a binding name. In the
+        simplest case, that name points to a value or function exported by the
+        component module. This is the same counter from the intro, now shown as
+        a token example.
     </p>
 
-    <pre><code data-title="view.html">&lt;button @click="inc" value="1"&gt;+1&lt;/button&gt;
+    <pre><code data-title="counter.html">&lt;script type="module" data-component data-module="@view/counter"&gt;
+    export let count = 0;
+    export const doubled = () =&gt; count * 2;
+    export function inc(event) { count += Number(event.target.value); }
+&lt;/script&gt;
+
+&lt;button @click="inc?prevent" value="1"&gt;+1&lt;/button&gt;
 &lt;output $text="count"&gt;&lt;/output&gt;
+&lt;output $text="doubled"&gt;&lt;/output&gt;</code></pre>
+
+    <p>
+        The <code>$text</code> attributes read exported values and write them to
+        DOM text. The <code>@click</code> attribute listens for a click and
+        calls the exported <code>inc</code> function. When <code>inc</code>
+        changes <code>count</code>, data-wrapper re-reads the connected
+        bindings and updates the outputs.
+    </p>
+
+    <p>
+        Directives use the same binding names, but they control structure
+        instead of writing one property. A <code>*list</code> directive reads an
+        array and renders its template once for each item. Inside that template,
+        paths that start with <code>./</code> read from the current row item.
+    </p>
+
+    <pre><code data-title="todos.html">&lt;script type="module" data-component&gt;
+    export let todos = [
+        { id: 1, task: 'Try $ bindings', done: true },
+        { id: 2, task: 'Render a *list', done: false },
+        { id: 3, task: 'Call an @ action', done: false },
+    ];
+    export const emptyTodos = () =&gt; todos.length === 0;
+
+    export function toggle(event) {
+        const { item } = event.detail;
+        todos = todos.map(todo =&gt;
+            todo.id === item.id ? { ...todo, done: !todo.done } : todo
+        );
+    }
+&lt;/script&gt;
 
 &lt;template *list="todos"&gt;
     &lt;label&gt;
-        &lt;input type="checkbox" $checked="./done"&gt;
+        &lt;input type="checkbox" $checked="./done" @click="toggle"&gt;
         &lt;span $text="./task"&gt;&lt;/span&gt;
     &lt;/label&gt;
+&lt;/template&gt;
+
+&lt;template *if="emptyTodos"&gt;
+    &lt;div&gt;All Done!&lt;/div&gt;
 &lt;/template&gt;</code></pre>
 
     <p>
+        In this example, <code>*list="todos"</code> reads the exported array.
+        The checkbox and span are rendered inside a row, so
+        <code>./done</code> and <code>./task</code> read fields from the current
+        todo item. The <code>toggle</code> action still comes from the module,
+        and the event detail includes the row item that was clicked. The
+        <code>*if</code> directive reads <code>emptyTodos</code> and renders
+        the placeholder only when the list is empty.
+    </p>
+
+    <p>
         Binding names resolve from the place where the DOM node is rendered.
-        These lookup forms let you choose whether a binding should read from the
+        By default, a binding will start in the local scope and climb up until it finds a match.
+        Use standard tree traversal syntax to specify a binding that should read from the
         nearest row, a parent row, the component root, or another wrapper.
     </p>
 
@@ -70,15 +118,4 @@
         <li><code>/view</code> reads from the wrapper's component root and bypasses rows.</li>
         <li><code>//cart/total</code> reads from another loaded wrapper by DOM id.</li>
     </ul>
-
-    <p>
-        This counter is mounted as part of the docs page. The buttons call the
-        exported <code>inc</code> action, and the output reads the exported
-        <code>count</code> value.
-    </p>
-    <div class="demo">
-        <button @click="inc" value="1">+1</button>
-        <button @click="inc" value="5">+5</button>
-        <output $text="count">0</output>
-    </div>
 </section>
