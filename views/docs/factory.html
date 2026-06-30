@@ -64,6 +64,13 @@ export default ({ props }) =&gt; {
         <code>props.start</code> in the counter.
     </p>
 
+    <p>
+        Child inputs use the same lookup forms as template bindings, including
+        <code>../customer</code> for a parent row and <code>//cart/total</code>
+        for an explicit read from another loaded wrapper by id. Cross-wrapper
+        input misses warn and are omitted rather than becoming static strings.
+    </p>
+
     <h3>The <code>ComponentContext</code> shape</h3>
     <p>The factory's single argument is a frozen object:</p>
     <table>

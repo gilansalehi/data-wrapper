@@ -32,6 +32,13 @@
         runtime re-derives on the next flush.
     </p>
 
+    <p>
+        This is the preferred cross-wrapper communication channel. Template
+        bindings can also read another mounted wrapper explicitly with
+        <code>//id/name</code>, but that form is an escape hatch for DOM-hosted
+        composition. Shared state belongs in modules.
+    </p>
+
     <h3>Plain state modules</h3>
     <p>
         Modules that aren't loaded as views can live anywhere on disk. The

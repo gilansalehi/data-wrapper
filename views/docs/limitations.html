@@ -20,15 +20,21 @@
         — but the memory growth is real. Tracked as a 1.0 fix.
     </p>
 
+    <h3>Cross-wrapper host limits</h3>
+    <p>
+        <code>//id/path</code> is supported as an explicit read from another
+        loaded wrapper's component scope. It is intentionally narrow: it does
+        not dispatch actions, subscribe to wrapper load/reload, inspect row
+        scopes, or retry if the target appears later. Use module imports for
+        normal shared state.
+    </p>
+
     <h3>Reserved binding syntax</h3>
     <p>
-        The binding parser recognizes a few forms that the engine does not
-        resolve. Using them today is a silent no-op; they're reserved for
-        future use and shouldn't be relied on. The <code>/name</code> form is
-        supported: it reads from the wrapper's root component scope.
+        Protocol-prefixed values are still reserved for future custom
+        resolvers. Using them today is a no-op and should not be relied on.
     </p>
     <ul>
-        <li><code>//host/path</code> — reserved for cross-wrapper addressing.</li>
         <li>Protocol-prefixed values (<code>localStorage://</code>, etc.) — reserved for custom resolvers.</li>
     </ul>
 

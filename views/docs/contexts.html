@@ -44,10 +44,13 @@
             <tr><td><code>./name</code></td><td>nearest enclosing <code>*list</code> row's item only</td></tr>
             <tr><td><code>../name</code></td><td>the parent row item; repeat as <code>../../name</code> for higher rows</td></tr>
             <tr><td><code>/name</code></td><td>the wrapper's root component scope, bypassing row scopes</td></tr>
+            <tr><td><code>//id/name</code></td><td>another loaded wrapper's root component scope, addressed by DOM id</td></tr>
         </tbody>
     </table>
     <p>
-        Cross-wrapper hosts (<code>//host/path</code>) are reserved for later —
-        see <a href="#limitations">Known Limitations</a>.
+        Cross-wrapper reads are explicit and root-only. They use
+        <code>document.getElementById()</code>, require a loaded
+        <code>&lt;data-wrapper&gt;</code>, and do not inspect another wrapper's
+        row scopes.
     </p>
 </section>

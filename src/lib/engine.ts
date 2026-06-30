@@ -187,8 +187,11 @@ const firstPathSegment = (path: string): string =>
 const hasOwn = (obj: object, key: PropertyKey) =>
     Object.prototype.hasOwnProperty.call(obj, key);
 
+const isCrossWrapperBinding = (raw: string): boolean =>
+    raw.startsWith('//');
+
 const isRootBinding = (raw: string): boolean =>
-    raw.startsWith('/') && !raw.startsWith('//');
+    raw.startsWith('/') && !isCrossWrapperBinding(raw);
 
 const rowScope = (row: Row): SourceScope => ({
     source: path => hasOwn(row.item, firstPathSegment(path)) ? rowSource(row, path) : null,
@@ -201,8 +204,14 @@ export const resolveSource = (
     isRel: boolean,
     parent = 0,
     raw?:  string,
+    host = '',
 ): Source | null => {
     if (!BARE_PATH.test(path)) return null;
+    if (raw !== undefined && isCrossWrapperBinding(raw)) {
+        const target = ctx.wrapper.ownerDocument.getElementById(host);
+        if (!target?.matches('data-wrapper')) return null;
+        return (target as Wrapper)._component?.source(path) ?? null;
+    }
     if (raw !== undefined && isRootBinding(raw)) return rootScope(ctx)?.source(path) ?? null;
     if (parent > 0) return parentItemScope(ctx, parent)?.source(path) ?? null;
     if (isRel) return nearestItemScope(ctx)?.source(path) ?? null;
@@ -220,9 +229,6 @@ const staticSource = (value: unknown): Source => ({
     subscribe: cb => { cb(value); return () => {}; },
 });
 
-const isReservedBinding = (raw: string): boolean =>
-    raw.startsWith('//');
-
 const canFallbackToStatic = (raw: string, path: string, parent: number): boolean =>
     BARE_BINDING.test(raw)
     || (raw.startsWith('./') && BARE_PATH.test(path))
@@ -234,11 +240,14 @@ const resolveBinding = (
     isRel: boolean,
     parent: number,
     raw:   string,
+    host:  string,
 ): BindingResolution => {
-    if (isReservedBinding(raw)) return { source: null, missed: false };
-
-    const source = resolveSource(ctx, path, isRel, parent, raw);
+    const source = resolveSource(ctx, path, isRel, parent, raw, host);
     if (source) return { source, missed: false };
+    if (isCrossWrapperBinding(raw)) {
+        console.warn(`data-wrapper: unresolved cross-wrapper binding "${raw}"`);
+        return { source: null, missed: false };
+    }
 
     if (!canFallbackToStatic(raw, path, parent)) return { source: null, missed: false };
     return { source: staticSource(path), missed: true };
@@ -258,7 +267,7 @@ export const wire = (
     const token = name[0];
     const prop  = name.slice(1);
     const dwrl  = p(value);
-    const { path, isRel, parent, params } = dwrl;
+    const { path, isRel, parent, params, host } = dwrl;
     const wrapper = ctx.wrapper;
 
     if (token === '@') {
@@ -279,9 +288,7 @@ export const wire = (
         return;
     }
 
-    // PoC: $ and * resolve bare names local-first or `./key` from the nearest row.
-    // TODO: pURL branches (`/wrapperState`, `//host/path`) restored in v1.
-    const { source, missed } = resolveBinding(ctx, path, isRel, parent, value);
+    const { source, missed } = resolveBinding(ctx, path, isRel, parent, value, host);
     if (!source) return;
     if (missed) warnStaticFallback(value);
 

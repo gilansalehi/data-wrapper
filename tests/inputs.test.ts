@@ -169,6 +169,76 @@ test('child wrappers inside *list receive props from the row mount point', async
         .toEqual(['Ada', 'Grace']);
 });
 
+test('child wrapper props can address the parent row with `../`', async () => {
+    const moduleName = '@test/008-parent-row-props';
+    const src = 'http://example.test/row-card.html?customer=../customer';
+    const parent = document.createElement('data-wrapper') as unknown as Wrapper;
+    parent._component = new ComponentRuntime(parent, {
+        rows: [
+            { id: 1, customer: { firstName: 'Ada' }, items: [{ id: 'a' }] },
+            { id: 2, customer: { firstName: 'Grace' }, items: [{ id: 'b' }] },
+        ],
+    });
+
+    parent.append(template(
+        'list',
+        'rows',
+        el('section', {}, template('list', './items', el('data-wrapper', { src }))),
+    ));
+
+    const html = componentView(moduleName, '<h3 $text="customer/firstName"></h3>');
+    const module: ComponentModule = {
+        default: (ctx: ComponentContext) => ({ customer: ctx.props.customer }),
+    };
+
+    const loads: Promise<void>[] = [];
+    await withComponentView(moduleName, html, module, async () => {
+        wake(parent, rootContext(parent), (wrapper, childSrc, ctx) => {
+            const promise = Promise.resolve(load(wrapper, childSrc, ctx));
+            loads.push(promise);
+            return promise;
+        });
+        await Promise.all(loads);
+    });
+
+    expect([...parent.querySelectorAll('data-wrapper h3')].map(h => h.textContent))
+        .toEqual(['Ada', 'Grace']);
+});
+
+test('child wrapper props can read an explicit cross-wrapper source by id', async () => {
+    const moduleName = '@test/009-cross-wrapper-props';
+    const src = 'http://example.test/summary.html?total=//cart/total';
+    let total = 1;
+    const target = document.createElement('data-wrapper') as unknown as Wrapper;
+    target.id = 'cart';
+    target._component = new ComponentRuntime(target, { get total() { return total; } });
+    document.body.append(target);
+
+    const parent = document.createElement('data-wrapper') as unknown as Wrapper;
+    parent._component = new ComponentRuntime(parent, {});
+    const child = document.createElement('data-wrapper') as unknown as Wrapper;
+    const html = componentView(moduleName, '<output $text="total"></output>');
+    const module: ComponentModule = {
+        default: (ctx: ComponentContext) => ({ total: ctx.props.total }),
+    };
+
+    try {
+        await withComponentView(moduleName, html, module, async () => {
+            await load(child, src, rootContext(parent));
+        });
+
+        expect(child.querySelector('output')?.textContent).toBe('1');
+        total = 2;
+        flush();
+        expect(child.querySelector('output')?.textContent).toBe('2');
+    } finally {
+        target._component?.destroy();
+        parent._component?.destroy();
+        child._component?.destroy();
+        target.remove();
+    }
+});
+
 // CQ6: `a/b` resolves `a` through the component scope, then reads `b` from that
 // value, and re-reads on flush so the nested field stays live.
 test('a nested path reads into a component binding and stays live', () => {

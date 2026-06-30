@@ -15,26 +15,26 @@ bare name
 ./relative
 ../parent
 /root
+//id/root
 ?params
 ```
 
 The `/root` form is the component/root-scope escape hatch. The `../parent` form
-addresses outer row scopes. Hosts and protocol-style addressing remain
-legacy/reserved surface area. The docs and code should not imply support the
-framework does not intend to provide.
+addresses outer row scopes. Ticket 009 adds `//id/root` as an explicit
+cross-wrapper read from another loaded wrapper's component scope. Protocol-style
+addressing remains legacy/reserved surface area. The docs and code should not
+imply support the framework does not intend to provide.
 
 ## Scope
 
 - Inventory supported binding forms.
 - Decide what happens for:
-  - `//host/path`
   - protocol-like values
 - Rename internal parser terms if useful.
 - Ensure unsupported forms fail clearly or remain no-ops intentionally.
 
 ## Non-Goals
 
-- No cross-wrapper addressing implementation.
 - No new parser package.
 - No breaking changes to current bare/relative/query syntax.
 
@@ -44,4 +44,4 @@ framework does not intend to provide.
 - Internal comments do not frame reserved branches as active features.
 - Unsupported forms have predictable behavior.
 - Current examples use only supported forms: bare names, `./row`, `../parent`,
-  `/root`, and query params.
+  `/root`, `//id/root`, and query params.

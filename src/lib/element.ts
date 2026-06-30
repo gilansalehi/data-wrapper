@@ -120,19 +120,22 @@ const importComponent = (
     return module;
 };
 
-const isReservedInputExpression = (raw: string): boolean =>
-    raw.startsWith('../') || raw.startsWith('//');
+const isCrossWrapperInputExpression = (raw: string): boolean =>
+    raw.startsWith('//');
 
 const resolveInputAssignment = (
     expr: string,
     ctx?: BindingContext,
 ): unknown => {
-    if (isReservedInputExpression(expr)) return null;
-
     if (ctx) {
-        const { path, isRel, parent } = p(expr);
-        const source = resolveSource(ctx, path, isRel, parent, expr);
+        const { path, isRel, parent, host } = p(expr);
+        const source = resolveSource(ctx, path, isRel, parent, expr, host);
         if (source) return () => source.read();
+    }
+
+    if (isCrossWrapperInputExpression(expr)) {
+        console.warn(`data-wrapper: unresolved cross-wrapper input "${expr}"`);
+        return null;
     }
 
     return expr;

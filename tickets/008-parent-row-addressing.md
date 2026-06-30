@@ -63,5 +63,5 @@ Unchanged rules:
 ./name        -> nearest row only
 name          -> nearest row, outer rows, then component runtime
 /name         -> component/root scope only
-//host/name   -> still reserved/inert
+//id/name     -> another loaded wrapper's component/root scope only
 ```

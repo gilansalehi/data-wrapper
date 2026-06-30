@@ -1,6 +1,6 @@
 # Testing
 
-Status: **draft, current through ticket 004 Phase V.** This documents *why* and
+Status: **draft, current through ticket 009.** This documents *why* and
 *what* we test, so the suite stays a safety net and never becomes a cage. The
 harness is wired up (`bunfig.toml` + `tests/setup.ts`); the suite is being
 filled in — see [Todos](#todos).
@@ -65,9 +65,9 @@ narrow `load()` test may stub `fetch` and the documented shim path
 tests/
   setup.ts          happy-dom global registrator (preloaded via bunfig.toml)
   resolution.test.ts core: name → source resolution
-  scopes.test.ts     core: scope climb, block transparency, miss policy
+  scopes.test.ts     core: scope climb, block transparency, miss policy, `//id`
   core.test.ts       core: action/flush, *list, *if
-  inputs.test.ts     004: props-facing behavior and `/key`
+  inputs.test.ts     004/008/009: props-facing behavior, `/key`, parent and cross inputs
 ```
 
 A test "wrapper" is a detached element carrying `_unsubs`, `_listCache`, and an
@@ -90,9 +90,11 @@ The guarantees 1.0 commits to. Each is one test unless noted.
   no climb
 - `../key` reads the parent row item; each additional `../` climbs one more row
 - `/key` reads the component/root scope and bypasses row scopes
+- `//id/key` reads another loaded wrapper's component/root scope by DOM id
 - a bare name that resolves nowhere up to the root renders a static literal,
   emits `console.warn`, and does not abort its sibling bindings
-- reserved syntax (`//host`) stays an inert no-op — distinct from a genuine miss
+- a missing `//id/key` target or path warns and stays inert — it does not render
+  a static literal
 
 **Reactivity**
 - `action(fn)` flushes after the call returns

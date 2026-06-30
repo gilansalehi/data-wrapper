@@ -1,5 +1,7 @@
 # Ticket 009: Cross-Wrapper Communication Policy
 
+**COMPLETED.**
+
 ## Goal
 
 Define the official communication channels between independent wrappers.
@@ -38,3 +40,19 @@ intentionally not supported.
 - The framework avoids ambiguous implicit cross-wrapper lookup.
 - If an escape hatch exists, it is clearly marked as explicit and advanced.
 - Existing module import demos remain the canonical shared-state example.
+
+## Decision
+
+The supported channels are:
+
+- ES module imports for shared application state.
+- Child inputs for parent/row-to-child configuration.
+- DOM events for component signals.
+- `//id/path` as an explicit advanced read escape hatch.
+
+`//id/path` uses the current document's DOM id lookup. The target must be a
+loaded `<data-wrapper id="id">`; the path resolves against that wrapper's
+component scope only, with instance bindings shadowing module exports just like
+local component bindings. It does not read row scopes, dispatch actions, create
+a framework registry, wait for future loads, or retry after reload. Misses warn
+and leave the binding/input unset rather than falling back to a static literal.

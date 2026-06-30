@@ -97,7 +97,9 @@ DW_DIRECTIVES.set('mount', ({ el, path, params, ctx, wake, cleanup }) =&gt; {
     <table>
         <thead><tr><th>Field</th><th>Purpose</th></tr></thead>
         <tbody>
-            <tr><td><code>path</code>, <code>isRel</code>, <code>parent</code>, <code>params</code>, <code>host</code>, <code>protocol</code></td><td>Parsed binding string fields.</td></tr>
+            <tr><td><code>path</code>, <code>isRel</code>, <code>parent</code>, <code>params</code></td><td>Parsed binding string fields.</td></tr>
+            <tr><td><code>host</code></td><td>The DOM id host for <code>//id/path</code> sources, otherwise empty.</td></tr>
+            <tr><td><code>protocol</code></td><td>Reserved parser field for future custom resolvers.</td></tr>
             <tr><td><code>el</code></td><td>The element carrying the directive attribute.</td></tr>
             <tr><td><code>ctx</code></td><td>The current binding context. Pass it to <code>wake()</code> to preserve scope.</td></tr>
             <tr><td><code>wake(node, ctx)</code></td><td>Wires directive-created DOM, including child wrappers.</td></tr>

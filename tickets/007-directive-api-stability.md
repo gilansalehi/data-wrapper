@@ -76,9 +76,10 @@ follow-ups (Codex can fold these in):
    per-item-scoped directive and find no helper. Scope-introducing directives = a
    future ticket that exposes a scope helper.
 
-2. **`host`/`protocol` in the field table are inert.** `directives.html` lists
-   them next to `path`/`isRel`/`params` as parsed binding fields, but they're
-   dwrl-parse artifacts reserved for future `//host` addressing and do nothing
-   today. Drop them or mark them reserved so authors don't reach for them.
+2. **`host`/`protocol` in the field table need careful wording.**
+   `host` is meaningful when the directive source uses the ticket-009
+   `//id/path` cross-wrapper form. `protocol` remains reserved for future
+   custom resolvers and should be documented as such so authors don't reach for
+   unsupported protocol-style values.
 
 Contract tests are in `tests/directives.test.ts`.

@@ -77,6 +77,18 @@ Bindings resolve lexically from the DOM location where they wake:
 | `./name` | nearest row only |
 | `../name` | parent row only; repeat as `../../name` for higher rows |
 | `/name` | component/root scope, bypassing rows |
+| `//id/name` | another loaded `<data-wrapper id="id">`, component/root scope only |
+
+## Cross-Wrapper Communication
+
+Use ES module imports for shared application state. Use child inputs for
+per-instance configuration and DOM events for signals that should travel out
+of a component.
+
+`//id/name` is the explicit escape hatch: it reads from the component scope of
+the loaded wrapper with that DOM id. It does not inspect row scopes, dispatch
+actions, wait for wrappers that load later, or retry after reload. A missing
+target or path warns and leaves the binding untouched.
 
 ## Browser support
 

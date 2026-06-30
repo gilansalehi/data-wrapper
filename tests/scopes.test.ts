@@ -5,7 +5,7 @@
 // wake + the real DOM; no internal resolver is called directly, so the scope
 // implementation underneath stays free to change.
 import { test, expect, spyOn } from 'bun:test';
-import { ComponentRuntime, rootContext, wake, type Wrapper } from '../src/lib/index.ts';
+import { ComponentRuntime, flush, rootContext, unwake, wake, type Wrapper } from '../src/lib/index.ts';
 
 const wrapperWithRuntime = (module: Record<string, unknown>): Wrapper => {
     const el = document.createElement('data-wrapper') as unknown as Wrapper;
@@ -71,18 +71,50 @@ test('an unresolved $ binding renders the literal name, warns, and spares its si
     warn.mockRestore();
 });
 
-// Reserved syntax (`//host`) is not a miss — it stays an inert no-op, so it
-// neither renders a literal nor warns. This keeps the miss policy off the escape
-// forms held for later tickets.
-test('reserved binding syntax stays inert — no literal, no warning', () => {
+// --- cross-wrapper reads `//id/path` (ticket 009) -----------------------------
+
+// `//id/name` is an explicit escape hatch: it asks the document for a wrapper by
+// id, then reads from that wrapper's component scope. It is not a row lookup and
+// it stays live through the same flush cycle as local component bindings.
+test('`//id/name` reads a loaded wrapper by id and updates on flush', () => {
+    let total = 1;
+    const target = wrapperWithRuntime({ get total() { return total; } });
+    target.id = 'cart';
+    const consumer = wrapperWithRuntime({});
+    consumer.innerHTML = '<output $text="//cart/total"></output>';
+    document.body.append(target, consumer);
+
+    try {
+        wake(consumer, rootContext(consumer));
+        expect(consumer.querySelector('output')?.textContent).toBe('1');
+
+        total = 2;
+        flush();
+        expect(consumer.querySelector('output')?.textContent).toBe('2');
+    } finally {
+        unwake(consumer);
+        target._component?.destroy();
+        consumer._component?.destroy();
+        target.remove();
+        consumer.remove();
+    }
+});
+
+// A cross-wrapper miss is not a local typo, so it does not render a static
+// literal. The binding stays untouched and warns so the developer can fix the id,
+// load order, or exported path.
+test('missing cross-wrapper binding stays inert and warns', () => {
     const warn = spyOn(console, 'warn').mockImplementation(() => {});
     const el = wrapperWithRuntime({});
-    el.innerHTML = '<output $text="//host/up">kept</output>';
-    wake(el, rootContext(el));
-
-    expect(el.querySelector('output')?.textContent).toBe('kept');
-    expect(warn).not.toHaveBeenCalled();
-    warn.mockRestore();
+    el.innerHTML = '<output $text="//missing/up">kept</output>';
+    try {
+        wake(el, rootContext(el));
+        expect(el.querySelector('output')?.textContent).toBe('kept');
+        expect(warn).toHaveBeenCalledWith('data-wrapper: unresolved cross-wrapper binding "//missing/up"');
+    } finally {
+        warn.mockRestore();
+        el._component?.destroy();
+    }
 });
 
 // --- parent-row addressing `../` (ticket 008) ---------------------------------

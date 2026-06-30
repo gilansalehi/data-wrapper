@@ -37,7 +37,9 @@
     <ul>
         <li><strong>Bare name</strong> (<code>view</code>) checks the nearest row, outer rows, the per-wrapper instance, then named module exports.</li>
         <li><strong>Relative path</strong> (<code>./done</code>) reads only from the nearest surrounding <code>*list</code> item.</li>
+        <li><strong>Parent row</strong> (<code>../order</code>) reads only from the parent row; repeat <code>../</code> to move higher.</li>
         <li><strong>Root path</strong> (<code>/view</code>) reads from the wrapper's component scope and bypasses rows.</li>
+        <li><strong>Cross-wrapper path</strong> (<code>//cart/total</code>) reads from another loaded wrapper by DOM id.</li>
     </ul>
 
     <p>Live counter (mounted as part of this very doc page):</p>
