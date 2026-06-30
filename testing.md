@@ -1,9 +1,9 @@
 # Testing
 
-Status: **draft, current through ticket 009.** This documents *why* and
+Status: **draft, current through ticket 011.** This documents *why* and
 *what* we test, so the suite stays a safety net and never becomes a cage. The
-harness is wired up (`bunfig.toml` + `tests/setup.ts`); the suite is being
-filled in — see [Todos](#todos).
+harness is wired up (`bunfig.toml` + `tests/setup.ts`); the baseline contract
+suite is present.
 
 These are **contract tests, not unit tests.** Their job is to let us change
 *implementation details* freely without breaking the *contract* the lib commits
@@ -66,8 +66,8 @@ tests/
   setup.ts          happy-dom global registrator (preloaded via bunfig.toml)
   resolution.test.ts core: name → source resolution
   scopes.test.ts     core: scope climb, block transparency, miss policy, `//id`
-  core.test.ts       core: action/flush, *list, *if
-  inputs.test.ts     004/008/009: props-facing behavior, `/key`, parent and cross inputs
+  core.test.ts       core: action/flush, *list, *if, event modifiers
+  inputs.test.ts     004/008/009/010: props-facing behavior, `/key`, parent/cross/reserved inputs
 ```
 
 A test "wrapper" is a detached element carrying `_unsubs`, `_listCache`, and an
@@ -91,6 +91,7 @@ The guarantees 1.0 commits to. Each is one test unless noted.
 - `../key` reads the parent row item; each additional `../` climbs one more row
 - `/key` reads the component/root scope and bypasses row scopes
 - `//id/key` reads another loaded wrapper's component/root scope by DOM id
+- protocol-prefixed values are reserved and inert
 - a bare name that resolves nowhere up to the root renders a static literal,
   emits `console.warn`, and does not abort its sibling bindings
 - a missing `//id/key` target or path warns and stays inert — it does not render
@@ -148,4 +149,6 @@ The guarantees 1.0 commits to. Each is one test unless noted.
 - [x] Validate the harness — `bun test` green on the current contract suite.
 - [x] Review 004 tests for the real `context.props` creation path without
       coupling to loader internals.
+- [x] Round out ticket 011 baseline coverage for action variants, event
+      modifiers, and nested teardown.
 - [ ] Decide if/when a Playwright smoke test covers the real `load()` round-trip.

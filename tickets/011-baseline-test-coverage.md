@@ -1,5 +1,7 @@
 # Ticket 011: Baseline Test Coverage
 
+**COMPLETED.**
+
 ## Goal
 
 Establish a minimum unit-test suite for the lib's public contract before 1.0
@@ -62,3 +64,11 @@ verification through the showcase pages.
   without asserting loader internals.
 - A failing test fails for a clearly named reason (no opaque assertion
   errors).
+
+## Shipped
+
+The baseline suite covers resolution, row scope climb, root/cross-wrapper
+addressing, miss policy, reserved protocol syntax, child input props, action
+flush behavior, action object/idempotence behavior, cross-runtime flush, list
+reconciliation, nested teardown cleanup, `*if`, directive extension behavior,
+event detail item, and event modifiers.

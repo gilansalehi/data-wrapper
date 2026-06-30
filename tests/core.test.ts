@@ -5,6 +5,7 @@
 import { test, expect } from 'bun:test';
 import {
     ComponentRuntime,
+    DW_DIRECTIVES,
     action,
     flush,
     rootContext,
@@ -51,14 +52,47 @@ const rowText = (el: Wrapper) =>
 
 // --- reactivity --------------------------------------------------------------
 
-test('mutating state in an action updates the bound DOM on flush', () => {
+test('mutating state in an action updates the bound DOM after the call returns', async () => {
     let n = 0;
     const bump = action(() => { n += 1; });
     const el = mount('<output $text="n"></output>', { get n() { return n; }, bump });
 
     expect(el.querySelector('output')?.textContent).toBe('0');
     bump();
-    flush();
+    await Promise.resolve();
+    expect(el.querySelector('output')?.textContent).toBe('1');
+});
+
+test('action() wraps each function in an object independently', async () => {
+    let n = 0;
+    const actions = action({
+        inc() { n += 1; },
+        dec() { n -= 1; },
+    });
+    const el = mount('<output $text="n"></output>', { get n() { return n; }, ...actions });
+
+    actions.inc();
+    await Promise.resolve();
+    expect(el.querySelector('output')?.textContent).toBe('1');
+
+    actions.dec();
+    await Promise.resolve();
+    expect(el.querySelector('output')?.textContent).toBe('0');
+});
+
+test('action(action(fn)) returns the already wrapped function', () => {
+    const once = action(() => {});
+    expect(action(once)).toBe(once);
+});
+
+test('an external action-wrapped writer flushes consuming runtimes', async () => {
+    let n = 0;
+    const write = action(() => { n += 1; });
+    const el = mount('<output $text="n"></output>', { get n() { return n; } });
+
+    write();
+    await Promise.resolve();
+
     expect(el.querySelector('output')?.textContent).toBe('1');
 });
 
@@ -122,4 +156,63 @@ test('*list renders, reorders, and removes rows from a compact template', () => 
     flush();
 
     expect(rowText(el)).toEqual(['C', 'A']);
+});
+
+test('removing a row tears down subscriptions created by nested lists', () => {
+    let cleaned = 0;
+    DW_DIRECTIVES.set('track-011', ({ cleanup }) => {
+        cleanup(() => { cleaned += 1; });
+        return () => {};
+    });
+
+    let groups = [
+        { id: 1, children: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }] },
+    ];
+    const setGroups = action((next: typeof groups) => { groups = next; });
+    const el = wrapperWithRuntime({ get groups() { return groups; }, setGroups });
+    const span = document.createElement('span');
+    span.setAttribute('*track-011', './label');
+    const li = document.createElement('li');
+    li.append(structuralTemplate('list', './children', span));
+    const ul = document.createElement('ul');
+    ul.append(structuralTemplate('list', 'groups', li));
+    el.append(ul);
+
+    try {
+        wake(el, rootContext(el));
+        expect(cleaned).toBe(0);
+
+        setGroups([]);
+        flush();
+
+        expect(cleaned).toBe(2);
+    } finally {
+        DW_DIRECTIVES.delete('track-011');
+    }
+});
+
+// --- events ------------------------------------------------------------------
+
+test('@event modifiers prevent default, stop propagation, and stop later listeners', () => {
+    let reported = false;
+    let bubbled = false;
+    let later = false;
+    const el = wrapperWithRuntime({
+        report() { reported = true; },
+    });
+    const button = document.createElement('button');
+    button.setAttribute('@click', 'report?prevent&stop&immediate');
+    el.append(button);
+    wake(el, rootContext(el));
+    el.addEventListener('click', () => { bubbled = true; });
+    button.addEventListener('click', () => { later = true; });
+
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+    const allowed = button.dispatchEvent(event);
+
+    expect(reported).toBe(true);
+    expect(event.defaultPrevented).toBe(true);
+    expect(allowed).toBe(false);
+    expect(bubbled).toBe(false);
+    expect(later).toBe(false);
 });
