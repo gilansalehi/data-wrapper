@@ -4,61 +4,110 @@
     <h2>Cross-module imports</h2>
 
     <p>
-        <code>data-module</code> marks the component module in a view and gives
-        it a stable import name. The loader registers the inline script's
-        content under that name in an import map; other modules then reference
-        it like any ES module.
+        Module imports are the best way to share application state between
+        views. A view script with <code>data-module</code> gets a stable module
+        name, and other component modules can import from that name just like
+        they import from any browser module.
     </p>
 
-    <h3>Producer</h3>
-    <pre><code>&lt;!-- /views/nav.html --&gt;
-&lt;script type="module" data-module="@view/nav"&gt;
+    <p>
+        The first view is the producer. It owns the state and exports the values
+        or functions that other views should be allowed to use.
+    </p>
+
+    <pre><code data-title="nav.html">&lt;script type="module" data-module="@view/nav"&gt;
     export let open = false;
-    export function toggle() { open = !open; }
+    export function toggle() {
+        open = !open;
+    }
 &lt;/script&gt;</code></pre>
 
-    <h3>Consumer</h3>
-    <pre><code>&lt;!-- /views/dashboard.html --&gt;
-&lt;script type="module" data-module="@view/dashboard"&gt;
-    import { open } from '@view/nav';
-    export const navStateLabel = () =&gt; open ? 'visible' : 'hidden';
+    <p>
+        The second view is the consumer. It imports from the producer module and
+        can expose imported functions to its own template. In this example, the
+        dashboard reads <code>open</code> and re-exports
+        <code>toggle</code> so its button can call the shared function.
+    </p>
+
+    <pre><code data-title="dashboard.html">&lt;script type="module" data-module="@view/dashboard"&gt;
+    import { open, toggle } from '@view/nav';
+
+    export const navLabel = () =&gt;
+        open ? 'Navigation open' : 'Navigation closed';
+
+    export { toggle };
 &lt;/script&gt;
 
-&lt;p&gt;Nav is &lt;span $text="navStateLabel"&gt;&lt;/span&gt;&lt;/p&gt;</code></pre>
+&lt;button @click="toggle"&gt;Toggle nav&lt;/button&gt;
+&lt;p $text="navLabel"&gt;&lt;/p&gt;</code></pre>
 
     <p>
-        ESM live bindings make this work without the framework doing anything
-        special: <code>open</code> reads through to the producer module's
-        latest value, and when an action there mutates it, every consuming
-        runtime re-derives on the next flush.
+        ES module imports are live bindings. The dashboard does not receive a
+        stale copy of <code>open</code>; each time <code>navLabel</code> runs,
+        it reads the current value from <code>@view/nav</code>. When
+        <code>toggle</code> changes that value from an event binding,
+        data-wrapper flushes the mounted runtimes and the dashboard output
+        updates.
     </p>
 
     <p>
-        This is the preferred cross-wrapper communication channel. Template
-        bindings can also read another mounted wrapper explicitly with
-        <code>//id/name</code>, but that form is an escape hatch for DOM-hosted
-        composition. Shared state belongs in modules.
+        The producer must already be registered before a consumer imports it.
+        The example below shows the intended order, but wrapper loads are still
+        asynchronous. If several consumers need shared state during their first
+        import, a plain state module with a host import map is usually simpler.
+    </p>
+
+    <pre><code data-title="host page">&lt;!-- register @view/nav before dashboard.html imports it --&gt;
+&lt;data-wrapper src="nav.html"&gt;&lt;/data-wrapper&gt;
+&lt;data-wrapper src="dashboard.html"&gt;&lt;/data-wrapper&gt;</code></pre>
+
+    <p>
+        Use this pattern for normal shared state. Template bindings can also
+        read another mounted wrapper with <code>//id/name</code>, but that is a
+        DOM escape hatch for narrow cases. If the state belongs to the
+        application instead of one rendered wrapper, put it in a module and
+        import it.
     </p>
 
     <h3>Plain state modules</h3>
     <p>
-        Modules that aren't loaded as views can live anywhere on disk. The
-        framework's only requirement is that the importing view can resolve
-        the path. With the import map shown below, a state module at
-        <code>/state/todos.js</code> is imported as
-        <code>state/todos.js</code>:
+        A shared module does not have to be a view. Plain JavaScript modules can
+        live anywhere the browser can resolve them. If you want a short import
+        prefix for those files, add a normal import map on the host page.
     </p>
 
-    <pre><code>&lt;!-- in the host page --&gt;
-&lt;script type="importmap"&gt;{"imports":{"state/":"/state/"}}&lt;/script&gt;</code></pre>
+    <pre><code data-title="host page">&lt;script type="importmap"&gt;
+{
+    "imports": {
+        "state/": "/state/"
+    }
+}
+&lt;/script&gt;</code></pre>
 
-    <pre><code>// inside any component module
-import { todos, addTodo } from 'state/todos.js';</code></pre>
+    <p>
+        The framework does not need to know about plain state modules. They are
+        just browser modules. The only requirement is that the importing view
+        can resolve the specifier.
+    </p>
+
+    <pre><code data-title="state/todos.js">export let todos = [];
+
+export function addTodo(task) {
+    todos = [...todos, { id: Date.now(), task, done: false }];
+}</code></pre>
+
+    <pre><code data-title="component module">import { todos, addTodo } from 'state/todos.js';</code></pre>
 
     <h3>Naming rules</h3>
+    <p>
+        The <code>data-module</code> value is both the marker that tells
+        data-wrapper which script to load and the name other modules import
+        from. Keep names stable and unique.
+    </p>
+
     <ul>
         <li><code>data-module</code> marks the inline component module, and the value must not be empty.</li>
-        <li>The name must be unique per document. Two views with the same name throw a duplicate-registration error.</li>
-        <li><code>@view/*</code> and <code>@docs/*</code> are conventions; the name itself is any valid ESM specifier.</li>
+        <li>A loaded document can only register one view for a given name. Reusing the same name for a different view throws a duplicate-registration error.</li>
+        <li><code>@view/*</code> and <code>@docs/*</code> are conventions. The name itself can be any valid module specifier your app chooses.</li>
     </ul>
 </section>
