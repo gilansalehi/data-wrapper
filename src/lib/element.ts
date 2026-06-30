@@ -71,8 +71,14 @@ const importMappedModule = async (name: string): Promise<ComponentModule> => {
     try {
         return await import(name) as ComponentModule;
     } catch (error) {
-        if (!shimSource() || !isResolutionError(error)) throw error;
-        return (await loadShim())(name);
+        if (!isResolutionError(error)) throw error;
+        if (shimSource()) return (await loadShim())(name);
+        throw new Error(
+            `Could not resolve component module "${name}". This browser may not ` +
+            `support runtime import maps — add an es-module-shims fallback with a ` +
+            `data-shim-src attribute on the framework <script>. See "Browser support".`,
+            { cause: error },
+        );
     }
 };
 

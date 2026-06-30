@@ -67,6 +67,27 @@ export default ({ props }) => ({
 Inside `card.html`, `$text="customer/firstName"` reads the exposed instance
 binding. `props.url` is always the full `src` string.
 
+## Browser support
+
+data-wrapper runs on modern evergreen browsers with native ES modules, custom
+elements, and import maps — no build step. The loader registers component
+modules through import maps at runtime, and your component code uses normal
+`import` syntax throughout.
+
+For browsers without runtime import-map support, point the framework `<script>`
+at [es-module-shims](https://github.com/guybedford/es-module-shims) with a
+`data-shim-src` attribute. The shim loads **only** if a native module resolution
+actually fails, so native-capable browsers never download it:
+
+```html
+<script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"
+        data-shim-src="https://ga.jspm.io/npm:es-module-shims@2/dist/es-module-shims.js"></script>
+```
+
+A CDN URL (above) is the simplest option; vendoring a copy and pointing
+`data-shim-src` at it works identically. If a module fails to resolve and no
+shim is configured, the loader throws a clear error telling you to add one.
+
 ## Docs
 
 The full documentation is a set of views in this repo at `views/docs/`,

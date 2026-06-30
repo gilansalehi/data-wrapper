@@ -40,4 +40,10 @@ bun run typecheck   # tsc --noEmit</code></pre>
     </p>
     <pre><code>&lt;script src="/dist/data-wrapper.js" type="module"
         data-shim-src="https://ga.jspm.io/npm:es-module-shims@2/dist/es-module-shims.js"&gt;&lt;/script&gt;</code></pre>
+    <p>
+        Your component code uses normal <code>import</code> syntax either way —
+        the shim is invisible to authors. A CDN URL (above) is the simplest
+        option; vendoring a copy works the same. With no shim configured, an
+        unsupported browser fails with a clear error pointing you here.
+    </p>
 </section>
