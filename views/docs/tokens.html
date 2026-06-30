@@ -6,43 +6,76 @@
 <section class="doc-section" id="tokens">
     <h2>Three tokens</h2>
 
+    <p>
+        A view file is regular HTML, so data-wrapper uses attributes to connect
+        that HTML to your module exports. Each special attribute starts with one
+        of three tokens. The token tells data-wrapper what kind of work the
+        attribute should do.
+    </p>
+
     <table>
         <thead>
             <tr>
                 <th>Token</th>
-                <th>Direction</th>
+                <th>Use it when...</th>
                 <th>Purpose</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td><code>$</code></td>
-                <td>binding → DOM</td>
-                <td><code>$prop="name"</code> sets <code>el[prop]</code> from a binding</td>
+                <td>You want data to appear in the DOM.</td>
+                <td><code>$prop="name"</code> reads a binding and writes it to a DOM property or attribute.</td>
             </tr>
             <tr>
                 <td><code>*</code></td>
-                <td>binding → layout</td>
-                <td><code>*directive="name"</code> runs a structural directive</td>
+                <td>You want data to shape the DOM.</td>
+                <td><code>*directive="name"</code> passes a binding to a structural directive such as <code>*list</code> or <code>*if</code>.</td>
             </tr>
             <tr>
                 <td><code>@</code></td>
-                <td>event → action</td>
-                <td><code>@event="name"</code> calls a module function on event</td>
+                <td>You want user input to call code.</td>
+                <td><code>@event="name"</code> listens for a browser event and calls an exported action.</td>
             </tr>
         </tbody>
     </table>
 
-    <p>Bindings resolve against the current binding context:</p>
+    <p>
+        The value on the right side of the attribute is a binding name. Most of
+        the time, that name points to a value or function exported by the
+        component module. Inside a <code>*list</code>, the same syntax can also
+        read from the current row item.
+    </p>
+
+    <pre><code data-title="view.html">&lt;button @click="inc" value="1"&gt;+1&lt;/button&gt;
+&lt;output $text="count"&gt;&lt;/output&gt;
+
+&lt;template *list="todos"&gt;
+    &lt;label&gt;
+        &lt;input type="checkbox" $checked="./done"&gt;
+        &lt;span $text="./task"&gt;&lt;/span&gt;
+    &lt;/label&gt;
+&lt;/template&gt;</code></pre>
+
+    <p>
+        Binding names resolve from the place where the DOM node is rendered.
+        These lookup forms let you choose whether a binding should read from the
+        nearest row, a parent row, the component root, or another wrapper.
+    </p>
+
     <ul>
-        <li><strong>Bare name</strong> (<code>view</code>) checks the nearest row, outer rows, the per-wrapper instance, then named module exports.</li>
-        <li><strong>Relative path</strong> (<code>./done</code>) reads only from the nearest surrounding <code>*list</code> item.</li>
-        <li><strong>Parent row</strong> (<code>../order</code>) reads only from the parent row; repeat <code>../</code> to move higher.</li>
-        <li><strong>Root path</strong> (<code>/view</code>) reads from the wrapper's component scope and bypasses rows.</li>
-        <li><strong>Cross-wrapper path</strong> (<code>//cart/total</code>) reads from another loaded wrapper by DOM id.</li>
+        <li><code>view</code> checks the nearest row, outer rows, the wrapper instance, and then named module exports.</li>
+        <li><code>./done</code> reads only from the nearest surrounding <code>*list</code> item.</li>
+        <li><code>../order</code> reads only from the parent row. Repeat <code>../</code> to move higher.</li>
+        <li><code>/view</code> reads from the wrapper's component root and bypasses rows.</li>
+        <li><code>//cart/total</code> reads from another loaded wrapper by DOM id.</li>
     </ul>
 
-    <p>Live counter (mounted as part of this very doc page):</p>
+    <p>
+        This counter is mounted as part of the docs page. The buttons call the
+        exported <code>inc</code> action, and the output reads the exported
+        <code>count</code> value.
+    </p>
     <div class="demo">
         <button @click="inc" value="1">+1</button>
         <button @click="inc" value="5">+5</button>
