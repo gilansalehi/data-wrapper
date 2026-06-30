@@ -62,24 +62,18 @@ and documented.
   test harness; custom directives receive the scoped `wake` closure through
   `DirectiveContext`.
 
-## Review notes (Claude, 2026-06-30)
+## Review status
 
 Delivery matches the agreed API — `cleanup` on the context, `own`/`ownerUnsubs`/
-`childContext` internal, and `*list`/`*if` switched onto `cleanup()`. Two small
-follow-ups (Codex can fold these in):
+`childContext` internal, and `*list`/`*if` switched onto `cleanup()`. Contract
+tests are in `tests/directives.test.ts`.
 
-1. **State the scoping boundary.** A custom directive can only `wake(node, ctx)`
+One public-docs follow-up remains before this ticket should be marked complete:
+
+- **State the scoping boundary.** A custom directive can only `wake(node, ctx)`
    under the context it is *handed* — with `childContext`/`blockContext` internal,
    it cannot introduce a new data scope the way `*list` does. That's the right
    1.0 line (custom directives are effects/decorators/toggles), but it should be a
    documented limitation in `directives.html`, or an author may expect to build a
    per-item-scoped directive and find no helper. Scope-introducing directives = a
    future ticket that exposes a scope helper.
-
-2. **`host`/`protocol` in the field table need careful wording.**
-   `host` is meaningful when the directive source uses the ticket-009
-   `//id/path` cross-wrapper form. `protocol` remains reserved for future
-   custom resolvers and should be documented as such so authors don't reach for
-   unsupported protocol-style values.
-
-Contract tests are in `tests/directives.test.ts`.

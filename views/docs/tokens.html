@@ -17,25 +17,25 @@
         <thead>
             <tr>
                 <th>Token</th>
-                <th>Use it when...</th>
                 <th>Purpose</th>
+                <th>How to...</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td><code>$</code></td>
-                <td>You want data to appear in the DOM.</td>
+                <td>Data Binding</td>
                 <td><code>$prop="name"</code> reads a binding and writes it to a DOM property or attribute.</td>
             </tr>
             <tr>
                 <td><code>*</code></td>
-                <td>You want data to shape the DOM.</td>
+                <td>Directives</td>
                 <td><code>*directive="name"</code> passes a binding to a structural directive such as <code>*list</code> or <code>*if</code>.</td>
             </tr>
             <tr>
                 <td><code>@</code></td>
-                <td>You want user input to call code.</td>
-                <td><code>@event="name"</code> listens for a browser event and calls an exported action.</td>
+                <td>Event Handling</td>
+                <td><code>@event="action"</code> listens for a browser event and calls an exported action.</td>
             </tr>
         </tbody>
     </table>

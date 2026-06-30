@@ -1,5 +1,7 @@
 # Ticket 008: Parent Row Addressing
 
+**COMPLETED.**
+
 ## Goal
 
 Decide whether and how bindings inside nested list contexts can address parent
@@ -65,3 +67,13 @@ name          -> nearest row, outer rows, then component runtime
 /name         -> component/root scope only
 //id/name     -> another loaded wrapper's component/root scope only
 ```
+
+## Shipped
+
+- `../name` and repeated `../../name` row addressing are implemented for
+  bindings and child wrapper input expressions.
+- Parent-row lookup targets the selected ancestor row only; it does not fall
+  through to outer rows or the component runtime on a miss.
+- `./name`, bare `name`, `/name`, and `//id/name` keep their documented
+  resolution rules.
+- Contract coverage lives in `tests/scopes.test.ts` and `tests/inputs.test.ts`.
