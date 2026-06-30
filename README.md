@@ -67,6 +67,17 @@ export default ({ props }) => ({
 Inside `card.html`, `$text="customer/firstName"` reads the exposed instance
 binding. `props.url` is always the full `src` string.
 
+## Binding Contexts
+
+Bindings resolve lexically from the DOM location where they wake:
+
+| Form | Meaning |
+| --- | --- |
+| `name` | nearest row that owns `name`, then outer rows, then the component instance/module |
+| `./name` | nearest row only |
+| `../name` | parent row only; repeat as `../../name` for higher rows |
+| `/name` | component/root scope, bypassing rows |
+
 ## Browser support
 
 data-wrapper runs on modern evergreen browsers with native ES modules, custom

@@ -3,6 +3,7 @@ export type Off = () => void;
 export type pURL = {
     path:     string;
     isRel:    boolean;
+    parent:   number;
     params:   URLSearchParams;
     host:     string;
     protocol: string;
@@ -11,11 +12,18 @@ export type pURL = {
 const DWRL_BASE = 'dwrl://data-wrapper/';
 
 export const pURL = (raw: string): pURL => {
-    let isRel = raw.startsWith('./');
-    const url = new URL(raw.slice(isRel ? 1 : 0), DWRL_BASE);
+    let parent = 0;
+    let input  = raw;
+    while (input.startsWith('../')) {
+        parent += 1;
+        input = input.slice(3);
+    }
+
+    let isRel = input.startsWith('./');
+    const url = new URL(input.slice(isRel ? 1 : 0), DWRL_BASE);
     let path  = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
     if (path.startsWith('./')) { isRel = true; path = path.slice(2); }
-    return { path, isRel, params: url.searchParams, host: url.hostname, protocol: url.protocol };
+    return { path, isRel, parent, params: url.searchParams, host: url.hostname, protocol: url.protocol };
 };
 
 export const p = pURL;

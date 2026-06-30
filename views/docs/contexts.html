@@ -42,12 +42,12 @@
         <tbody>
             <tr><td><code>name</code></td><td>nearest row that owns the name, then outer rows, then per-wrapper instance binding, then named module export</td></tr>
             <tr><td><code>./name</code></td><td>nearest enclosing <code>*list</code> row's item only</td></tr>
+            <tr><td><code>../name</code></td><td>the parent row item; repeat as <code>../../name</code> for higher rows</td></tr>
             <tr><td><code>/name</code></td><td>the wrapper's root component scope, bypassing row scopes</td></tr>
         </tbody>
     </table>
     <p>
-        Parent-row references (<code>../</code>) and cross-wrapper hosts
-        (<code>//host/path</code>) are reserved for later — see
-        <a href="#limitations">Known Limitations</a>.
+        Cross-wrapper hosts (<code>//host/path</code>) are reserved for later —
+        see <a href="#limitations">Known Limitations</a>.
     </p>
 </section>

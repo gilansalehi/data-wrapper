@@ -130,8 +130,8 @@ const resolveInputAssignment = (
     if (isReservedInputExpression(expr)) return null;
 
     if (ctx) {
-        const { path, isRel } = p(expr);
-        const source = resolveSource(ctx, path, isRel, expr);
+        const { path, isRel, parent } = p(expr);
+        const source = resolveSource(ctx, path, isRel, parent, expr);
         if (source) return () => source.read();
     }
 

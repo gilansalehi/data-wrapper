@@ -47,18 +47,20 @@ export type DispatchDetail = {
 };
 
 export interface DirectiveContext extends pURL {
-    ctx:  BindingContext;
-    el:   Element;
-    wake: (node: Element, ctx: BindingContext) => void;
+    ctx:     BindingContext;
+    el:      Element;
+    wake:    (node: Element, ctx: BindingContext) => void;
+    cleanup: (off: Off) => void;
 }
-export type DirectiveHandler = (ctx: DirectiveContext) => Sub;
+export type DirectiveUpdater = Sub;
+export type DirectiveHandler = (ctx: DirectiveContext) => DirectiveUpdater;
 export type Formatter        = (value: unknown, arg?: unknown) => unknown;
 export type WrapperLoader    = (wrapper: Wrapper, src: string, ctx?: BindingContext) => void | Promise<void>;
 
 export const rootContext = (wrapper: Wrapper): BindingContext =>
     ({ wrapper, scope: wrapper._component ?? null, parent: null, unsubs: wrapper._unsubs });
 
-export const childContext = (parent: BindingContext, row: Row): BindingContext =>
+const childContext = (parent: BindingContext, row: Row): BindingContext =>
     ({ wrapper: parent.wrapper, scope: rowScope(row), parent, unsubs: row.unsubs });
 
 const blockContext = (parent: BindingContext, unsubs: Off[]): BindingContext =>
@@ -67,6 +69,15 @@ const blockContext = (parent: BindingContext, unsubs: Off[]): BindingContext =>
 const nearestItemScope = (ctx: BindingContext): SourceScope | null => {
     for (let c: BindingContext | null = ctx; c; c = c.parent)
         if (c.scope?.item) return c.scope;
+    return null;
+};
+
+const parentItemScope = (ctx: BindingContext, levels: number): SourceScope | null => {
+    for (let c: BindingContext | null = ctx; c; c = c.parent) {
+        if (!c.scope?.item) continue;
+        if (levels === 0) return c.scope;
+        levels -= 1;
+    }
     return null;
 };
 
@@ -79,10 +90,10 @@ const rootScope = (ctx: BindingContext): SourceScope | null => {
 export const nearestItem = (ctx: BindingContext): Item | undefined =>
     nearestItemScope(ctx)?.item?.();
 
-export const ownerUnsubs = (ctx: BindingContext): Off[] =>
+const ownerUnsubs = (ctx: BindingContext): Off[] =>
     ctx.unsubs;
 
-export const own = (ctx: BindingContext, off: Off) => {
+const own = (ctx: BindingContext, off: Off) => {
     ownerUnsubs(ctx).push(off);
 };
 
@@ -188,10 +199,12 @@ export const resolveSource = (
     ctx:   BindingContext,
     path:  string,
     isRel: boolean,
+    parent = 0,
     raw?:  string,
 ): Source | null => {
     if (!BARE_PATH.test(path)) return null;
     if (raw !== undefined && isRootBinding(raw)) return rootScope(ctx)?.source(path) ?? null;
+    if (parent > 0) return parentItemScope(ctx, parent)?.source(path) ?? null;
     if (isRel) return nearestItemScope(ctx)?.source(path) ?? null;
     if (raw !== undefined && !BARE_BINDING.test(raw)) return null;
 
@@ -208,23 +221,26 @@ const staticSource = (value: unknown): Source => ({
 });
 
 const isReservedBinding = (raw: string): boolean =>
-    raw.startsWith('../') || raw.startsWith('//');
+    raw.startsWith('//');
 
-const canFallbackToStatic = (raw: string, path: string): boolean =>
-    BARE_BINDING.test(raw) || (raw.startsWith('./') && BARE_PATH.test(path));
+const canFallbackToStatic = (raw: string, path: string, parent: number): boolean =>
+    BARE_BINDING.test(raw)
+    || (raw.startsWith('./') && BARE_PATH.test(path))
+    || (parent > 0 && BARE_PATH.test(path));
 
 const resolveBinding = (
     ctx:   BindingContext,
     path:  string,
     isRel: boolean,
+    parent: number,
     raw:   string,
 ): BindingResolution => {
     if (isReservedBinding(raw)) return { source: null, missed: false };
 
-    const source = resolveSource(ctx, path, isRel, raw);
+    const source = resolveSource(ctx, path, isRel, parent, raw);
     if (source) return { source, missed: false };
 
-    if (!canFallbackToStatic(raw, path)) return { source: null, missed: false };
+    if (!canFallbackToStatic(raw, path, parent)) return { source: null, missed: false };
     return { source: staticSource(path), missed: true };
 };
 
@@ -242,7 +258,7 @@ export const wire = (
     const token = name[0];
     const prop  = name.slice(1);
     const dwrl  = p(value);
-    const { path, isRel, params } = dwrl;
+    const { path, isRel, parent, params } = dwrl;
     const wrapper = ctx.wrapper;
 
     if (token === '@') {
@@ -265,7 +281,7 @@ export const wire = (
 
     // PoC: $ and * resolve bare names local-first or `./key` from the nearest row.
     // TODO: pURL branches (`/wrapperState`, `//host/path`) restored in v1.
-    const { source, missed } = resolveBinding(ctx, path, isRel, value);
+    const { source, missed } = resolveBinding(ctx, path, isRel, parent, value);
     if (!source) return;
     if (missed) warnStaticFallback(value);
 
@@ -280,7 +296,13 @@ export const wire = (
     if (token === '*') {
         const factory = DW_DIRECTIVES.get(prop);
         if (!factory) throw new Error(`Unknown directive *${prop}`);
-        const updater = factory({ ...dwrl, ctx, el, wake: (node, nextCtx) => wake(node, nextCtx, load) });
+        const updater = factory({
+            ...dwrl,
+            ctx,
+            el,
+            wake:    (node, nextCtx) => wake(node, nextCtx, load),
+            cleanup: off => own(ctx, off),
+        });
         const off     = source.subscribe(updater);
         own(ctx, off);
         return;
@@ -387,7 +409,7 @@ const reconcile = (
 
 // `*list` lives on the <template>. The template's body is the row; the
 // template's parent is the container. The template itself never renders.
-const listDirective: DirectiveHandler = ({ ctx, el, params, wake }) => {
+const listDirective: DirectiveHandler = ({ ctx, el, params, wake, cleanup }) => {
     const tpl       = el as HTMLTemplateElement;
     const container = tpl.parentElement;
     if (!container) return () => {};
@@ -396,7 +418,7 @@ const listDirective: DirectiveHandler = ({ ctx, el, params, wake }) => {
     let cache = wrapper._listCache.get(container);
     if (!cache) { cache = new Map(); wrapper._listCache.set(container, cache); }
 
-    own(ctx, () => {
+    cleanup(() => {
         for (const row of cache.values()) { unwire(row.unsubs); row.node.remove(); }
         cache.clear();
         wrapper._listCache.delete(container);
@@ -417,7 +439,7 @@ const listDirective: DirectiveHandler = ({ ctx, el, params, wake }) => {
 
 // `*if` also lives on the <template>. Truthy → clone the body in place; falsy →
 // remove it. An anchor comment marks the slot so re-show appends at the same point.
-const ifDirective: DirectiveHandler = ({ ctx, el, wake }) => {
+const ifDirective: DirectiveHandler = ({ ctx, el, wake, cleanup }) => {
     const tpl    = el as HTMLTemplateElement;
     const anchor = document.createComment('dw-if');
     tpl.replaceWith(anchor);
@@ -431,7 +453,7 @@ const ifDirective: DirectiveHandler = ({ ctx, el, wake }) => {
         live = null;
         liveUnsubs = [];
     };
-    own(ctx, disposeLive);
+    cleanup(disposeLive);
 
     return value => {
         if (value && !live) {

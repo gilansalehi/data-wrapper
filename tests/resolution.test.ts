@@ -78,6 +78,22 @@ test('a bare name climbs from an inner row to an outer row that owns the key', (
     expect(el.querySelector('span')?.textContent).toBe('outer');
 });
 
+test('a parent-row path reads an outer row from a nested row context', () => {
+    const el = wrapperWithRuntime({
+        items: [{ id: 1, label: 'outer', children: [{ id: 'a', label: 'inner' }] }],
+    });
+    const span = document.createElement('span');
+    span.setAttribute('$text', '../label');
+    const inner = structuralTemplate('list', './children', span);
+    const article = document.createElement('article');
+    article.append(inner, document.createTextNode(' '));
+    el.append(structuralTemplate('list', 'items', article), document.createTextNode(' '));
+
+    wake(el, rootContext(el));
+
+    expect(el.querySelector('span')?.textContent).toBe('outer');
+});
+
 test('an explicit relative path reads only the nearest row scope', () => {
     const el = wrapperWithRuntime({
         label: 'module',

@@ -41,3 +41,27 @@ syntax and resolution rule before it becomes an ad hoc feature.
 - Nested list behavior remains deterministic.
 - Nearest-row `./name` semantics remain unchanged.
 - README documents the decision.
+
+## Decision
+
+Ticket 008 chooses and implements lexical parent-row addressing:
+
+```txt
+../name       -> parent row only
+../../name    -> grandparent row only
+```
+
+Each `../` segment skips one row scope. The remaining path resolves against
+that target row only; it does not continue climbing and it does not fall through
+to the component runtime. If the targeted row does not exist or does not own the
+first path segment, the binding follows the normal row-addressing miss policy
+for `$`/`*`: render the static literal path and warn.
+
+Unchanged rules:
+
+```txt
+./name        -> nearest row only
+name          -> nearest row, outer rows, then component runtime
+/name         -> component/root scope only
+//host/name   -> still reserved/inert
+```

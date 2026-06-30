@@ -13,13 +13,15 @@ host, and protocol. Current architecture relies on:
 ```txt
 bare name
 ./relative
+../parent
 /root
 ?params
 ```
 
-The `/root` form is now the component/root-scope escape hatch. Hosts and
-protocol-style addressing remain legacy/reserved surface area. The docs and code
-should not imply support the framework does not intend to provide.
+The `/root` form is the component/root-scope escape hatch. The `../parent` form
+addresses outer row scopes. Hosts and protocol-style addressing remain
+legacy/reserved surface area. The docs and code should not imply support the
+framework does not intend to provide.
 
 ## Scope
 
@@ -27,14 +29,12 @@ should not imply support the framework does not intend to provide.
 - Decide what happens for:
   - `//host/path`
   - protocol-like values
-  - `../path`
 - Rename internal parser terms if useful.
 - Ensure unsupported forms fail clearly or remain no-ops intentionally.
 
 ## Non-Goals
 
 - No cross-wrapper addressing implementation.
-- No parent-row syntax unless Ticket 008 accepts it.
 - No new parser package.
 - No breaking changes to current bare/relative/query syntax.
 
@@ -43,5 +43,5 @@ should not imply support the framework does not intend to provide.
 - README documents supported and reserved binding forms.
 - Internal comments do not frame reserved branches as active features.
 - Unsupported forms have predictable behavior.
-- Current examples use only supported forms: bare names, `./row`, `/root`, and
-  query params.
+- Current examples use only supported forms: bare names, `./row`, `../parent`,
+  `/root`, and query params.

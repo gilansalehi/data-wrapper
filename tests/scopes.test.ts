@@ -71,13 +71,13 @@ test('an unresolved $ binding renders the literal name, warns, and spares its si
     warn.mockRestore();
 });
 
-// Reserved syntax (`../`, `//host`) is not a miss — it stays an inert no-op, so it
+// Reserved syntax (`//host`) is not a miss — it stays an inert no-op, so it
 // neither renders a literal nor warns. This keeps the miss policy off the escape
 // forms held for later tickets.
 test('reserved binding syntax stays inert — no literal, no warning', () => {
     const warn = spyOn(console, 'warn').mockImplementation(() => {});
     const el = wrapperWithRuntime({});
-    el.innerHTML = '<output $text="../up">kept</output>';
+    el.innerHTML = '<output $text="//host/up">kept</output>';
     wake(el, rootContext(el));
 
     expect(el.querySelector('output')?.textContent).toBe('kept');

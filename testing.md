@@ -88,11 +88,11 @@ The guarantees 1.0 commits to. Each is one test unless noted.
   owns it
 - `./key` reads the nearest enclosing `*list` row item — explicit local scope,
   no climb
+- `../key` reads the parent row item; each additional `../` climbs one more row
 - `/key` reads the component/root scope and bypasses row scopes
 - a bare name that resolves nowhere up to the root renders a static literal,
   emits `console.warn`, and does not abort its sibling bindings
-- reserved syntax (`//host`, `../`) stays an inert no-op — distinct from
-  a genuine miss
+- reserved syntax (`//host`) stays an inert no-op — distinct from a genuine miss
 
 **Reactivity**
 - `action(fn)` flushes after the call returns

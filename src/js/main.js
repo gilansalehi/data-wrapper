@@ -13,7 +13,7 @@
 // so no subscription is kept); the framework's own `_`-prefixed markers
 // (`_live`, `_debug`, …) are stripped so the listing shows authored markup,
 // not wake residue.
-import { DW_DIRECTIVES } from '/dist/data-wrapper.js';
+import { DW_DIRECTIVES } from 'data-wrapper';
 
 const stripFramework = (el) => {
     const clone = el.cloneNode(true);
