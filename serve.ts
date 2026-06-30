@@ -2,8 +2,13 @@
 // Content-Type from extension. No special routes — view modules are handled
 // client-side by the framework via import maps.
 
+const envPort = Number.parseInt(Bun.env.PORT ?? '', 10);
+const port = Number.isFinite(envPort) ? envPort : 3000;
+const hostname = Bun.env.HOST || '127.0.0.1';
+
 const server = Bun.serve({
-    port: 3000,
+    port,
+    hostname,
     async fetch(req) {
         const url  = new URL(req.url);
         const path = url.pathname === '/' ? '/index.html' : url.pathname;
@@ -21,4 +26,4 @@ const server = Bun.serve({
     },
 });
 
-console.log(`Serving at http://localhost:${server.port}`);
+console.log(`Serving at http://${hostname}:${server.port}`);

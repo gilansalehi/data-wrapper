@@ -1,0 +1,70 @@
+<style>
+    .orders-monitor {
+        display: grid;
+        gap: .75rem;
+        border: var(--border);
+        border-radius: var(--radius);
+        padding: .9rem;
+        background: var(--surface);
+    }
+
+    .orders-monitor h3,
+    .orders-monitor p {
+        margin: 0;
+    }
+
+    .orders-monitor h3 {
+        font-size: 1rem;
+    }
+
+    .orders-monitor p {
+        color: var(--muted);
+        font-size: .88rem;
+    }
+
+    .orders-monitor dl {
+        display: grid;
+        gap: .5rem;
+        margin: 0;
+    }
+
+    .orders-monitor dl > div {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        border-top: 1px solid color-mix(in srgb, var(--muted) 18%, transparent);
+        padding-top: .5rem;
+    }
+
+    .orders-monitor dt {
+        color: var(--muted);
+        font-size: .82rem;
+    }
+
+    .orders-monitor dd {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+</style>
+
+<aside class="orders-monitor" aria-label="Operations monitor">
+    <h3>Operations monitor</h3>
+    <p>Fulfillment snapshot</p>
+    <dl>
+        <div>
+            <dt>Orders</dt>
+            <dd $text="//orders/orderCount"></dd>
+        </div>
+        <div>
+            <dt>Lines</dt>
+            <dd $text="//orders/lineCount"></dd>
+        </div>
+        <div>
+            <dt>Packed</dt>
+            <dd $text="//orders/packedCount"></dd>
+        </div>
+    </dl>
+</aside>

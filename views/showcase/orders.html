@@ -98,6 +98,13 @@
 
     .orders-demo .orders-head { margin-bottom: 1rem; }
 
+    .orders-demo .orders-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
+        gap: 1rem;
+        align-items: start;
+    }
+
     .orders-demo .order-stats {
         display: flex;
         flex-wrap: wrap;
@@ -173,6 +180,12 @@
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
     }
+
+    @media (max-width: 820px) {
+        .orders-demo .orders-layout {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 <section class="demo orders-demo">
@@ -190,31 +203,35 @@
         <span><strong $text="packedCount"></strong> packed</span>
     </div>
 
-    <div class="order-list">
-        <template *list="orders">
-            <article class="order-card" $data-status="./status">
-                <header class="order-card-head">
-                    <div>
-                        <h3 $text="./customer"></h3>
-                        <span class="order-status" $text="./status"></span>
-                    </div>
-                    <div class="order-actions">
-                        <button @click="addLine">Add line</button>
-                        <button class="delete-btn" @click="removeOrder" aria-label="Remove order">✕</button>
-                    </div>
-                </header>
+    <div class="orders-layout">
+        <div class="order-list">
+            <template *list="orders">
+                <article class="order-card" $data-status="./status">
+                    <header class="order-card-head">
+                        <div>
+                            <h3 $text="./customer"></h3>
+                            <span class="order-status" $text="./status"></span>
+                        </div>
+                        <div class="order-actions">
+                            <button @click="addLine">Add line</button>
+                            <button class="delete-btn" @click="removeOrder" aria-label="Remove order">✕</button>
+                        </div>
+                    </header>
 
-                <ul class="line-list">
-                    <template *list="./lines">
-                        <li class="line-item" $class="./packed?onoff=packed:open">
-                            <input type="checkbox" $checked="./packed" @change="togglePacked" aria-label="Toggle packed">
-                            <code $text="./sku"></code>
-                            <span $text="./name"></span>
-                            <strong class="line-qty">× <span $text="./qty"></span></strong>
-                        </li>
-                    </template>
-                </ul>
-            </article>
-        </template>
+                    <ul class="line-list">
+                        <template *list="./lines">
+                            <li class="line-item" $class="./packed?onoff=packed:open">
+                                <input type="checkbox" $checked="./packed" @change="togglePacked" aria-label="Toggle packed">
+                                <code $text="./sku"></code>
+                                <span $text="./name"></span>
+                                <strong class="line-qty">× <span $text="./qty"></span></strong>
+                            </li>
+                        </template>
+                    </ul>
+                </article>
+            </template>
+        </div>
+
+        <data-wrapper src="/views/showcase/orders-monitor.html"></data-wrapper>
     </div>
 </section>
