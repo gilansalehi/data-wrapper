@@ -1,0 +1,26 @@
+<script type="module" data-component data-module="@docs/errors"></script>
+
+<section class="doc-section" id="errors">
+    <h2>Error handling</h2>
+    <p>
+        The framework <strong>throws on failure</strong> rather than swallowing
+        errors. A failed <code>fetch</code>, an unparseable view, a missing or
+        duplicate <code>data-module</code>, a factory that throws, an unknown
+        <code>*directive</code>, or an action that throws all propagate as an
+        exception — an uncaught promise rejection on the async load path. Each
+        error carries the view URL, the wrapper's <code>src</code>, or the
+        binding/action name, so the source is identifiable.
+    </p>
+    <p>
+        The one deliberate non-throwing case is a <strong>lookup miss</strong>: a
+        <code>$</code> or <code>*</code> binding whose name resolves nowhere
+        renders the literal name and emits a <code>console.warn</code>. That is
+        almost always a typo, but it is non-fatal and never aborts the bindings
+        around it.
+    </p>
+    <p>
+        There is no separate error event or error-state model — the mechanism is a
+        thrown error, observable in the console and through global handlers such as
+        <code>window.onunhandledrejection</code>.
+    </p>
+</section>

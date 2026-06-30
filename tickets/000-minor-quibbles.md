@@ -15,6 +15,14 @@ redefined across `tests/core.test.ts`, `tests/scopes.test.ts`, and
 `tests/inputs.test.ts`. Extract the shared ones into a single `tests/helpers.ts`
 so the harness has one source of truth. (From ticket 004 review.)
 
+### 2. Half-loaded state on a post-append `wake()` failure (ticket 005)
+
+If `wake()` throws after `load()` has swapped in the new content — only an
+unknown `*directive` typo does this — the wrapper is left partially woken with
+`_loadedSrc` already set, so a reconnect won't retry. The error is loud (thrown),
+so it isn't silent, and we deliberately left it unhandled (no error slop). The
+one-line fix, if a dev ever hits it: set `_loadedSrc` after `wake()` succeeds.
+
 ## Non-Goals
 
 - No behavioral changes; surface polish and test/docs hygiene only.
