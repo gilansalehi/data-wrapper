@@ -4,82 +4,147 @@
     <h2>Module scope vs. default factory</h2>
 
     <p>
-        Named exports are the component's <em>shared</em> state surface — one
-        per module, regardless of how many wrappers mount it. That's the right
-        default for things like app-wide theme or auth state.
+        A component view can expose bindings from two places. Named exports
+        live in the module, and the module is shared by every wrapper that loads
+        it. A default factory can create a separate instance object for one
+        mounted wrapper. Most views can use named exports only; reach for a
+        factory when each wrapper needs its own copy of some state.
     </p>
 
     <p>
-        When a view needs state unique to each mounted wrapper, the module may
-        also export a <strong>default factory</strong>. The factory receives
-        the wrapper's load URL, parsed query parameters, and resolved
-        <code>props</code>, then returns an object that overlays the module
-        scope. If the same name appears in both, the instance value wins.
+        Named exports are a good fit for shared application state. If two
+        wrappers load this view, both wrappers read and update the same
+        <code>theme</code> export.
     </p>
 
-    <pre><code>export const label = 'Counter';
+    <pre><code data-title="theme.html">&lt;script type="module" data-component data-module="@view/theme"&gt;
+    export let theme = 'light';
+    export const label = () =&gt; `Theme: ${theme}`;
 
-export default ({ props }) =&gt; {
-    let count = Number(props.start ?? 0);
-    return {
-        get count() { return count; },
-        increment() { count += 1; },
+    export function toggleTheme() {
+        theme = theme === 'light' ? 'dark' : 'light';
+    }
+&lt;/script&gt;
+
+&lt;button @click="toggleTheme"&gt;Toggle&lt;/button&gt;
+&lt;output $text="label"&gt;&lt;/output&gt;</code></pre>
+
+    <p>
+        That shared behavior is often exactly what you want. A theme switcher,
+        a user session, or a shared collection should usually have one source of
+        truth. But a counter, form, or reusable card often needs state that
+        belongs to one wrapper only.
+    </p>
+
+    <p>
+        A default factory handles that second case. The factory runs once for
+        each mounted wrapper. It receives a context object, and it may return an
+        object of instance bindings for that wrapper. The instance object sits
+        in front of the module exports, so an instance binding with the same
+        name wins.
+    </p>
+
+    <pre><code data-title="counter.html">&lt;script type="module" data-component data-module="@view/counter"&gt;
+    export const label = 'Counter';
+
+    export default ({ props }) =&gt; {
+        let count = Number(props.start ?? 0);
+
+        return {
+            get count() { return count; },
+            increment() { count += 1; },
+        };
     };
-};</code></pre>
+&lt;/script&gt;
 
-    <pre><code>&lt;data-wrapper src="counter.html?start=5"&gt;&lt;/data-wrapper&gt;</code></pre>
+&lt;h3 $text="label"&gt;&lt;/h3&gt;
+&lt;button @click="increment"&gt;+1&lt;/button&gt;
+&lt;output $text="count"&gt;&lt;/output&gt;</code></pre>
+
+    <pre><code data-title="host page">&lt;data-wrapper src="counter.html?start=5"&gt;&lt;/data-wrapper&gt;
+&lt;data-wrapper src="counter.html?start=20"&gt;&lt;/data-wrapper&gt;</code></pre>
 
     <p>
-        Here <code>count</code> and <code>increment</code> are per-wrapper
-        bindings, while <code>label</code> comes from the shared module scope.
-        Query parameters configure each wrapper independently without creating
-        another module instance.
+        Both wrappers use the same module export for <code>label</code>, but
+        each wrapper gets its own <code>count</code> variable and its own
+        <code>increment</code> function. The query string supplies the starting
+        value for that specific wrapper.
     </p>
 
     <h3>Child inputs</h3>
     <p>
-        Query entries on a child wrapper's <code>src</code> are resolved where
-        that child is mounted and delivered to the child's factory as
-        <code>props</code>. Resolved entries are stable function readers;
-        unresolved entries are static strings. Inputs are not automatically
-        exposed to the template; the factory returns the bindings it wants the
-        template to see.
+        The factory context includes <code>props</code>. Props come from the
+        query string on the wrapper's <code>src</code>. When a child wrapper is
+        mounted inside another view, those query entries are resolved from the
+        place where the child appears in the parent DOM.
     </p>
 
-    <pre><code>&lt;data-wrapper src="card.html?customer&amp;status=orderStatus"&gt;&lt;/data-wrapper&gt;</code></pre>
+    <pre><code data-title="orders.html">&lt;script type="module" data-component data-module="@view/orders"&gt;
+    export const customer = { firstName: 'Ada', lastName: 'Lovelace' };
+    export let orderStatus = 'Ready';
+&lt;/script&gt;
 
-    <pre><code>export default ({ props }) =&gt; ({
-    customer: props.customer,
-    status: props.status,
-});</code></pre>
+&lt;data-wrapper src="card.html?customer&amp;status=orderStatus"&gt;&lt;/data-wrapper&gt;</code></pre>
 
-    <pre><code>&lt;h3 $text="customer/firstName"&gt;&lt;/h3&gt;
+    <p>
+        The shorthand <code>?customer</code> means
+        <code>?customer=customer</code>. It asks the child to receive a prop
+        named <code>customer</code>, resolved from the parent binding with the
+        same name. The <code>status=orderStatus</code> entry gives the child a
+        prop named <code>status</code>, but reads it from the parent's
+        <code>orderStatus</code> binding.
+    </p>
+
+    <pre><code data-title="card.html">&lt;script type="module" data-component data-module="@view/card"&gt;
+    export default ({ props }) =&gt; ({
+        customer: props.customer,
+        status: props.status,
+    });
+&lt;/script&gt;
+
+&lt;h3 $text="customer/firstName"&gt;&lt;/h3&gt;
 &lt;p $text="status"&gt;&lt;/p&gt;</code></pre>
 
     <p>
-        Because a resolved input is a function, the factory either
-        <em>returns</em> it for the template to call — keeping it live, as with
-        <code>customer</code> above — or <em>calls</em> it to snapshot a value. A
-        literal input is a plain value used directly, as with
-        <code>props.start</code> in the counter.
+        A resolved prop is a stable function reader. In the card example, the
+        factory returns <code>props.customer</code> and
+        <code>props.status</code> directly, so the card template keeps reading
+        the current parent values. If the factory called
+        <code>props.customer()</code> instead, it would snapshot the current
+        value at mount time. A query value that does not resolve to a binding is
+        a static string, like <code>start=5</code> in the counter example.
     </p>
 
     <p>
-        Child inputs use the same lookup forms as template bindings, including
-        <code>../customer</code> for a parent row and <code>//cart/total</code>
-        for an explicit read from another loaded wrapper by id. Cross-wrapper
-        input misses warn and are omitted rather than becoming static strings.
+        Inputs are not automatically added to the child template. The factory
+        chooses which props become bindings by returning them. This keeps child
+        inputs explicit: the query string passes values into the module, and the
+        factory decides what the HTML can bind to.
+    </p>
+
+    <p>
+        Child inputs use the same lookup forms as template bindings. Use
+        <code>./name</code> for the nearest row, <code>../name</code> for a
+        parent row, <code>/name</code> for the wrapper root, and
+        <code>//id/name</code> for an explicit read from another loaded wrapper.
+        Protocol-prefixed inputs are reserved for future resolvers and are
+        omitted today.
     </p>
 
     <h3>The <code>ComponentContext</code> shape</h3>
-    <p>The factory's single argument is a frozen object:</p>
+    <p>
+        The factory receives one frozen object. The most common field is
+        <code>props</code>, but the full context is available when a component
+        needs the wrapper element, the resolved URL, or teardown.
+    </p>
+
     <table>
         <thead><tr><th>Field</th><th>Type</th><th>Purpose</th></tr></thead>
         <tbody>
             <tr><td><code>wrapper</code></td><td><code>HTMLElement</code></td><td>The mounted <code>&lt;data-wrapper&gt;</code> element itself.</td></tr>
-            <tr><td><code>url</code></td><td><code>URL</code></td><td>The full resolved <code>src</code> URL.</td></tr>
-            <tr><td><code>params</code></td><td><code>URLSearchParams</code></td><td>Parsed query parameters from the <code>src</code>.</td></tr>
-            <tr><td><code>props</code></td><td><code>Readonly object</code></td><td>Input values or function readers, plus reserved <code>props.url</code>, the full original <code>src</code> string.</td></tr>
+            <tr><td><code>url</code></td><td><code>URL</code></td><td>The full resolved <code>src</code> URL for this wrapper.</td></tr>
+            <tr><td><code>params</code></td><td><code>URLSearchParams</code></td><td>The raw query parameters from the resolved <code>src</code>.</td></tr>
+            <tr><td><code>props</code></td><td><code>Readonly object</code></td><td>Resolved input values or function readers. It also includes reserved <code>props.url</code>, the original <code>src</code> string.</td></tr>
             <tr><td><code>cleanup</code></td><td><code>function</code></td><td>Registers teardown work owned by this wrapper instance.</td></tr>
         </tbody>
     </table>
