@@ -26,6 +26,26 @@ const mount = (
     return el;
 };
 
+const wrapperWithRuntime = (
+    module:    Record<string, unknown>,
+    instance?: Record<string, unknown>,
+): Wrapper => {
+    const el = document.createElement('data-wrapper') as unknown as Wrapper;
+    el._component = new ComponentRuntime(el, module, instance);
+    return el;
+};
+
+const structuralTemplate = (
+    directive: string,
+    source:    string,
+    child:     Element,
+): HTMLTemplateElement => {
+    const tpl = document.createElement('template');
+    tpl.setAttribute(`*${directive}`, source);
+    tpl.content.append(child);
+    return tpl;
+};
+
 const rowText = (el: Wrapper) =>
     [...el.querySelectorAll('li')].map(li => li.textContent);
 
@@ -47,10 +67,13 @@ test('mutating state in an action updates the bound DOM on flush', () => {
 test('*if adds its body when truthy and removes it when falsy', () => {
     let show = true;
     const toggle = action(() => { show = !show; });
-    const el = mount(
-        '<div><template *if="show"><span class="body"></span></template></div>',
-        { get show() { return show; }, toggle },
-    );
+    const el = wrapperWithRuntime({ get show() { return show; }, toggle });
+    const span = document.createElement('span');
+    span.className = 'body';
+    const div = document.createElement('div');
+    div.append(structuralTemplate('if', 'show', span));
+    el.append(div);
+    wake(el, rootContext(el));
 
     expect(el.querySelector('.body')).not.toBeNull();
     toggle();
@@ -61,10 +84,13 @@ test('*if adds its body when truthy and removes it when falsy', () => {
 test('*list updates a row in place and removes a dropped row', () => {
     let items = [{ id: 1, label: 'a' }, { id: 2, label: 'b' }];
     const setItems = action((next: typeof items) => { items = next; });
-    const el = mount(
-        '<ul><template *list="items"><li $text="./label"></li></template></ul>',
-        { get items() { return items; }, setItems },
-    );
+    const el = wrapperWithRuntime({ get items() { return items; }, setItems });
+    const li = document.createElement('li');
+    li.setAttribute('$text', './label');
+    const ul = document.createElement('ul');
+    ul.append(structuralTemplate('list', 'items', li));
+    el.append(ul);
+    wake(el, rootContext(el));
     expect(rowText(el)).toEqual(['a', 'b']);
 
     setItems([{ id: 1, label: 'A' }]);

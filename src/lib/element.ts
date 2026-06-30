@@ -1,9 +1,12 @@
 import {
+    resolveSource,
     rootContext,
     unwake,
     wake,
+    type BindingContext,
     type ListCache,
     type Wrapper,
+    type WrapperLoader,
 } from './engine.ts';
 import {
     ComponentRuntime,
@@ -11,8 +14,9 @@ import {
     type ComponentFactory,
     type ComponentInstance,
     type ComponentModule,
+    type ComponentProps,
 } from './component.ts';
-import type { Off } from './utils.ts';
+import { p, type Off } from './utils.ts';
 
 type ComponentModuleRecord = {
     viewURL: string;
@@ -110,6 +114,50 @@ const importComponent = (
     return module;
 };
 
+const isReservedInputExpression = (raw: string): boolean =>
+    raw.startsWith('../') || raw.startsWith('//');
+
+const resolveInputAssignment = (
+    expr: string,
+    ctx?: BindingContext,
+): unknown => {
+    if (isReservedInputExpression(expr)) return null;
+
+    if (ctx) {
+        const { path, isRel } = p(expr);
+        const source = resolveSource(ctx, path, isRel, expr);
+        if (source) return () => source.read();
+    }
+
+    return expr;
+};
+
+const inputProps = (
+    src: string,
+    url: URL,
+    ctx?: BindingContext,
+): ComponentProps => {
+    const props:  Record<string, unknown> = Object.create(null);
+    const seen = new Set<string>();
+
+    for (const [name, value] of url.searchParams) {
+        if (seen.has(name)) continue;
+        seen.add(name);
+
+        const expr = value === '' ? name : value;
+        const assignment = resolveInputAssignment(expr, ctx);
+        if (assignment == null) continue;
+
+        props[name] = assignment;
+    }
+
+    props.url = src;
+    return Object.freeze(props) as ComponentProps;
+};
+
+const isNestedWrapper = (wrapper: HTMLElement): boolean =>
+    !!wrapper.parentElement?.closest('data-wrapper');
+
 export class DataWrapper extends HTMLElement {
     declare _unsubs:     Off[];
     declare _listCache:  ListCache;
@@ -126,10 +174,12 @@ export class DataWrapper extends HTMLElement {
     connectedCallback() {
         const src = this.getAttribute('src');
         if (src) {
+            if (isNestedWrapper(this)) return;
             if (this._loadedSrc === src) return;
-            load(this, src).catch(err => console.error(`<data-wrapper src="${src}">`, err));
+            Promise.resolve(load(this, src))
+                .catch((err: unknown) => console.error(`<data-wrapper src="${src}">`, err));
         }
-        else wake(this, rootContext(this));
+        else wake(this, rootContext(this), load);
     }
 
     disconnectedCallback() {
@@ -146,8 +196,11 @@ export class DataWrapper extends HTMLElement {
     }
 }
 
-export const load = async (wrapper: Wrapper, src: string) => {
+export const load: WrapperLoader = async (wrapper: Wrapper, src: string, ctx?: BindingContext) => {
+    if (wrapper._loadedSrc === src) return;
+
     const url  = new URL(src, document.baseURI);
+    const props = inputProps(src, url, ctx);
     const res  = await fetch(url);
     const html = await res.text();
     const tpl  = document.createElement('template');
@@ -177,6 +230,7 @@ export const load = async (wrapper: Wrapper, src: string) => {
                     wrapper,
                     url,
                     params: url.searchParams,
+                    props,
                     cleanup: off => factoryUnsubs.push(off),
                 });
                 const created = (factory as ComponentFactory)(context);
@@ -201,7 +255,7 @@ export const load = async (wrapper: Wrapper, src: string) => {
         ? new ComponentRuntime(wrapper, componentModule, instance)
         : undefined;
     wrapper._loadedSrc = src;
-    wake(wrapper, rootContext(wrapper));
+    wake(wrapper, rootContext(wrapper), load);
 };
 
 if (typeof customElements !== 'undefined' && !customElements.get('data-wrapper')) {

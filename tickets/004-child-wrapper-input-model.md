@@ -6,7 +6,9 @@ Define the official parent-to-child input channel for nested `<data-wrapper>`
 composition.
 
 Child inputs are declared on the child host's `src` query string. Each query
-entry becomes a bindable input source in the child component.
+entry is resolved at the mount point and handed to the child's **default
+factory** via `context`; the factory chooses what to expose as instance
+bindings. Inputs are not auto-injected into the binding namespace.
 
 ```html
 <data-wrapper src="/views/card.html?customer&status=orderStatus"></data-wrapper>
@@ -36,8 +38,8 @@ The model should preserve the component boundary:
 
 ```txt
 module top level = singleton/shared exports
-default factory = per-wrapper instance bindings
-src query inputs = per-wrapper input sources
+default factory = per-wrapper instance bindings (and the sole input sink)
+src query inputs = per-wrapper data handed to the factory
 ```
 
 The wrapper element is the DOM mount and teardown shell. It is not the source of
@@ -65,11 +67,9 @@ Rows and component runtimes become `SourceScope`s. The wrapper can remain in
 context for DOM ownership, load, and teardown, but resolution walks scopes
 rather than asking the wrapper as the primary lookup object.
 
-Projected child inputs are **not** a separate chain link — they live *inside*
-the component runtime scope, which resolves `instance → input → module`
-internally. Instance and module already share the runtime, so inputs must sit
-between them there; a separate input scope cannot express that order. The chain
-stays `rows → runtime`.
+Inputs are **not** part of the binding lookup at all (see Input Semantics): they
+are handed to the factory, not resolved as bindings. So the scope chain stays
+`rows → runtime`, and the runtime resolves `instance → module` — no input tier.
 
 Bare-name lookup climbs the context chain:
 
@@ -106,8 +106,9 @@ Expression resolution:
 Root wrappers use the same assignment rule. With no parent scope available,
 query values become static literal sources.
 
-The default factory receives a `props` object whose entries are stable
-references:
+The resolved inputs are delivered **only** to the default factory, as a `props`
+object whose entries are stable references. There is no auto-binding — a template
+can bind an input only if the factory returns it:
 
 ```js
 export default ({ props }) => {
@@ -124,6 +125,9 @@ function prop = stable function reference; callers may invoke it for current val
 props.url = full `src` string
 ```
 
+`url` is reserved on `props`; a query entry named `url` does not override
+`props.url`.
+
 If a factory needs raw query access, it can parse `props.url` with the existing
 pURL helper:
 
@@ -133,19 +137,19 @@ const { params } = p(props.url);
 
 ## Binding Behavior
 
-Child templates bind projected inputs directly:
+A template binds an input only after the factory has returned it as an instance
+binding — there is no separate input layer:
 
 ```html
 <!-- /views/card.html -->
+<script type="module" data-component data-module="@view/card">
+    export default ({ props }) => props;   // expose all inputs, or pick selectively
+</script>
 <h3 $text="customer/firstName"></h3>
 <p $text="status"></p>
 ```
 
-Runtime precedence should be:
-
-```txt
-factory return bindings > input sources > module exports
-```
+Binding precedence is unchanged: `factory return (instance) > module exports`.
 
 Token behavior stays simple:
 
@@ -193,6 +197,10 @@ load/claim operation directly.
 their parent wake can claim them. Loading must remain idempotent; the existing
 `_loadedSrc` marker is acceptable for this ticket.
 
+Directive-created DOM must be woken through the injected `DirectiveContext.wake`
+closure so `*list` rows and `*if` bodies preserve the loader-aware binding
+context for nested child wrappers.
+
 Do not add `_parentContext`, `_loadingSrc`, service-locator loader registration,
 or a separate lifecycle module for this ticket.
 
@@ -224,11 +232,11 @@ aborting sibling bindings; resolved bindings are unaffected.
 
 Interpret `src` query entries as input assignments (resolve in the parent context
 at the mount point, else static literal). Build the `props` object
-(value-or-function, plus `props.url`). Inputs live inside the runtime scope with
-precedence `instance > input > module`; inputs bind without a factory. `wake()`
-claims a child host with the current context and passes that context into load;
-no `_parentContext`. Keep `_loadedSrc`; add no new wrapper-private load state
-unless a real race remains.
+(value-or-function, plus `props.url`) and deliver it to the factory via
+`context` — no binding-lookup change, no input tier. `wake()` claims a child host
+with the current context and passes that context into load; no `_parentContext`.
+Keep `_loadedSrc`; add no new wrapper-private load state unless a real race
+remains.
 
 **Checkpoint:** the Acceptance list below.
 
@@ -251,19 +259,23 @@ Unrelated `*list` reconciliation fixes stay out of all four phases.
 - No strict typo detection or spellchecking yet.
 - No `../` or `//host` addressing.
 - No automatic whole-row-as-props behavior.
+- No auto-overlay of inputs into the binding namespace; inputs reach templates
+  only via the factory return.
+- No input tier in resolution; the runtime resolves `instance > module` only.
 - No dataset-based state model.
 
 ## Acceptance
 
 - A parent can pass per-row data to a child wrapper intentionally.
-- Child inputs declared in `src` query params become bindable child sources.
+- Child inputs declared in `src` query params are delivered to the factory.
 - `src="/child.html?customer&status=orderStatus"` resolves against the parent
   scope at the child mount point.
 - Unresolved input expressions become static literal sources.
-- Child factories receive `props`, including stable `props.url`.
-- Child templates can bind projected inputs directly without a factory.
-- Factory return bindings shadow input sources; input sources shadow module
-  exports.
+- Child factories receive resolved inputs as `context.props`, including stable
+  `props.url`.
+- Inputs reach templates only through the factory return; nothing is
+  auto-injected into the binding namespace.
+- Binding precedence is unchanged: factory return shadows module exports.
 - Bare lookup climbs row scopes to the root/component scope.
 - Nested child wrappers do not self-load before parent `wake()` claims them.
 - Existing literal config via URL query params remains possible.

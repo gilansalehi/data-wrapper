@@ -1,15 +1,17 @@
 import { publish, subscribe, type Source, type SourceScope, type Station, type Sub } from './engine.ts';
-import type { Off } from './utils.ts';
+import { readPath, type Off } from './utils.ts';
 
 // Named exports are the shared module scope. A default-export factory may
 // return an instance scope for one mounted wrapper; instance names shadow
 // module names.
 export type ComponentModule = Readonly<Record<string, unknown>>;
 export type ComponentInstance = Readonly<Record<string, unknown>>;
+export type ComponentProps = Readonly<Record<string, unknown> & { url: string }>;
 export type ComponentContext = Readonly<{
     wrapper: HTMLElement;
     url:     URL;
     params:  URLSearchParams;
+    props:   ComponentProps;
     cleanup: (off: Off) => void;
 }>;
 export type ComponentFactory =
@@ -19,6 +21,14 @@ type Output = { read: () => unknown; value: unknown };
 
 const own = (obj: object, key: PropertyKey) =>
     Object.prototype.hasOwnProperty.call(obj, key);
+
+const firstPathSegment = (path: string): string =>
+    path.split('/')[0] ?? '';
+
+const restPath = (path: string): string => {
+    const i = path.indexOf('/');
+    return i === -1 ? '' : path.slice(i + 1);
+};
 
 // Synchronizes a component module and optional instance with active DOM sinks.
 // Each subscribed output is re-read on every flush; changes publish through
@@ -45,7 +55,8 @@ export class ComponentRuntime implements SourceScope {
     }
 
     has(name: string): boolean {
-        return this.hasInstance(name) || (name !== 'default' && own(this.module, name));
+        const key = firstPathSegment(name);
+        return this.hasInstance(key) || (key !== 'default' && own(this.module, key));
     }
 
     source(name: string): Source | null {
@@ -98,7 +109,7 @@ export class ComponentRuntime implements SourceScope {
     }
 
     activateAction(name: string): Off | null {
-        const value = this.value(name);
+        const value = this.exactValue(name);
         if (typeof value !== 'function') return null;
 
         let active = this.actions.get(name);
@@ -106,7 +117,7 @@ export class ComponentRuntime implements SourceScope {
             // wire's @event invocation goes through the same `action` helper devs
             // use for cross-module mutators. One primitive, two call sites.
             const wrapped = action((...args: unknown[]) => {
-                const current = this.value(name);
+                const current = this.exactValue(name);
                 if (typeof current !== 'function') {
                     throw new Error(`Component action "${name}" is no longer a function`);
                 }
@@ -145,8 +156,16 @@ export class ComponentRuntime implements SourceScope {
         return !!this.instance && own(this.instance, name);
     }
 
-    private value(name: string): unknown {
+    private exactValue(name: string): unknown {
         return this.hasInstance(name) ? this.instance![name] : this.module[name];
+    }
+
+    private value(name: string): unknown {
+        const key  = firstPathSegment(name);
+        const rest = restPath(name);
+        const v    = this.exactValue(key);
+        const base = typeof v === 'function' ? (v as () => unknown)() : v;
+        return rest ? readPath(base, rest) : base;
     }
 
     // Namespace access preserves ESM live bindings; instance access triggers
@@ -156,8 +175,7 @@ export class ComponentRuntime implements SourceScope {
             throw new Error(`Component binding "${name}" is not exported`);
         }
         return () => {
-            const v = this.value(name);
-            return typeof v === 'function' ? (v as () => unknown)() : v;
+            return this.value(name);
         };
     }
 }
@@ -181,7 +199,7 @@ const _scheduleFlush = () => {
 };
 
 const ACTION = Symbol('dw:action');
-type Fn = (...args: unknown[]) => unknown;
+type Fn = (...args: any[]) => any;
 
 // `action(fn)` wraps a function so every call schedules a global flush after
 // it returns; if the call returns a Promise, the flush also runs after the

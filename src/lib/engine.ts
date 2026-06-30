@@ -53,6 +53,7 @@ export interface DirectiveContext extends pURL {
 }
 export type DirectiveHandler = (ctx: DirectiveContext) => Sub;
 export type Formatter        = (value: unknown, arg?: unknown) => unknown;
+export type WrapperLoader    = (wrapper: Wrapper, src: string, ctx?: BindingContext) => void | Promise<void>;
 
 export const rootContext = (wrapper: Wrapper): BindingContext =>
     ({ wrapper, scope: wrapper._component ?? null, parent: null, unsubs: wrapper._unsubs });
@@ -67,6 +68,12 @@ const nearestItemScope = (ctx: BindingContext): SourceScope | null => {
     for (let c: BindingContext | null = ctx; c; c = c.parent)
         if (c.scope?.item) return c.scope;
     return null;
+};
+
+const rootScope = (ctx: BindingContext): SourceScope | null => {
+    let root = ctx;
+    while (root.parent) root = root.parent;
+    return root.scope;
 };
 
 export const nearestItem = (ctx: BindingContext): Item | undefined =>
@@ -122,7 +129,8 @@ export const PROP_ALIASES: Record<string, string> = {
 
 const setProp = (el: Element, prop: string, val: unknown) => {
     if (val == null) return;
-    if (prop in el) (el as unknown as Record<string, unknown>)[prop] = val;
+    const value = prop === 'textContent' ? String(val) : val;
+    if (prop in el) (el as unknown as Record<string, unknown>)[prop] = value;
     else el.setAttribute(prop, String(val));
 };
 
@@ -140,7 +148,7 @@ export const bind = (el: Element, prop: string): Sub => {
 // --- wire / wake -------------------------------------------------------------
 
 const TOKENS    = '@$*';
-const NO_WAKE   = ['DATA-WRAPPER', 'SVG'];
+const NO_WAKE   = ['SVG'];
 const LIVE      = '_live';
 const BARE_PATH = /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:\/[a-zA-Z_$][a-zA-Z0-9_$]*)*$/;
 const BARE_BINDING = /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:\/[a-zA-Z_$][a-zA-Z0-9_$]*)*(?:[?#].*)?$/;
@@ -168,6 +176,9 @@ const firstPathSegment = (path: string): string =>
 const hasOwn = (obj: object, key: PropertyKey) =>
     Object.prototype.hasOwnProperty.call(obj, key);
 
+const isRootBinding = (raw: string): boolean =>
+    raw.startsWith('/') && !raw.startsWith('//');
+
 const rowScope = (row: Row): SourceScope => ({
     source: path => hasOwn(row.item, firstPathSegment(path)) ? rowSource(row, path) : null,
     item:   () => row.item,
@@ -180,6 +191,7 @@ export const resolveSource = (
     raw?:  string,
 ): Source | null => {
     if (!BARE_PATH.test(path)) return null;
+    if (raw !== undefined && isRootBinding(raw)) return rootScope(ctx)?.source(path) ?? null;
     if (isRel) return nearestItemScope(ctx)?.source(path) ?? null;
     if (raw !== undefined && !BARE_BINDING.test(raw)) return null;
 
@@ -196,7 +208,7 @@ const staticSource = (value: unknown): Source => ({
 });
 
 const isReservedBinding = (raw: string): boolean =>
-    raw.startsWith('../') || raw.startsWith('/');
+    raw.startsWith('../') || raw.startsWith('//');
 
 const canFallbackToStatic = (raw: string, path: string): boolean =>
     BARE_BINDING.test(raw) || (raw.startsWith('./') && BARE_PATH.test(path));
@@ -224,6 +236,7 @@ export const wire = (
     el:   Element,
     attr: Attr,
     ctx:  BindingContext,
+    load?: WrapperLoader,
 ) => {
     const { name, value } = attr;
     const token = name[0];
@@ -243,7 +256,7 @@ export const wire = (
         }, el);
         own(ctx, off);
 
-        if (BARE_BINDING.test(value)) {
+        if (BARE_BINDING.test(value) || isRootBinding(value)) {
             const actionOff = wrapper._component?.activateAction(path);
             if (actionOff) own(ctx, actionOff);
         }
@@ -267,32 +280,61 @@ export const wire = (
     if (token === '*') {
         const factory = DW_DIRECTIVES.get(prop);
         if (!factory) throw new Error(`Unknown directive *${prop}`);
-        const updater = factory({ ...dwrl, ctx, el, wake });
+        const updater = factory({ ...dwrl, ctx, el, wake: (node, nextCtx) => wake(node, nextCtx, load) });
         const off     = source.subscribe(updater);
         own(ctx, off);
         return;
     }
 };
 
+const wakeNodes = (root: Element): Element[] => {
+    const nodes: Element[] = [root];
+    const visit = (node: Element) => {
+        for (const child of [...node.children]) {
+            if (NO_WAKE.includes(child.tagName)) continue;
+            nodes.push(child);
+            if (child.tagName === 'DATA-WRAPPER') continue;
+            visit(child);
+        }
+    };
+    visit(root);
+    return nodes;
+};
+
+const loadChildWrapper = (
+    el:   Element,
+    ctx:  BindingContext,
+    load?: WrapperLoader,
+) => {
+    if (!load) return;
+    const src = el.getAttribute('src');
+    if (!src) return;
+
+    const wrapper = el as Wrapper;
+    if (wrapper._loadedSrc === src) return;
+
+    try {
+        Promise.resolve(load(wrapper, src, ctx))
+            .catch(err => console.error(`<data-wrapper src="${src}">`, err));
+    } catch (err) {
+        console.error(`<data-wrapper src="${src}">`, err);
+    }
+};
+
 export const wake = (
     root: Element,
     ctx:  BindingContext,
+    load?: WrapperLoader,
 ) => {
-    const nodes: Element[] = [root];
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
-        acceptNode: n => NO_WAKE.includes((n as Element).tagName)
-            ? NodeFilter.FILTER_REJECT
-            : NodeFilter.FILTER_ACCEPT,
-    });
-    let n: Node | null;
-    while ((n = walker.nextNode())) nodes.push(n as Element);
-
-    for (const el of nodes) {
+    for (const el of wakeNodes(root)) {
+        const isChildWrapper = el !== ctx.wrapper && el.tagName === 'DATA-WRAPPER';
         if (el.hasAttribute(LIVE)) continue;
         const attrs = [...el.attributes].filter(a => TOKENS.includes(a.name[0]));
-        if (!attrs.length) continue;
-        el.setAttribute(LIVE, '');
-        for (const a of attrs) wire(el, a, ctx);
+        if (attrs.length) {
+            el.setAttribute(LIVE, '');
+            for (const a of attrs) wire(el, a, ctx, load);
+        }
+        if (isChildWrapper) loadChildWrapper(el, ctx, load);
     }
 };
 
@@ -308,6 +350,7 @@ const reconcile = (
     tpl:       HTMLTemplateElement,
     keyProp:   string,
     ctx:       BindingContext,
+    wakeNode:  DirectiveContext['wake'],
 ) => {
     const active = new Set<unknown>();
     const fresh: Row[] = [];
@@ -328,7 +371,7 @@ const reconcile = (
             row.item = item;
             for (const ch in row.subs) publish(row.subs, ch, readPath(item, ch));
         }
-        if (row.node !== cursor && row.node.nextSibling !== cursor)
+        if (row.node.parentNode !== container || (row.node !== cursor && row.node.nextSibling !== cursor))
             container.insertBefore(row.node, cursor);
         cursor = row.node.nextSibling;
     }
@@ -340,12 +383,12 @@ const reconcile = (
         cache.delete(id);
     }
 
-    for (const row of fresh) wake(row.node, childContext(ctx, row));
+    for (const row of fresh) wakeNode(row.node, childContext(ctx, row));
 };
 
 // `*list` lives on the <template>. The template's body is the row; the
 // template's parent is the container. The template itself never renders.
-const listDirective: DirectiveHandler = ({ ctx, el, params }) => {
+const listDirective: DirectiveHandler = ({ ctx, el, params, wake }) => {
     const tpl       = el as HTMLTemplateElement;
     const container = tpl.parentElement;
     if (!container) return () => {};
@@ -369,13 +412,13 @@ const listDirective: DirectiveHandler = ({ ctx, el, params }) => {
             cache.clear();
             return;
         }
-        reconcile(container, items, cache, tpl, keyProp, ctx);
+        reconcile(container, items, cache, tpl, keyProp, ctx, wake);
     };
 };
 
 // `*if` also lives on the <template>. Truthy → clone the body in place; falsy →
 // remove it. An anchor comment marks the slot so re-show appends at the same point.
-const ifDirective: DirectiveHandler = ({ ctx, el }) => {
+const ifDirective: DirectiveHandler = ({ ctx, el, wake }) => {
     const tpl    = el as HTMLTemplateElement;
     const anchor = document.createComment('dw-if');
     tpl.replaceWith(anchor);
