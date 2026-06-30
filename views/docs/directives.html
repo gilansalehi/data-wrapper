@@ -12,18 +12,27 @@
 </script>
 
 <section class="doc-section" id="directives">
-    <h2>Directives on <code>&lt;template&gt;</code></h2>
+    <h2>Directives</h2>
 
     <p>
-        <code>*list</code> and <code>*if</code> live on
-        <code>&lt;template&gt;</code> elements — the template's body is what
-        renders, and the template itself never appears in the document.
+        A directive reads a binding and lets JavaScript decide what should
+        happen to the DOM. The built-in directives are <code>*list</code> and
+        <code>*if</code>. Both are written on <code>&lt;template&gt;</code>
+        elements because the template body is the content that data-wrapper
+        inserts, updates, or removes.
     </p>
 
-    <pre><code>&lt;ul&gt;
-    &lt;template *list="view"&gt;
+    <pre><code data-title="tasks.html">&lt;script type="module" data-module="@view/tasks"&gt;
+    export const tasks = [
+        { id: 1, label: 'Read the docs', done: true },
+        { id: 2, label: 'Try directives', done: false },
+    ];
+&lt;/script&gt;
+
+&lt;ul&gt;
+    &lt;template *list="tasks?key=id"&gt;
         &lt;li $class="./done?bool=done:active"&gt;
-            &lt;span $text="./task"&gt;&lt;/span&gt;
+            &lt;span $text="./label"&gt;&lt;/span&gt;
             &lt;template *if="./done"&gt;
                 &lt;strong&gt;done&lt;/strong&gt;
             &lt;/template&gt;
@@ -31,84 +40,112 @@
     &lt;/template&gt;
 &lt;/ul&gt;</code></pre>
 
-    <h3>Behavior</h3>
-    <ul>
-        <li>
-            <code>*list</code> reads an array from the current binding
-            context, reconciles by item identity (default key
-            <code>id</code>, override with <code>?key=field</code>), and
-            creates a nested binding context for each rendered item.
-        </li>
-        <li>
-            Existing items update in place; new items wake; missing items
-            tear down.
-        </li>
-        <li>
-            <code>*if</code> shows its body when the bound value is truthy
-            and removes it when falsy. The body wakes under the current
-            context, so <code>./</code> bindings inside still see the
-            surrounding row.
-        </li>
-    </ul>
+    <p>
+        <code>*list</code> reads an array and renders the template body once for
+        each item. Each rendered item gets its own row context, so
+        <code>./label</code> and <code>./done</code> read from the current
+        task. By default, list reconciliation uses each item's
+        <code>id</code>; pass <code>?key=field</code> when a different field
+        should identify the row.
+    </p>
+
+    <p>
+        <code>*if</code> shows its template body when the bound value is truthy
+        and removes it when the value is falsy. It does not create a new row
+        context. In the example above, <code>*if="./done"</code> still reads
+        from the surrounding <code>*list</code> item.
+    </p>
 
     <h3>Custom directives</h3>
     <p>
-        Register structural directives at startup with
-        <code>DW_DIRECTIVES</code>. A directive receives parsed binding fields,
-        its host element, the current binding context, a <code>wake()</code>
-        helper for nested DOM, and a <code>cleanup()</code> hook for teardown
-        owned by that context.
+        Custom directives are registered in <code>DW_DIRECTIVES</code>. The
+        name after the <code>*</code> token selects the directive, and the value
+        on the right side is the binding the directive will receive. A custom
+        directive returns an updater function; data-wrapper calls that updater
+        immediately and again whenever the bound value changes.
     </p>
 
-    <pre><code>import { DW_DIRECTIVES } from 'data-wrapper';
+    <pre><code data-title="directives.js">import { DW_DIRECTIVES } from 'data-wrapper';
 
-DW_DIRECTIVES.set('mount', ({ el, path, params, ctx, wake, cleanup }) =&gt; {
-    const outlet = document.createElement('section');
-    el.after(outlet);
-    cleanup(() =&gt; outlet.remove());
+DW_DIRECTIVES.set('badge', ({ el, cleanup }) =&gt; {
+    const badge = document.createElement('small');
+    badge.className = 'badge';
+    el.append(badge);
+
+    cleanup(() =&gt; badge.remove());
 
     return value =&gt; {
-        outlet.textContent = '';
-        if (!value) return;
-
-        const child = document.createElement(path || 'div');
-        outlet.append(child);
-        wake(child, ctx);
+        badge.textContent = value == null ? '' : String(value);
     };
 });</code></pre>
 
+    <pre><code data-title="usage.html">&lt;button *badge="unreadCount"&gt;Inbox&lt;/button&gt;</code></pre>
+
     <p>
-        The function returned by a directive is its updater; the framework calls
-        it with the bound value immediately and again whenever that value
-        changes. The framework owns the source subscription. Directive-owned DOM,
-        timers, observers, or listeners should be registered with
-        <code>cleanup()</code>.
+        The framework owns the source subscription. The directive owns anything
+        it creates: extra DOM, timers, observers, or event listeners. Register
+        that teardown work with <code>cleanup()</code> so it runs when the
+        surrounding wrapper or row is removed.
     </p>
 
     <p>
-        The supported directive exports are <code>DW_DIRECTIVES</code>,
-        <code>DirectiveContext</code>, <code>DirectiveHandler</code>,
-        <code>DirectiveUpdater</code>, and <code>nearestItem(ctx)</code> for
-        reading the nearest row item when needed. Low-level row construction and
-        owner subscription arrays are internal; custom directives should use
-        <code>wake()</code> and <code>cleanup()</code> instead.
+        If a directive creates DOM that contains data-wrapper bindings, call
+        <code>wake(node, ctx)</code> with the context the directive received.
+        That wires the new DOM under the same scope as the directive host.
+    </p>
+
+    <pre><code data-title="custom wake">DW_DIRECTIVES.set('mirror', ({ el, ctx, wake, cleanup }) =&gt; {
+    const output = document.createElement('output');
+    output.setAttribute('$text', 'label');
+    el.after(output);
+
+    wake(output, ctx);
+    cleanup(() =&gt; output.remove());
+
+    return () =&gt; {};
+});</code></pre>
+
+    <p>
+        Custom directives cannot create new row scopes in the current API. They
+        can decorate an element, show or hide DOM, create DOM under the context
+        they receive, and clean up after themselves. Scope-introducing behavior,
+        such as rendering one child context per item, is reserved for built-ins
+        like <code>*list</code> until a public scope helper exists.
+    </p>
+
+    <p>
+        A directive receives a <code>DirectiveContext</code> object:
     </p>
 
     <table>
         <thead><tr><th>Field</th><th>Purpose</th></tr></thead>
         <tbody>
-            <tr><td><code>path</code>, <code>isRel</code>, <code>parent</code>, <code>params</code></td><td>Parsed binding string fields.</td></tr>
-            <tr><td><code>host</code></td><td>The DOM id host for <code>//id/path</code> sources, otherwise empty.</td></tr>
-            <tr><td><code>protocol</code></td><td>Reserved parser field for future custom resolvers.</td></tr>
+            <tr><td><code>path</code>, <code>isRel</code>, <code>parent</code>, <code>params</code></td><td>The parsed binding string, using the same lookup syntax as <code>$</code> bindings.</td></tr>
+            <tr><td><code>host</code></td><td>The DOM id host from a <code>//id/path</code> source, otherwise empty.</td></tr>
+            <tr><td><code>protocol</code></td><td>A reserved parser field for future custom resolvers.</td></tr>
             <tr><td><code>el</code></td><td>The element carrying the directive attribute.</td></tr>
-            <tr><td><code>ctx</code></td><td>The current binding context. Pass it to <code>wake()</code> to preserve scope.</td></tr>
-            <tr><td><code>wake(node, ctx)</code></td><td>Wires directive-created DOM, including child wrappers.</td></tr>
-            <tr><td><code>cleanup(off)</code></td><td>Registers teardown with the current context owner.</td></tr>
+            <tr><td><code>ctx</code></td><td>The current binding context.</td></tr>
+            <tr><td><code>wake(node, ctx)</code></td><td>Wires directive-created DOM, including any bindings or child wrappers inside it.</td></tr>
+            <tr><td><code>cleanup(off)</code></td><td>Registers teardown work with the current context owner.</td></tr>
         </tbody>
     </table>
 
+    <p>
+        The public directive exports are <code>DW_DIRECTIVES</code>,
+        <code>DirectiveContext</code>, <code>DirectiveHandler</code>,
+        <code>DirectiveUpdater</code>, and <code>nearestItem(ctx)</code>.
+        Low-level row construction and owner subscription arrays are internal;
+        custom directives should use <code>wake()</code> and
+        <code>cleanup()</code> instead.
+    </p>
+
     <h3>Live demo</h3>
-    <p>Click an item to toggle its done state.</p>
+    <p>
+        This demo uses both built-in directives. <code>*list</code> renders the
+        tasks, and <code>*if</code> shows the check mark for completed items.
+        Click an item to toggle its state.
+    </p>
+
     <ul class="demo-list">
         <template *list="items">
             <li>

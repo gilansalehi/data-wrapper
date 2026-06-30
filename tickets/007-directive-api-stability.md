@@ -1,5 +1,7 @@
 # Ticket 007: Directive API Stability
 
+**COMPLETED.**
+
 ## Goal
 
 Lock the public custom directive API for 1.0.
@@ -62,18 +64,16 @@ and documented.
   test harness; custom directives receive the scoped `wake` closure through
   `DirectiveContext`.
 
-## Review status
+## Shipped
 
-Delivery matches the agreed API — `cleanup` on the context, `own`/`ownerUnsubs`/
-`childContext` internal, and `*list`/`*if` switched onto `cleanup()`. Contract
-tests are in `tests/directives.test.ts`.
-
-One public-docs follow-up remains before this ticket should be marked complete:
-
-- **State the scoping boundary.** A custom directive can only `wake(node, ctx)`
-   under the context it is *handed* — with `childContext`/`blockContext` internal,
-   it cannot introduce a new data scope the way `*list` does. That's the right
-   1.0 line (custom directives are effects/decorators/toggles), but it should be a
-   documented limitation in `directives.html`, or an author may expect to build a
-   per-item-scoped directive and find no helper. Scope-introducing directives = a
-   future ticket that exposes a scope helper.
+- `DirectiveContext` carries parsed binding fields, `el`, `ctx`, scoped
+  `wake()`, and `cleanup()`.
+- `DW_DIRECTIVES`, `DirectiveContext`, `DirectiveHandler`,
+  `DirectiveUpdater`, and `nearestItem(ctx)` are the documented directive
+  authoring surface.
+- `childContext`, `ownerUnsubs`, and `own` remain internal helpers.
+- Built-in `*list` and `*if` use the public cleanup path.
+- `views/docs/directives.html` documents directive return behavior, cleanup
+  ownership, `host`/`protocol` fields, and the current custom-directive
+  scoping boundary.
+- Contract tests are in `tests/directives.test.ts`.
