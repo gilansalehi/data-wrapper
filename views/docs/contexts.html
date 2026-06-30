@@ -4,53 +4,96 @@
     <h2>Binding contexts</h2>
 
     <p>
-        Every wrapper starts a <strong>root binding context</strong> backed by
-        its <code>ComponentRuntime</code>. Each <code>*list</code> item pushes
-        a <strong>nested row context</strong>. Bindings are wired under the
-        context where their DOM node wakes — which is what makes nested lists
-        compose.
+        A binding resolves from the place where its DOM node is rendered. The
+        wrapper starts with a root context, which is backed by the component
+        module and any object returned by the default factory. Each
+        <code>*list</code> then creates a row context for the item it renders.
+        Nested lists create nested row contexts.
     </p>
 
-    <pre><code>wrapper component
-  order row
-    line row
-      DOM binding</code></pre>
+    <p>
+        This is what makes the same binding syntax work at different depths in
+        the DOM. In the example below, the outer template renders orders and the
+        inner template renders line items inside each order.
+    </p>
 
-    <pre><code>&lt;template *list="orders"&gt;
-    &lt;h3 $text="./customer"&gt;&lt;/h3&gt;
+    <pre><code data-title="orders.html">&lt;script type="module" data-module="@view/orders"&gt;
+    export const storeName = 'Downtown';
+    export const orders = [
+        {
+            id: 1,
+            customer: 'Ada',
+            lines: [
+                { id: 'a', sku: 'Notebook', qty: 2 },
+                { id: 'b', sku: 'Pencil', qty: 6 },
+            ],
+        },
+    ];
+&lt;/script&gt;
 
-    &lt;template *list="./lines"&gt;
-        &lt;span $text="./sku"&gt;&lt;/span&gt;
-        &lt;span $text="./qty"&gt;&lt;/span&gt;
-    &lt;/template&gt;
+&lt;template *list="orders"&gt;
+    &lt;article&gt;
+        &lt;h3 $text="./customer"&gt;&lt;/h3&gt;
+        &lt;p&gt;Store: &lt;span $text="storeName"&gt;&lt;/span&gt;&lt;/p&gt;
+
+        &lt;template *list="./lines"&gt;
+            &lt;p&gt;
+                &lt;span $text="../customer"&gt;&lt;/span&gt;
+                ordered
+                &lt;span $text="./qty"&gt;&lt;/span&gt;
+                &lt;span $text="./sku"&gt;&lt;/span&gt;
+            &lt;/p&gt;
+        &lt;/template&gt;
+    &lt;/article&gt;
 &lt;/template&gt;</code></pre>
 
     <p>
-        The outer <code>./customer</code> reads from the order row. The inner
-        <code>./sku</code> and <code>./qty</code> read from the line row.
-        Bare names climb from the nearest row through outer rows to the
-        wrapper's component runtime. Component actions still resolve from the
-        wrapper module, and row events include the nearest item on
-        <code>event.detail.item</code>.
+        The first <code>*list</code> reads <code>orders</code> from the wrapper
+        root and creates one row context per order. Inside that row,
+        <code>./customer</code> reads the current order. The bare name
+        <code>storeName</code> starts at the current row, does not find a field
+        with that name, and then climbs to the wrapper root.
+    </p>
+
+    <p>
+        The inner <code>*list="./lines"</code> starts from the current order and
+        renders one row for each line item. Inside that inner row,
+        <code>./qty</code> and <code>./sku</code> read the line item, while
+        <code>../customer</code> skips the line item and reads the parent order.
     </p>
 
     <h3>Resolution rules</h3>
+    <p>
+        These forms are available in <code>$</code> bindings,
+        <code>*</code> directive sources, and child-wrapper input expressions.
+        They all follow the same lookup rules.
+    </p>
+
     <table>
         <thead>
             <tr><th>Form</th><th>Resolves to</th></tr>
         </thead>
         <tbody>
-            <tr><td><code>name</code></td><td>nearest row that owns the name, then outer rows, then per-wrapper instance binding, then named module export</td></tr>
-            <tr><td><code>./name</code></td><td>nearest enclosing <code>*list</code> row's item only</td></tr>
-            <tr><td><code>../name</code></td><td>the parent row item; repeat as <code>../../name</code> for higher rows</td></tr>
-            <tr><td><code>/name</code></td><td>the wrapper's root component scope, bypassing row scopes</td></tr>
-            <tr><td><code>//id/name</code></td><td>another loaded wrapper's root component scope, addressed by DOM id</td></tr>
+            <tr><td><code>name</code></td><td>Starts at the nearest row that owns the name, then climbs through outer rows, then reads the wrapper root. At the root, factory instance bindings win over named module exports.</td></tr>
+            <tr><td><code>./name</code></td><td>Reads the nearest enclosing <code>*list</code> row only.</td></tr>
+            <tr><td><code>../name</code></td><td>Reads the parent row only. Repeat the prefix, as in <code>../../name</code>, to target higher rows.</td></tr>
+            <tr><td><code>/name</code></td><td>Reads the wrapper root and bypasses every row context.</td></tr>
+            <tr><td><code>//id/name</code></td><td>Reads another loaded <code>&lt;data-wrapper id="id"&gt;</code>, root scope only.</td></tr>
         </tbody>
     </table>
+
+    <p>
+        Parent-row paths are exact. If <code>../name</code> targets a parent row
+        that does not own <code>name</code>, it does not keep climbing and it
+        does not fall through to the wrapper root. That keeps nested templates
+        predictable.
+    </p>
+
     <p>
         Cross-wrapper reads are explicit and root-only. They use
         <code>document.getElementById()</code>, require a loaded
         <code>&lt;data-wrapper&gt;</code>, and do not inspect another wrapper's
-        row scopes.
+        row scopes. Use module imports for normal shared state; use
+        <code>//id/name</code> only when the DOM relationship is the point.
     </p>
 </section>
