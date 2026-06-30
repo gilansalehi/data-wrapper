@@ -79,6 +79,10 @@ Bindings resolve lexically from the DOM location where they wake:
 | `/name` | component/root scope, bypassing rows |
 | `//id/name` | another loaded `<data-wrapper id="id">`, component/root scope only |
 
+Protocol-prefixed forms such as `localStorage://key` are reserved for future
+resolvers. They are inert today: no static fallback, no event dispatch, and no
+child input value.
+
 ## Cross-Wrapper Communication
 
 Use ES module imports for shared application state. Use child inputs for

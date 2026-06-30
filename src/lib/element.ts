@@ -123,12 +123,16 @@ const importComponent = (
 const isCrossWrapperInputExpression = (raw: string): boolean =>
     raw.startsWith('//');
 
+const isReservedInputProtocol = (protocol: string): boolean =>
+    protocol !== 'dwrl:';
+
 const resolveInputAssignment = (
     expr: string,
     ctx?: BindingContext,
 ): unknown => {
     if (ctx) {
-        const { path, isRel, parent, host } = p(expr);
+        const { path, isRel, parent, host, protocol } = p(expr);
+        if (isReservedInputProtocol(protocol)) return null;
         const source = resolveSource(ctx, path, isRel, parent, expr, host);
         if (source) return () => source.read();
     }

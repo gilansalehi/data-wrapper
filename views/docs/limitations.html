@@ -32,7 +32,9 @@
     <h3>Reserved binding syntax</h3>
     <p>
         Protocol-prefixed values are still reserved for future custom
-        resolvers. Using them today is a no-op and should not be relied on.
+        resolvers. Using them today is a no-op: they do not render static
+        literals, dispatch parsed-path events, run directives, or create child
+        input values.
     </p>
     <ul>
         <li>Protocol-prefixed values (<code>localStorage://</code>, etc.) — reserved for custom resolvers.</li>

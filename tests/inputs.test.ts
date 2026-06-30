@@ -239,6 +239,29 @@ test('child wrapper props can read an explicit cross-wrapper source by id', asyn
     }
 });
 
+test('protocol-prefixed child props are reserved and omitted', async () => {
+    const moduleName = '@test/010-reserved-input';
+    const src = 'http://example.test/reserved.html?cache=localStorage://orders/current';
+    let captured: ComponentProps | undefined;
+    const parent = document.createElement('data-wrapper') as unknown as Wrapper;
+    parent._component = new ComponentRuntime(parent, {});
+    const child = document.createElement('data-wrapper') as unknown as Wrapper;
+    const html = componentView(moduleName, '<output $text="hasCache"></output>');
+    const module: ComponentModule = {
+        default: (ctx: ComponentContext) => {
+            captured = ctx.props;
+            return { hasCache: Object.hasOwn(ctx.props, 'cache') ? 'yes' : 'no' };
+        },
+    };
+
+    await withComponentView(moduleName, html, module, async () => {
+        await load(child, src, rootContext(parent));
+    });
+
+    expect(captured?.cache).toBeUndefined();
+    expect(child.querySelector('output')?.textContent).toBe('no');
+});
+
 // CQ6: `a/b` resolves `a` through the component scope, then reads `b` from that
 // value, and re-reads on flush so the nested field stays live.
 test('a nested path reads into a component binding and stays live', () => {

@@ -163,6 +163,7 @@ const NO_WAKE   = ['SVG'];
 const LIVE      = '_live';
 const BARE_PATH = /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:\/[a-zA-Z_$][a-zA-Z0-9_$]*)*$/;
 const BARE_BINDING = /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:\/[a-zA-Z_$][a-zA-Z0-9_$]*)*(?:[?#].*)?$/;
+const DWRL_PROTOCOL = 'dwrl:';
 type BindingResolution = { source: Source | null; missed: boolean };
 
 const formatter = (params: URLSearchParams) => {
@@ -192,6 +193,9 @@ const isCrossWrapperBinding = (raw: string): boolean =>
 
 const isRootBinding = (raw: string): boolean =>
     raw.startsWith('/') && !isCrossWrapperBinding(raw);
+
+const isReservedProtocol = (protocol: string): boolean =>
+    protocol !== DWRL_PROTOCOL;
 
 const rowScope = (row: Row): SourceScope => ({
     source: path => hasOwn(row.item, firstPathSegment(path)) ? rowSource(row, path) : null,
@@ -267,8 +271,10 @@ export const wire = (
     const token = name[0];
     const prop  = name.slice(1);
     const dwrl  = p(value);
-    const { path, isRel, parent, params, host } = dwrl;
+    const { path, isRel, parent, params, host, protocol } = dwrl;
     const wrapper = ctx.wrapper;
+
+    if (isReservedProtocol(protocol)) return;
 
     if (token === '@') {
         if (!path) return;

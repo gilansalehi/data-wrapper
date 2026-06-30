@@ -117,6 +117,29 @@ test('missing cross-wrapper binding stays inert and warns', () => {
     }
 });
 
+// Protocol-prefixed values are reserved for future resolvers. They stay inert
+// across tokens today: no static literal fallback for `$`, and no parsed-path
+// event emission for `@`.
+test('protocol-prefixed bindings are reserved inert syntax', () => {
+    const warn = spyOn(console, 'warn').mockImplementation(() => {});
+    const el = wrapperWithRuntime({});
+    el.innerHTML = '<output $text="localStorage://orders/count">kept</output><button @click="localStorage://orders/count">go</button>';
+    let emitted = false;
+    el.addEventListener('count', () => { emitted = true; });
+
+    try {
+        wake(el, rootContext(el));
+        (el.querySelector('button') as HTMLButtonElement).click();
+
+        expect(el.querySelector('output')?.textContent).toBe('kept');
+        expect(emitted).toBe(false);
+        expect(warn).not.toHaveBeenCalled();
+    } finally {
+        warn.mockRestore();
+        el._component?.destroy();
+    }
+});
+
 // --- parent-row addressing `../` (ticket 008) ---------------------------------
 
 // `../name` skips the nearest row and reads the parent row. Both rows own

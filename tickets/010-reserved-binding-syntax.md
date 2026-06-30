@@ -1,5 +1,7 @@
 # Ticket 010: Reserved Binding Syntax and Parser Surface
 
+**COMPLETED.**
+
 ## Goal
 
 Clarify which binding string forms are supported, reserved, or removed before
@@ -45,3 +47,21 @@ imply support the framework does not intend to provide.
 - Unsupported forms have predictable behavior.
 - Current examples use only supported forms: bare names, `./row`, `../parent`,
   `/root`, `//id/root`, and query params.
+
+## Decision
+
+Supported binding forms are:
+
+```txt
+name
+./name
+../name
+/name
+//id/name
+name?formatter
+```
+
+Protocol-prefixed values such as `localStorage://key` remain reserved for
+future custom resolvers. They are intentionally inert today across `$`, `*`,
+`@`, and child `src` inputs: no static literal fallback, no parsed-path event
+dispatch, no directive updater, and no prop value.
