@@ -42,7 +42,7 @@
         a token example.
     </p>
 
-    <pre><code data-title="counter.html">&lt;script type="module" data-component data-module="@view/counter"&gt;
+    <pre><code data-title="counter.html">&lt;script type="module" data-module="@view/counter"&gt;
     export let count = 0;
     export const doubled = () =&gt; count * 2;
     export function inc(event) { count += Number(event.target.value); }
@@ -67,7 +67,7 @@
         paths that start with <code>./</code> read from the current row item.
     </p>
 
-    <pre><code data-title="todos.html">&lt;script type="module" data-component&gt;
+    <pre><code data-title="todos.html">&lt;script type="module" data-module="@view/todos"&gt;
     export let todos = [
         { id: 1, task: 'Try $ bindings', done: true },
         { id: 2, task: 'Render a *list', done: false },

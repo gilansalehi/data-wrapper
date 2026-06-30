@@ -1,24 +1,25 @@
-<script type="module" data-component data-module="@docs/modules"></script>
+<script type="module" data-module="@docs/modules"></script>
 
 <section class="doc-section" id="modules">
     <h2>Cross-module imports</h2>
 
     <p>
-        <code>data-module</code> gives the component module a stable import
-        name. The loader registers the inline script's content under that name
-        in an import map; other modules then reference it like any ES module.
+        <code>data-module</code> marks the component module in a view and gives
+        it a stable import name. The loader registers the inline script's
+        content under that name in an import map; other modules then reference
+        it like any ES module.
     </p>
 
     <h3>Producer</h3>
     <pre><code>&lt;!-- /views/nav.html --&gt;
-&lt;script type="module" data-component data-module="@view/nav"&gt;
+&lt;script type="module" data-module="@view/nav"&gt;
     export let open = false;
     export function toggle() { open = !open; }
 &lt;/script&gt;</code></pre>
 
     <h3>Consumer</h3>
     <pre><code>&lt;!-- /views/dashboard.html --&gt;
-&lt;script type="module" data-component data-module="@view/dashboard"&gt;
+&lt;script type="module" data-module="@view/dashboard"&gt;
     import { open } from '@view/nav';
     export const navStateLabel = () =&gt; open ? 'visible' : 'hidden';
 &lt;/script&gt;
@@ -56,7 +57,7 @@ import { todos, addTodo } from 'state/todos.js';</code></pre>
 
     <h3>Naming rules</h3>
     <ul>
-        <li><code>data-module</code> is required on the inline script — the loader rejects unnamed modules.</li>
+        <li><code>data-module</code> marks the inline component module, and the value must not be empty.</li>
         <li>The name must be unique per document. Two views with the same name throw a duplicate-registration error.</li>
         <li><code>@view/*</code> and <code>@docs/*</code> are conventions; the name itself is any valid ESM specifier.</li>
     </ul>

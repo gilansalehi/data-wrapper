@@ -1,10 +1,10 @@
-<script type="module" data-component data-module="@docs/errors"></script>
+<script type="module" data-module="@docs/errors"></script>
 
 <section class="doc-section" id="errors">
     <h2>Error handling</h2>
     <p>
         The framework <strong>throws on failure</strong> rather than swallowing
-        errors. A failed <code>fetch</code>, an unparseable view, a missing or
+        errors. A failed <code>fetch</code>, an unparseable view, a blank or
         duplicate <code>data-module</code>, a factory that throws, an unknown
         <code>*directive</code>, or an action that throws all propagate as an
         exception — an uncaught promise rejection on the async load path.

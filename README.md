@@ -14,7 +14,7 @@ There is no build step, virtual DOM, JSX, or component compiler.
 
 ```html
 <!-- counter.html -->
-<script type="module" data-component data-module="@view/counter">
+<script type="module" data-module="@view/counter">
     export let count = 0;
     export const doubled = () => count * 2;
     export function inc(event) {
@@ -132,7 +132,7 @@ auth, or a central collection.
 
 ```html
 <!-- theme.html -->
-<script type="module" data-component data-module="@view/theme">
+<script type="module" data-module="@view/theme">
     import { action } from 'data-wrapper';
 
     export let theme = 'light';
@@ -151,7 +151,7 @@ Instance bindings shadow named module exports with the same name.
 
 ```html
 <!-- counter.html -->
-<script type="module" data-component data-module="@view/counter">
+<script type="module" data-module="@view/counter">
     import { action } from 'data-wrapper';
 
     export const label = 'Counter';
@@ -231,12 +231,13 @@ child input value.
 
 ## Cross-Module Imports
 
-`data-module` gives a component module a stable import name. Other component
-modules can import from that name just like they import from any ES module.
+`data-module` marks the component module in a view and gives it a stable import
+name. Other component modules can import from that name just like they import
+from any ES module.
 
 ```html
 <!-- nav.html -->
-<script type="module" data-component data-module="@view/nav">
+<script type="module" data-module="@view/nav">
     import { action } from 'data-wrapper';
 
     export let open = false;
@@ -246,7 +247,7 @@ modules can import from that name just like they import from any ES module.
 
 ```html
 <!-- dashboard.html -->
-<script type="module" data-component data-module="@view/dashboard">
+<script type="module" data-module="@view/dashboard">
     import { open, toggle } from '@view/nav';
 
     export const navLabel = () => open ? 'Navigation open' : 'Navigation closed';

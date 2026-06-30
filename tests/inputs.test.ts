@@ -80,7 +80,7 @@ const withComponentView = async (
 };
 
 const componentView = (moduleName: string, body: string) => `
-<script type="module" data-component data-module="${moduleName}"></script>
+<script type="module" data-module="${moduleName}"></script>
 ${body}
 `;
 

@@ -1,4 +1,4 @@
-<script type="module" data-component data-module="@docs/factory"></script>
+<script type="module" data-module="@docs/factory"></script>
 
 <section class="doc-section" id="factory">
     <h2>Module scope vs. default factory</h2>
@@ -17,7 +17,7 @@
         <code>theme</code> export.
     </p>
 
-    <pre><code data-title="theme.html">&lt;script type="module" data-component data-module="@view/theme"&gt;
+    <pre><code data-title="theme.html">&lt;script type="module" data-module="@view/theme"&gt;
     export let theme = 'light';
     export const label = () =&gt; `Theme: ${theme}`;
 
@@ -44,7 +44,7 @@
         name wins.
     </p>
 
-    <pre><code data-title="counter.html">&lt;script type="module" data-component data-module="@view/counter"&gt;
+    <pre><code data-title="counter.html">&lt;script type="module" data-module="@view/counter"&gt;
     export const label = 'Counter';
 
     export default ({ props }) =&gt; {
@@ -79,7 +79,7 @@
         place where the child appears in the parent DOM.
     </p>
 
-    <pre><code data-title="orders.html">&lt;script type="module" data-component data-module="@view/orders"&gt;
+    <pre><code data-title="orders.html">&lt;script type="module" data-module="@view/orders"&gt;
     export const customer = { firstName: 'Ada', lastName: 'Lovelace' };
     export let orderStatus = 'Ready';
 &lt;/script&gt;
@@ -95,7 +95,7 @@
         <code>orderStatus</code> binding.
     </p>
 
-    <pre><code data-title="card.html">&lt;script type="module" data-component data-module="@view/card"&gt;
+    <pre><code data-title="card.html">&lt;script type="module" data-module="@view/card"&gt;
     export default ({ props }) =&gt; ({
         customer: props.customer,
         status: props.status,

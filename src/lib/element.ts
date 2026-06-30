@@ -230,10 +230,10 @@ export const load: WrapperLoader = async (wrapper: Wrapper, src: string, ctx?: B
     tpl.innerHTML = html;
 
     const scripts = tpl.content.querySelectorAll<HTMLScriptElement>(
-        'script[type="module"][data-component]'
+        'script[type="module"][data-module]'
     );
     if (scripts.length > 1) {
-        throw new Error(`Component view ${url.href} may contain only one data-component module`);
+        throw new Error(`Component view ${url.href} may contain only one data-module script`);
     }
     const script = scripts[0];
 
