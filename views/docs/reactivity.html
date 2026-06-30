@@ -22,80 +22,135 @@
     <h2>Reactivity model</h2>
 
     <p>
-        The framework has exactly two primitives — <code>action()</code>, a
-        function wrapper, and <code>flush()</code>, a manual flush trigger.
-        Every <code>@event</code> binding is auto-wrapped, so most components
-        never have to call either directly.
+        data-wrapper does not track individual property reads. Instead, each
+        mounted wrapper remembers which bindings are connected to the DOM. When
+        a flush runs, the wrapper re-reads those bindings and updates the DOM
+        only where the value changed.
     </p>
 
-    <h3>The action boundary</h3>
     <p>
-        When an action runs, every active <code>ComponentRuntime</code>
-        re-reads its subscribed outputs and publishes the ones that changed
-        (compared with <code>Object.is</code>). Calls coalesce inside a
-        microtask, so a chain of nested action invocations triggers one flush
-        at the end, not one per call.
+        That makes the model simple: mutate your state, then make sure a flush
+        happens. Event bindings do this for you. Code that runs outside an event
+        binding can use <code>action()</code> or call <code>flush()</code>
+        manually.
+    </p>
+
+    <pre><code data-title="counter.html">&lt;script type="module" data-module="@view/counter"&gt;
+    export let count = 0;
+    export const doubled = () =&gt; count * 2;
+
+    export function increment() {
+        count += 1;
+    }
+&lt;/script&gt;
+
+&lt;button @click="increment"&gt;+1&lt;/button&gt;
+&lt;output $text="count"&gt;&lt;/output&gt;
+&lt;output $text="doubled"&gt;&lt;/output&gt;</code></pre>
+
+    <p>
+        When the button is clicked, the exported <code>increment</code>
+        function runs inside the event action boundary. After it returns,
+        data-wrapper re-reads <code>count</code> and <code>doubled</code>. A
+        function used as a value is called during that read, so derived values
+        can stay as ordinary JavaScript functions.
     </p>
 
     <h3><code>action()</code></h3>
     <p>
-        Wrap functions that mutate module state but get called from outside
-        an <code>@event</code> boundary — imported writers, timer callbacks,
-        WebSocket handlers, anything async that runs after the next
-        microtask.
+        Use <code>action()</code> for exported writers that may be called from
+        outside a local <code>@event</code> binding. This is common when one
+        module imports a writer from another module, or when application code
+        calls a writer directly.
     </p>
 
-    <pre><code>import { action } from 'data-wrapper';
+    <pre><code data-title="state/todos.js">import { action } from 'data-wrapper';
 
-// single function
-export const setFilter = action(f =&gt; { filter = f; });
+export let todos = [];
 
-// object — wraps each value, returns the same shape
-export const { addTodo, removeTodo } = action({
-    addTodo:    item =&gt; { todos = [...todos, item]; },
-    removeTodo: id   =&gt; { todos = todos.filter(t =&gt; t.id !== id); },
+export const addTodo = action(task =&gt; {
+    todos = [...todos, { id: Date.now(), task, done: false }];
 });</code></pre>
 
     <p>
-        <code>action()</code> is idempotent — wrapping an already-wrapped
-        function returns it unchanged, so passing the same writer through
-        multiple layers doesn't multiply flushes.
+        <code>action(fn)</code> returns a wrapped function. The wrapped function
+        calls your function, then schedules a global flush. Multiple action
+        calls in the same task are coalesced, so a chain of writers still
+        produces one flush at the end of the microtask. All mounted wrappers
+        that read affected exports get a chance to re-read their active
+        bindings.
+    </p>
+
+    <pre><code data-title="object form">import { action } from 'data-wrapper';
+
+export let todos = [];
+
+export const { addTodo, removeTodo } = action({
+    addTodo(task) {
+        todos = [...todos, { id: Date.now(), task, done: false }];
+    },
+    removeTodo(id) {
+        todos = todos.filter(todo =&gt; todo.id !== id);
+    },
+});</code></pre>
+
+    <p>
+        The object form wraps each function and returns the same shape. Calling
+        <code>action()</code> on an already wrapped function returns the same
+        function, so passing a writer through multiple modules does not multiply
+        flushes.
     </p>
 
     <h3>Async actions</h3>
     <p>
-        If the wrapped function returns a Promise, the action flushes again
-        when the promise resolves. The synchronous portion's mutations
-        publish before the first <code>await</code>; post-await mutations
-        publish when the chain settles.
+        If an action returns a Promise, data-wrapper flushes after the
+        synchronous part and again when the Promise settles. That covers the
+        common loading pattern: show a loading state, await the data, then show
+        the result.
     </p>
 
-    <pre><code>export const loadItems = action(async () =&gt; {
+    <pre><code data-title="async action">import { action } from 'data-wrapper';
+
+export let loading = false;
+export let items = [];
+
+export const loadItems = action(async () =&gt; {
     loading = true;
+
     items   = await fetch('/items').then(r =&gt; r.json());
     loading = false;
 });</code></pre>
 
     <h3><code>flush()</code> as an escape hatch</h3>
     <p>
-        For mutations that can't be wrapped at the call site — a
-        <code>setInterval</code>, a third-party event listener — call
-        <code>flush()</code> manually after the mutation.
+        Some code runs outside the framework's event boundary and outside a
+        writer you can wrap. Timers, third-party listeners, and browser APIs may
+        mutate state later. In those cases, call <code>flush()</code> after the
+        mutation.
     </p>
 
-    <pre><code>import { flush } from 'data-wrapper';
+    <pre><code data-title="timer.js">import { flush } from 'data-wrapper';
+
+export let clock = new Date();
 
 setInterval(() =&gt; {
     clock = new Date();
     flush();
 }, 1000);</code></pre>
 
+    <p>
+        <code>flush()</code> is global. It asks every active wrapper runtime to
+        re-read its connected bindings. Each runtime compares new values with
+        the previous values using <code>Object.is</code>, then publishes only
+        the bindings that changed.
+    </p>
+
     <h3>Live demo</h3>
     <p>
-        This timer is set up by a factory and uses <code>flush()</code>
-        manually because <code>setInterval</code> escapes the action
-        boundary.
+        This timer uses <code>setInterval</code>, so it calls
+        <code>flush()</code> manually after each tick.
     </p>
+
     <div class="demo">
         <button @click="startTimer">Start</button>
         <button @click="stopTimer">Stop</button>
