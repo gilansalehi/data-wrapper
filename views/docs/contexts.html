@@ -28,8 +28,10 @@
     <p>
         The outer <code>./customer</code> reads from the order row. The inner
         <code>./sku</code> and <code>./qty</code> read from the line row.
-        Component actions still resolve from the wrapper module, and row
-        events include the nearest item on <code>event.detail.item</code>.
+        Bare names climb from the nearest row through outer rows to the
+        wrapper's component runtime. Component actions still resolve from the
+        wrapper module, and row events include the nearest item on
+        <code>event.detail.item</code>.
     </p>
 
     <h3>Resolution rules</h3>
@@ -38,14 +40,14 @@
             <tr><th>Form</th><th>Resolves to</th></tr>
         </thead>
         <tbody>
-            <tr><td><code>name</code></td><td>per-wrapper instance binding, then named module export</td></tr>
-            <tr><td><code>./name</code></td><td>nearest enclosing <code>*list</code> row's item</td></tr>
+            <tr><td><code>name</code></td><td>nearest row that owns the name, then outer rows, then per-wrapper instance binding, then named module export</td></tr>
+            <tr><td><code>./name</code></td><td>nearest enclosing <code>*list</code> row's item only</td></tr>
+            <tr><td><code>/name</code></td><td>the wrapper's root component scope, bypassing row scopes</td></tr>
         </tbody>
     </table>
     <p>
-        That's the entire grammar for now. Absolute paths
-        (<code>/wrapperState</code>), parent-row references (<code>../</code>),
-        and cross-wrapper hosts (<code>//host/path</code>) are reserved for
-        later — see <a href="#limitations">Known Limitations</a>.
+        Parent-row references (<code>../</code>) and cross-wrapper hosts
+        (<code>//host/path</code>) are reserved for later — see
+        <a href="#limitations">Known Limitations</a>.
     </p>
 </section>

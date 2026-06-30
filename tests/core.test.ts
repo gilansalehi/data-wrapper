@@ -97,3 +97,29 @@ test('*list updates a row in place and removes a dropped row', () => {
     flush();
     expect(rowText(el)).toEqual(['A']);
 });
+
+test('*list renders, reorders, and removes rows from a compact template', () => {
+    let items = [
+        { id: 1, label: 'a' },
+        { id: 2, label: 'b' },
+        { id: 3, label: 'c' },
+    ];
+    const setItems = action((next: typeof items) => { items = next; });
+    const el = wrapperWithRuntime({ get items() { return items; }, setItems });
+    const li = document.createElement('li');
+    li.setAttribute('$text', './label');
+    const ul = document.createElement('ul');
+    ul.append(structuralTemplate('list', 'items', li));
+    el.append(ul);
+    wake(el, rootContext(el));
+
+    expect(rowText(el)).toEqual(['a', 'b', 'c']);
+
+    setItems([
+        { id: 3, label: 'C' },
+        { id: 1, label: 'A' },
+    ]);
+    flush();
+
+    expect(rowText(el)).toEqual(['C', 'A']);
+});

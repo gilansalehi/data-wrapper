@@ -12,6 +12,10 @@ implementation in places. Specifically:
 
 - The factory + module-scope overlay model gets one paragraph but needs a
   worked side-by-side example showing when to use each.
+- Child-wrapper inputs via `src` query params are now part of the factory model
+  and need a concise worked example.
+- Binding resolution changed during ticket 004: bare names climb row scopes, and
+  `/name` is the component/root-scope escape hatch.
 - `data-module="@view/name"` has one mention and no example of consuming it
   from another module.
 - URL-param event modifiers (`?prevent`, `?stop`, `?immediate`) are
@@ -34,6 +38,9 @@ from the README alone.
 - Add worked sections for:
   - the factory vs. module-scope decision, with two side-by-side counter
     examples
+  - child inputs: `src="?customer&status=orderStatus"` delivered to
+    `context.props`, then explicitly returned by the factory
+  - supported binding forms: bare climb, `./row`, and `/root`
   - cross-module imports via `@view/name` (one producer, one consumer)
   - URL-param event modifiers, with a list of supported modifiers
   - the reactivity model: `action()` shapes (single function, object batch,

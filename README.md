@@ -25,6 +25,48 @@ through three tokens. No build step, no virtual DOM, no JSX.
 Named exports are the component's state surface. Mutate `count` inside an
 action; every binding that reads it updates on the next flush.
 
+## Component Instances
+
+Module exports are shared by every wrapper that imports the same component
+module. A default export can act as a per-wrapper factory when a view needs
+instance state or inputs from its mounting point:
+
+```js
+export const label = 'Counter';
+
+export default ({ props }) => {
+    let count = Number(props.start ?? 0);
+    return {
+        get count() { return count; },
+        inc() { count += 1; },
+    };
+};
+```
+
+```html
+<data-wrapper src="counter.html?start=5"></data-wrapper>
+```
+
+`src` query entries become factory `props`. A child wrapper resolves each entry
+against the parent binding context where it is mounted; resolved entries are
+stable function readers, and unresolved entries are static strings. Inputs are
+not automatically added to the template binding namespace, so the factory
+decides what to expose:
+
+```html
+<data-wrapper src="card.html?customer&status=orderStatus"></data-wrapper>
+```
+
+```js
+export default ({ props }) => ({
+    customer: props.customer,
+    status: props.status,
+});
+```
+
+Inside `card.html`, `$text="customer/firstName"` reads the exposed instance
+binding. `props.url` is always the full `src` string.
+
 ## Docs
 
 The full documentation is a set of views in this repo at `views/docs/`,

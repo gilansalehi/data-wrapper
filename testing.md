@@ -1,9 +1,9 @@
 # Testing
 
-Status: **draft for discussion.** This documents *why* and *what* we test, so the
-suite stays a safety net and never becomes a cage. The harness is wired up
-(`bunfig.toml` + `tests/setup.ts`); the suite is being filled in — see
-[Todos](#todos).
+Status: **draft, current through ticket 004 Phase V.** This documents *why* and
+*what* we test, so the suite stays a safety net and never becomes a cage. The
+harness is wired up (`bunfig.toml` + `tests/setup.ts`); the suite is being
+filled in — see [Todos](#todos).
 
 These are **contract tests, not unit tests.** Their job is to let us change
 *implementation details* freely without breaking the *contract* the lib commits
@@ -40,19 +40,24 @@ to change underneath them.
 - **Stub the boundary, don't mock the world.** The loader's async machinery
   (`fetch`, dynamic `import`, blob URLs, import-map injection) is not modeled by
   happy-dom and is not the lib's logic. Where a test needs loading to *happen*,
-  inject a fake via `setWrapperLoader` and assert the observable effect.
+  pass a fake loader to `wake(wrapper, rootContext(wrapper), fakeLoader)` and
+  assert the observable effect.
 - **Failures must name themselves.** A red test should read as a sentence about
   the broken guarantee, not an opaque assertion dump.
 
 ## The `load()` boundary
 
-`load()` (fetch → import component → append → wake) is **not** unit-tested. It
-depends on browser behaviors happy-dom doesn't fully provide. Its *observable
-contract* — connecting a wrapper triggers a wake; a wrapper host with `src` gets
-loaded once; a nested host is claimed with its parent's context — is covered by
-stubbing `setWrapperLoader`. The real round-trip is verified manually via the
-showcase pages, and may later get a thin Playwright smoke test. No e2e,
+`load()` (fetch → import component → append → wake) sits on browser behavior
+happy-dom does not fully provide. The real round-trip is verified manually via
+the showcase pages, and may later get a thin Playwright smoke test. No e2e,
 snapshot, coverage-gate, or CI work is in scope here.
+
+The observable child-loading contract can still be tested without reaching into
+private fields: call `wake(wrapper, rootContext(wrapper), fakeLoader)` and assert
+that nested hosts are handed to the loader with the right mounted behavior. A
+narrow `load()` test may stub `fetch` and the documented shim path
+(`globalThis.importShim`) when it is the least-coupled way to prove
+`context.props`, but tests should not assert import-map or blob-URL mechanics.
 
 ## Layout
 
@@ -60,11 +65,9 @@ snapshot, coverage-gate, or CI work is in scope here.
 tests/
   setup.ts          happy-dom global registrator (preloaded via bunfig.toml)
   resolution.test.ts core: name → source resolution
-  reactivity.test.ts core: action() / flush() / cross-runtime
-  directives.test.ts core: *list reconcile + teardown, *if toggle
-  events.test.ts     core: @event dispatch, modifiers, action activation
-  props.test.ts      004: projected props semantics (no load)
-  composition.test.ts 004: wake orchestration via stubbed loader
+  scopes.test.ts     core: scope climb, block transparency, miss policy
+  core.test.ts       core: action/flush, *list, *if
+  inputs.test.ts     004: props-facing behavior and `/key`
 ```
 
 A test "wrapper" is a detached element carrying `_unsubs`, `_listCache`, and an
@@ -85,9 +88,10 @@ The guarantees 1.0 commits to. Each is one test unless noted.
   owns it
 - `./key` reads the nearest enclosing `*list` row item — explicit local scope,
   no climb
-- a bare name that resolves nowhere up to the root surfaces a console error and
-  does not abort its sibling bindings
-- reserved syntax (`/abs`, `//host`, `../`) stays an inert no-op — distinct from
+- `/key` reads the component/root scope and bypasses row scopes
+- a bare name that resolves nowhere up to the root renders a static literal,
+  emits `console.warn`, and does not abort its sibling bindings
+- reserved syntax (`//host`, `../`) stays an inert no-op — distinct from
   a genuine miss
 
 **Reactivity**
@@ -110,25 +114,26 @@ The guarantees 1.0 commits to. Each is one test unless noted.
 
 ## Ticket 004: child wrapper inputs
 
-**Props semantics (engine-direct, no `load()`):**
-- a child binding resolves a projected prop to the parent's current value
-- precedence: factory return shadows a prop; a prop shadows a child module export
-- liveness through destructuring: `const { x } = props; x()` reflects a later
-  parent mutation (props are function readers, not snapshots)
-- a prop source resolves against the *parent* context, climbing the parent's row
-  scopes then its component runtime: a child mounted in a parent `*list` row reads
-  `?customer` from that row
-- `?date=dateAlias` aliases the parent binding `dateAlias` to the child prop `date`
-- no query params ⇒ `props = {}`; an existing wrapper is unaffected
-- an unresolvable projection throws an error naming the child URL, the prop, and
-  the parent binding — a projection miss throws (the child cannot render without
-  its declared input), whereas a template-binding miss only logs and continues
+**Props semantics:**
+- Child inputs are factory-only. Query entries become `context.props`; they are
+  not auto-bound and do not create an input tier in lookup.
+- A resolved input is a stable function reader backed by the parent source; a
+  literal input is a stable value.
+- `?date=dateAlias` aliases the parent binding `dateAlias` to the child prop
+  `date`; `?start=5` yields the static string `"5"` when no binding resolves.
+- Unresolved input expressions become static literals and do not warn.
+- `props.url` is reserved and always contains the full `src` string.
+- A template can bind an input only after the factory returns it as an instance
+  binding; instance bindings still shadow module exports.
+- Nested component paths resolve the first segment through `instance > module`,
+  then read the remaining path from that value. A missing first segment is a
+  normal binding miss; a missing deep property renders empty.
 
 **Wake orchestration (stubbed loader):**
 - connecting a wrapper triggers a wake rather than a direct load
 - a root host with `src` is loaded exactly once
-- a nested host is claimed with its parent's binding context and loaded; the
-  parent wake does not descend into the child's contents
+- a nested host is loaded with its parent's binding context at the mount point;
+  the parent wake does not descend into the child's contents
 - loading is idempotent: waking the same host twice loads once
 - a nested host that wakes itself before its parent claims it does not self-load;
   it loads once the parent reaches it
@@ -136,10 +141,9 @@ The guarantees 1.0 commits to. Each is one test unless noted.
 ## Todos
 
 - [x] Scaffolding: `tests/setup.ts` + `bunfig.toml` (`preload`) + `"test"` script.
-- [x] Climb-depth: bare names climb to the root; a total miss is a console error.
-- [ ] Validate the harness — `bun test` green on the resolution exemplars.
-- [ ] Write the rest of the core tests, then the 004 tests; Codex implements.
-- [ ] **Codex follow-up:** bare-name resolution must climb *all* row scopes and
-      log on a total miss. Current code stops at the nearest row and misses
-      silently (`resolveSource` returns null).
+- [x] Climb-depth: bare names climb to the root; a total miss warns and renders
+      a static literal.
+- [x] Validate the harness — `bun test` green on the current contract suite.
+- [x] Review 004 tests for the real `context.props` creation path without
+      coupling to loader internals.
 - [ ] Decide if/when a Playwright smoke test covers the real `load()` round-trip.

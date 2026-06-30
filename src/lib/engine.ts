@@ -313,12 +313,11 @@ const loadChildWrapper = (
     const wrapper = el as Wrapper;
     if (wrapper._loadedSrc === src) return;
 
-    try {
-        Promise.resolve(load(wrapper, src, ctx))
-            .catch(err => console.error(`<data-wrapper src="${src}">`, err));
-    } catch (err) {
-        console.error(`<data-wrapper src="${src}">`, err);
-    }
+    // Child-load errors throw by default (ticket 005): propagate as an uncaught
+    // rejection with src attribution rather than swallowing to the console.
+    Promise.resolve(load(wrapper, src, ctx)).catch(err => {
+        throw new Error(`<data-wrapper src="${src}"> failed to load`, { cause: err });
+    });
 };
 
 export const wake = (

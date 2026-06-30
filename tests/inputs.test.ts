@@ -5,12 +5,21 @@
 // same shape the passing resolution suite uses — deliberately NOT innerHTML, which
 // happy-dom appears to handle differently for token attributes / <template> bodies.
 //
-// Note: the `src` → context.props resolution itself runs inside load() (fetch +
-// dynamic import), which happy-dom can't model (ticket 011 blind spot). What these
-// pin is the *contract's point* — cross-wrapper liveness and path/scope resolution —
-// not the fetch wiring, which is covered by manual smoke.
-import { test, expect } from 'bun:test';
-import { ComponentRuntime, flush, rootContext, wake, type Wrapper } from '../src/lib/index.ts';
+// The full browser loader round-trip remains a smoke-test concern, but these tests
+// can stub the browser boundary (`fetch` + import shim) and still exercise the
+// public `load()` / `wake()` contract without asserting loader internals.
+import { test, expect, spyOn } from 'bun:test';
+import {
+    ComponentRuntime,
+    flush,
+    load,
+    rootContext,
+    wake,
+    type ComponentContext,
+    type ComponentModule,
+    type ComponentProps,
+    type Wrapper,
+} from '../src/lib/index.ts';
 
 const el = (tag: string, attrs: Record<string, string> = {}, ...kids: Element[]): Element => {
     const node = document.createElement(tag);
@@ -38,25 +47,126 @@ const mount = (
     return wrapper;
 };
 
+type ShimGlobal = typeof globalThis & {
+    importShim?: (specifier: string) => Promise<ComponentModule>;
+    fetch: typeof fetch;
+};
+
+const withComponentView = async (
+    moduleName: string,
+    html:       string,
+    module:     ComponentModule,
+    run:        () => Promise<void>,
+) => {
+    const global = globalThis as ShimGlobal;
+    const previousFetch = global.fetch;
+    const previousShim  = global.importShim;
+
+    global.fetch = (async () => new Response(html, {
+        headers: { 'Content-Type': 'text/html' },
+    })) as unknown as typeof fetch;
+    global.importShim = async specifier => {
+        if (specifier !== moduleName) throw new Error(`Unexpected component import ${specifier}`);
+        return module;
+    };
+
+    try {
+        await run();
+    } finally {
+        global.fetch = previousFetch;
+        if (previousShim) global.importShim = previousShim;
+        else delete global.importShim;
+    }
+};
+
+const componentView = (moduleName: string, body: string) => `
+<script type="module" data-component data-module="${moduleName}"></script>
+${body}
+`;
+
 // --- Phase 3: the input channel ----------------------------------------------
 
-// The headline 004 promise: a projected input is a live reader backed by the
-// parent, so mutating the parent updates the child across the wrapper boundary.
-// We construct what `export default ({ props }) => props` yields for `?customer`
-// (a reader over the parent source) since load() itself is the happy-dom blind spot.
-test('a projected input renders the parent value and stays live across the wrapper boundary', () => {
-    let name = 'Ada';
-    const parent = new ComponentRuntime(document.createElement('data-wrapper'), {
-        get customer() { return name; },
+test('load delivers src query inputs as factory props, and templates see only factory return values', async () => {
+    const warn = spyOn(console, 'warn').mockImplementation(() => {});
+    const moduleName = '@test/004-props';
+    const src = 'http://example.test/card.html?customer&status=orderStatus&start=5&url=query';
+    let customer = { firstName: 'Ada' };
+    let captured: ComponentProps | undefined;
+
+    const parent = document.createElement('data-wrapper') as unknown as Wrapper;
+    parent._component = new ComponentRuntime(parent, {
+        get customer() { return customer; },
+        get orderStatus() { return 'active'; },
     });
-    const source = parent.source('customer')!;
 
-    const wrapper = mount(el('h3', { $text: 'customer' }), {}, { customer: () => source.read() });
+    const child = document.createElement('data-wrapper') as unknown as Wrapper;
+    const html = componentView(moduleName, `
+<h3 id="name" $text="exposedCustomer/firstName"></h3>
+<p id="status" $text="status"></p>
+<output id="start" $text="start"></output>
+<code id="unexposed" $text="customer/firstName"></code>
+`);
+    const module: ComponentModule = {
+        default: (ctx: ComponentContext) => {
+            captured = ctx.props;
+            return {
+                exposedCustomer: ctx.props.customer,
+                status: ctx.props.status,
+                start: ctx.props.start,
+            };
+        },
+    };
 
-    expect(wrapper.querySelector('h3')?.textContent).toBe('Ada');
-    name = 'Grace';
-    flush();
-    expect(wrapper.querySelector('h3')?.textContent).toBe('Grace');
+    try {
+        await withComponentView(moduleName, html, module, async () => {
+            await load(child, src, rootContext(parent));
+        });
+
+        expect(typeof captured?.customer).toBe('function');
+        expect(typeof captured?.status).toBe('function');
+        expect(captured?.start).toBe('5');
+        expect(captured?.url).toBe(src);
+        expect(child.querySelector('#name')?.textContent).toBe('Ada');
+        expect(child.querySelector('#status')?.textContent).toBe('active');
+        expect(child.querySelector('#start')?.textContent).toBe('5');
+        expect(child.querySelector('#unexposed')?.textContent).toBe('customer/firstName');
+
+        customer = { firstName: 'Grace' };
+        flush();
+        expect(child.querySelector('#name')?.textContent).toBe('Grace');
+    } finally {
+        warn.mockRestore();
+    }
+});
+
+test('child wrappers inside *list receive props from the row mount point', async () => {
+    const moduleName = '@test/004-row-props';
+    const src = 'http://example.test/row-card.html?customer';
+    const parent = document.createElement('data-wrapper') as unknown as Wrapper;
+    parent._component = new ComponentRuntime(parent, {
+        rows: [
+            { id: 1, customer: { firstName: 'Ada' } },
+            { id: 2, customer: { firstName: 'Grace' } },
+        ],
+    });
+    parent.append(template('list', 'rows', el('article', {}, el('data-wrapper', { src }))));
+    const html = componentView(moduleName, '<h3 $text="customer/firstName"></h3>');
+    const module: ComponentModule = {
+        default: (ctx: ComponentContext) => ({ customer: ctx.props.customer }),
+    };
+
+    const loads: Promise<void>[] = [];
+    await withComponentView(moduleName, html, module, async () => {
+        wake(parent, rootContext(parent), (wrapper, childSrc, ctx) => {
+            const promise = Promise.resolve(load(wrapper, childSrc, ctx));
+            loads.push(promise);
+            return promise;
+        });
+        await Promise.all(loads);
+    });
+
+    expect([...parent.querySelectorAll('data-wrapper h3')].map(h => h.textContent))
+        .toEqual(['Ada', 'Grace']);
 });
 
 // CQ6: `a/b` resolves `a` through the component scope, then reads `b` from that

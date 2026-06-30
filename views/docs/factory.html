@@ -12,15 +12,15 @@
     <p>
         When a view needs state unique to each mounted wrapper, the module may
         also export a <strong>default factory</strong>. The factory receives
-        the wrapper's load URL plus parsed query parameters and returns an
-        object that overlays the module scope. If the same name appears in
-        both, the instance value wins.
+        the wrapper's load URL, parsed query parameters, and resolved
+        <code>props</code>, then returns an object that overlays the module
+        scope. If the same name appears in both, the instance value wins.
     </p>
 
     <pre><code>export const label = 'Counter';
 
-export default ({ wrapper, url, params }) =&gt; {
-    let count = Number(params.get('start') ?? 0);
+export default ({ props }) =&gt; {
+    let count = Number(props.start ?? 0);
     return {
         get count() { return count; },
         increment() { count += 1; },
@@ -36,6 +36,34 @@ export default ({ wrapper, url, params }) =&gt; {
         another module instance.
     </p>
 
+    <h3>Child inputs</h3>
+    <p>
+        Query entries on a child wrapper's <code>src</code> are resolved where
+        that child is mounted and delivered to the child's factory as
+        <code>props</code>. Resolved entries are stable function readers;
+        unresolved entries are static strings. Inputs are not automatically
+        exposed to the template; the factory returns the bindings it wants the
+        template to see.
+    </p>
+
+    <pre><code>&lt;data-wrapper src="card.html?customer&amp;status=orderStatus"&gt;&lt;/data-wrapper&gt;</code></pre>
+
+    <pre><code>export default ({ props }) =&gt; ({
+    customer: props.customer,
+    status: props.status,
+});</code></pre>
+
+    <pre><code>&lt;h3 $text="customer/firstName"&gt;&lt;/h3&gt;
+&lt;p $text="status"&gt;&lt;/p&gt;</code></pre>
+
+    <p>
+        Because a resolved input is a function, the factory either
+        <em>returns</em> it for the template to call — keeping it live, as with
+        <code>customer</code> above — or <em>calls</em> it to snapshot a value. A
+        literal input is a plain value used directly, as with
+        <code>props.start</code> in the counter.
+    </p>
+
     <h3>The <code>ComponentContext</code> shape</h3>
     <p>The factory's single argument is a frozen object:</p>
     <table>
@@ -44,6 +72,8 @@ export default ({ wrapper, url, params }) =&gt; {
             <tr><td><code>wrapper</code></td><td><code>HTMLElement</code></td><td>The mounted <code>&lt;data-wrapper&gt;</code> element itself.</td></tr>
             <tr><td><code>url</code></td><td><code>URL</code></td><td>The full resolved <code>src</code> URL.</td></tr>
             <tr><td><code>params</code></td><td><code>URLSearchParams</code></td><td>Parsed query parameters from the <code>src</code>.</td></tr>
+            <tr><td><code>props</code></td><td><code>Readonly object</code></td><td>Input values or function readers, plus reserved <code>props.url</code>, the full original <code>src</code> string.</td></tr>
+            <tr><td><code>cleanup</code></td><td><code>function</code></td><td>Registers teardown work owned by this wrapper instance.</td></tr>
         </tbody>
     </table>
 </section>

@@ -35,8 +35,9 @@
 
     <p>Bindings resolve against the current binding context:</p>
     <ul>
-        <li><strong>Bare name</strong> (<code>view</code>) checks the per-wrapper instance, then named module exports.</li>
-        <li><strong>Relative path</strong> (<code>./done</code>) reads from the nearest surrounding <code>*list</code> item.</li>
+        <li><strong>Bare name</strong> (<code>view</code>) checks the nearest row, outer rows, the per-wrapper instance, then named module exports.</li>
+        <li><strong>Relative path</strong> (<code>./done</code>) reads only from the nearest surrounding <code>*list</code> item.</li>
+        <li><strong>Root path</strong> (<code>/view</code>) reads from the wrapper's component scope and bypasses rows.</li>
     </ul>
 
     <p>Live counter (mounted as part of this very doc page):</p>

@@ -24,22 +24,22 @@
     <p>
         The binding parser recognizes a few forms that the engine does not
         resolve. Using them today is a silent no-op; they're reserved for
-        future use and shouldn't be relied on:
+        future use and shouldn't be relied on. The <code>/name</code> form is
+        supported: it reads from the wrapper's root component scope.
     </p>
     <ul>
-        <li><code>/absolute/path</code> — reserved for a wrapper-state surface.</li>
         <li><code>//host/path</code> — reserved for cross-wrapper addressing.</li>
         <li><code>../name</code> — reserved for parent-row references inside nested lists.</li>
         <li>Protocol-prefixed values (<code>localStorage://</code>, etc.) — reserved for custom resolvers.</li>
     </ul>
 
-    <h3>No built-in lifecycle hooks</h3>
+    <h3>No lifecycle hook matrix</h3>
     <p>
         The default factory <em>is</em> the mount hook — it runs once per
-        wrapper. A formal cleanup primitive for releasing per-wrapper
-        resources (timers, observers, external listeners) is tracked for
-        1.0; until then, components that own such resources should release
-        them explicitly when the wrapper unloads.
+        wrapper. Use <code>context.cleanup()</code> for per-wrapper teardown
+        work such as timers, observers, or external listeners. The framework
+        does not currently expose a broader lifecycle matrix such as
+        before-update, after-render, or before-unmount hooks.
     </p>
 
     <h3>No SSR or hydration</h3>

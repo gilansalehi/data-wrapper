@@ -175,9 +175,16 @@ export class DataWrapper extends HTMLElement {
         const src = this.getAttribute('src');
         if (src) {
             if (isNestedWrapper(this)) return;
+            // Already loaded this src — e.g. a DOM move (disconnect + reconnect):
+            // keep the live component, don't reload. disconnectedCallback defers
+            // teardown and skips it on reconnect, so the instance survives moves;
+            // tearing down eagerly here would break that move-safety.
             if (this._loadedSrc === src) return;
-            Promise.resolve(load(this, src))
-                .catch((err: unknown) => console.error(`<data-wrapper src="${src}">`, err));
+            // Load errors throw by default (ticket 005): surface as an uncaught
+            // rejection with src attribution rather than swallowing to the console.
+            load(this, src).catch((err: unknown) => {
+                throw new Error(`<data-wrapper src="${src}"> failed to load`, { cause: err });
+            });
         }
         else wake(this, rootContext(this), load);
     }
@@ -188,6 +195,9 @@ export class DataWrapper extends HTMLElement {
         queueMicrotask(() => {
             this._disconnectQueued = false;
             if (this.isConnected) return;
+            // unwake before destroy so factory cleanups (registered via ctx.cleanup)
+            // run while the component runtime is still live — an action can flush
+            // state during teardown.
             unwake(this);
             this._component?.destroy();
             this._component = undefined;
