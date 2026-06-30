@@ -2,27 +2,68 @@
 
 <section class="doc-section" id="errors">
     <h2>Error handling</h2>
+
     <p>
-        The framework <strong>throws on failure</strong> rather than swallowing
-        errors. A failed <code>fetch</code>, an unparseable view, a blank or
-        duplicate <code>data-module</code>, a factory that throws, an unknown
-        <code>*directive</code>, or an action that throws all propagate as an
-        exception — an uncaught promise rejection on the async load path.
-        Framework-raised loader errors name the view URL, and the custom element
-        wraps a failed load with its <code>src</code>; an unknown
-        <code>*directive</code> names the directive. An error thrown by your own
-        factory or action code propagates as-is — surfaced without rewriting.
+        data-wrapper does not hide framework errors. If a view cannot load or
+        wire correctly, the failure is thrown so the browser console and your
+        global error handlers can see it.
     </p>
+
     <p>
-        The one deliberate non-throwing case is a <strong>lookup miss</strong>: a
-        <code>$</code> or <code>*</code> binding whose name resolves nowhere
-        renders the literal name and emits a <code>console.warn</code>. That is
-        almost always a typo, but it is non-fatal and never aborts the bindings
-        around it.
+        Load failures happen on an async path. A failed network request, more
+        than one <code>data-module</code> script in a view, a blank or duplicate
+        <code>data-module</code> value, a non-function default export, a factory
+        that returns the wrong shape, or an unknown directive will reject the
+        load. The custom element wraps that failure with the wrapper
+        <code>src</code>, and the original error remains available as the
+        cause.
     </p>
+
+    <pre><code data-title="global handlers">window.addEventListener('unhandledrejection', event =&gt; {
+    console.error(event.reason);
+});
+
+window.addEventListener('error', event =&gt; {
+    console.error(event.error);
+});</code></pre>
+
     <p>
-        There is no separate error event or error-state model — the mechanism is a
-        thrown error, observable in the console and through global handlers such as
-        <code>window.onunhandledrejection</code>.
+        Errors from your own factory or action code are not rewritten. If a
+        factory throws, that error becomes the cause of the failed load. If an
+        event action throws, the error behaves like an exception from an event
+        handler. This keeps the stack trace focused on the code that failed.
+    </p>
+
+    <pre><code data-title="factory error">export default () =&gt; {
+    throw new Error('Could not initialize customer card');
+};</code></pre>
+
+    <h3>Lookup misses</h3>
+    <p>
+        A missing binding is handled differently from a broken load. If a normal
+        <code>$</code> or <code>*</code> binding cannot resolve its name,
+        data-wrapper renders the literal binding text and writes a
+        <code>console.warn</code>. That is usually a typo, but it is not fatal
+        and it does not stop neighboring bindings from working.
+    </p>
+
+    <pre><code data-title="non-fatal miss">&lt;output $text="customerName"&gt;&lt;/output&gt;</code></pre>
+
+    <p>
+        Cross-wrapper misses are also non-fatal, but they do not render a static
+        fallback. A binding such as <code>//cart/total</code> warns and leaves
+        the target element untouched if the wrapper or binding cannot be found.
+        A missing cross-wrapper child input warns and is omitted from
+        <code>props</code>.
+    </p>
+
+    <h3>No error boundary</h3>
+    <p>
+        There is no <code>dw/error</code> event, wrapper error state, retry
+        system, or error-boundary component model. The public mechanism is the
+        platform mechanism: thrown errors, rejected promises, console warnings,
+        and browser global error handlers. If a load fails during wake, the
+        wrapper is left retryable instead of being marked as successfully
+        loaded.
     </p>
 </section>
