@@ -7,9 +7,11 @@
         errors. A failed <code>fetch</code>, an unparseable view, a missing or
         duplicate <code>data-module</code>, a factory that throws, an unknown
         <code>*directive</code>, or an action that throws all propagate as an
-        exception — an uncaught promise rejection on the async load path. Each
-        error carries the view URL, the wrapper's <code>src</code>, or the
-        binding/action name, so the source is identifiable.
+        exception — an uncaught promise rejection on the async load path.
+        Framework-raised loader errors name the view URL, and the custom element
+        wraps a failed load with its <code>src</code>; an unknown
+        <code>*directive</code> names the directive. An error thrown by your own
+        factory or action code propagates as-is — surfaced without rewriting.
     </p>
     <p>
         The one deliberate non-throwing case is a <strong>lookup miss</strong>: a

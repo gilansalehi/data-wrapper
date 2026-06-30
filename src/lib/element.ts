@@ -188,7 +188,7 @@ export class DataWrapper extends HTMLElement {
             if (this._loadedSrc === src) return;
             // Load errors throw by default (ticket 005): surface as an uncaught
             // rejection with src attribution rather than swallowing to the console.
-            load(this, src).catch((err: unknown) => {
+            Promise.resolve(load(this, src)).catch((err: unknown) => {
                 throw new Error(`<data-wrapper src="${src}"> failed to load`, { cause: err });
             });
         }
@@ -270,8 +270,10 @@ export const load: WrapperLoader = async (wrapper: Wrapper, src: string, ctx?: B
     wrapper._component = componentModule
         ? new ComponentRuntime(wrapper, componentModule, instance)
         : undefined;
-    wrapper._loadedSrc = src;
+    // Commit _loadedSrc only after a successful wake() so a wake-time failure
+    // leaves the wrapper retryable rather than marked-loaded (ticket 005).
     wake(wrapper, rootContext(wrapper), load);
+    wrapper._loadedSrc = src;
 };
 
 if (typeof customElements !== 'undefined' && !customElements.get('data-wrapper')) {
