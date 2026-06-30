@@ -14,11 +14,27 @@
     <h2>Built-in formatters</h2>
 
     <p>
-        Append <code>?formatter=arg</code> to a <code>$</code> binding or
-        <code>*</code> directive source to pipe the value through static
-        transforms. Params run left-to-right.
+        Formatters are small value transforms that run after a binding is read
+        and before it reaches the DOM or a directive. Add them as query params
+        on a <code>$</code> binding or a <code>*</code> directive source.
     </p>
 
+    <pre><code data-title="examples.html">&lt;span $text="name?trim&amp;case=title"&gt;&lt;/span&gt;
+&lt;span $text="amount?currency=EUR"&gt;&lt;/span&gt;
+
+&lt;template *list="people?unique=id&amp;sort=name"&gt;
+    &lt;span $text="./name"&gt;&lt;/span&gt;
+&lt;/template&gt;</code></pre>
+
+    <p>
+        Params run from left to right. In the first example,
+        <code>trim</code> removes surrounding whitespace, then
+        <code>case=title</code> converts the remaining text to title case.
+        Formatter arguments are static strings, so use a computed export when a
+        sort key, currency code, or label needs to change at runtime.
+    </p>
+
+    <h3>Text and fallback</h3>
     <table>
         <thead><tr><th>Name</th><th>Syntax</th><th>Effect</th></tr></thead>
         <tbody>
@@ -27,10 +43,25 @@
             <tr><td><code>case</code></td><td><code>?case=upper</code></td><td><code>upper</code>, <code>lower</code>, <code>title</code>, or <code>sentence</code>.</td></tr>
             <tr><td><code>trim</code></td><td><code>?trim</code></td><td>Trims leading and trailing whitespace.</td></tr>
             <tr><td><code>truncate</code></td><td><code>?truncate=80</code></td><td>Caps text length with an ellipsis.</td></tr>
+            <tr><td><code>json</code></td><td><code>?json</code></td><td>Debug JSON display.</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Collections</h3>
+    <table>
+        <thead><tr><th>Name</th><th>Syntax</th><th>Effect</th></tr></thead>
+        <tbody>
             <tr><td><code>count</code></td><td><code>?count</code>, <code>?count=words</code>, <code>?count=chars</code></td><td>Counts array/string length, words, or characters.</td></tr>
             <tr><td><code>join</code></td><td><code>?join=, </code></td><td>Joins array values.</td></tr>
             <tr><td><code>sort</code></td><td><code>?sort=name</code>, <code>?sort=-name</code>, <code>?sort=name:desc</code></td><td>Sorts an array copy by a static key.</td></tr>
             <tr><td><code>unique</code></td><td><code>?unique</code>, <code>?unique=id</code></td><td>Deduplicates primitives or objects by a static key.</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Numbers and dates</h3>
+    <table>
+        <thead><tr><th>Name</th><th>Syntax</th><th>Effect</th></tr></thead>
+        <tbody>
             <tr><td><code>number</code></td><td><code>?number</code></td><td>Locale number formatting.</td></tr>
             <tr><td><code>fixed</code></td><td><code>?fixed=2</code></td><td>Fixed decimal places.</td></tr>
             <tr><td><code>percent</code></td><td><code>?percent</code>, <code>?percent=1</code></td><td>Percent formatting with optional fractional digits.</td></tr>
@@ -38,18 +69,27 @@
             <tr><td><code>date</code></td><td><code>?date</code></td><td>Locale date.</td></tr>
             <tr><td><code>time</code></td><td><code>?time</code></td><td>Locale time.</td></tr>
             <tr><td><code>datetime</code></td><td><code>?datetime</code></td><td>Locale date and time.</td></tr>
-            <tr><td><code>json</code></td><td><code>?json</code></td><td>Debug JSON display.</td></tr>
         </tbody>
     </table>
 
     <p>
-        Formatter arguments are static strings. Use computed exports for
-        dynamic formatter configuration. The legacy <code>onoff</code> name
-        remains as an alias for existing code; new examples use
-        <code>bool</code>.
+        The legacy <code>onoff</code> formatter still exists as a compatibility
+        alias for existing code. New examples should use <code>bool</code>.
     </p>
 
-    <h3>Live</h3>
+    <pre><code data-title="dynamic configuration">export let sortKey = 'name';
+export let people = [
+    { name: 'Ada', role: 'engineer' },
+    { name: 'Grace', role: 'admiral' },
+];
+
+export const sortedPeople = () =&gt; {
+    return [...people].sort((a, b) =&gt;
+        String(a[sortKey]).localeCompare(String(b[sortKey]))
+    );
+};</code></pre>
+
+    <h3>Live demo</h3>
     <div class="demo">
         <button @click="toggle">Toggle</button>
         <p>
@@ -73,10 +113,17 @@
     </div>
 
     <h3>Custom formatters</h3>
-    <p>Register your own formatter at startup:</p>
-    <pre><code>import { DW_FORMATTERS } from 'data-wrapper';
+    <p>
+        Custom formatters can be registered at startup with
+        <code>DW_FORMATTERS</code>. A formatter receives the current value and
+        the static argument string from the query param.
+    </p>
 
-DW_FORMATTERS.set('status', v =&gt; v === 200 ? 'healthy' : 'check');
+    <pre><code data-title="formatters.js">import { DW_FORMATTERS } from 'data-wrapper';
 
-// Use: &lt;span $text="code?status"&gt;&lt;/span&gt;</code></pre>
+DW_FORMATTERS.set('status', (value, label = 'healthy') =&gt; {
+    return value === 200 ? label : 'check';
+});</code></pre>
+
+    <pre><code data-title="usage.html">&lt;span $text="code?status=ready"&gt;&lt;/span&gt;</code></pre>
 </section>
