@@ -4,56 +4,56 @@
     <h2>Known limitations</h2>
 
     <p>
-        The lib is pre-1.0. The items below are tracked, intentional gaps —
-        either deferred features or accepted limitations with a documented
-        scope. Each will either ship resolved in 1.0 or carry a final
-        documented status.
+        data-wrapper is still pre-1.0, so a few boundaries are intentional.
+        These are not hidden features or special cases to depend on. They are
+        the edges of the current public contract.
     </p>
 
-    <h3><code>*if</code> clone cleanup</h3>
+    <h3>Cross-wrapper reads are narrow</h3>
     <p>
-        When a <code>*if</code> body is removed, subscriptions created
-        inside that body stay registered on the nearest row or wrapper until
-        that owner is itself destroyed. Repeatedly toggling a long-lived
-        <code>*if</code> accumulates stale subscriptions. They are
-        functionally inert — they fire harmless updates against detached DOM
-        — but the memory growth is real. Tracked as a 1.0 fix.
+        <code>//id/path</code> is an explicit read from another loaded
+        wrapper's root component scope. It does not inspect row scopes, dispatch
+        actions, subscribe to wrapper load or reload, or retry if the target
+        appears later. Use module imports for normal shared state.
     </p>
 
-    <h3>Cross-wrapper host limits</h3>
+    <h3>View-module imports depend on registration order</h3>
     <p>
-        <code>//id/path</code> is supported as an explicit read from another
-        loaded wrapper's component scope. It is intentionally narrow: it does
-        not dispatch actions, subscribe to wrapper load/reload, inspect row
-        scopes, or retry if the target appears later. Use module imports for
-        normal shared state.
+        A view can import another view by its <code>data-module</code> name
+        only after that producer has been loaded and registered. If several
+        components need shared state during their first import, put that state
+        in a plain JavaScript module and expose it with a host import map.
     </p>
 
-    <h3>Reserved binding syntax</h3>
+    <h3>Protocol resolvers are reserved</h3>
     <p>
-        Protocol-prefixed values are still reserved for future custom
-        resolvers. Using them today is a no-op: they do not render static
-        literals, dispatch parsed-path events, run directives, or create child
-        input values.
+        Protocol-prefixed values such as <code>localStorage://key</code> are
+        reserved for future source resolvers. Today they are inert: they do not
+        render static literals, dispatch parsed-path events, run directives, or
+        create child input values.
     </p>
-    <ul>
-        <li>Protocol-prefixed values (<code>localStorage://</code>, etc.) — reserved for custom resolvers.</li>
-    </ul>
 
-    <h3>No lifecycle hook matrix</h3>
+    <h3>Custom directives cannot create row scopes</h3>
+    <p>
+        Custom directives can decorate DOM, respond to a bound value, create DOM
+        under the context they receive, and register cleanup. They do not
+        currently get a public helper for creating new row contexts. Scope-
+        introducing behavior remains built into <code>*list</code>.
+    </p>
+
+    <h3>There is no lifecycle hook matrix</h3>
     <p>
         The default factory <em>is</em> the mount hook — it runs once per
         wrapper. Use <code>context.cleanup()</code> for per-wrapper teardown
         work such as timers, observers, or external listeners. The framework
-        does not currently expose a broader lifecycle matrix such as
+        does not currently expose a broader lifecycle matrix with hooks such as
         before-update, after-render, or before-unmount hooks.
     </p>
 
-    <h3>No SSR or hydration</h3>
+    <h3>There is no SSR or hydration path</h3>
     <p>
-        The framework is client-rendered. There's no server-side render
-        path, no hydration protocol, and no plan to add either before 1.0.
-        First contentful paint depends on the bundle loading and each
-        wrapper's first <code>load()</code> call.
+        data-wrapper is client-rendered. There is no server-side render path
+        and no hydration protocol. First contentful paint depends on loading the
+        bundle and each wrapper's first <code>load()</code> call.
     </p>
 </section>

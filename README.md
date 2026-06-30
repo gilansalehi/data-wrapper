@@ -331,20 +331,26 @@ shim is configured, the loader throws a clear error telling you to add one.
 
 ## Known Limitations
 
-The framework is still pre-1.0, and a few boundaries are intentional.
-
-`*if` cleanup is functional but not final. When a `*if` body is removed,
-subscriptions created inside that body remain registered on the nearest row or
-wrapper until that owner is destroyed. Those subscriptions update detached DOM
-and are functionally harmless, but repeated toggles can accumulate stale
-subscriptions. This is tracked as a 1.0 cleanup fix.
-
-Protocol-prefixed binding values are reserved for future source resolvers. They
-are ignored today.
+The framework is still pre-1.0, and a few boundaries are intentional:
 
 Cross-wrapper reads are read-only and load-order sensitive. Use module imports
 for shared state when both components should participate in the same reactive
 model.
+
+View-module imports depend on registration order. A consumer can import from a
+`data-module` name only after the producer view has been loaded and registered.
+Use plain JavaScript modules plus a host import map for shared state that must be
+available during first import.
+
+Protocol-prefixed binding values such as `localStorage://key` are reserved for
+future source resolvers. They are inert today.
+
+Custom directives cannot create new row scopes yet. They can decorate DOM, wake
+DOM under the context they receive, and register cleanup. Scope-introducing
+behavior remains built into `*list`.
+
+There is no lifecycle hook matrix beyond the default factory and
+`context.cleanup()`.
 
 There is no SSR or hydration path. data-wrapper is client-rendered.
 
