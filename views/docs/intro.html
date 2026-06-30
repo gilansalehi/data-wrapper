@@ -3,16 +3,28 @@
 <section class="doc-section" id="intro">
     <h2>data-wrapper</h2>
     <p class="lead">
-        Zero-dependency, HTML-first reactivity built on a single Web Component.
-        Components are plain ES modules; views bind DOM effects to their live
-        exports through three tokens.
+        data-wrapper lets you build reactive HTML with one Web Component and
+        plain browser modules. You add the framework script, place a
+        <code>&lt;data-wrapper&gt;</code> element on the page, and point it at
+        an HTML file that contains the view you want to render.
     </p>
 
-    <pre><code>&lt;script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"&gt;&lt;/script&gt;
-&lt;data-wrapper src="counter.html"&gt;&lt;/data-wrapper&gt;</code></pre>
+    <pre><code>&lt;script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"&gt;&lt;/script&gt;</code></pre>
 
-    <pre><code>&lt;!-- counter.html --&gt;
-&lt;script type="module" data-component data-module="@view/counter"&gt;
+    <p>
+        After the script is loaded, any <code>&lt;data-wrapper&gt;</code> element
+        can load a view file. The <code>src</code> attribute points to ordinary
+        HTML.
+    </p>
+
+    <pre><code>&lt;data-wrapper src="counter.html"&gt;&lt;/data-wrapper&gt;</code></pre>
+
+    <p>
+        The view file contains the component module and the HTML that should be
+        rendered inside the wrapper.
+    </p>
+
+    <pre><code data-title="counter.html">&lt;script type="module" data-component data-module="@view/counter"&gt;
     export let count = 0;
     export const doubled = () =&gt; count * 2;
     export function inc(event) { count += Number(event.target.value); }
@@ -23,14 +35,25 @@
 &lt;output $text="doubled"&gt;&lt;/output&gt;</code></pre>
 
     <p>
-        No build step, no virtual DOM, no JSX. Named exports are the
-        component's normal state surface. Mutate <code>count</code> inside an
-        action; every binding that reads it updates on the next flush.
+        The view can include a module script. Any named export from that script
+        is available to the HTML below it. In this example, the
+        <code>$text</code> bindings read <code>count</code> and
+        <code>doubled</code>, while the <code>@click</code> binding calls
+        <code>inc</code> when the button is clicked.
     </p>
 
-    <p>The core model is deliberately small:</p>
+    <p>
+        There is no build step, virtual DOM, JSX, or component compiler. The
+        browser loads the HTML and the module directly. When an action changes
+        exported state, data-wrapper re-reads the bindings that are connected to
+        the DOM and updates the matching elements.
+    </p>
 
-    <pre><code>ES modules compose application state
-binding contexts compose template-local row data
-DOM bindings are effects subscribed to resolved sources</code></pre>
+    <p>
+        Most of the framework follows from that small loop: export values from a
+        module, bind those values in HTML, and let actions update the exports.
+        Lists, child components, shared modules, directives, and formatters build
+        on the same idea. The rest of this guide introduces those pieces one at
+        a time.
+    </p>
 </section>
