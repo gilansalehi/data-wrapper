@@ -122,13 +122,130 @@ export const unwake = (wrapper: Wrapper) => {
 
 export const DW_DIRECTIVES = new Map<string, DirectiveHandler>();
 
+const text = (value: unknown): string =>
+    value == null ? '' : String(value);
+
+const numberValue = (value: unknown): number | null => {
+    if (value == null || value === '') return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+};
+
+const dateValue = (value: unknown): Date | null => {
+    if (value == null || value === '') return null;
+    const date = value instanceof Date ? value : new Date(value as string | number);
+    return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const fixedDigits = (arg: unknown, fallback = 2): number => {
+    const n = Number.parseInt(String(arg ?? ''), 10);
+    return Number.isFinite(n) ? Math.max(0, Math.min(20, n)) : fallback;
+};
+
+const boolLabel = (value: unknown, arg: unknown, yes: string, no: string): string => {
+    const labels = arg == null || arg === '' ? [yes, no] : String(arg).split(':');
+    return value ? labels[0] : (labels[1] ?? '');
+};
+
+const caseText = (value: unknown, arg: unknown): string => {
+    const s = text(value);
+    switch (String(arg ?? '').toLowerCase()) {
+        case 'upper':    return s.toUpperCase();
+        case 'lower':    return s.toLowerCase();
+        case 'title':    return s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+        case 'sentence': return s ? s[0].toUpperCase() + s.slice(1) : s;
+        default:         return s;
+    }
+};
+
+const truncateText = (value: unknown, arg: unknown): string => {
+    const s = text(value);
+    const n = Number.parseInt(String(arg ?? ''), 10);
+    if (!Number.isFinite(n) || n <= 0 || s.length <= n) return s;
+    return n <= 3 ? s.slice(0, n) : `${s.slice(0, n - 3)}...`;
+};
+
+const countValue = (value: unknown, arg: unknown): number => {
+    if (value == null) return 0;
+    if (arg === 'words') return text(value).trim().split(/\s+/).filter(Boolean).length;
+    if (arg === 'chars') return text(value).length;
+    return typeof (value as { length?: unknown }).length === 'number'
+        ? (value as { length: number }).length
+        : 0;
+};
+
+const sortValue = (value: unknown, arg: unknown): unknown => {
+    if (!Array.isArray(value)) return value;
+    let key = String(arg ?? '').trim();
+    let desc = false;
+    if (key.startsWith('-')) { desc = true; key = key.slice(1); }
+    const colon = key.indexOf(':');
+    if (colon !== -1) {
+        desc = key.slice(colon + 1).toLowerCase() === 'desc';
+        key = key.slice(0, colon);
+    }
+    const read = (item: unknown) => key ? readPath(item, key) : item;
+    return [...value].sort((a, b) => {
+        const av = read(a);
+        const bv = read(b);
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        const order = typeof av === 'number' && typeof bv === 'number'
+            ? av - bv
+            : String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: 'base' });
+        return desc ? -order : order;
+    });
+};
+
+const uniqueValue = (value: unknown, arg: unknown): unknown => {
+    if (!Array.isArray(value)) return value;
+    const key = String(arg ?? '');
+    const seen = new Set<unknown>();
+    return value.filter(item => {
+        const id = key ? readPath(item, key) : item;
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+    });
+};
+
 export const DW_FORMATTERS = new Map<string, Formatter>([
-    // `?onoff=truthy:falsy` → one of the two labels. Bare `?onoff` falls back to on/off.
-    ['onoff', (v, arg) => {
-        if (arg == null || arg === '') return v ? 'on' : 'off';
-        const [t, f = ''] = String(arg).split(':');
-        return v ? t : f;
+    ['bool',     (v, arg) => boolLabel(v, arg, 'true', 'false')],
+    ['onoff',    (v, arg) => boolLabel(v, arg, 'on', 'off')],
+    ['default',  (v, arg) => v == null || v === '' ? text(arg) : v],
+    ['case',     caseText],
+    ['trim',     v => text(v).trim()],
+    ['truncate', truncateText],
+    ['count',    countValue],
+    ['join',     (v, arg) => Array.isArray(v) ? v.join(arg === '' || arg == null ? ', ' : String(arg)) : text(v)],
+    ['sort',     sortValue],
+    ['unique',   uniqueValue],
+    ['number',   v => { const n = numberValue(v); return n == null ? '' : new Intl.NumberFormat('en-US').format(n); }],
+    ['fixed',    (v, arg) => { const n = numberValue(v); return n == null ? '' : n.toFixed(fixedDigits(arg)); }],
+    ['percent',  (v, arg) => {
+        const n = numberValue(v);
+        return n == null ? '' : new Intl.NumberFormat('en-US', {
+            style: 'percent',
+            maximumFractionDigits: fixedDigits(arg, 0),
+        }).format(n);
     }],
+    ['currency', (v, arg) => {
+        const n = numberValue(v);
+        if (n == null) return '';
+        try {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: String(arg || 'USD').toUpperCase(),
+            }).format(n);
+        } catch {
+            return '';
+        }
+    }],
+    ['date',     v => dateValue(v)?.toLocaleDateString('en-US') ?? ''],
+    ['time',     v => dateValue(v)?.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) ?? ''],
+    ['datetime', v => dateValue(v)?.toLocaleString('en-US') ?? ''],
+    ['json',     v => { try { return JSON.stringify(v) ?? ''; } catch { return text(v); } }],
 ]);
 
 export const PROP_ALIASES: Record<string, string> = {
@@ -297,9 +414,9 @@ export const wire = (
     const { source, missed } = resolveBinding(ctx, path, isRel, parent, value, host);
     if (!source) return;
     if (missed) warnStaticFallback(value);
+    const format = formatter(params);
 
     if (token === '$') {
-        const format = formatter(params);
         const set    = bind(el, prop);
         const off    = source.subscribe(v => set(format(v)));
         own(ctx, off);
@@ -316,7 +433,7 @@ export const wire = (
             wake:    (node, nextCtx) => wake(node, nextCtx, load),
             cleanup: off => own(ctx, off),
         });
-        const off     = source.subscribe(updater);
+        const off     = source.subscribe(v => updater(format(v)));
         own(ctx, off);
         return;
     }

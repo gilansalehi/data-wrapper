@@ -220,7 +220,7 @@
 
                     <ul class="line-list">
                         <template *list="./lines">
-                            <li class="line-item" $class="./packed?onoff=packed:open">
+                            <li class="line-item" $class="./packed?bool=packed:open">
                                 <input type="checkbox" $checked="./packed" @change="togglePacked" aria-label="Toggle packed">
                                 <code $text="./sku"></code>
                                 <span $text="./name"></span>

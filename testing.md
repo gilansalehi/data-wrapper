@@ -1,6 +1,6 @@
 # Testing
 
-Status: **draft, current through ticket 011.** This documents *why* and
+Status: **draft, current through ticket 013.** This documents *why* and
 *what* we test, so the suite stays a safety net and never becomes a cage. The
 harness is wired up (`bunfig.toml` + `tests/setup.ts`); the baseline contract
 suite is present.
@@ -67,6 +67,7 @@ tests/
   resolution.test.ts core: name → source resolution
   scopes.test.ts     core: scope climb, block transparency, miss policy, `//id`
   core.test.ts       core: action/flush, *list, *if, event modifiers
+  formatters.test.ts 013: built-in formatter output and composition
   inputs.test.ts     004/008/009/010: props-facing behavior, `/key`, parent/cross/reserved inputs
 ```
 
@@ -114,6 +115,12 @@ The guarantees 1.0 commits to. Each is one test unless noted.
 - bare `@name` activates the matching component action
 - `@event` dispatches with `detail.item` from the nearest row
 - `?prevent` / `?stop` / `?immediate` modifiers take effect
+
+**Formatters**
+- built-in formatter params compose left-to-right
+- `$` bindings and `*` directive sources both run through the formatter pipeline
+- list formatters such as `sort` and `unique` return transformed array copies
+- number/date/json/text formatters render stable values and are null-safe
 
 ## Ticket 004: child wrapper inputs
 

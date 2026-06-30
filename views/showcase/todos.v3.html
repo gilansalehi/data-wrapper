@@ -47,7 +47,7 @@
 
     <ul class="todo-list">
         <template *list="view">
-            <li class="todo-item" $class="./done?onoff=done:active">
+            <li class="todo-item" $class="./done?bool=done:active">
                 <input type="checkbox" $checked="./done" @change="toggleTodo" aria-label="Toggle todo completion">
                 <span $text="./task"></span>
                 <template *if="./done"><strong class="done-badge">done</strong></template>

@@ -83,6 +83,21 @@ Protocol-prefixed forms such as `localStorage://key` are reserved for future
 resolvers. They are inert today: no static fallback, no event dispatch, and no
 child input value.
 
+## Formatters
+
+Formatter params run left-to-right on `$` bindings and `*` directive sources:
+
+```html
+<span $text="name?trim&case=title"></span>
+<span $text="price?currency=EUR"></span>
+<template *list="orders?unique=id&sort=-createdAt"></template>
+```
+
+Built-ins: `default`, `bool`, `case`, `trim`, `truncate`, `count`, `join`,
+`sort`, `unique`, `number`, `fixed`, `percent`, `currency`, `date`, `time`,
+`datetime`, and `json`. Formatter arguments are static strings; use a computed
+export when the formatting configuration itself needs to be reactive.
+
 ## Cross-Wrapper Communication
 
 Use ES module imports for shared application state. Use child inputs for

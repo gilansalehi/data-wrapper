@@ -1,5 +1,12 @@
 <script type="module" data-component data-module="@docs/formatters">
     export let flag = true;
+    export const name = '  ada lovelace  ';
+    export const amount = 1234.56;
+    export const due = new Date(2026, 5, 30, 9, 5, 0);
+    export const people = [
+        { id: 1, name: 'Grace' },
+        { id: 2, name: 'Ada' },
+    ];
     export function toggle() { flag = !flag; }
 </script>
 
@@ -7,44 +14,69 @@
     <h2>Built-in formatters</h2>
 
     <p>
-        Append <code>?formatter=arg</code> to any <code>$</code> binding to
-        pipe the value through a transformer. Today the framework ships one
-        built-in formatter; more will follow before 1.0.
+        Append <code>?formatter=arg</code> to a <code>$</code> binding or
+        <code>*</code> directive source to pipe the value through static
+        transforms. Params run left-to-right.
     </p>
 
     <table>
         <thead><tr><th>Name</th><th>Syntax</th><th>Effect</th></tr></thead>
         <tbody>
-            <tr>
-                <td><code>onoff</code></td>
-                <td><code>?onoff=truthy:falsy</code></td>
-                <td>
-                    Picks one of two labels based on the bound value's
-                    truthiness. Bare <code>?onoff</code> falls back to
-                    <code>on</code>/<code>off</code>.
-                </td>
-            </tr>
+            <tr><td><code>default</code></td><td><code>?default=Unknown</code></td><td>Fallback for null, undefined, or empty string.</td></tr>
+            <tr><td><code>bool</code></td><td><code>?bool=Yes:No</code></td><td>Truthy/falsy labels. Bare <code>?bool</code> returns <code>true</code>/<code>false</code>.</td></tr>
+            <tr><td><code>case</code></td><td><code>?case=upper</code></td><td><code>upper</code>, <code>lower</code>, <code>title</code>, or <code>sentence</code>.</td></tr>
+            <tr><td><code>trim</code></td><td><code>?trim</code></td><td>Trims leading and trailing whitespace.</td></tr>
+            <tr><td><code>truncate</code></td><td><code>?truncate=80</code></td><td>Caps text length with an ellipsis.</td></tr>
+            <tr><td><code>count</code></td><td><code>?count</code>, <code>?count=words</code>, <code>?count=chars</code></td><td>Counts array/string length, words, or characters.</td></tr>
+            <tr><td><code>join</code></td><td><code>?join=, </code></td><td>Joins array values.</td></tr>
+            <tr><td><code>sort</code></td><td><code>?sort=name</code>, <code>?sort=-name</code>, <code>?sort=name:desc</code></td><td>Sorts an array copy by a static key.</td></tr>
+            <tr><td><code>unique</code></td><td><code>?unique</code>, <code>?unique=id</code></td><td>Deduplicates primitives or objects by a static key.</td></tr>
+            <tr><td><code>number</code></td><td><code>?number</code></td><td>Locale number formatting.</td></tr>
+            <tr><td><code>fixed</code></td><td><code>?fixed=2</code></td><td>Fixed decimal places.</td></tr>
+            <tr><td><code>percent</code></td><td><code>?percent</code>, <code>?percent=1</code></td><td>Percent formatting with optional fractional digits.</td></tr>
+            <tr><td><code>currency</code></td><td><code>?currency</code>, <code>?currency=EUR</code></td><td>Currency formatting. Default is USD.</td></tr>
+            <tr><td><code>date</code></td><td><code>?date</code></td><td>Locale date.</td></tr>
+            <tr><td><code>time</code></td><td><code>?time</code></td><td>Locale time.</td></tr>
+            <tr><td><code>datetime</code></td><td><code>?datetime</code></td><td>Locale date and time.</td></tr>
+            <tr><td><code>json</code></td><td><code>?json</code></td><td>Debug JSON display.</td></tr>
         </tbody>
     </table>
+
+    <p>
+        Formatter arguments are static strings. Use computed exports for
+        dynamic formatter configuration. The legacy <code>onoff</code> name
+        remains as an alias for existing code; new examples use
+        <code>bool</code>.
+    </p>
 
     <h3>Live</h3>
     <div class="demo">
         <button @click="toggle">Toggle</button>
         <p>
-            Status: <strong $text="flag?onoff=ready:waiting">ready</strong>
+            Status: <strong $text="flag?bool=ready:waiting">ready</strong>
         </p>
+        <p>
+            Name: <strong $text="name?trim&case=title"></strong>
+        </p>
+        <p>
+            Amount: <strong $text="amount?currency"></strong>
+        </p>
+        <p>
+            Due: <strong $text="due?date"></strong> at
+            <strong $text="due?time"></strong>
+        </p>
+        <ol>
+            <template *list="people?sort=name">
+                <li $text="./name"></li>
+            </template>
+        </ol>
     </div>
 
     <h3>Custom formatters</h3>
     <p>Register your own formatter at startup:</p>
     <pre><code>import { DW_FORMATTERS } from 'data-wrapper';
 
-DW_FORMATTERS.set('currency', v =&gt;
-    new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(Number(v) || 0)
-);
+DW_FORMATTERS.set('status', v =&gt; v === 200 ? 'healthy' : 'check');
 
-// Use: &lt;span $text="price?currency"&gt;&lt;/span&gt;</code></pre>
+// Use: &lt;span $text="code?status"&gt;&lt;/span&gt;</code></pre>
 </section>

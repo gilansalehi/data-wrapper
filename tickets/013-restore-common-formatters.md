@@ -1,5 +1,7 @@
 # Ticket 013: Restore Common Formatters
 
+**COMPLETED.**
+
 ## Goal
 
 Re-add the most-used built-in formatters that were removed during the
@@ -7,9 +9,9 @@ component-module pivot.
 
 ## Rationale
 
-`DW_FORMATTERS` currently ships with only `onoff`. Every non-trivial component
-reaches for at least one of: `currency`, `date`, `count` (array length),
-`upper`, `lower`, `trim`. Today the dev writes a computed export to do
+`DW_FORMATTERS` shipped with only `onoff`. Every non-trivial component reaches
+for at least one of: currency, dates, count/length, text casing, trimming,
+sorting, or fallback display. Today the dev writes a computed export to do
 formatting that should be a one-token pipeline param, which fights the "three
 tokens, no script" pitch the README opens with.
 
@@ -19,17 +21,12 @@ binding sugar without re-introducing the surface that was rightly trimmed.
 
 ## Scope
 
-- Add to `DW_FORMATTERS` in `engine.ts`:
-  - `currency` — `Intl.NumberFormat` with USD default
-  - `date` — `toLocaleDateString` for date-like inputs
-  - `count` — `length` for arrays and strings
-  - `upper` — `toUpperCase` with null-safety
-  - `lower` — `toLowerCase` with null-safety
-  - `trim` — `String.prototype.trim` with null-safety
-- Each formatter accepts a single value and returns a formatted result.
-- Document the full formatter set in the README (per ticket 012).
-- Keep formatters small and dependency-free; they should be readable in
-  one line each.
+- Add consolidated static formatters to `DW_FORMATTERS` in `engine.ts`.
+- Support formatter params on `$` bindings and `*` directive sources.
+- Keep formatter arguments static for now; reactive formatter args are future
+  source-dependency work.
+- Document the full formatter set in the README and formatter docs.
+- Keep formatters dependency-free and readable.
 
 ## Non-Goals
 
@@ -37,12 +34,21 @@ binding sugar without re-introducing the surface that was rightly trimmed.
   through a dev-registered formatter).
 - No `relativeTime` / `ago` formatter (debatable correctness, varies by app
   needs).
-- No formatter argument syntax beyond what `onoff` already supports.
+- No reactive formatter arguments such as `?sort=sortKey`.
 - No new categories of binding pipeline behavior.
 
 ## Acceptance
 
-- All six formatters are usable as `$text="key?currency"` etc.
+- Approved formatters are usable as `$text="key?currency"` and, where useful,
+  `*list="items?sort=name"`.
 - Each formatter handles null/undefined input without throwing.
 - README's formatter list matches the shipped set.
-- Bundle size growth is under 500 bytes minified (these are small).
+- Bundle size remains within the ticket-015 budget.
+
+## Shipped
+
+Built-ins: `default`, `bool`, `case`, `trim`, `truncate`, `count`, `join`,
+`sort`, `unique`, `number`, `fixed`, `percent`, `currency`, `date`, `time`,
+`datetime`, and `json`.
+
+`onoff` remains as a compatibility alias. New docs and examples use `bool`.
