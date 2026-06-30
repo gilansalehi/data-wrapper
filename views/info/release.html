@@ -1,0 +1,21 @@
+<script type="module" data-module="@info/release"></script>
+
+<section class="doc-section" id="info-release">
+    <h2>Release Checks</h2>
+    <p>
+        These checks are not a release process yet. They are the small set of
+        facts that should be true before a public beta is announced.
+    </p>
+
+    <table>
+        <thead><tr><th>Status</th><th>Check</th><th>Why it matters</th></tr></thead>
+        <tbody>
+            <tr><td><span class="info-status">Pending</span></td><td>Public export audit</td><td>Prevents accidental internals from becoming implied API.</td></tr>
+            <tr><td><span class="info-status">Pending</span></td><td>Root <code>LICENSE</code> and <code>CHANGELOG.md</code></td><td>Required release metadata.</td></tr>
+            <tr><td><span class="info-status">Pending</span></td><td>Repeatable size report</td><td>Keeps size snapshots from drifting.</td></tr>
+            <tr><td><span class="info-status">Pending</span></td><td>Dist smoke tests</td><td>Confirms consumers can load the built artifacts.</td></tr>
+            <tr><td><span class="info-status">Pending</span></td><td>Example audit against <code>dist/</code></td><td>Confirms docs do not rely on source-only behavior.</td></tr>
+            <tr><td><span class="info-status">Pending</span></td><td>Browser smoke pass</td><td>Confirms the compatibility matrix against real browsers.</td></tr>
+        </tbody>
+    </table>
+</section>

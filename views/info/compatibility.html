@@ -1,0 +1,32 @@
+<script type="module" data-module="@info/compatibility"></script>
+
+<section class="doc-section" id="info-compat">
+    <h2>Browser Compatibility</h2>
+    <p>
+        data-wrapper targets modern evergreen browsers. The core runtime depends
+        on native Custom Elements, HTML templates, ES modules, dynamic
+        <code>import()</code>, <code>fetch</code>, <code>URL</code>, and
+        <code>URLSearchParams</code>. Runtime import-map support is the newest
+        requirement; the framework script supports an
+        <code>data-shim-src</code> fallback for es-module-shims.
+    </p>
+
+    <table>
+        <thead><tr><th>Browser</th><th>Target</th><th>Notes</th></tr></thead>
+        <tbody>
+            <tr><td>Chrome / Edge</td><td>Current evergreen releases</td><td>Expected to run natively with import maps.</td></tr>
+            <tr><td>Firefox</td><td>Current evergreen releases</td><td>Expected to run natively with import maps in current releases.</td></tr>
+            <tr><td>Safari / iOS Safari</td><td>Current evergreen releases</td><td>Expected to run natively in current releases; verify on real Safari before public beta.</td></tr>
+            <tr><td>Older evergreen browsers</td><td>Best effort with shim</td><td>Use <code>data-shim-src</code> for import-map fallback where native support is missing or inconsistent.</td></tr>
+            <tr><td>Internet Explorer</td><td>Unsupported</td><td>Missing required Web Component and module primitives.</td></tr>
+        </tbody>
+    </table>
+
+    <p>
+        Compatibility references:
+        <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap">MDN import maps</a>,
+        <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements">MDN custom elements</a>,
+        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import">MDN dynamic import</a>,
+        and <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template">MDN templates</a>.
+    </p>
+</section>

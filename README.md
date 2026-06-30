@@ -386,6 +386,7 @@ so each concept is followed by a live example.
 | Error handling | `views/docs/errors.html` |
 | Formatters | `views/docs/formatters.html` |
 | Known limitations | `views/docs/limitations.html` |
+| Technical info | `info.html` and `views/info/*.html` |
 
 ## Project Layout
 
