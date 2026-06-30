@@ -104,3 +104,63 @@ bun --hot ./index.ts
 ```
 
 For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
+
+---
+
+# Project: data-wrapper
+
+Zero-dependency, HTML-first reactivity built on a single Web Component
+(`<data-wrapper>`). No build step, no virtual DOM, no JSX.
+
+- **Source** in `src/lib/`: `utils.ts` (binding parser `pURL`, `readPath`),
+  `engine.ts` (binding contexts, `wake`/`wire`/`resolveSource`, reconcile,
+  `*list`/`*if`), `component.ts` (`ComponentRuntime`, `action`/`flush`),
+  `element.ts` (`<data-wrapper>` + `load()`), `index.ts` (re-exports).
+- **Docs are dogfooded**: each section is a `<data-wrapper>` view in `views/docs/`
+  mounted by `framework.html`. A feature isn't done until its doc is true.
+- **Tickets** in `tickets/NNN-*.md`. `tickets/000-minor-quibbles.md` is a *living*
+  list of small follow-ups — small quibbles go there, not into new tickets.
+- **`collab.md`** holds the project ethos and the active Claude↔Codex threads —
+  read it first. Ethos in one breath: platform-first; collapse-don't-bolt-on;
+  minimal grammar / single interface; documentation-first; honest about gaps;
+  no error slop (only handle failures a dev will actually hit — loud throw is the
+  default).
+
+## Workflow
+
+- Two assistants collaborate via `collab.md`: **Claude** and **Codex**. Roles
+  swap each phase/ticket (one implements, the other writes tests + reviews); the
+  user is the lead who ratifies decisions. Leave review comments on the ticket —
+  the other assistant picks them up.
+- **Never run destructive/mutating shell commands** (`rm`, `git rm`, `git mv`) —
+  hand the user the exact command instead; the permission prompt stalls the loop.
+  Read-only `git` (status/log/diff/grep) is fine; edit files via Edit/Write.
+- The user moves fast and values momentum, decisiveness, and honest reporting
+  (own mistakes plainly). Don't re-surface settled decisions as questions.
+
+## Testing
+
+- **Contract tests, not unit tests** (see `testing.md`). Drive the public surface
+  — `new ComponentRuntime(...)` + `wake(wrapper, rootContext(wrapper))` + the real
+  DOM, or `action`/`flush`. Assert observable behavior; never call internal
+  helpers (`resolveSource`, `formatter`) or assert private fields. One test per
+  distinct behavior; less is more.
+- **Build test DOM with `createElement`/`setAttribute` and `template.content.append`,
+  NOT `innerHTML`.** happy-dom handles `innerHTML` + `<template>` differently and
+  produces false failures; the createElement pattern is what the green suite uses.
+- `bun review` = `tsc --noEmit` + `bun test`. The loader (`load()`, `fetch`,
+  dynamic `import`, import maps) is happy-dom's blind spot — stub `globalThis.fetch`
+  + `importShim`, or test engine-direct.
+- Test helpers (`mount` / `wrapperWithRuntime` / `structuralTemplate` / `el`) are
+  duplicated across test files — consolidating into `tests/helpers.ts` is ticket
+  000.
+
+## Improve next session
+
+- **Verify before asserting.** Read the *actual code* before claiming a defect or
+  diagnosis — not ticket text or a remembered earlier state. This session I twice
+  reasoned from stale context: a `reconcile` "bug" was already fixed by a different
+  guard, and the proposed fix would have regressed an optimization. The tree moves
+  fast and Codex's in-flight work (sometimes from the *next* ticket) bleeds across
+  files — use `git log`/`status` to separate committed from in-progress and scope
+  reviews to the right ticket.

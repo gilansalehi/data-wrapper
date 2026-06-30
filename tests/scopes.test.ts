@@ -84,3 +84,46 @@ test('reserved binding syntax stays inert — no literal, no warning', () => {
     expect(warn).not.toHaveBeenCalled();
     warn.mockRestore();
 });
+
+// --- parent-row addressing `../` (ticket 008) ---------------------------------
+
+// `../name` skips the nearest row and reads the parent row. Both rows own
+// `label` here, so only `../` (not bare, not `./`) reaches the outer 'outer'.
+test('`../name` reads the parent row, not the nearest one', () => {
+    const el = wrapperWithRuntime({
+        rows: [{ id: 1, label: 'outer', items: [{ id: 'a', label: 'inner' }] }],
+    });
+    const span = document.createElement('span');
+    span.setAttribute('$text', '../label');
+    const li = document.createElement('li');
+    li.append(structuralTemplate('list', './items', span));
+    const ul = document.createElement('ul');
+    ul.append(structuralTemplate('list', 'rows', li));
+    el.append(ul);
+    wake(el, rootContext(el));
+
+    expect(el.querySelector('span')?.textContent).toBe('outer');
+});
+
+// `../name` targets that parent row *only* — it does not climb or fall through to
+// the component. A parent row that lacks the name misses (literal + warn) even
+// when the component defines it.
+test('`../name` resolves the parent row only and does not fall through to the component', () => {
+    const warn = spyOn(console, 'warn').mockImplementation(() => {});
+    const el = wrapperWithRuntime({
+        shared: 'from-component',
+        rows: [{ id: 1, items: [{ id: 'a' }] }],
+    });
+    const span = document.createElement('span');
+    span.setAttribute('$text', '../shared');
+    const li = document.createElement('li');
+    li.append(structuralTemplate('list', './items', span));
+    const ul = document.createElement('ul');
+    ul.append(structuralTemplate('list', 'rows', li));
+    el.append(ul);
+    wake(el, rootContext(el));
+
+    expect(el.querySelector('span')?.textContent).toBe('shared');
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+});
