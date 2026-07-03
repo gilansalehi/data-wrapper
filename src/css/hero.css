@@ -37,7 +37,6 @@
     line-height: .82;
     letter-spacing: -.08em;
     font-weight: 900;
-    text-wrap: nowrap;
 }
 
 .no-hero__title::before,
@@ -63,7 +62,18 @@
     font-weight: 700;
     line-height: 1.18;
     letter-spacing: -.01em;
-    text-wrap: balance;
+}
+
+@supports (text-wrap: nowrap) {
+    .no-hero__title {
+        text-wrap: nowrap;
+    }
+}
+
+@supports (text-wrap: balance) {
+    .no-hero__line {
+        text-wrap: balance;
+    }
 }
 
 .no-hero__pivot {

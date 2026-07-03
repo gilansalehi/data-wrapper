@@ -16,47 +16,6 @@
         })();
     </script>
     <link rel="stylesheet" href="/src/css/index.css">
-    <style>
-        .docs-layout { display: grid; grid-template-columns: 18rem 1fr; gap: 2rem;
-                       max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; }
-        .docs-toc { position: sticky; top: 1.5rem; align-self: start;
-                    border-right: 1px solid var(--border, #ddd); padding-right: 1rem; }
-        .docs-toc h1 { margin: 0 0 .25rem; font-size: 1.5rem; }
-        .docs-subtitle { margin: 0 0 1.25rem; color: var(--muted, #666); font-size: .95rem; }
-        .docs-toc ol { list-style: decimal inside; padding: 0; margin: 0; line-height: 1.85; }
-        .docs-toc a { text-decoration: none; }
-        .docs-toc a:hover { text-decoration: underline; }
-        .docs-sidefoot { margin-top: 2rem; font-size: .9rem; }
-        .docs-content { min-width: 0; }
-        .doc-section { padding: 1.5rem 0; border-top: 1px solid var(--border, #eee); }
-        .doc-section:first-child { border-top: 0; }
-        .doc-section h2 { margin-top: 0; }
-        .doc-section table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
-        .doc-section th, .doc-section td { border-bottom: 1px solid var(--border, #eee);
-                                            padding: .5rem .75rem; text-align: left; vertical-align: top; }
-        .doc-section pre { background: var(--ink); color: var(--ink-text); padding: .75rem 1rem;
-                           border-radius: 4px; overflow-x: auto; }
-        .doc-section pre code { color: inherit; background: none; }
-        .doc-section pre code[data-title] { display: block; }
-        .doc-section pre code[data-title]::before {
-            content: attr(data-title);
-            display: block;
-            margin: -.75rem -1rem .75rem;
-            padding: .45rem 1rem;
-            border-bottom: 1px solid color-mix(in srgb, var(--ink-text) 18%, transparent);
-            background: var(--ink);
-            color: color-mix(in srgb, var(--ink-text) 72%, transparent);
-            font-size: .78rem;
-            font-weight: 600;
-        }
-        .info-status { display: inline-block; min-width: 5.5rem; font-weight: 700; }
-        @media (max-width: 768px) {
-            .docs-layout { grid-template-columns: 1fr; }
-            .docs-toc { position: static; border-right: 0;
-                        border-bottom: 1px solid var(--border, #ddd);
-                        padding: 0 0 1rem; }
-        }
-    </style>
     <script src="/dist/data-wrapper.js" type="module"
             data-shim-src="https://ga.jspm.io/npm:es-module-shims@2.8.1/dist/es-module-shims.js"></script>
 </head>

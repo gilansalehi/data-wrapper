@@ -33,10 +33,17 @@
 
 /* Typography & a11y */
 
-.note { font-size: .78rem; color: var(--faint); margin: .2rem 0 1.5rem; text-wrap: pretty; }
+.note { font-size: .78rem; color: var(--faint); margin: .2rem 0 1.5rem; }
 .mono { font-family: var(--mono); }
-.text-balance { text-wrap: balance; }
 .text-muted { color: var(--muted); }
+
+@supports (text-wrap: pretty) {
+    .note { text-wrap: pretty; }
+}
+
+@supports (text-wrap: balance) {
+    .text-balance { text-wrap: balance; }
+}
 
 .sr-only {
     position: absolute;

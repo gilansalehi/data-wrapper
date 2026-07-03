@@ -46,8 +46,11 @@ h1, h2, h3, h4, h5, h6 {
 
 a {
     color: var(--link);
+    text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
     text-underline-offset: .18em;
-    &:hover { font-weight: 600; }
+    transition: text-decoration-color .15s;
+
+    &:hover { text-decoration-color: currentColor; }
 }
 
 code {
