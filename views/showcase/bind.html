@@ -1,0 +1,32 @@
+<script type="module" data-module="@view/bind">
+    export let name = '';
+
+    export const greeting = () =>
+        name.trim() ? `Hi, ${name.trim()}! 👋` : 'Start typing above…';
+
+    export function setName(event) { name = event.target.value; }
+</script>
+
+<style>
+    .demo-bind { display: flex; flex-direction: column; gap: .8rem; }
+    .demo-bind__input {
+        padding: .6em .8em;
+        font: inherit;
+        color: var(--text);
+        background: var(--control-bg);
+        border: var(--border-strong);
+        border-radius: var(--radius);
+    }
+    .demo-bind__input:focus-visible { outline: none; box-shadow: var(--ring); }
+    .demo-bind__out {
+        min-height: 1.6em;
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+</style>
+
+<div class="demo-bind">
+    <input class="demo-bind__input" type="text" @input="setName"
+           placeholder="your name" aria-label="your name">
+    <output class="demo-bind__out" $text="greeting"></output>
+</div>

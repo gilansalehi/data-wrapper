@@ -1,0 +1,28 @@
+<section class="pitch">
+    <div class="container">
+        <p class="pitch__kicker">01 — recognize it</p>
+        <h2 class="pitch__title">You already know this.</h2>
+        <p class="pitch__lead">
+            A variable. A button. One binding. That's a reactive component.
+        </p>
+
+        <div class="pitch__split">
+            <pre class="pitch__code"><code data-title="counter.html">&lt;script type="module" data-module="@view/counter"&gt;
+    export let count = 0;
+    export const doubled = () =&gt; count * 2;
+    export function increment(e) { count += Number(e.target.value); }
+&lt;/script&gt;
+
+&lt;button @click="increment?prevent" value="1"&gt;Increment&lt;/button&gt;
+&lt;output $text="count"&gt;&lt;/output&gt;
+&lt;output $text="doubled"&gt;&lt;/output&gt;</code></pre>
+
+            <figure class="pitch__demo">
+                <figcaption class="pitch__demo-label">live — click it →</figcaption>
+                <data-wrapper src="/views/showcase/counter.v2.html"></data-wrapper>
+            </figure>
+        </div>
+
+        <p class="pitch__foot">No compiler touched that. The browser just ran it.</p>
+    </div>
+</section>

@@ -1,0 +1,231 @@
+/* ============================================================
+   Landing pitch sections — the marketing narrative on index.html.
+   Minimal & technical voice: code-forward, tight copy, live demos.
+   Full-bleed sections (outer .pitch) with a .container inner, so a
+   section can carry its own background like the hero does.
+   ============================================================ */
+
+.pitch {
+    padding-block: clamp(2.5rem, 6vw, 4.75rem);
+}
+.pitch + .pitch {
+    border-top: var(--border);
+}
+
+.pitch__kicker {
+    margin: 0 0 .8rem;
+    font-family: var(--mono);
+    font-size: .74rem;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--faint);
+}
+
+.pitch__title {
+    margin: 0 0 .7rem;
+    padding-bottom: 0;
+    border-bottom: 0;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -.02em;
+}
+.pitch__title code { font-size: .85em; }
+@supports (text-wrap: balance) { .pitch__title { text-wrap: balance; } }
+
+.pitch__lead {
+    max-width: 42rem;
+    margin: 0 0 1.4rem;
+    font-size: clamp(1.02rem, 1.6vw, 1.12rem);
+    line-height: 1.55;
+    color: var(--text);
+}
+@supports (text-wrap: pretty) { .pitch__lead { text-wrap: pretty; } }
+
+.pitch__foot {
+    margin: 1.2rem 0 0;
+    font-size: .95rem;
+    font-style: italic;
+    color: var(--faint);
+}
+
+/* code | demo split */
+.pitch__split {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 46rem;
+}
+
+/* Code blocks — the docs' gentle-blue slab + data-title label, site-wide. */
+.pitch__code {
+    margin: 0;
+    padding: .85rem 1.1rem;
+    background: var(--ink);
+    color: var(--ink-text);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    font-size: .82rem;
+    line-height: 1.65;
+    overflow-x: auto;
+}
+.pitch__code code {
+    padding: 0;
+    background: none;
+    color: inherit;
+    font-family: var(--mono);
+}
+.pitch__code code[data-title] { display: block; }
+.pitch__code code[data-title]::before {
+    content: attr(data-title);
+    display: block;
+    margin: -.85rem -1.1rem .85rem;
+    padding: .45rem 1.1rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--ink-text) 18%, transparent);
+    color: color-mix(in srgb, var(--ink-text) 72%, transparent);
+    font-size: .78rem;
+    font-weight: 600;
+}
+
+/* demo + widget frames */
+.pitch__demo,
+.pitch__widget {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    margin: 0;
+    padding: 1.25rem;
+    background: var(--bg);
+    border: var(--border-strong);
+    border-radius: calc(var(--radius) * 2);
+    box-shadow: var(--shadow);
+}
+.pitch__demo-label {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: .76rem;
+    letter-spacing: .04em;
+    color: var(--faint);
+}
+
+/* Give bare demo controls a reasonable look without fighting any
+   component-colocated CSS — :where() keeps specificity at zero. */
+.pitch__demo :where(.component-counter) {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.pitch__demo :where(button) {
+    align-self: flex-start;
+    padding: .4em .85em;
+    border: var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--control-bg);
+    color: var(--text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+.pitch__demo :where(button):hover { background: var(--control-hover); }
+.pitch__demo :where(output) {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+/* "no X" struck list */
+.pitch__nots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.pitch__nots li {
+    display: inline-flex;
+    align-items: center;
+    gap: .45em;
+    padding: .32em .75em;
+    border: var(--border);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: .82rem;
+    color: var(--muted);
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, var(--err) 55%, transparent);
+}
+.pitch__nots li::before {
+    content: "✗";
+    color: var(--err);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+/* three tokens */
+.pitch__tokens {
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+}
+@media (min-width: 640px) {
+    .pitch__tokens { grid-template-columns: repeat(3, 1fr); }
+}
+.pitch__tokens > div {
+    padding: 1.15rem;
+    background: var(--bg);
+    border: var(--border);
+    border-radius: calc(var(--radius) * 2);
+}
+.pitch__tokens dt {
+    margin: 0 0 .55rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+.pitch__tokens dt code {
+    font-size: 1.35em;
+    font-weight: 800;
+    color: var(--link);
+}
+.pitch__tokens dd {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: .86rem;
+    color: var(--muted);
+}
+
+/* playground grid */
+.pitch__grid {
+    display: grid;
+    gap: 1.5rem;
+}
+@media (min-width: 720px) {
+    .pitch__grid { grid-template-columns: 1fr 1fr; }
+}
+
+.pitch__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .65rem;
+    margin-top: 1.6rem;
+}
+
+/* section backgrounds */
+.pitch--band { background: var(--surface); }
+.pitch--band .pitch__widget { background: var(--bg); }
+
+/* theme-aware closing bookend — a surface band that toggles with the theme */
+.pitch--cta {
+    background: var(--surface);
+}
+
+/* auto-synced "view source" peek (framework fetches the real file) */
+.pitch__peek { margin-top: 1.1rem; }
+.pitch__peek summary {
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: .8rem;
+    color: var(--faint);
+}
