@@ -32,6 +32,35 @@ mode. Add one before the first stable release cadence, not before this 0.1 beta.
   intended files (no `archive/`, `tickets/`, `views/`, `state/`, source `.ts`
   files, etc.).
 
+## Progress
+
+Done:
+
+- `package.json` is set to `version: "0.1.0"` for the first public beta.
+- `author`, `license: "MIT"`, expanded `keywords`, dist entry fields, and
+  `"files": ["dist"]` are in place.
+- The root `LICENSE` file exists with the full MIT text and the 2026 copyright.
+- The framework guide has had an accuracy and readability pass for public docs.
+- The technical info page exists at `info.html`, with views for package
+  metadata, download size, browser compatibility, public API surface, and
+  release checks.
+- The CSS release polish pass is complete: reset/base styles are tighter,
+  component-specific CSS has moved next to the views it styles, shared docs
+  chrome lives in `src/css/docs.css`, and global hover/text-wrap defaults no
+  longer cause avoidable warnings or layout shifts.
+
+Pending:
+
+- Add `repository`, `homepage`, and `bugs` to `package.json` once the public
+  remote / homepage URLs are known.
+- Validate `package.json` with `npm pkg get`.
+- Run `npm pack --dry-run` and confirm the tarball contains only
+  `dist/`, `package.json`, `README.md`, and `LICENSE`.
+- Smoke test both published artifacts from fresh HTML:
+  `dist/data-wrapper.js` as ESM and `dist/data-wrapper.min.js` as a classic
+  script.
+- Do a browser smoke pass for the public docs and showcase pages.
+
 ## Non-Goals
 
 - No semver policy document.

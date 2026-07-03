@@ -23,6 +23,22 @@ element.ts     loader, import-map/shim path, props
 component.ts   runtime, action/flush
 ```
 
+## Current Status
+
+The current build is inside the public beta budget:
+
+```txt
+dist/data-wrapper.js       27,827 bytes
+dist/data-wrapper.min.js   15,992 bytes
+dist/data-wrapper.min.js    6,491 bytes gzip
+```
+
+The first CSS trim pass is complete, but that work does not materially change
+the package size because the npm package intentionally publishes only `dist/`.
+The next useful package-size step is a small tooling pass: add a repeatable size
+report, then do a focused `src/lib` read-through for simpler code and accidental
+public surface.
+
 ## Size Budgets
 
 Use the public beta budget as the release guardrail. The stretch targets remain

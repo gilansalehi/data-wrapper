@@ -28,14 +28,16 @@ worth freezing.
 
 The first public technical info page exists at `info.html`, with small views in
 `views/info/` for package metadata, download size, browser compatibility, public
-API surface, and release checks. Follow up by feeding it generated package,
-export, and size data instead of manually maintained snapshots.
+API surface, and release checks. The page is currently hand-maintained and
+accurate enough for the beta prep pass. Follow up by feeding it generated
+package, export, and size data instead of manually maintained snapshots.
 
 ### 4. Repeatable size report
 
 Add a command or script that reports raw and gzip sizes for
 `dist/data-wrapper.js` and `dist/data-wrapper.min.js`. The info page can then
-use the generated numbers instead of a manually updated snapshot.
+use the generated numbers instead of a manually updated snapshot. This is also
+tracked as the first practical step in ticket 015.
 
 ### 5. Dist smoke tests
 
