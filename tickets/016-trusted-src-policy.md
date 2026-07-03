@@ -23,7 +23,7 @@ composition require a permissive `script-src` (`blob:`, plus any shim CDN). A
 So the framework itself has to enforce a source policy.
 
 Related fixes already landed (this review):
-- `$innerhtml`/`$outerhtml` throw; raw HTML needs the named `$unsafe-html`
+- `$innerhtml`/`$outerhtml` throw; raw HTML needs the named `$unsafeHTML`
   opt-in (`bind`, `PROP_ALIASES`).
 - `javascript:`/`vbscript:` values are neutralized in URL attributes
   (`href`/`src`/`action`/`formaction`) in `setProp`.
@@ -94,6 +94,14 @@ If none of these is a hard wall — i.e. multi-import-maps are not unsafe by
 definition — a strict-CSP-compatible mode is worth its own ticket, and this
 same-origin default becomes the belt to that CSP's suspenders.
 
+Strict authoring mode would change the component format. Inline
+`<script type="module" data-module>` blocks would no longer be the default
+authoring path, because the current runtime turns them into blob modules. A
+strict mode would likely require external module files via
+`<script type="module" data-module="..." src="./component.js">`, a static or
+nonce-aware import-map story, and browser verification across the supported
+matrix.
+
 ## Non-goals
 
 - Not a CSP replacement; complements it where CSP can't be strict.
@@ -108,4 +116,4 @@ same-origin default becomes the belt to that CSP's suspenders.
   `src` is refused and logged; an allowed `src` loads normally.
 - `bun review` green; size stays within the ticket 015 budget (report the delta).
 - A `views/docs/security.html` section (dogfooded) documents the policy, the
-  `$unsafe-html` opt-in, and the URL-scheme neutralization.
+  `$unsafeHTML` opt-in, and the URL-scheme neutralization.
