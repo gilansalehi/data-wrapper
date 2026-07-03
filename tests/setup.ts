@@ -3,5 +3,5 @@
 // surface a browser gives it. No per-test DOM boilerplate.
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
 
-GlobalRegistrator.register();
+GlobalRegistrator.register({ url: 'http://example.test/' });
 await import('../src/lib/element.ts');

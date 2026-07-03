@@ -217,7 +217,7 @@ export function action(input: Fn | Record<string, Fn>): Fn | Record<string, Fn> 
             let result;
             try { result = (input as Fn)(...args); }
             finally { _scheduleFlush(); }
-            if (result instanceof Promise) result.finally(_scheduleFlush);
+            if (result instanceof Promise) result.finally(_scheduleFlush).catch(() => {});
             return result;
         }) as Fn & { [ACTION]: true };
         wrapped[ACTION] = true;

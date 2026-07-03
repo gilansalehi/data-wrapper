@@ -83,6 +83,15 @@ test('action(action(fn)) returns the already wrapped function', () => {
     expect(action(once)).toBe(once);
 });
 
+test('a rejecting async action does not create a floating rejection', async () => {
+    const fail = action(async () => {
+        throw new Error('nope');
+    });
+
+    await expect(fail()).rejects.toThrow('nope');
+    await Promise.resolve();
+});
+
 test('an external action-wrapped writer flushes consuming runtimes', async () => {
     let n = 0;
     const write = action(() => { n += 1; });
@@ -187,6 +196,19 @@ test('removing a row tears down subscriptions created by nested lists', () => {
     } finally {
         DW_DIRECTIVES.delete('track-011');
     }
+});
+
+test('wake skips SVG subtrees', () => {
+    const el = wrapperWithRuntime({ label: 'blocked' });
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('$class', 'label');
+    svg.append(text);
+    el.append(svg);
+
+    expect(() => wake(el, rootContext(el))).not.toThrow();
+    expect(text.hasAttribute('_live')).toBe(false);
+    expect(text.getAttribute('class')).toBeNull();
 });
 
 // --- events ------------------------------------------------------------------

@@ -262,8 +262,15 @@ export const PROP_ALIASES: Record<string, string> = {
 // URL-bearing attributes where a `javascript:`/`vbscript:` value is code
 // execution. Bindings carry runtime values from data, so we neutralize the value
 // at write time rather than trusting the author.
-const URL_ATTRS     = new Set([
-    'href', 'src', 'action', 'formaction', 'data', 'ping', 'poster', 'background',
+const URL_ATTRS = new Set([
+    'href',
+    'src',
+    'action',
+    'formaction',
+    'data',
+    'ping',
+    'poster',
+    'background',
 ]);
 // A browser's URL parser ignores ASCII whitespace and C0 control characters, so
 // `java\tscript:` still resolves to the javascript: scheme. Strip those from a
@@ -318,7 +325,7 @@ export const bind = (el: Element, prop: string): Sub => {
 // --- wire / wake -------------------------------------------------------------
 
 const TOKENS    = '@$*';
-const NO_WAKE   = ['SVG'];
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 const LIVE      = '_live';
 const BARE_PATH = /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:\/[a-zA-Z_$][a-zA-Z0-9_$]*)*$/;
 const BARE_BINDING = /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:\/[a-zA-Z_$][a-zA-Z0-9_$]*)*(?:[?#].*)?$/;
@@ -485,7 +492,7 @@ const wakeNodes = (root: Element): Element[] => {
     const nodes: Element[] = [root];
     const visit = (node: Element) => {
         for (const child of [...node.children]) {
-            if (NO_WAKE.includes(child.tagName)) continue;
+            if (child.namespaceURI === SVG_NAMESPACE) continue;
             nodes.push(child);
             if (child.tagName === 'DATA-WRAPPER') continue;
             visit(child);

@@ -65,6 +65,30 @@ Controlled inputs already work with ordinary tokens, for example
 inventing a shorthand such as `*bind`; a shorthand should wait until repeated
 real usage proves the boilerplate is worth the extra API.
 
+### 9. Fix the dead `NO_WAKE` SVG guard — done
+
+Fixed by checking `namespaceURI` for SVG nodes before waking descendants. Real
+SVG-binding support remains a separate future feature.
+
+### 10. Revoke or drop unused blob module URLs
+
+`element.ts` creates a `URL.createObjectURL` blob per inline `data-module` and
+never revokes it. Bounded (one per distinct module, cached for app life) and
+effectively required while the import-map entry references it — hygiene only.
+Revisit only if a module-churn scenario proves it matters.
+
+### 11. `action()` floating `.finally` can surface an unhandled rejection — done
+
+Fixed by adding a handled catch to the discarded `finally` branch while
+preserving the original action promise for callers.
+
+### 12. Refresh `collab.md` stale entries
+
+The "Current focus: ticket 007" line and the open 007 DirectiveContext thread are
+stale (007/008 shipped). The 016 security-doc location is settled (info page,
+`views/info/security.html`). Trim resolved threads and update the focus line per
+the collab.md hygiene rules.
+
 ## Non-Goals
 
 - No behavioral changes; surface polish and test/docs hygiene only.

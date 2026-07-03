@@ -2,8 +2,9 @@
 
 ## Status
 
-IN PROGRESS — default posture ratified (Option B, same-origin). Security-info
-documentation has landed; runtime source-policy enforcement is still pending.
+COMPLETE for alpha — `<data-wrapper src>` is same-origin-only at runtime.
+Configurable cross-origin / path-prefix policy is deferred to the post-alpha
+roadmap.
 
 ## Problem
 
@@ -41,33 +42,28 @@ fetch. Model it on CSP's own trust story.
    `<data-wrapper>` can also inject a policy tag. Same rule CSP follows (policy
    must precede content).
 
-2. **Policy source.** A `<meta name="data-wrapper-src-policy" content="...">`
-   read at init. Prefer meta over a `data-*` on the framework `<script>` so
-   page-level policy is not confused with the script's functional attributes,
-   and matches the CSP-meta mental model.
+2. **Policy source.** Deferred. Alpha enforces same-origin only. A later
+   `<meta name="data-wrapper-src-policy" content="...">` or equivalent policy
+   can add explicit cross-origin / path-prefix support if third-party views or
+   UGC become target use-cases.
 
-3. **Match granularity** (content is a space/`;`-separated list):
-   - `'self'` — same-origin only. The one-token 80% win; kills
-     `src="//attacker.example/…"`. Note: does **not** stop same-origin
-     user-uploaded HTML.
-   - origin entries (`https://cdn.example.com`) — allow specific cross-origin.
-   - path-prefix entries (`/views/`) — needed for the same-origin-upload case:
-     restrict loads to your own views directory.
+3. **Match granularity.** Alpha has exactly one rule: the resolved view URL must
+   share the document origin. That kills `src="//attacker.example/…"`. It does
+   not try to solve same-origin user-uploaded HTML, because UGC is out of scope
+   for alpha.
 
-4. **Enforcement.** Resolve `new URL(src, baseURI)`, test against the snapshot,
+4. **Enforcement.** Resolve `new URL(src, baseURI)`, test against the origin,
    and on violation **refuse to load + `console.error`** with attribution. A
    blocked src is hostile runtime data, not a dev-authoring mistake, so it does
    not throw the app down (consistent with the `javascript:`-scheme handling). A
-   dev typo pointing outside the allowlist surfaces the same clear error.
+   dev typo pointing outside the origin surfaces the same clear error.
 
 ## Decision (ratified)
 
 **Default posture: Option B — same-origin (secure-by-default).** Cross-origin
-`src` requires an explicit policy. Protects the majority with zero config; only
-the cross-origin-view minority opts in. The documented CDN *install* loads the
-**framework** via `<script src>`, not a cross-origin `<data-wrapper src>`, so
-this does not regress the install story. It is a behavior change only for anyone
-loading a genuinely cross-origin view.
+`src` is not supported in the alpha runtime. The documented CDN *install* loads
+the **framework** via `<script src>`, not a cross-origin `<data-wrapper src>`,
+so this does not regress the install story.
 
 This default is chosen out of *necessity*: the framework can't rely on a strict
 CSP today (see below), so a same-origin default is the strongest posture we can
@@ -123,6 +119,8 @@ Done:
 
 - Option B is ratified: without an explicit policy, `<data-wrapper src>` should
   load same-origin views only.
+- Runtime enforcement is implemented in `src/lib/element.ts` before `fetch()`.
+- The document origin is snapshotted at framework initialization time.
 - The technical info page now includes `views/info/security.html`, wired into
   `info.html`.
 - The security info page measures the current posture against public standards:
@@ -137,26 +135,11 @@ Done:
 
 Pending before this ticket is complete:
 
-- Implement the runtime source policy in `src/lib/element.ts` before `fetch()`.
-- Snapshot `<meta name="data-wrapper-src-policy" content="...">` at framework
-  initialization time, not during each load.
-- Enforce default same-origin when no policy is configured.
-- Enforce explicit origin and same-origin path-prefix entries when a policy is
-  configured.
-- Refuse blocked loads with `console.error` attribution and no page-level crash.
-- Add contract tests for default same-origin, allowed same-origin, blocked
-  cross-origin, blocked out-of-prefix, allowed explicit origin/prefix, and
-  policy snapshot immutability.
-- Update `views/info/security.html` if the final runtime grammar differs from
-  the current ticket text.
-- Expand URL-scheme neutralization beyond `href`, `src`, `action`, and
-  `formaction` where the attribute is a straightforward single URL. Decide
-  separately how to handle list-valued URL attributes such as `srcset` and
-  `ping`.
-- Run `bun run review` and `bun report`; record the size delta.
+None for alpha.
 
 Roadmap / not alpha-blocking:
 
+- Configurable source policy for explicit trusted origins and path prefixes.
 - UGC-safe rendering and sanitization policy.
 - Third-party component view loading.
 - CSS-injection hardening for hostile content.
@@ -167,10 +150,11 @@ Roadmap / not alpha-blocking:
 
 ## Acceptance
 
-- [ ] Policy snapshotted at init; a policy tag injected after load cannot widen it
-  (contract test: inject a `<meta>` post-init, assert it has no effect).
-- [ ] With Option B default (or an explicit policy), a cross-origin / out-of-prefix
-  `src` is refused and logged; an allowed `src` loads normally.
-- [ ] `bun review` green; size stays within the ticket 015 budget (report the delta).
+- [x] Source origin snapshotted at init; a policy tag injected after load cannot
+  widen it.
+- [x] Same-origin `src` loads normally; cross-origin `src` is refused and logged.
+- [x] `bun review` green; size stays within the ticket 015 budget:
+  `dist/data-wrapper.js` 28,973 bytes raw, `dist/data-wrapper.min.js` 16,744
+  bytes raw / 6,795 bytes gzip.
 - [x] A `views/info/security.html` section (dogfooded) documents the policy, the
   `$unsafeHTML` opt-in, and the URL-scheme neutralization.

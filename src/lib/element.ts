@@ -28,6 +28,9 @@ type ShimGlobal = typeof globalThis & { importShim?: ImportShim };
 
 const componentModules = new Map<string, ComponentModuleRecord>();
 let shimPromise: Promise<ImportShim> | undefined;
+const viewSourceOrigin = new URL(document.baseURI).origin;
+const isTrustedViewSource = (url: URL): boolean =>
+    url.origin === viewSourceOrigin;
 
 const canonicalViewURL = (url: URL) => {
     const canonical = new URL(url);
@@ -74,9 +77,7 @@ const importMappedModule = async (name: string): Promise<ComponentModule> => {
         if (!isResolutionError(error)) throw error;
         if (shimSource()) return (await loadShim())(name);
         throw new Error(
-            `Could not resolve component module "${name}". This browser may not ` +
-            `support runtime import maps — add an es-module-shims fallback with a ` +
-            `data-shim-src attribute on the framework <script>. See "Browser support".`,
+            `Could not resolve component module "${name}". Add es-module-shims with data-shim-src.`,
             { cause: error },
         );
     }
@@ -223,6 +224,11 @@ export const load: WrapperLoader = async (wrapper: Wrapper, src: string, ctx?: B
     if (wrapper._loadedSrc === src) return;
 
     const url  = new URL(src, document.baseURI);
+    if (!isTrustedViewSource(url)) {
+        console.error(`data-wrapper: blocked cross-origin src "${src}"`);
+        return;
+    }
+
     const props = inputProps(src, url, ctx);
     const res  = await fetch(url);
     const html = await res.text();

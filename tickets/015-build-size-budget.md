@@ -10,10 +10,10 @@ explicit size budgets and a focused trim pass over `src/lib`.
 Current build after tickets 004-013:
 
 ```txt
-dist/data-wrapper.js       27,827 bytes raw
-dist/data-wrapper.js        8,114 bytes gzip
-dist/data-wrapper.min.js   15,992 bytes raw
-dist/data-wrapper.min.js    6,486 bytes gzip
+dist/data-wrapper.js       28,973 bytes raw
+dist/data-wrapper.js        8,539 bytes gzip
+dist/data-wrapper.min.js   16,744 bytes raw
+dist/data-wrapper.min.js    6,795 bytes gzip
 ```
 
 `src/lib` is about 1,197 lines total, with most weight in:
@@ -29,10 +29,10 @@ component.ts   runtime, action/flush
 The current build is inside the public beta budget:
 
 ```txt
-dist/data-wrapper.js       27,827 bytes raw
-dist/data-wrapper.js        8,114 bytes gzip
-dist/data-wrapper.min.js   15,992 bytes raw
-dist/data-wrapper.min.js    6,486 bytes gzip
+dist/data-wrapper.js       28,973 bytes raw
+dist/data-wrapper.js        8,539 bytes gzip
+dist/data-wrapper.min.js   16,744 bytes raw
+dist/data-wrapper.min.js    6,795 bytes gzip
 ```
 
 The first CSS trim pass is complete, but that work does not materially change

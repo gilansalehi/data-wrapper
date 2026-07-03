@@ -2,8 +2,9 @@
 // the dangerous sink distinguishable. `$text` is textContent; raw HTML needs the
 // named `$unsafeHTML` opt-in; and `javascript:`-scheme values are neutralized in
 // URL attributes. Driven through the real wire/wake path; observable behavior only.
-import { test, expect } from 'bun:test';
+import { test, expect, spyOn } from 'bun:test';
 import { ComponentRuntime } from '../src/lib/component.ts';
+import { load } from '../src/lib/element.ts';
 import { rootContext, wake, type Wrapper } from '../src/lib/engine.ts';
 
 // Build a wrapper holding one child element with a single token attribute, then
@@ -78,4 +79,62 @@ test('$srcdoc is an allowed acknowledged sink (no safe twin, naming is the opt-i
     const { child } = mountChild('iframe', '$srcdoc', 'doc', { doc: '<b>x</b>' });
     const written = (child as HTMLIFrameElement).srcdoc || child.getAttribute('srcdoc');
     expect(written).toBe('<b>x</b>');
+});
+
+test('<data-wrapper src> allows same-origin views by default', async () => {
+    const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(
+        (async () => new Response('<p id="ok">ok</p>')) as unknown as typeof fetch,
+    );
+    const wrapper = document.createElement('data-wrapper') as unknown as Wrapper;
+
+    try {
+        await load(wrapper, 'http://example.test/view.html');
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
+        expect(wrapper.querySelector('#ok')?.textContent).toBe('ok');
+        expect(wrapper._loadedSrc).toBe('http://example.test/view.html');
+    } finally {
+        fetchSpy.mockRestore();
+    }
+});
+
+test('<data-wrapper src> blocks cross-origin views by default', async () => {
+    const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(
+        (async () => new Response('<p>should not load</p>')) as unknown as typeof fetch,
+    );
+    const error = spyOn(console, 'error').mockImplementation(() => {});
+    const wrapper = document.createElement('data-wrapper') as unknown as Wrapper;
+
+    try {
+        await load(wrapper, 'https://attacker.example/view.html');
+        expect(fetchSpy).not.toHaveBeenCalled();
+        expect(error).toHaveBeenCalledWith(expect.stringContaining('blocked cross-origin src'));
+        expect(wrapper._loadedSrc).toBeUndefined();
+        expect(wrapper.childElementCount).toBe(0);
+    } finally {
+        fetchSpy.mockRestore();
+        error.mockRestore();
+    }
+});
+
+test('later policy meta tags cannot widen the alpha same-origin guard', async () => {
+    const meta = document.createElement('meta');
+    meta.name = 'data-wrapper-src-policy';
+    meta.content = "'self' https://attacker.example";
+    document.head.append(meta);
+
+    const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(
+        (async () => new Response('<p>should not load</p>')) as unknown as typeof fetch,
+    );
+    const error = spyOn(console, 'error').mockImplementation(() => {});
+    const wrapper = document.createElement('data-wrapper') as unknown as Wrapper;
+
+    try {
+        await load(wrapper, 'https://attacker.example/view.html');
+        expect(fetchSpy).not.toHaveBeenCalled();
+        expect(error).toHaveBeenCalled();
+    } finally {
+        meta.remove();
+        fetchSpy.mockRestore();
+        error.mockRestore();
+    }
 });

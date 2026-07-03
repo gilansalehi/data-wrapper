@@ -50,6 +50,27 @@
         before-update, after-render, or before-unmount hooks.
     </p>
 
+    <h3>Keyless lists match rows by value</h3>
+    <p>
+        <code>*list</code> identifies rows by a key field —
+        <code>id</code> by default, or a chosen field with
+        <code>*list="items?key=field"</code>. Without a key field, a row's
+        identity falls back to a structural JSON snapshot of the item. Two equal
+        items then collapse to a single row, and editing any field changes that
+        row's identity, forcing a teardown and rebuild instead of an in-place
+        update. Supply a stable key whenever list items can repeat or change over
+        time.
+    </p>
+
+    <h3>Bindings do not run inside SVG subtrees</h3>
+    <p>
+        The current wake pass skips SVG descendants. This avoids treating SVG
+        DOM properties like regular HTML properties; for example, SVG
+        <code>className</code> is not the same writable string property as an
+        HTML element's <code>className</code>. Inline SVG is fine as static
+        markup, but SVG-specific binding support is a future feature.
+    </p>
+
     <h3>There is no SSR or hydration path</h3>
     <p>
         data-wrapper is client-rendered. There is no server-side render path
