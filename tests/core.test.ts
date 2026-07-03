@@ -1,16 +1,14 @@
 // Core mechanics — reactivity and the structural directives: the rock-solid
-// tenets that tests/resolution.test.ts does not cover. Driven through the public
-// surface (ComponentRuntime + wake + action/flush + real DOM); assertions are
-// observable behavior only, so the implementation underneath stays free to change.
+// tenets that tests/resolution.test.ts does not cover. Driven through the runtime
+// harness and real DOM; assertions are observable behavior only, so the
+// implementation underneath stays free to change.
 import { test, expect } from 'bun:test';
+import { ComponentRuntime } from '../src/lib/component.ts';
+import { rootContext, wake, type Wrapper } from '../src/lib/engine.ts';
 import {
-    ComponentRuntime,
     DW_DIRECTIVES,
     action,
     flush,
-    rootContext,
-    wake,
-    type Wrapper,
 } from '../src/lib/index.ts';
 
 // A detached <data-wrapper> never fires connectedCallback, so each test drives

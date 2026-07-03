@@ -3,9 +3,9 @@
 <section class="doc-section" id="info-api">
     <h2>Public API Surface</h2>
     <p>
-        The intended authoring surface is small. Before public beta, the
-        package export should be audited so internals are not accidentally
-        treated as stable API.
+        The intended authoring surface is small. The package entry exports the
+        APIs component authors use, while the runtime classes, loader, resolver,
+        and wake internals remain source-level implementation details.
     </p>
 
     <table>
@@ -14,8 +14,9 @@
             <tr><td>Reactivity</td><td><code>action</code>, <code>flush</code></td><td>Documented and tested.</td></tr>
             <tr><td>Formatters</td><td><code>DW_FORMATTERS</code>, <code>Formatter</code></td><td>Documented extension point.</td></tr>
             <tr><td>Directives</td><td><code>DW_DIRECTIVES</code>, <code>DirectiveContext</code>, <code>DirectiveHandler</code>, <code>DirectiveUpdater</code>, <code>nearestItem</code></td><td>Documented extension point.</td></tr>
+            <tr><td>Helpers</td><td><code>p</code>, <code>pURL</code>, <code>on</code>, <code>emit</code>, <code>q</code></td><td>Small advanced helpers.</td></tr>
             <tr><td>Component factory</td><td><code>ComponentContext</code>, <code>ComponentProps</code>, <code>ComponentFactory</code></td><td>Useful for TypeScript authors if types ship.</td></tr>
-            <tr><td>Internals to review</td><td><code>wake</code>, <code>wire</code>, <code>resolveSource</code>, parser helpers, station helpers, runtime classes</td><td>Currently exported through broad module re-exports.</td></tr>
+            <tr><td>Internals</td><td><code>wake</code>, <code>wire</code>, <code>resolveSource</code>, station helpers, runtime classes, loader</td><td>Not exported from the package entry.</td></tr>
         </tbody>
     </table>
 </section>

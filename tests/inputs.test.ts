@@ -7,18 +7,18 @@
 //
 // The full browser loader round-trip remains a smoke-test concern, but these tests
 // can stub the browser boundary (`fetch` + import shim) and still exercise the
-// public `load()` / `wake()` contract without asserting loader internals.
+// loader / wake contract without asserting loader internals.
 import { test, expect, spyOn } from 'bun:test';
 import {
     ComponentRuntime,
-    flush,
-    load,
-    rootContext,
-    wake,
     type ComponentContext,
     type ComponentModule,
     type ComponentProps,
-    type Wrapper,
+} from '../src/lib/component.ts';
+import { load } from '../src/lib/element.ts';
+import { rootContext, wake, type Wrapper } from '../src/lib/engine.ts';
+import {
+    flush,
 } from '../src/lib/index.ts';
 
 const el = (tag: string, attrs: Record<string, string> = {}, ...kids: Element[]): Element => {

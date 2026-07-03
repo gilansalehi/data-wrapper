@@ -5,7 +5,9 @@
 // wake + the real DOM; no internal resolver is called directly, so the scope
 // implementation underneath stays free to change.
 import { test, expect, spyOn } from 'bun:test';
-import { ComponentRuntime, flush, rootContext, unwake, wake, type Wrapper } from '../src/lib/index.ts';
+import { ComponentRuntime } from '../src/lib/component.ts';
+import { rootContext, unwake, wake, type Wrapper } from '../src/lib/engine.ts';
+import { flush } from '../src/lib/index.ts';
 
 const wrapperWithRuntime = (module: Record<string, unknown>): Wrapper => {
     const el = document.createElement('data-wrapper') as unknown as Wrapper;

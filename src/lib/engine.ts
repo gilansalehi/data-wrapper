@@ -211,7 +211,6 @@ const uniqueValue = (value: unknown, arg: unknown): unknown => {
 
 export const DW_FORMATTERS = new Map<string, Formatter>([
     ['bool',     (v, arg) => boolLabel(v, arg, 'true', 'false')],
-    ['onoff',    (v, arg) => boolLabel(v, arg, 'on', 'off')],
     ['default',  (v, arg) => v == null || v === '' ? text(arg) : v],
     ['case',     caseText],
     ['trim',     v => text(v).trim()],

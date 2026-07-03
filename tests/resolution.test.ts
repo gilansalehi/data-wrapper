@@ -1,8 +1,9 @@
-// Contract: how a binding name resolves to a value. These drive the real public
+// Contract: how a binding name resolves to a value. These drive the real runtime
 // surface — build a runtime, `wake` a wrapper, read the DOM — and never touch
 // internal resolver helpers, so the resolution code underneath is free to change.
 import { test, expect } from 'bun:test';
-import { ComponentRuntime, rootContext, wake, type Wrapper } from '../src/lib/index.ts';
+import { ComponentRuntime } from '../src/lib/component.ts';
+import { rootContext, wake, type Wrapper } from '../src/lib/engine.ts';
 
 // A detached <data-wrapper> never fires connectedCallback, so each test drives
 // wake() explicitly. The element's _unsubs/_listCache come from its constructor.

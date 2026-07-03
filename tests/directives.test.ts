@@ -4,15 +4,12 @@
 // can register teardown via cleanup(). Driven through wake + the real DOM; DOM is
 // built with createElement so token attributes survive.
 import { test, expect } from 'bun:test';
+import { ComponentRuntime } from '../src/lib/component.ts';
+import { rootContext, unwake, wake, type Wrapper } from '../src/lib/engine.ts';
 import {
-    ComponentRuntime,
     DW_DIRECTIVES,
     flush,
-    rootContext,
-    unwake,
-    wake,
     type DirectiveContext,
-    type Wrapper,
 } from '../src/lib/index.ts';
 
 const el = (tag: string, attrs: Record<string, string> = {}, ...kids: Element[]): Element => {

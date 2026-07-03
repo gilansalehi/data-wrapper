@@ -2,20 +2,20 @@
 
 ## Goal
 
-Keep the production package small and intentional before 1.0, with explicit
-size budgets and a focused trim pass over `src/lib`.
+Keep the production package small and intentional before public beta, with
+explicit size budgets and a focused trim pass over `src/lib`.
 
 ## Baseline
 
-Current build after ticket 008:
+Current build after tickets 004-013:
 
 ```txt
-dist/data-wrapper.js       23,083 bytes
-dist/data-wrapper.min.js   13,262 bytes
-dist/data-wrapper.min.js    5,544 bytes gzip
+dist/data-wrapper.js       27,827 bytes
+dist/data-wrapper.min.js   15,992 bytes
+dist/data-wrapper.min.js    6,491 bytes gzip
 ```
 
-`src/lib` is about 1,039 lines total, with most weight in:
+`src/lib` is about 1,197 lines total, with most weight in:
 
 ```txt
 engine.ts      binding, wake, directives, scope resolution
@@ -25,21 +25,10 @@ component.ts   runtime, action/flush
 
 ## Size Budgets
 
-Use two budgets: a near-term budget for polish work before ticket 009, and a
-final 1.0 budget after cross-wrapper communication lands.
+Use the public beta budget as the release guardrail. The stretch targets remain
+useful pressure, but should not make the source obscure.
 
-### Pre-009 budget
-
-```txt
-ESM raw       <= 24 KB
-IIFE min raw  <= 14 KB
-IIFE min gzip <= 6 KB
-```
-
-This is a guardrail, not a target to spend. New polish tickets should stay under
-it unless there is a clear DX or correctness reason.
-
-### 1.0 budget after ticket 009
+### Public beta budget
 
 ```txt
 ESM raw       <= 30 KB
@@ -47,7 +36,8 @@ IIFE min raw  <= 17 KB
 IIFE min gzip <= 7 KB
 ```
 
-If ticket 009 is smaller than expected, tighten these numbers before release.
+This is a guardrail, not a target to spend. Polish work should stay under it
+unless there is a clear DX or correctness reason.
 
 ### Stretch targets
 
@@ -81,7 +71,7 @@ Treat these as useful pressure, not a reason to make the source obscure.
 - `component.ts` action/flush path: preserve semantics, but check whether nested
   output bookkeeping has avoidable duplication.
 - Dist formats: decide whether the package truly needs both ESM and IIFE for
-  1.0, or whether one is a docs/CDN convenience artifact.
+  public beta, or whether one is a docs/CDN convenience artifact.
 
 ## Non-Goals
 
@@ -96,7 +86,6 @@ Treat these as useful pressure, not a reason to make the source obscure.
 
 - `bun run review` and `bun run build` pass.
 - A size report is easy to run locally and records raw + gzip sizes.
-- Production output is at or below the pre-009 budget.
+- Production output is at or below the public beta budget.
 - Any size reductions are explained in terms of simpler code or removed
   non-contract surface, not arbitrary golf.
-- Final 1.0 release prep revisits the budget after ticket 009.

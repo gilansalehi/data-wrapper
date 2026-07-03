@@ -15,13 +15,14 @@ redefined across `tests/core.test.ts`, `tests/scopes.test.ts`, and
 `tests/inputs.test.ts`. Extract the shared ones into a single `tests/helpers.ts`
 so the harness has one source of truth. (From ticket 004 review.)
 
-### 2. Public API surface audit
+### 2. Public API surface follow-up
 
-`src/lib/index.ts` currently re-exports every lib module. Before a public beta,
-define the intentional authoring surface and stop exporting accidental internals.
-Likely public exports include `action`, `flush`, `DW_DIRECTIVES`,
-`DW_FORMATTERS`, directive types, formatter types, and the small set of helpers
-we explicitly document.
+`src/lib/index.ts` now exports the intentional authoring surface instead of the
+whole internal runtime. Keep docs and examples aligned with that surface:
+`action`, `flush`, `DW_DIRECTIVES`, `DW_FORMATTERS`, directive/formatter/factory
+types, and the small helpers we explicitly support (`p`, `pURL`, `on`, `emit`,
+and `q`). If TypeScript declarations ship later, revisit which public types are
+worth freezing.
 
 ### 3. Keep the technical info page generated/current
 
@@ -46,6 +47,22 @@ or IIFE artifact, then renders a minimal `<data-wrapper>` view.
 
 Before public beta, verify that public examples run against the current
 `dist/` build, not only `src/lib` through the test harness.
+
+### 7. Lifecycle events / post-wake DOM setup
+
+The current lifecycle is intentionally small: the default factory is setup, and
+`context.cleanup()` is teardown. If a real component needs post-wake DOM setup
+for a chart, editor, observer, canvas, or third-party widget, explore a DOM-side
+lifecycle event such as `@wake` / `@dw:wake` instead of expanding the factory
+context. The design needs to answer event naming, row-local cleanup, and whether
+the event fires once per created node or on every re-wake.
+
+### 8. Explicit controlled-input examples
+
+Controlled inputs already work with ordinary tokens, for example
+`<input @input="setValue" $value="value">`. Add a small docs example before
+inventing a shorthand such as `*bind`; a shorthand should wait until repeated
+real usage proves the boilerplate is worth the extra API.
 
 ## Non-Goals
 

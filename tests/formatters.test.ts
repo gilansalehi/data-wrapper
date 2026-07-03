@@ -1,7 +1,8 @@
 // Built-in formatter contract. These tests drive real $ bindings and *list
 // sources through wake(); they assert rendered output, not registry internals.
 import { test, expect } from 'bun:test';
-import { ComponentRuntime, rootContext, wake, type Wrapper } from '../src/lib/index.ts';
+import { ComponentRuntime } from '../src/lib/component.ts';
+import { rootContext, wake, type Wrapper } from '../src/lib/engine.ts';
 
 const mount = (html: string, module: Record<string, unknown>): Wrapper => {
     const el = document.createElement('data-wrapper') as unknown as Wrapper;

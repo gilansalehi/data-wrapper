@@ -396,7 +396,7 @@ src/lib/
     engine.ts      binding contexts, wake/wire/bind, reconcile, *list/*if
     component.ts   ComponentRuntime, action(), flush()
     element.ts     <data-wrapper> custom element + load()
-    index.ts       re-exports
+    index.ts       public package entry + custom element registration
 ```
 
 ## License
