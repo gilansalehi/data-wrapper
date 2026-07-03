@@ -50,6 +50,50 @@ git history.)
 
 ## Active threads
 
+### 016 — Trusted source policy and security docs (Codex → Claude)
+
+User decision: we are landing **Option B** for beta. `<data-wrapper src>`
+should default to same-origin, with an explicit trusted-source policy for any
+cross-origin or narrower path-prefix cases. UGC and third-party-loaded component
+views are not target use-cases for this beta; if we later pursue those, security
+gets a deeper revisit.
+
+Current framing:
+
+- The short-term fix is a framework-enforced source policy before `fetch()`.
+  Snapshot the policy once at framework init so injected markup cannot widen it.
+- Policy source remains the ticket proposal:
+  `<meta name="data-wrapper-src-policy" content="...">`.
+- Default with no policy is same-origin.
+- Supported policy tokens for this pass: `'self'`, explicit origins such as
+  `https://cdn.example.com`, and same-origin path prefixes such as `/views/`.
+- On violation: refuse to load and `console.error` with the blocked `src`; do not
+  crash the whole page.
+- `$unsafeHTML` is the spelling to document. The older `$unsafe-html` wording is
+  obsolete.
+
+Docs handoff:
+
+- Please implement `views/docs/security.html` and wire it into
+  `framework.html`.
+- The page should document:
+  - `<data-wrapper src>` is a code-execution boundary because views may include a
+    component module.
+  - Same-origin is the default policy.
+  - How to opt into a narrower path policy or explicit trusted origin.
+  - `$text` is safe text; `$innerHTML` / `$outerHTML` are blocked; `$unsafeHTML`
+    is the explicit raw-HTML opt-in.
+  - `javascript:` / `vbscript:` values are blocked in URL-bearing attributes.
+  - Current CSP guidance: sensible current-mode CSP is possible, but strict CSP
+    requires a future external-module / nonce-aware authoring mode.
+
+I will review the page for accuracy and contract fit. If the source policy
+implementation lands with a public behavior gap, I can add focused tests, but
+the tests should stay contract-level: default same-origin, explicit allowlist,
+blocked cross-origin/out-of-prefix, and policy snapshot immutability.
+
+— Codex, 2026-07-03
+
 ### 007 — DirectiveContext shape (Claude → Codex)
 
 The recent refactor already settled most of this in code; the ticket just hasn't

@@ -2,8 +2,8 @@
 
 ## Status
 
-READY — default posture ratified (Option B, same-origin). Build pending role
-assignment.
+IN PROGRESS — default posture ratified (Option B, same-origin). Security-info
+documentation has landed; runtime source-policy enforcement is still pending.
 
 ## Problem
 
@@ -73,26 +73,35 @@ This default is chosen out of *necessity*: the framework can't rely on a strict
 CSP today (see below), so a same-origin default is the strongest posture we can
 enforce ourselves without new platform work.
 
-## Future direction: step up a tier
+## Future direction: step up a tier (Trusted Types as the metric)
 
 Same-origin-by-default is a framework-enforced allowlist standing in for a
-platform control we can't currently use. The north star is to step up a tier —
-let apps run a **strict `script-src` CSP** so the browser neutralizes the
-injection-to-execution escalation directly, and our allowlist becomes
+platform control we can't currently use. The north star is to step up a tier so
+the browser enforces the boundary directly and our allowlist becomes
 defense-in-depth rather than the sole line.
 
-The open question is whether the multi-import-map + blob module composition is
-*inherently* CSP-incompatible or just needs adapting:
-- blob-URL module scripts require `script-src blob:`. Can inline `data-module`
-  scripts register via a real URL (or nonce/hash) instead of a blob?
-- the dynamically-injected `<script type="importmap">` needs a nonce or hash
-  under a strict policy — can the framework thread a page nonce through?
-- multiple import maps are now spec-supported; confirm strict-CSP behavior
-  across the target browsers.
+The concrete, testable acceptance metric is **Trusted Types enforcement**
+(`Content-Security-Policy: require-trusted-types-for 'script'`), now Baseline
+2026. Under enforcement the browser throws a `TypeError` on any raw-string write
+to an injection sink unless it passes through a named `TrustedTypePolicy`. That
+replaces the vague "strict CSP" goal with a pass/fail conformance test.
 
-If none of these is a hard wall — i.e. multi-import-maps are not unsafe by
-definition — a strict-CSP-compatible mode is worth its own ticket, and this
-same-origin default becomes the belt to that CSP's suspenders.
+data-wrapper does not run under enforcement today. It writes raw strings to four
+Trusted-Types-protected sinks:
+- `$unsafeHTML` → `Element.innerHTML` (TrustedHTML sink).
+- `<iframe $srcdoc>` → `HTMLIFrameElement.srcdoc` (TrustedHTML sink).
+- `importComponent` → the injected `<script type="importmap">.textContent`
+  (TrustedScript sink).
+- `loadShim` → `script.src` (TrustedScriptURL sink).
+
+The step-up work routes each through a single framework `TrustedTypePolicy`, plus
+a CSP story for the blob-module composition (real-URL or nonce/hash module
+registration so `script-src` need not allow `blob:`). If none of these is a hard
+wall — i.e. multi-import-maps are not unsafe by definition — this is worth its
+own ticket, and the same-origin default becomes the belt to that CSP's
+suspenders. Note this likely changes the authoring format: inline
+`data-module` blocks become blob modules today, so an enforced mode would prefer
+external module files (`<script type="module" data-module src="./x.js">`).
 
 Strict authoring mode would change the component format. Inline
 `<script type="module" data-module>` blocks would no longer be the default
@@ -108,12 +117,60 @@ matrix.
 - No allowlist for the framework's own module import / import-map composition —
   that is trusted first-party config, not a per-wrapper UGC surface.
 
+## Progress
+
+Done:
+
+- Option B is ratified: without an explicit policy, `<data-wrapper src>` should
+  load same-origin views only.
+- The technical info page now includes `views/info/security.html`, wired into
+  `info.html`.
+- The security info page measures the current posture against public standards:
+  OWASP DOM-XSS guidance, CWE-79, CSP Level 3, and Trusted Types.
+- The page documents the alpha threat model: developer-authored views and trusted
+  bound data; UGC and third-party-loaded component views are out of scope until
+  the 1.0 roadmap.
+- The page documents existing sink protections: `$text`, blocked
+  `$innerHTML` / `$outerHTML`, explicit `$unsafeHTML`, URL-scheme
+  neutralization for the current URL attrs, and no string-eval event handling.
+- The ticket now uses `$unsafeHTML` consistently.
+
+Pending before this ticket is complete:
+
+- Implement the runtime source policy in `src/lib/element.ts` before `fetch()`.
+- Snapshot `<meta name="data-wrapper-src-policy" content="...">` at framework
+  initialization time, not during each load.
+- Enforce default same-origin when no policy is configured.
+- Enforce explicit origin and same-origin path-prefix entries when a policy is
+  configured.
+- Refuse blocked loads with `console.error` attribution and no page-level crash.
+- Add contract tests for default same-origin, allowed same-origin, blocked
+  cross-origin, blocked out-of-prefix, allowed explicit origin/prefix, and
+  policy snapshot immutability.
+- Update `views/info/security.html` if the final runtime grammar differs from
+  the current ticket text.
+- Expand URL-scheme neutralization beyond `href`, `src`, `action`, and
+  `formaction` where the attribute is a straightforward single URL. Decide
+  separately how to handle list-valued URL attributes such as `srcset` and
+  `ping`.
+- Run `bun run review` and `bun report`; record the size delta.
+
+Roadmap / not alpha-blocking:
+
+- UGC-safe rendering and sanitization policy.
+- Third-party component view loading.
+- CSS-injection hardening for hostile content.
+- Trusted Types enforcement compatibility
+  (`require-trusted-types-for 'script'`) as the 1.0 security metric.
+- Strict-CSP-compatible authoring mode, likely with external module files and a
+  nonce/static import-map story.
+
 ## Acceptance
 
-- Policy snapshotted at init; a policy tag injected after load cannot widen it
+- [ ] Policy snapshotted at init; a policy tag injected after load cannot widen it
   (contract test: inject a `<meta>` post-init, assert it has no effect).
-- With Option B default (or an explicit policy), a cross-origin / out-of-prefix
+- [ ] With Option B default (or an explicit policy), a cross-origin / out-of-prefix
   `src` is refused and logged; an allowed `src` loads normally.
-- `bun review` green; size stays within the ticket 015 budget (report the delta).
-- A `views/docs/security.html` section (dogfooded) documents the policy, the
+- [ ] `bun review` green; size stays within the ticket 015 budget (report the delta).
+- [x] A `views/info/security.html` section (dogfooded) documents the policy, the
   `$unsafeHTML` opt-in, and the URL-scheme neutralization.
