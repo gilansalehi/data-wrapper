@@ -2,7 +2,21 @@
     export { theme, toggleTheme } from 'state/theme.js';
 </script>
 
-<section class="demo theme-demo">
+<style>
+    .theme-demo {
+        border: var(--border);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: .4rem;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+
+        & p:first-child { margin-top: 0; }
+        & p:last-child  { margin-bottom: 0; }
+    }
+</style>
+
+<section class="theme-demo">
     <h2>Component module imports</h2>
     <p><code>@view/theme</code> exports the live theme binding and action.
        The component below imports both by module name; either button updates

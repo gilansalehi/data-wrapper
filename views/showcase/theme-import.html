@@ -2,6 +2,14 @@
     export { theme, toggleTheme } from '@view/theme';
 </script>
 
+<style>
+    .module-import-demo {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: var(--border);
+    }
+</style>
+
 <div class="module-import-demo">
     <p>Imported from <code>@view/theme</code>: <strong $text="theme"></strong></p>
     <button @click="toggleTheme">Toggle from importer</button>

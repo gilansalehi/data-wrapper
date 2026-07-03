@@ -1,20 +1,3 @@
-/* ============================================================
-   Reusable surfaces
-   ============================================================ */
-.card {
-    background: var(--surface);
-    border: var(--border);
-    border-radius: var(--radius);
-    padding: 1.25rem;
-    box-shadow: var(--shadow);
-    transition: box-shadow .2s, transform .2s, border-color .2s;
-}
-
-.card:hover {
-    border-color: color-mix(in srgb, currentColor 28%, transparent);
-    /* transform: translateY(-2px); */
-}
-
 .btn {
     display: inline-flex;
     align-items: center;
@@ -49,25 +32,4 @@
 
 .btn-outline {
     background: transparent;
-}
-
-.btn-sm { min-height: 0; padding: .2em .65em; font-size: .8rem; }
-.btn-md { font-size: 1rem; }
-.btn-lg { padding: .55em 1em; font-size: 1rem; }
-
-.code {
-    font-size: .82rem;
-    background: var(--surface);
-    padding: .15em .4em;
-    border-radius: 3px;
-    font-family: var(--mono);
-}
-
-.code-pop {
-    --code-pop-color: color-mix(var(--ink-text) 50%, transparent);
-    font-size: 1.18rem;
-    padding: .15em .4em;
-    border-radius: 4px;
-    font-family: var(--mono);
-    background: var(--code-pop-color);
 }

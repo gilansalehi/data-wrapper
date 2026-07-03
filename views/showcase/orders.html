@@ -83,7 +83,16 @@
     }
 </script>
 
-<style>
+    <style>
+    .orders-demo {
+        border: var(--border);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: .4rem;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+    }
+
     .orders-demo .orders-head,
     .orders-demo .order-card-head {
         display: flex;
@@ -151,6 +160,17 @@
         gap: .35rem;
     }
 
+    .orders-demo .delete-btn {
+        margin-left: auto;
+        color: var(--err);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: .15rem .4rem;
+        font-size: 1rem;
+        min-height: 0;
+    }
+
     .orders-demo .line-list {
         list-style: none;
         padding: 0;
@@ -188,7 +208,7 @@
     }
 </style>
 
-<section class="demo orders-demo">
+<section class="orders-demo">
     <header class="orders-head">
         <div>
             <h2>Nested binding contexts</h2>

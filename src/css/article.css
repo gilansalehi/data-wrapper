@@ -1,11 +1,5 @@
 /* ============================================================
-   Polish — typographic hierarchy, code surfaces, and editorial
-   detailing for the content pages.
-
-   Every rule here is additive and scoped to <main>, the document
-   <header>, or the generated <figure> docs. Widgets (classed/id'd)
-   and the hero keep their own styling — their higher specificity
-   wins, this layer only fills the gaps.
+   Content-page typography and editorial surfaces.
    ============================================================ */
 
 /* ── Anchored scrolling ──────────────────────────────────────
@@ -13,12 +7,6 @@
    viewport edge so the heading is never flush against the top. */
 
 [id] { scroll-margin-top: 2rem; }
-
-/* ── Heading scale — a modular rhythm the pages currently lack ─
-main h1,
-main h2 {
-    font-family: var(--serif);
-} */
 
 header.container h1,
 main h1 {
@@ -56,9 +44,6 @@ main h3 {
     margin: 2rem 0 .5rem;
 }
 
-/* Card titles opt out of the section rhythm. */
-.card h3 { margin-top: 0; }
-
 /* ── Prose flow ──────────────────────────────────────────────
    The first paragraph under a heading reads as a lead-in. */
 
@@ -67,31 +52,27 @@ main h2 + p {
     color: var(--muted);
 }
 
-main p,
-figcaption p { text-wrap: pretty; }
+main p { text-wrap: pretty; }
 
 main section > ul > li:not([class]),
 main section > ol > li:not([class]) { margin: .35rem 0; }
 
 /* ── Links — an underline that grows in on hover, no weight jump ─ */
 
-main a:not(.btn),
-figcaption a {
+main a:not(.btn) {
     text-decoration: underline;
     text-decoration-color: color-mix(in srgb, var(--link) 35%, transparent);
     text-decoration-thickness: 1px;
     text-underline-offset: .2em;
     transition: text-decoration-color .15s;
 }
-main a:not(.btn):hover,
-figcaption a:hover {
+main a:not(.btn):hover {
     text-decoration-color: var(--link);
     font-weight: inherit;          /* cancel the global bold-on-hover shift */
 }
 
 /* ── Code block snippets (framework pages) ───────────────────
-   A bare prose <pre> (direct child of a section) had no styling;
-   give it the same dark slab as the .install widget. Scoped to a
+   A bare prose <pre> uses the same dark slab as titled examples. Scoped to a
    direct child so <details> code-reveal widgets are left alone. */
 main section details > pre,
 main section > pre {
@@ -113,80 +94,12 @@ main section > pre code {
     font-size: inherit;
 }
 
-/* ── Generated documentation — the <figure> partials ─────────
-   documentation.html is built entirely of these; previously they
-   rendered with the UA default 40px figure margin and no frame. */
-
-main figure[data-source] {
-    margin: 1.5rem 0;
-    border: var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-    overflow: hidden;
-    box-shadow: var(--shadow);
-}
-
-/* A source-file tab, pulled straight from the data-source attribute. */
-main figure[data-source]::before {
-    content: attr(data-source);
-    display: block;
-    padding: .5rem 1rem;
-    font-family: var(--mono);
-    font-size: .72rem;
-    letter-spacing: .04em;
-    color: var(--muted);
-    background: color-mix(in srgb, var(--surface) 40%, var(--bg));
-    border-bottom: var(--border);
-}
-
-main figure[data-source] figcaption {
-    padding: 1rem 1.15rem;
-    font-size: .92rem;
-    line-height: 1.6;
-}
-main figure[data-source] figcaption p { margin: 0 0 .6rem; }
-main figure[data-source] figcaption p:last-child { margin-bottom: 0; }
-main figure[data-source] figcaption ul {
-    margin: .4rem 0 0;
-    padding-left: 1.15rem;
-    list-style: disc;
-}
-main figure[data-source] figcaption li { margin: .15rem 0; }
-main figure[data-source] figcaption code {
-    background: var(--bg);
-    border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
-}
-
-/* The code slab fills the frame edge-to-edge — no double border. */
-main figure[data-source] pre {
-    margin: 0;
-    border-radius: 0;
-    box-shadow: none;
-}
-
 /* ── Tables — a quiet row hover on the content pages ─────────── */
 
 main tbody tr { transition: background-color .12s; }
 main tbody tr:hover {
     background: color-mix(in srgb, var(--link) 6%, transparent);
 }
-
-/* ── Callout — an emphasised aside (distinct from the tiny .note) ─ */
-
-.callout {
-    margin: 1.5rem 0;
-    padding: .9rem 1.15rem;
-    border-left: 3px solid var(--link);
-    background: color-mix(in srgb, var(--link) 6%, transparent);
-    border-radius: 0 var(--radius) var(--radius) 0;
-    color: var(--text);
-    text-wrap: pretty;
-}
-
-/* ── Cards — re-enable the lift the .card:hover rule left commented ─ */
-
-main .card { transition: transform .2s, box-shadow .2s, border-color .2s; }
-main .card:hover { transform: translateY(-2px); }
 
 /* ── Selection — tinted to the brand link colour ─────────────── */
 

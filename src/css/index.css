@@ -1,12 +1,9 @@
 
 @import 'theme.css';
 @import 'reset.css';
-@import 'typography.css';
-@import 'app.css';
 @import 'layout.css';
 @import 'components.css';
 @import 'hero.css';
 @import 'article.css';
-@import 'how-to.css';
 @import 'atoms.css';
 @import 'motion.css';

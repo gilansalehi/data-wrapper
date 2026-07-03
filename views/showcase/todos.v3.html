@@ -39,7 +39,79 @@
     }
 </script>
 
-<article class="demo">
+<style>
+    .todo-demo {
+        border: var(--border);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: .4rem;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+
+        & p:first-child { margin-top: 0; }
+        & p:last-child  { margin-bottom: 0; }
+    }
+
+    .todo-demo form {
+        display: flex;
+        gap: .5rem;
+        margin-bottom: .75rem;
+
+        & input  { flex: 1; margin: 0; }
+        & button { white-space: nowrap; }
+    }
+
+    .todo-list {
+        list-style: none;
+        padding: 0;
+        margin: .75rem 0;
+    }
+
+    .todo-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        border-bottom: var(--border);
+
+        &.done span { text-decoration: line-through; opacity: .45; }
+    }
+
+    .done-badge {
+        font-size: .68rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--ok);
+        border: 1px solid color-mix(in srgb, var(--ok) 40%, transparent);
+        border-radius: 999px;
+        padding: .05rem .45rem;
+    }
+
+    .todo-demo .delete-btn {
+        margin-left: auto;
+        color: var(--err);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: .15rem .4rem;
+        font-size: 1rem;
+        min-height: 0;
+    }
+
+    .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: .75rem;
+        font-size: .88rem;
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+
+    .filter-btns button { margin-left: .2rem; }
+</style>
+
+<article class="todo-demo">
     <form @submit="addTodo?prevent">
         <input name="task" type="text" placeholder="What needs doing?" required autocomplete="off">
         <button type="submit">Add</button>
