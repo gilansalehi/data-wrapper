@@ -259,15 +259,24 @@ export const PROP_ALIASES: Record<string, string> = {
 
 // --- bind --------------------------------------------------------------------
 
-// URL-bearing attributes where a `javascript:`/`vbscript:` value is same-origin
-// code execution. Bindings carry runtime values from UGC, so we neutralize the
-// value at write time rather than trusting the author.
-const URL_ATTRS      = new Set(['href', 'src', 'action', 'formaction']);
-const DANGEROUS_URL  = /^\s*(?:javascript|vbscript):/i;
+// URL-bearing attributes where a `javascript:`/`vbscript:` value is code
+// execution. Bindings carry runtime values from data, so we neutralize the value
+// at write time rather than trusting the author.
+const URL_ATTRS     = new Set([
+    'href', 'src', 'action', 'formaction', 'data', 'ping', 'poster', 'background',
+]);
+// A browser's URL parser ignores ASCII whitespace and C0 control characters, so
+// `java\tscript:` still resolves to the javascript: scheme. Strip those from a
+// copy before testing the prefix; the original value is what we store or drop.
+const CONTROL_CHARS = /[\u0000-\u0020]+/g;
+const DANGEROUS_URL = /^(?:javascript|vbscript):/i;
+
+const isDangerousUrl = (val: unknown): boolean =>
+    DANGEROUS_URL.test(String(val).replace(CONTROL_CHARS, ''));
 
 const setProp = (el: Element, prop: string, val: unknown) => {
     if (val == null) return;
-    if (URL_ATTRS.has(prop.toLowerCase()) && DANGEROUS_URL.test(String(val))) {
+    if (URL_ATTRS.has(prop.toLowerCase()) && isDangerousUrl(val)) {
         console.warn(`data-wrapper: blocked unsafe URL scheme in ${prop}="${String(val)}"`);
         return;
     }
@@ -278,10 +287,22 @@ const setProp = (el: Element, prop: string, val: unknown) => {
 
 export const bind = (el: Element, prop: string): Sub => {
     const lower = prop.toLowerCase();
+    // Raw-HTML sinks with a safe twin (`$text`) throw so they can't be reached by
+    // accident; raw HTML needs the explicit `$unsafeHTML` opt-in. `srcdoc` is the
+    // one HTML sink we let through — it has no safe alternative and naming it is
+    // itself the opt-in (documented on the security info page).
     if (lower === 'innerhtml' || lower === 'outerhtml') {
         throw new Error(
             `$${prop} is blocked: binding raw HTML is an XSS risk. Use $text for ` +
             `safe text, or $unsafeHTML to opt into raw HTML when you trust the value.`
+        );
+    }
+    // Event handlers are the `@event` interface, never a `$` binding. Blocking
+    // `$on*` closes the event-handler sink class and points to the one right way.
+    if (lower.length > 2 && lower.startsWith('on')) {
+        throw new Error(
+            `$${prop} is blocked: bind events with @${lower.slice(2)} (the @event ` +
+            `interface), not a $ property binding.`
         );
     }
     if (prop === 'class') {

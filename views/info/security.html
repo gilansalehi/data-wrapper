@@ -36,9 +36,15 @@
             <code>$unsafeHTML</code> opt-in, so the dangerous sink can never be
             reached by accident.</li>
         <li><strong>URL-scheme neutralization.</strong> <code>javascript:</code>
-            and <code>vbscript:</code> values are dropped from
-            <code>href</code>, <code>src</code>, <code>action</code>, and
-            <code>formaction</code>.</li>
+            and <code>vbscript:</code> values are dropped from every URL-bearing
+            attribute (<code>href</code>, <code>src</code>, <code>action</code>,
+            <code>formaction</code>, <code>data</code>, <code>ping</code>,
+            <code>poster</code>, <code>background</code>), and the check resists
+            control-character obfuscation such as <code>java&#9;script:</code>.</li>
+        <li><strong>Event handlers only via <code>@event</code>.</strong>
+            Binding an <code>$on*</code> property throws and points to the
+            <code>@event</code> interface, so the event-handler sink cannot be
+            reached through a <code>$</code> binding.</li>
         <li><strong>No string evaluation.</strong> No <code>eval</code>,
             <code>Function</code>, or string-argument timers. Events bind
             functions, not code strings; JSON uses <code>JSON</code>, not
@@ -67,15 +73,15 @@
             </tr>
             <tr>
                 <td>RULE #5 — untrusted data in a URL attribute context</td>
-                <td>Met for <code>href</code> / <code>src</code> /
-                    <code>action</code> / <code>formaction</code>: dangerous URL
-                    schemes are neutralized.</td>
+                <td>Met across the URL-attr set: dangerous schemes are
+                    neutralized, including control-character-obfuscated forms.</td>
             </tr>
             <tr>
                 <td>RULE #3, GUIDELINE #5 / #10 — no event-handler or implicit
                     <code>eval</code> sinks</td>
-                <td>Met: no <code>eval</code> / <code>Function</code>; string
-                    event-handler attributes do not execute.</td>
+                <td>Met: no <code>eval</code> / <code>Function</code>; binding an
+                    event handler via <code>$on*</code> is rejected — events use
+                    the <code>@event</code> interface only.</td>
             </tr>
         </tbody>
     </table>

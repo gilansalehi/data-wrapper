@@ -53,3 +53,29 @@ test('an ordinary URL still binds', () => {
     const { child } = mountChild('a', '$href', 'link', { link: 'https://example.com/' });
     expect(child.getAttribute('href')).toBe('https://example.com/');
 });
+
+test('a javascript: scheme obfuscated with control chars is still blocked', () => {
+    const { child } = mountChild('a', '$href', 'link', { link: 'java\tscript:alert(1)' });
+    expect(child.getAttribute('href')).toBeNull();
+});
+
+test('a dangerous scheme is blocked across the URL-attr set (formaction)', () => {
+    const { child } = mountChild('button', '$formaction', 'go', { go: 'javascript:steal()' });
+    expect(child.getAttribute('formaction')).toBeNull();
+});
+
+test('binding an event handler with $ throws and points to @event', () => {
+    const wrapper = document.createElement('data-wrapper') as unknown as Wrapper;
+    const child = document.createElement('button');
+    child.setAttribute('$onclick', 'handler');
+    wrapper.append(child);
+    wrapper._component = new ComponentRuntime(wrapper, { handler: () => {} });
+
+    expect(() => wake(wrapper, rootContext(wrapper))).toThrow(/@click/);
+});
+
+test('$srcdoc is an allowed acknowledged sink (no safe twin, naming is the opt-in)', () => {
+    const { child } = mountChild('iframe', '$srcdoc', 'doc', { doc: '<b>x</b>' });
+    const written = (child as HTMLIFrameElement).srcdoc || child.getAttribute('srcdoc');
+    expect(written).toBe('<b>x</b>');
+});
