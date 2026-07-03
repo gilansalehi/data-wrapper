@@ -98,7 +98,6 @@ const own = (ctx: BindingContext, off: Off) => {
 };
 
 // --- station primitives ------------------------------------------------------
-
 export const subscribe = (st: Station, ch: string, sub: Sub, value: unknown): Off => {
     const subs = (st[ch] ??= []);
     subs.push(sub);
