@@ -46,6 +46,10 @@ Done:
   release checks.
 - `bun report` rebuilds the dist artifacts, reports raw and gzip package sizes,
   enforces the public beta size budget, and updates the download-size view.
+- `npm pkg get` validates the package metadata.
+- `npm pack --dry-run` includes only the intended publish surface.
+- A packed tarball installs into a separate project, and that project can
+  `import "data-wrapper"` from the tarball.
 - The CSS release polish pass is complete: reset/base styles are tighter,
   component-specific CSS has moved next to the views it styles, shared docs
   chrome lives in `src/css/docs.css`, and global hover/text-wrap defaults no
@@ -55,13 +59,51 @@ Pending:
 
 - Add `repository`, `homepage`, and `bugs` to `package.json` once the public
   remote / homepage URLs are known.
-- Validate `package.json` with `npm pkg get`.
-- Run `npm pack --dry-run` and confirm the tarball contains only
-  `dist/`, `package.json`, `README.md`, and `LICENSE`.
 - Smoke test both published artifacts from fresh HTML:
   `dist/data-wrapper.js` as ESM and `dist/data-wrapper.min.js` as a classic
   script.
 - Do a browser smoke pass for the public docs and showcase pages.
+
+## Publish Preflight Checklist
+
+Local release checks:
+
+- [x] `bun run review` passes.
+- [x] `bun report` passes and updates `views/info/size.html`.
+- [ ] Dist smoke fixture passes for `dist/data-wrapper.js` as ESM.
+- [ ] Dist smoke fixture passes for `dist/data-wrapper.min.js` as a classic
+  script.
+- [ ] Public docs and showcase pages pass a browser smoke check.
+
+Package metadata:
+
+- [x] `version` is `0.1.0`.
+- [x] `license` is `MIT`, with a root `LICENSE` file.
+- [x] `author`, `description`, `keywords`, entry points, and `"files": ["dist"]`
+  are set.
+- [ ] `repository`, `homepage`, and `bugs` point at the public project URLs.
+- [x] The package name is available, or the package is renamed/scoped before
+  publish. `npm view data-wrapper` currently returns `E404`.
+- [ ] npm auth is ready on the publishing machine.
+
+Package contents:
+
+- [x] `npm pkg get` validates the package metadata.
+- [x] `npm pack --dry-run` includes only the intended publish surface:
+  `dist/`, `package.json`, `README.md`, and `LICENSE`.
+- [x] `npm pack` tarball installs into a separate project.
+- [x] A separate project can `import "data-wrapper"` from the packed tarball and
+  register `<data-wrapper>`.
+
+Publish:
+
+- [ ] Publish the beta with `npm publish --tag beta`.
+- [ ] If the package is scoped, publish with
+  `npm publish --access public --tag beta`.
+- [ ] Verify a separate project can install the published beta with
+  `npm install data-wrapper@beta` or the scoped equivalent.
+- [ ] Verify the exact version can be installed with
+  `npm install data-wrapper@0.1.0` or the scoped equivalent.
 
 ## Non-Goals
 

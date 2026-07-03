@@ -247,20 +247,43 @@ export const DW_FORMATTERS = new Map<string, Formatter>([
 ]);
 
 export const PROP_ALIASES: Record<string, string> = {
-    text:  'textContent',
-    class: 'className',
+    text:       'textContent',
+    class:      'className',
+    // `$unsafeHTML` is the opt-in for raw HTML — `unsafe` is in the name, so the
+    // dev has said the word. The bare `$innerhtml`/`$outerhtml` forms throw (see
+    // `bind`). Both casings alias because the DOM lowercases attribute names, so
+    // an authored `$unsafeHTML` reaches us as `unsafehtml`.
+    unsafeHTML: 'innerHTML',
+    unsafehtml: 'innerHTML',
 };
 
 // --- bind --------------------------------------------------------------------
 
+// URL-bearing attributes where a `javascript:`/`vbscript:` value is same-origin
+// code execution. Bindings carry runtime values from UGC, so we neutralize the
+// value at write time rather than trusting the author.
+const URL_ATTRS      = new Set(['href', 'src', 'action', 'formaction']);
+const DANGEROUS_URL  = /^\s*(?:javascript|vbscript):/i;
+
 const setProp = (el: Element, prop: string, val: unknown) => {
     if (val == null) return;
+    if (URL_ATTRS.has(prop.toLowerCase()) && DANGEROUS_URL.test(String(val))) {
+        console.warn(`data-wrapper: blocked unsafe URL scheme in ${prop}="${String(val)}"`);
+        return;
+    }
     const value = prop === 'textContent' ? String(val) : val;
     if (prop in el) (el as unknown as Record<string, unknown>)[prop] = value;
     else el.setAttribute(prop, String(val));
 };
 
 export const bind = (el: Element, prop: string): Sub => {
+    const lower = prop.toLowerCase();
+    if (lower === 'innerhtml' || lower === 'outerhtml') {
+        throw new Error(
+            `$${prop} is blocked: binding raw HTML is an XSS risk. Use $text for ` +
+            `safe text, or $unsafeHTML to opt into raw HTML when you trust the value.`
+        );
+    }
     if (prop === 'class') {
         const base = el.className;
         return v => { if (v == null) return;
