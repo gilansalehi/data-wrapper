@@ -34,10 +34,9 @@ package, export, and size data instead of manually maintained snapshots.
 
 ### 4. Repeatable size report
 
-Add a command or script that reports raw and gzip sizes for
-`dist/data-wrapper.js` and `dist/data-wrapper.min.js`. The info page can then
-use the generated numbers instead of a manually updated snapshot. This is also
-tracked as the first practical step in ticket 015.
+Done in `bun report`: the command rebuilds the dist artifacts, reports raw and
+gzip sizes for `dist/data-wrapper.js` and `dist/data-wrapper.min.js`, updates
+`views/info/size.html`, and fails if the public beta budget is exceeded.
 
 ### 5. Dist smoke tests
 

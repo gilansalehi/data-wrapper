@@ -10,9 +10,10 @@ explicit size budgets and a focused trim pass over `src/lib`.
 Current build after tickets 004-013:
 
 ```txt
-dist/data-wrapper.js       27,827 bytes
-dist/data-wrapper.min.js   15,992 bytes
-dist/data-wrapper.min.js    6,491 bytes gzip
+dist/data-wrapper.js       27,827 bytes raw
+dist/data-wrapper.js        8,114 bytes gzip
+dist/data-wrapper.min.js   15,992 bytes raw
+dist/data-wrapper.min.js    6,486 bytes gzip
 ```
 
 `src/lib` is about 1,197 lines total, with most weight in:
@@ -28,16 +29,20 @@ component.ts   runtime, action/flush
 The current build is inside the public beta budget:
 
 ```txt
-dist/data-wrapper.js       27,827 bytes
-dist/data-wrapper.min.js   15,992 bytes
-dist/data-wrapper.min.js    6,491 bytes gzip
+dist/data-wrapper.js       27,827 bytes raw
+dist/data-wrapper.js        8,114 bytes gzip
+dist/data-wrapper.min.js   15,992 bytes raw
+dist/data-wrapper.min.js    6,486 bytes gzip
 ```
 
 The first CSS trim pass is complete, but that work does not materially change
 the package size because the npm package intentionally publishes only `dist/`.
-The next useful package-size step is a small tooling pass: add a repeatable size
-report, then do a focused `src/lib` read-through for simpler code and accidental
-public surface.
+The repeatable size report is now available as `bun report`; it rebuilds the
+dist artifacts, measures raw and gzip bytes, updates `views/info/size.html`, and
+fails if the public beta budget is exceeded.
+
+The next useful package-size step is a focused `src/lib` read-through for
+simpler code and accidental public surface.
 
 ## Size Budgets
 
@@ -67,8 +72,8 @@ Treat these as useful pressure, not a reason to make the source obscure.
 
 ## Scope
 
-- Add a repeatable size-report command or script that prints raw and gzip sizes
-  for both dist files.
+- Done: add a repeatable size-report command or script that prints raw and gzip
+  sizes for both dist files.
 - Audit public exports and remove any accidental non-contract exports.
 - Remove dead branches, stale comments that imply code paths, and unused helper
   surface.

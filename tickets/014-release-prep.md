@@ -44,6 +44,8 @@ Done:
 - The technical info page exists at `info.html`, with views for package
   metadata, download size, browser compatibility, public API surface, and
   release checks.
+- `bun report` rebuilds the dist artifacts, reports raw and gzip package sizes,
+  enforces the public beta size budget, and updates the download-size view.
 - The CSS release polish pass is complete: reset/base styles are tighter,
   component-specific CSS has moved next to the views it styles, shared docs
   chrome lives in `src/css/docs.css`, and global hover/text-wrap defaults no

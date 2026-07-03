@@ -17,6 +17,7 @@
   "author": "Gilan Salehi <gilansalehi@gmail.com>",
   "scripts": {
     "build": "bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.js --format esm --target browser && bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.min.js --format iife --minify --target browser",
+    "report": "bun run build && bun scripts/report.ts",
     "review": "bun typecheck && bun test",
     "serve": "bun serve.ts",
     "test": "bun test",
