@@ -37,7 +37,46 @@
     export function setFilter(event) {
         filter = event.target.value;
     }
+
+    export function clearDone() {
+        todos = todos.filter(t => !t.done);
+    }
 </script>
+
+<article class="todo-demo">
+    <header class="todo-demo__header">
+        <div>
+            <p class="todo-demo__eyebrow">live todo view</p>
+            <h3>Ship the beta</h3>
+        </div>
+        <strong class="todo-demo__count"><span $text="activeCount">0</span> active</strong>
+    </header>
+
+    <form @submit="addTodo?prevent">
+        <input name="task" type="text" placeholder="What needs doing?" required autocomplete="off">
+        <button type="submit">Add</button>
+    </form>
+
+    <ul class="todo-list">
+        <template *list="view">
+            <li class="todo-item" $class="./done?bool=done:active">
+                <input type="checkbox" $checked="./done" @change="toggleTodo" aria-label="Toggle todo completion">
+                <span $text="./task"></span>
+                <template *if="./done"><strong class="done-badge">done</strong></template>
+                <button class="delete-btn" @click="removeTodo" aria-label="Remove">✕</button>
+            </li>
+        </template>
+    </ul>
+
+    <div class="controls">
+        <button @click="clearDone">Clear done</button>
+        <div class="filter-btns" role="group" aria-label="Filter todos">
+            <button @click="setFilter" value="all">All</button>
+            <button @click="setFilter" value="active">Active</button>
+            <button @click="setFilter" value="done">Done</button>
+        </div>
+    </div>
+</article>
 
 <style>
     .todo-demo {
@@ -47,9 +86,47 @@
         margin-bottom: .4rem;
         background: var(--surface);
         box-shadow: var(--shadow);
+        overflow: clip;
 
         & p:first-child { margin-top: 0; }
         & p:last-child  { margin-bottom: 0; }
+    }
+
+    .todo-demo__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: .9rem;
+        border-bottom: var(--border);
+    }
+
+    .todo-demo__eyebrow {
+        margin: 0;
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: .72rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .todo-demo h3 {
+        margin: .1rem 0 0;
+        font-size: 1.2rem;
+        line-height: 1.15;
+    }
+
+    .todo-demo__count {
+        flex: 0 0 auto;
+        padding: .25rem .6rem;
+        border: 1px solid color-mix(in srgb, var(--link) 35%, transparent);
+        border-radius: 999px;
+        color: var(--link);
+        font-family: var(--mono);
+        font-size: .78rem;
+        font-weight: 700;
+        background: color-mix(in srgb, var(--link) 8%, transparent);
     }
 
     .todo-demo form {
@@ -73,8 +150,18 @@
         gap: 10px;
         padding: 10px;
         border-bottom: var(--border);
+        background: var(--bg);
 
         &.done span { text-decoration: line-through; opacity: .45; }
+    }
+
+    .todo-item:first-child {
+        border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .todo-item:last-child {
+        border-bottom: 0;
+        border-radius: 0 0 var(--radius) var(--radius);
     }
 
     .done-badge {
@@ -110,30 +197,3 @@
 
     .filter-btns button { margin-left: .2rem; }
 </style>
-
-<article class="todo-demo">
-    <form @submit="addTodo?prevent">
-        <input name="task" type="text" placeholder="What needs doing?" required autocomplete="off">
-        <button type="submit">Add</button>
-    </form>
-
-    <ul class="todo-list">
-        <template *list="view">
-            <li class="todo-item" $class="./done?bool=done:active">
-                <input type="checkbox" $checked="./done" @change="toggleTodo" aria-label="Toggle todo completion">
-                <span $text="./task"></span>
-                <template *if="./done"><strong class="done-badge">done</strong></template>
-                <button class="delete-btn" @click="removeTodo" aria-label="Remove">✕</button>
-            </li>
-        </template>
-    </ul>
-
-    <div class="controls">
-        <span><strong $text="activeCount">0</strong> active</span>
-        <div class="filter-btns" role="group" aria-label="Filter todos">
-            <button @click="setFilter" value="all">All</button>
-            <button @click="setFilter" value="active">Active</button>
-            <button @click="setFilter" value="done">Done</button>
-        </div>
-    </div>
-</article>

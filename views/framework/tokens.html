@@ -1,20 +1,56 @@
 <section class="pitch">
     <div class="container">
-        <p class="pitch__kicker">03 — the whole api</p>
-        <h2 class="pitch__title">Three tokens. That's the surface area.</h2>
+        <p class="pitch__kicker">3 — three tokens</p>
+        <h2 class="pitch__title">Wire your HTML with <code>$</code>, <code>@</code>, and <code>*</code>.</h2>
+        <p class="pitch__lead">
+            A view exports values and functions from its module script. The HTML
+            uses three attribute tokens to read those exports, call those
+            functions, and render repeated or conditional markup.
+        </p>
 
+        <div class="pitch__split">
+            <pre class="pitch__code"><code data-title="counter.html">&lt;script type="module" data-module="@view/counter"&gt;
+    export let count = 0;
+    export function increment() { count += 1; }
+&lt;/script&gt;
+
+&lt;button @click="increment"&gt;Increment&lt;/button&gt;
+&lt;output $text="count"&gt;&lt;/output&gt;</code></pre>
+
+            <figure class="pitch__demo">
+                <figcaption class="pitch__demo-label">live component — click it</figcaption>
+                <data-wrapper src="/views/showcase/counter.v2.html"></data-wrapper>
+            </figure>
+        </div>
+
+        <p class="pitch__foot">
+            The button calls <code>increment</code>. After the function changes
+            <code>count</code>, the <code>$text</code> binding reads the value
+            again and updates the output.
+        </p>
+
+        <p class="pitch__mini-title">The three tokens:</p>
         <dl class="pitch__tokens">
             <div>
-                <dt><code>$</code> show</dt>
-                <dd>&lt;output $text="count"&gt;</dd>
+                <dt><code>$</code> write a value</dt>
+                <dd>
+                    <code>&lt;output $text="count"&gt;&lt;/output&gt;</code>
+                    <span>Read an exported value and write it into text, attributes, properties, or classes.</span>
+                </dd>
             </div>
             <div>
-                <dt><code>@</code> do</dt>
-                <dd>&lt;button @click="inc"&gt;</dd>
+                <dt><code>@</code> call a function</dt>
+                <dd>
+                    <code>&lt;button @click="increment"&gt;&lt;/button&gt;</code>
+                    <span>Listen for a browser event and call an exported function from the view.</span>
+                </dd>
             </div>
             <div>
-                <dt><code>*</code> repeat</dt>
-                <dd>&lt;template *list="todos"&gt;</dd>
+                <dt><code>*</code> render markup</dt>
+                <dd>
+                    <code>&lt;template *list="todos"&gt;</code>
+                    <span>Repeat a template with <code>*list</code>, or show a block with <code>*if</code>.</span>
+                </dd>
             </div>
         </dl>
     </div>

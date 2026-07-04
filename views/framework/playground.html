@@ -1,16 +1,22 @@
 <section class="pitch">
     <div class="container">
-        <p class="pitch__kicker">04 — try it</p>
-        <h2 class="pitch__title">Poke at it. It's all live.</h2>
+        <p class="pitch__kicker">4 — render lists</p>
+        <h2 class="pitch__title">Use <code>*list</code> when one item becomes many.</h2>
         <p class="pitch__lead">
-            Add a todo, toggle one, clear them. Every value on screen is a
-            binding — open the source and you'll recognize all of it.
+            Lists do not require a new model. <code>*list</code> repeats a
+            template for each item, while <code>$</code> and <code>@</code>
+            keep doing the same value and event work.
         </p>
 
         <figure class="pitch__widget">
-            <figcaption class="pitch__demo-label">a real list — add, toggle, clear</figcaption>
+            <figcaption class="pitch__demo-label">live view — add, toggle, filter, clear done</figcaption>
             <data-wrapper src="/views/showcase/todos.v3.html"></data-wrapper>
             <data-wrapper src="/views/framework/peek.html?file=/views/showcase/todos.v3.html"></data-wrapper>
         </figure>
+
+        <p class="pitch__foot">
+            Open the source to see the actual view file that powers the widget.
+            There is no separate demo version.
+        </p>
     </div>
 </section>

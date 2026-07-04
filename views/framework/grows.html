@@ -1,11 +1,21 @@
 <section class="pitch pitch--cta">
     <div class="container">
-        <p class="pitch__kicker">05 — when you're ready</p>
-        <h2 class="pitch__title">It grows with you.</h2>
+        <p class="pitch__kicker">5 — compose views</p>
+        <h2 class="pitch__title">Split bigger screens into smaller files.</h2>
         <p class="pitch__lead">
-            Lists, child components, state shared across the page — the same
-            idea, no new paradigm to learn.
+            When a page gets larger, add more wrappers instead of changing the
+            model. Each view owns the markup and state it needs, and the parent
+            can pass values through the <code>src</code> URL.
         </p>
+
+        <pre class="pitch__code"><code data-title="parent view">&lt;data-wrapper src="customer-card.html?customer"&gt;&lt;/data-wrapper&gt;
+&lt;data-wrapper src="order-list.html?customer"&gt;&lt;/data-wrapper&gt;</code></pre>
+
+        <p class="pitch__foot">
+            The first component can be tiny. The larger app is the same idea
+            repeated with clearer boundaries.
+        </p>
+
         <div class="pitch__actions">
             <a class="btn btn-primary" href="/framework.html#intro">Start with one wrapper</a>
             <a class="btn btn-outline" href="/framework.html">Read the guide</a>

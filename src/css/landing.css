@@ -50,6 +50,13 @@
     color: var(--faint);
 }
 
+.pitch__mini-title {
+    margin: 1.5rem 0 .65rem;
+    color: var(--muted);
+    font-size: .86rem;
+    font-weight: 700;
+}
+
 /* code | demo split */
 .pitch__split {
     display: flex;
@@ -109,13 +116,16 @@
     color: var(--faint);
 }
 
+.pitch__demo {
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--link) 10%, transparent), transparent 34%),
+        var(--bg);
+}
+
 /* Give bare demo controls a reasonable look without fighting any
    component-colocated CSS — :where() keeps specificity at zero. */
 .pitch__demo :where(.component-counter) {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
+    width: 100%;
 }
 .pitch__demo :where(button) {
     align-self: flex-start;
@@ -129,11 +139,6 @@
     cursor: pointer;
 }
 .pitch__demo :where(button):hover { background: var(--control-hover); }
-.pitch__demo :where(output) {
-    font-family: var(--mono);
-    font-weight: 700;
-    font-size: 1.2rem;
-}
 
 /* "no X" struck list */
 .pitch__nots {
@@ -191,9 +196,22 @@
 }
 .pitch__tokens dd {
     margin: 0;
+    display: grid;
+    gap: .5rem;
+}
+.pitch__tokens dd code {
+    display: block;
     font-family: var(--mono);
     font-size: .86rem;
+    color: var(--text);
+    background: var(--surface);
+    white-space: nowrap;
+    overflow-x: auto;
+}
+.pitch__tokens dd span {
     color: var(--muted);
+    font-size: .9rem;
+    line-height: 1.45;
 }
 
 /* playground grid */
