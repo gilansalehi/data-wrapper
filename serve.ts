@@ -1,6 +1,12 @@
-// Dev / test static file server. Serves the public site by default; Bun.file
-// infers Content-Type from extension. View modules are handled client-side by
-// data-wrapper via import maps.
+// Dev / test static file server.
+//
+// The public website lives in site/ because Cloudflare Pages serves that
+// directory directly with no app build step. Keeping the local server pointed at
+// the same root makes development match production, while src/lib/ remains the
+// package source that builds to dist/ for npm.
+//
+// Bun.file infers Content-Type from extension. View modules are handled
+// client-side by data-wrapper via import maps.
 
 const envPort = Number.parseInt(Bun.env.PORT ?? '', 10);
 const port = Number.isFinite(envPort) ? envPort : 3000;

@@ -356,9 +356,9 @@ There is no SSR or hydration path. data-wrapper is client-rendered.
 
 ## Docs
 
-The full documentation is a set of views in this repo at `views/docs/`, mounted
-by `framework.html` alongside the showcase components they describe. Run the dev
-server and open `/framework.html` in a browser:
+The full documentation is a set of views in this repo at `site/views/docs/`,
+mounted by `site/framework.html` alongside the showcase components they
+describe. Run the dev server and open `/framework.html` in a browser:
 
 ```sh
 bun install
@@ -390,7 +390,29 @@ so each concept is followed by a live example.
 
 ## Project Layout
 
+The repository has two public surfaces, and they are intentionally kept
+separate:
+
+`src/lib/` contains the framework source that is built and published to npm.
+This is the package surface that downstream projects consume.
+
+`site/` contains the public website that documents and showcases the framework.
+It is served directly by `bun run serve` and by Cloudflare Pages. The deploy is
+build-free: Pages should use `exit 0` as the build command and `site` as the
+output directory. The site keeps its HTML views, CSS, JavaScript, icons, and
+runtime copy of `dist/` together so the hosted version dogfoods the same
+build-free workflow the library promotes.
+
 ```
+site/
+    index.html       landing page
+    framework.html   framework documentation shell
+    info.html        package and release information shell
+    views/           documentation views and live showcase components
+    assets/          public CSS and small site scripts
+    state/           shared site state modules
+    dist/            browser-ready data-wrapper files used by the site
+
 src/lib/
     utils.ts       binding parser, readPath, DOM helpers
     engine.ts      binding contexts, wake/wire/bind, reconcile, *list/*if
