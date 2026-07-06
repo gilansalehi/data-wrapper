@@ -36,7 +36,7 @@ package, export, and size data instead of manually maintained snapshots.
 
 Done in `bun report`: the command rebuilds the dist artifacts, reports raw and
 gzip sizes for `dist/data-wrapper.js` and `dist/data-wrapper.min.js`, updates
-`views/info/size.html`, and fails if the public beta budget is exceeded.
+`site/views/info/size.html`, and fails if the public beta budget is exceeded.
 
 ### 5. Dist smoke tests
 

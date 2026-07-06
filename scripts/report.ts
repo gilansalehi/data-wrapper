@@ -6,7 +6,7 @@ const files = {
   min: new URL("../dist/data-wrapper.min.js", import.meta.url),
 };
 
-const sizeView = new URL("../views/info/size.html", import.meta.url);
+const sizeView = new URL("../site/views/info/size.html", import.meta.url);
 
 type ArtifactSize = {
   raw: number;
@@ -80,7 +80,7 @@ for (const budget of budgets) {
   );
 }
 
-console.log("\nUpdated views/info/size.html");
+console.log("\nUpdated site/views/info/size.html");
 
 if (failed) {
   process.exitCode = 1;

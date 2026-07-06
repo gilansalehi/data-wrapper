@@ -38,7 +38,7 @@ dist/data-wrapper.min.js    6,795 bytes gzip
 The first CSS trim pass is complete, but that work does not materially change
 the package size because the npm package intentionally publishes only `dist/`.
 The repeatable size report is now available as `bun report`; it rebuilds the
-dist artifacts, measures raw and gzip bytes, updates `views/info/size.html`, and
+dist artifacts, measures raw and gzip bytes, updates `site/views/info/size.html`, and
 fails if the public beta budget is exceeded.
 
 The next useful package-size step is a focused `src/lib` read-through for

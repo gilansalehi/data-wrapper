@@ -1,10 +1,11 @@
-// Dev / test static file server. Serves the project root; Bun.file infers
-// Content-Type from extension. No special routes — view modules are handled
-// client-side by the framework via import maps.
+// Dev / test static file server. Serves the public site by default; Bun.file
+// infers Content-Type from extension. View modules are handled client-side by
+// data-wrapper via import maps.
 
 const envPort = Number.parseInt(Bun.env.PORT ?? '', 10);
 const port = Number.isFinite(envPort) ? envPort : 3000;
 const hostname = Bun.env.HOST || '127.0.0.1';
+const root = Bun.env.SERVE_ROOT || 'site';
 
 const server = Bun.serve({
     port,
@@ -12,7 +13,10 @@ const server = Bun.serve({
     async fetch(req) {
         const url  = new URL(req.url);
         const path = url.pathname === '/' ? '/index.html' : url.pathname;
-        const file = Bun.file('.' + path);
+        const parts = decodeURIComponent(path).split('/').filter(Boolean);
+        if (parts.includes('..')) return new Response('Bad request', { status: 400 });
+
+        const file = Bun.file(`${root}/${parts.join('/')}`);
 
         if (!(await file.exists())) return new Response('Not found', { status: 404 });
 
@@ -26,4 +30,4 @@ const server = Bun.serve({
     },
 });
 
-console.log(`Serving at http://${hostname}:${server.port}`);
+console.log(`Serving ${root} at http://${hostname}:${server.port}`);

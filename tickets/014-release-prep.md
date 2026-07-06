@@ -16,18 +16,47 @@ packed tarball installs into a separate temporary project.
 
 Known external blockers:
 
-- No git remote is configured locally, so `repository`, `homepage`, and `bugs`
-  cannot be filled without choosing the public project URL.
+- A public GitHub repo needs to be created and pushed before Cloudflare Pages
+  can connect to it.
+- No git remote is configured locally, so `repository` cannot be filled without
+  choosing the public GitHub repo URL. `homepage` is now
+  `https://data-wrapper.org`.
+- Bug reporting metadata should wait until either GitHub Issues or
+  `gilan@data-wrapper.org` forwarding is live.
 - npm auth is not active yet. `npm whoami` returns `ENEEDAUTH`; run
   `npm adduser` / `npm login` on the publishing machine before publish.
 - Final browser smoke checks need to be confirmed by a real browser pass.
 
 ## Go-Live Checklist
 
+### 0. Public Site Deploy
+
+- [x] Domain purchased: `data-wrapper.org`.
+- [x] Canonical domain decision: `https://data-wrapper.org`.
+- [x] `www.data-wrapper.org` should redirect or alias to the apex domain.
+- [x] Cloudflare Pages deploy mode decision: Git-connected Pages project.
+- [x] Cloudflare Pages project name decision: `data-wrapper`.
+- [x] Public site root is `site/`.
+- [x] Cloudflare Pages deploy is build-free: build command `exit 0`, output
+  directory `site`.
+- [x] Public site root excludes repo-private files such as tickets, tests,
+  TypeScript source, tarballs, and collaboration notes.
+- [x] `site/` passes static reference smoke.
+- [ ] Public GitHub repository exists.
+- [ ] Git remote is configured locally.
+- [ ] Current release branch is pushed to GitHub.
+- [ ] Cloudflare Pages project exists for `data-wrapper`.
+- [ ] Cloudflare Pages is connected to the GitHub repository.
+- [ ] Cloudflare Pages build command is `exit 0`.
+- [ ] Cloudflare Pages build output directory is `site`.
+- [ ] `data-wrapper.org` is connected to the Cloudflare Pages project.
+- [ ] `https://data-wrapper.org` serves the current site.
+- [ ] `https://www.data-wrapper.org` redirects or aliases correctly.
+
 ### 1. Final Local Preflight
 
 - [x] `bun run review` passes.
-- [x] `bun report` passes and updates `views/info/size.html`.
+- [x] `bun report` passes and updates `site/views/info/size.html`.
 - [x] `npm pkg get` validates the package metadata.
 - [x] `npm pack --dry-run` lists only the intended publish surface.
 - [x] `npm pack` can create a tarball that installs into a separate project.
@@ -59,7 +88,9 @@ Known external blockers:
 - [x] `license` is `MIT`, with a root `LICENSE` file.
 - [x] `author`, `description`, `keywords`, entry points, and `"files": ["dist"]`
   are set.
-- [ ] `repository`, `homepage`, and `bugs` point at the public project URLs.
+- [x] `homepage` points at `https://data-wrapper.org`.
+- [ ] `repository` points at the public GitHub repo.
+- [ ] `bugs` points at the chosen public support channel.
 - [ ] npm auth is ready on the publishing machine.
 
 ### 5. Publish
@@ -80,6 +111,7 @@ bun report
 npm pkg get name version description license author keywords main module exports files
 npm pack --dry-run
 npm pack
+bun run site:serve
 npm publish --tag beta
 ```
 
