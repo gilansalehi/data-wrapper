@@ -17,22 +17,21 @@
 
     <h3>Scope &amp; threat model</h3>
     <p>
-        The current contract assumes <strong>developer-authored views and
-        trusted bound data</strong>. Rendering user-generated content (UGC) and
-        loading third-party views are <strong>out of scope today</strong>: an app
-        that renders untrusted content owns its sanitization until the
-        Trusted-Types tier lands (see below). Under that contract the only
-        untrusted bytes are whatever the app's own backend returns, and encoding
-        those is an application responsibility — the same default posture as
-        mainstream client frameworks.
+        The current contract assumes <strong>developer-authored views</strong>.
+        Normal text bindings are safe for arbitrary strings because
+        <code>$text</code> writes <code>textContent</code>, and URL-shaped
+        bindings get a runtime scheme guard. Rendering user-generated HTML,
+        accepting user-authored view files, and loading third-party views are
+        <strong>out of scope today</strong>: an app that renders untrusted HTML
+        owns sanitization until the Trusted-Types tier lands (see below).
     </p>
 
     <h3>Default protections</h3>
     <ul>
         <li><strong>Safe-by-default text.</strong> <code>$text</code> writes
             <code>textContent</code>; bound values are never parsed as HTML.</li>
-        <li><strong>Gated raw HTML.</strong> <code>$innerhtml</code> and
-            <code>$outerhtml</code> throw. Raw HTML requires the explicit
+        <li><strong>Gated raw HTML.</strong> <code>$innerHTML</code> and
+            <code>$outerHTML</code> throw. Raw HTML requires the explicit
             <code>$unsafeHTML</code> opt-in, so the dangerous sink can never be
             reached by accident.</li>
         <li><strong>URL-scheme neutralization.</strong> <code>javascript:</code>
@@ -49,9 +48,9 @@
             <code>Function</code>, or string-argument timers. Events bind
             functions, not code strings; JSON uses <code>JSON</code>, not
             <code>eval</code>.</li>
-        <li><strong>Same-origin view loading by default.</strong> A
-            <code>&lt;data-wrapper src&gt;</code> currently loads same-origin
-            views only, limiting injected-<code>src</code> escalation.</li>
+        <li><strong>Same-origin view loading.</strong> A
+            <code>&lt;data-wrapper src&gt;</code> only loads views from the page's
+            origin, limiting injected-<code>src</code> escalation.</li>
     </ul>
 
     <h3>OWASP DOM-XSS Cheat Sheet conformance</h3>
@@ -105,8 +104,9 @@
         <li>Do not pass untrusted content to <code>$unsafeHTML</code> or to an
             <code>&lt;iframe $srcdoc&gt;</code> — both are raw-HTML sinks by
             definition.</li>
-        <li>Sanitize or encode backend data before binding it into a URL or HTML
-            sink; the "trusted data" assumption must actually hold.</li>
+        <li>Sanitize backend data before binding it into an HTML sink. URL
+            bindings block executable schemes, but they do not decide whether a
+            normal <code>https:</code> destination is appropriate for the app.</li>
         <li>Set defense-in-depth the framework cannot: <code>HttpOnly</code>
             cookies, Subresource Integrity on the CDN framework script, and the
             CSP directives noted above.</li>
