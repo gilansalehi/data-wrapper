@@ -16,13 +16,9 @@ packed tarball installs into a separate temporary project.
 
 Known external blockers:
 
-- A public GitHub repo needs to be created and pushed before Cloudflare Pages
-  can connect to it.
-- No git remote is configured locally, so `repository` cannot be filled without
-  choosing the public GitHub repo URL. `homepage` is now
-  `https://data-wrapper.org`.
-- Bug reporting metadata should wait until either GitHub Issues or
-  `gilan@data-wrapper.org` forwarding is live.
+- Cloudflare Pages needs to be connected to
+  `https://github.com/gilansalehi/data-wrapper`.
+- The custom domain needs to be attached to the Cloudflare Pages project.
 - npm auth is not active yet. `npm whoami` returns `ENEEDAUTH`; run
   `npm adduser` / `npm login` on the publishing machine before publish.
 - Final browser smoke checks need to be confirmed by a real browser pass.
@@ -42,9 +38,9 @@ Known external blockers:
 - [x] Public site root excludes repo-private files such as tickets, tests,
   TypeScript source, tarballs, and collaboration notes.
 - [x] `site/` passes static reference smoke.
-- [ ] Public GitHub repository exists.
-- [ ] Git remote is configured locally.
-- [ ] Current release branch is pushed to GitHub.
+- [x] Public GitHub repository exists.
+- [x] Git remote is configured locally.
+- [x] Current release branch is pushed to GitHub.
 - [ ] Cloudflare Pages project exists for `data-wrapper`.
 - [ ] Cloudflare Pages is connected to the GitHub repository.
 - [ ] Cloudflare Pages build command is `exit 0`.
@@ -89,8 +85,8 @@ Known external blockers:
 - [x] `author`, `description`, `keywords`, entry points, and `"files": ["dist"]`
   are set.
 - [x] `homepage` points at `https://data-wrapper.org`.
-- [ ] `repository` points at the public GitHub repo.
-- [ ] `bugs` points at the chosen public support channel.
+- [x] `repository` points at the public GitHub repo.
+- [x] `bugs` points at the chosen public support channel.
 - [ ] npm auth is ready on the publishing machine.
 
 ### 5. Publish
