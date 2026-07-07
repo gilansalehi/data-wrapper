@@ -2,7 +2,7 @@
 // tenets that tests/resolution.test.ts does not cover. Driven through the runtime
 // harness and real DOM; assertions are observable behavior only, so the
 // implementation underneath stays free to change.
-import { test, expect } from 'bun:test';
+import { test, expect, spyOn } from 'bun:test';
 import { ComponentRuntime } from '../src/lib/component.ts';
 import { rootContext, wake, type Wrapper } from '../src/lib/engine.ts';
 import {
@@ -112,6 +112,28 @@ test('nullish text bindings clear stale DOM text', () => {
     clear();
     flush();
     expect(el.querySelector('output')?.textContent).toBe('');
+});
+
+test('inline wrappers rewire after a real disconnect and reconnect', async () => {
+    const warn = spyOn(console, 'warn').mockImplementation(() => {});
+    const el = document.createElement('data-wrapper') as unknown as Wrapper;
+    el.innerHTML = '<output $text="Ready"></output>';
+
+    try {
+        document.body.append(el);
+        expect(el.querySelector('output')?.textContent).toBe('Ready');
+
+        el.remove();
+        await Promise.resolve();
+        el.querySelector('output')!.textContent = 'stale';
+
+        document.body.append(el);
+        expect(el.querySelector('output')?.textContent).toBe('Ready');
+    } finally {
+        el.remove();
+        await Promise.resolve();
+        warn.mockRestore();
+    }
 });
 
 // --- structural directives ---------------------------------------------------

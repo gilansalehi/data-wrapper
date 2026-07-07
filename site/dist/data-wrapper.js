@@ -81,6 +81,8 @@ var unwake = (wrapper) => {
     for (const row of cache.values())
       unwire(row.unsubs);
   unwire(wrapper._unsubs);
+  for (const el of wakeNodes(wrapper))
+    el.removeAttribute(LIVE);
 };
 var DW_DIRECTIVES = new Map;
 var text = (value) => value == null ? "" : String(value);

@@ -115,6 +115,7 @@ export const unwake = (wrapper: Wrapper) => {
     for (const cache of wrapper._listCache.values())
         for (const row of cache.values()) unwire(row.unsubs);
     unwire(wrapper._unsubs);
+    for (const el of wakeNodes(wrapper)) el.removeAttribute(LIVE);
 };
 
 // --- registries --------------------------------------------------------------
