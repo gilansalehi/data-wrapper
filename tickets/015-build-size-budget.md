@@ -7,13 +7,13 @@ explicit size budgets and a focused trim pass over `src/lib`.
 
 ## Baseline
 
-Current build after tickets 004-013:
+Current build before the focused trim pass:
 
 ```txt
-dist/data-wrapper.js       28,973 bytes raw
-dist/data-wrapper.js        8,539 bytes gzip
-dist/data-wrapper.min.js   16,744 bytes raw
-dist/data-wrapper.min.js    6,795 bytes gzip
+dist/data-wrapper.js       29,266 bytes raw
+dist/data-wrapper.js        8,603 bytes gzip
+dist/data-wrapper.min.js   16,953 bytes raw
+dist/data-wrapper.min.js    6,858 bytes gzip
 ```
 
 `src/lib` is about 1,197 lines total, with most weight in:
@@ -26,13 +26,14 @@ component.ts   runtime, action/flush
 
 ## Current Status
 
-The current build is inside the public beta budget:
+The current build is inside the public beta budget, but the minified raw output
+is close to the guardrail:
 
 ```txt
-dist/data-wrapper.js       28,973 bytes raw
-dist/data-wrapper.js        8,539 bytes gzip
-dist/data-wrapper.min.js   16,744 bytes raw
-dist/data-wrapper.min.js    6,795 bytes gzip
+dist/data-wrapper.js       29,266 bytes raw
+dist/data-wrapper.js        8,603 bytes gzip
+dist/data-wrapper.min.js   16,953 bytes raw
+dist/data-wrapper.min.js    6,858 bytes gzip
 ```
 
 The first CSS trim pass is complete, but that work does not materially change
@@ -42,7 +43,8 @@ dist artifacts, measures raw and gzip bytes, updates `site/views/info/size.html`
 fails if the public beta budget is exceeded.
 
 The next useful package-size step is a focused `src/lib` read-through for
-simpler code and accidental public surface.
+simpler code, accidental public surface, duplicate branches, and byte-heavy
+error paths that can be made clearer rather than shorter by force.
 
 ## Size Budgets
 
@@ -83,12 +85,11 @@ Treat these as useful pressure, not a reason to make the source obscure.
 
 ## Candidate Areas To Inspect
 
-- `element.ts` import-map/shim path: keep the clear errors from ticket 006, but
-  make sure there is no duplicate branching or repeated wrapper text.
+- `element.ts` import-map/shim path: keep the clear errors, but make sure there
+  is no duplicate branching or repeated wrapper text.
 - `engine.ts` binding resolution: make sure the `./`, `../`, bare, `/`, and
   reserved forms share classification cleanly.
-- Directive API helpers after ticket 007: confirm only intentional authoring
-  APIs are exported.
+- Directive API helpers: confirm only intentional authoring APIs are exported.
 - `component.ts` action/flush path: preserve semantics, but check whether nested
   output bookkeeping has avoidable duplication.
 - Dist formats: decide whether the package truly needs both ESM and IIFE for
