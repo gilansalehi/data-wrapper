@@ -44,11 +44,26 @@
 </header>
 
 <main>
-    <data-wrapper src="/views/framework/nobuild.html"></data-wrapper>
-    <data-wrapper src="/views/framework/know.html"></data-wrapper>
-    <data-wrapper src="/views/framework/tokens.html"></data-wrapper>
-    <data-wrapper src="/views/framework/playground.html"></data-wrapper>
-    <data-wrapper src="/views/framework/grows.html"></data-wrapper>
+    <!-- Hidden page TOC: the source the hamburger nav mirrors into "On this page".
+         Keeps the marketing layout full-bleed; this only feeds the nav. Labels and
+         order track the section wrappers below. -->
+    <aside class="docs-toc">
+        <nav aria-label="Page sections">
+            <ol>
+                <li><a href="#nobuild">No build step</a></li>
+                <li><a href="#views">Load HTML views</a></li>
+                <li><a href="#tokens">Three tokens</a></li>
+                <li><a href="#lists">Render lists</a></li>
+                <li><a href="#compose">Compose views</a></li>
+            </ol>
+        </nav>
+    </aside>
+
+    <data-wrapper id="nobuild" src="/views/framework/nobuild.html"></data-wrapper>
+    <data-wrapper id="views"   src="/views/framework/know.html"></data-wrapper>
+    <data-wrapper id="tokens"  src="/views/framework/tokens.html"></data-wrapper>
+    <data-wrapper id="lists"   src="/views/framework/playground.html"></data-wrapper>
+    <data-wrapper id="compose" src="/views/framework/grows.html"></data-wrapper>
 </main>
 </body>
 </html>

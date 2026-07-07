@@ -26,6 +26,41 @@
     export const hasSections = () => sections.length > 0;
 </script>
 
+<header class="sticky header theme-ink">
+    <div class="container header__kicker">&lt;data-wrapper&gt; : the no-framework framework</div>
+</header>
+
+<button @click="toggle" class="nav-hamburger" aria-label="Toggle navigation">
+    <hr><hr><hr>
+</button>
+
+<div class="nav-backdrop" $class="open?bool=on:off" data-enter="fade" @click="close" aria-hidden="true"></div>
+
+<dialog $open="open" data-enter="slide from-right" aria-label="Site navigation">
+    <header class="nav-header">
+        <strong>data-wrapper</strong>
+        <button @click="close" class="nav-close" aria-label="Close navigation">✕</button>
+    </header>
+    <nav class="nav-links" aria-label="Site navigation">
+        <span class="nav-section-label">Pages</span>
+        <template *list="pages">
+            <a $href="./href" $text="./label" $aria-current="./current?bool=page:false" @click="close"></a>
+        </template>
+
+        <template *if="hasSections">
+            <div class="nav-group">
+                <span class="nav-section-label">On this page</span>
+                <template *list="sections">
+                    <a $href="./href" $text="./label" @click="close"></a>
+                </template>
+            </div>
+        </template>
+    </nav>
+    <footer class="nav-footer">
+        <button @click="toggleTheme" class="theme-toggle">◐ Toggle theme (<span $text="theme"></span>)</button>
+    </footer>
+</dialog>
+
 <style>
     #nav { --nav-width: 240px; }
 
@@ -138,6 +173,10 @@
         background: var(--surface);
     }
 
+    /* Single root so the *if body is one element (cloneTemplate keeps only
+       firstElementChild); display:contents keeps it out of the flex layout. */
+    .nav-group { display: contents; }
+
     .nav-section-label {
         padding: .6rem 1.1rem .2rem;
         font-size: .7rem;
@@ -166,36 +205,3 @@
         &:hover:not(:disabled) { background: var(--surface); color: var(--text); }
     }
 </style>
-
-<header class="sticky header theme-ink">
-    <div class="container header__kicker">&lt;data-wrapper&gt; : the no-framework framework</div>
-</header>
-
-<button @click="toggle" class="nav-hamburger" aria-label="Toggle navigation">
-    <hr><hr><hr>
-</button>
-
-<div class="nav-backdrop" $class="open?bool=on:off" data-enter="fade" @click="close" aria-hidden="true"></div>
-
-<dialog $open="open" data-enter="slide from-right" aria-label="Site navigation">
-    <header class="nav-header">
-        <strong>data-wrapper</strong>
-        <button @click="close" class="nav-close" aria-label="Close navigation">✕</button>
-    </header>
-    <nav class="nav-links" aria-label="Site navigation">
-        <span class="nav-section-label">Pages</span>
-        <template *list="pages">
-            <a $href="./href" $text="./label" $aria-current="./current?bool=page:false" @click="close"></a>
-        </template>
-
-        <template *if="hasSections">
-            <span class="nav-section-label">On this page</span>
-            <template *list="sections">
-                <a $href="./href" $text="./label" @click="close"></a>
-            </template>
-        </template>
-    </nav>
-    <footer class="nav-footer">
-        <button @click="toggleTheme" class="theme-toggle">◐ Toggle theme (<span $text="theme"></span>)</button>
-    </footer>
-</dialog>
