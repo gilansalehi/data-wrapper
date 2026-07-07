@@ -124,6 +124,7 @@ export class ComponentRuntime implements SourceScope {
                 return current(...args);
             });
             const handler: EventListener = e => {
+                if (!(e instanceof CustomEvent)) return;
                 if (
                     this.root.matches('data-wrapper')
                     && e.target instanceof Element

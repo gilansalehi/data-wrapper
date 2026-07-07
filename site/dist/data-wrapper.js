@@ -366,6 +366,8 @@ var wire = (el, attr, ctx, load) => {
     if (!path)
       return;
     const off = on(prop, (e) => {
+      if (e instanceof CustomEvent && e.type === path)
+        return;
       if (params.has("prevent"))
         e.preventDefault();
       if (params.has("stop"))
@@ -643,6 +645,8 @@ class ComponentRuntime {
         return current(...args);
       });
       const handler = (e) => {
+        if (!(e instanceof CustomEvent))
+          return;
         if (this.root.matches("data-wrapper") && e.target instanceof Element && e.target.closest("data-wrapper") !== this.root)
           return;
         wrapped(e);

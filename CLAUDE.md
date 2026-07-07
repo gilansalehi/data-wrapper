@@ -1,3 +1,11 @@
+## Honesty / calibration (non-negotiable, table stakes)
+
+Never state a fact about an external UI, dashboard, API, tool, or version you
+have not verified *this session*. Tag every non-trivial factual claim inline:
+`(verified: <source>)` or `(guess)`. If something is behind auth, unreadable, or
+otherwise uncheckable, say "I can't see that — show me" and **stop**; do not
+narrate a plausible-sounding version of it. A short "I don't know" beats a fluent
+guess. Confident-but-unverified is the failure mode to avoid, always.
 
 Default to using Bun instead of Node.js.
 

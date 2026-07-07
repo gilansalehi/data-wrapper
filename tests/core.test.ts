@@ -236,3 +236,43 @@ test('@event modifiers prevent default, stop propagation, and stop later listene
     expect(bubbled).toBe(false);
     expect(later).toBe(false);
 });
+
+test('@event actions named like native events run once', () => {
+    let calls = 0;
+    let original: Event | undefined;
+    const el = wrapperWithRuntime({
+        click(event: CustomEvent<{ originalEvent: Event }>) {
+            calls += 1;
+            original = event.detail.originalEvent;
+        },
+    });
+    const button = document.createElement('button');
+    button.setAttribute('@click', 'click');
+    el.append(button);
+    wake(el, rootContext(el));
+
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(calls).toBe(1);
+    expect(original).toBeInstanceOf(MouseEvent);
+});
+
+test('@event bindings can listen to custom events', () => {
+    let calls = 0;
+    let original: Event | undefined;
+    const el = wrapperWithRuntime({
+        handle(event: CustomEvent<{ originalEvent: Event }>) {
+            calls += 1;
+            original = event.detail.originalEvent;
+        },
+    });
+    const button = document.createElement('button');
+    button.setAttribute('@select', 'handle');
+    el.append(button);
+    wake(el, rootContext(el));
+
+    button.dispatchEvent(new CustomEvent('select', { bubbles: true }));
+
+    expect(calls).toBe(1);
+    expect(original).toBeInstanceOf(CustomEvent);
+});

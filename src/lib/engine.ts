@@ -445,6 +445,7 @@ export const wire = (
     if (token === '@') {
         if (!path) return;
         const off = on(prop, (e: Event) => {
+            if (e instanceof CustomEvent && e.type === path) return;
             if (params.has('prevent'))   e.preventDefault();
             if (params.has('stop'))      e.stopPropagation();
             if (params.has('immediate')) e.stopImmediatePropagation();
