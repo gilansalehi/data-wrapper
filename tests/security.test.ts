@@ -97,6 +97,21 @@ test('<data-wrapper src> allows same-origin views by default', async () => {
     }
 });
 
+test('<data-wrapper src> rejects failed fetch responses with status attribution', async () => {
+    const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(
+        (async () => new Response('missing', { status: 404, statusText: 'Not Found' })) as unknown as typeof fetch,
+    );
+    const wrapper = document.createElement('data-wrapper') as unknown as Wrapper;
+
+    try {
+        await expect(load(wrapper, 'http://example.test/missing.html')).rejects.toThrow('404 Not Found');
+        expect(wrapper._loadedSrc).toBeUndefined();
+        expect(wrapper.childElementCount).toBe(0);
+    } finally {
+        fetchSpy.mockRestore();
+    }
+});
+
 test('<data-wrapper src> blocks cross-origin views by default', async () => {
     const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(
         (async () => new Response('<p>should not load</p>')) as unknown as typeof fetch,

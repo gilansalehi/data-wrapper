@@ -231,6 +231,9 @@ export const load: WrapperLoader = async (wrapper: Wrapper, src: string, ctx?: B
 
     const props = inputProps(src, url, ctx);
     const res  = await fetch(url);
+    if (!res.ok) {
+        throw new Error(`Component view ${url.href} failed to load: ${res.status} ${res.statusText}`.trim());
+    }
     const html = await res.text();
     const tpl  = document.createElement('template');
     tpl.innerHTML = html;
