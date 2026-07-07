@@ -246,7 +246,7 @@ var DANGEROUS_URL = /^(?:javascript|vbscript):/i;
 var isDangerousUrl = (val) => DANGEROUS_URL.test(String(val).replace(CONTROL_CHARS, ""));
 var setProp = (el, prop, val) => {
   if (val == null)
-    return;
+    val = "";
   if (URL_ATTRS.has(prop.toLowerCase()) && isDangerousUrl(val)) {
     console.warn(`data-wrapper: blocked unsafe URL scheme in ${prop}="${String(val)}"`);
     return;

@@ -103,6 +103,17 @@ test('an external action-wrapped writer flushes consuming runtimes', async () =>
     expect(el.querySelector('output')?.textContent).toBe('1');
 });
 
+test('nullish text bindings clear stale DOM text', () => {
+    let label: string | null = 'Ready';
+    const clear = action(() => { label = null; });
+    const el = mount('<output $text="label"></output>', { get label() { return label; }, clear });
+
+    expect(el.querySelector('output')?.textContent).toBe('Ready');
+    clear();
+    flush();
+    expect(el.querySelector('output')?.textContent).toBe('');
+});
+
 // --- structural directives ---------------------------------------------------
 
 test('*if adds its body when truthy and removes it when falsy', () => {

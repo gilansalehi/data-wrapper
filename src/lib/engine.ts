@@ -282,12 +282,11 @@ const isDangerousUrl = (val: unknown): boolean =>
     DANGEROUS_URL.test(String(val).replace(CONTROL_CHARS, ''));
 
 const setProp = (el: Element, prop: string, val: unknown) => {
-    if (val == null) return;
     if (URL_ATTRS.has(prop.toLowerCase()) && isDangerousUrl(val)) {
         console.warn(`data-wrapper: blocked unsafe URL scheme in ${prop}="${String(val)}"`);
         return;
     }
-    const value = prop === 'textContent' ? String(val) : val;
+    const value = prop === 'textContent' ? String(val ?? '') : val;
     if (prop in el) (el as unknown as Record<string, unknown>)[prop] = value;
     else el.setAttribute(prop, String(val));
 };
