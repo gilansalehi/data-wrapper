@@ -5,6 +5,25 @@
 
     export function toggle() { open = !open; }
     export function close()  { open = false; }
+
+    // Normalize the URL so the active-page match works whether the host serves
+    // clean URLs (Cloudflare Pages: /framework) or file paths (local: /framework.html).
+    const path = location.pathname.replace(/(?:index)?\.html$/, '') || '/';
+
+    // Top-level site pages. `current` flags the active one for aria-current.
+    export const pages = [
+        { href: '/',          label: 'Home' },
+        { href: '/framework', label: 'Framework guide' },
+        { href: '/info',      label: 'Technical info' },
+    ].map(p => ({ ...p, current: p.href === path }));
+
+    // Mirror THIS page's authored table of contents (the sidebar aside) so the
+    // nav reflects exactly the sections the page has — no hardcoded, page-blind
+    // links. Pages without a sidebar (home) yield an empty list.
+    export const sections = [...document.querySelectorAll('.docs-toc nav a[href^="#"]')]
+        .map(a => ({ href: a.getAttribute('href'), label: a.textContent.trim() }));
+
+    export const hasSections = () => sections.length > 0;
 </script>
 
 <style>
@@ -113,6 +132,12 @@
         }
     }
 
+    .nav-links a[aria-current="page"] {
+        color: var(--link);
+        font-weight: 600;
+        background: var(--surface);
+    }
+
     .nav-section-label {
         padding: .6rem 1.1rem .2rem;
         font-size: .7rem;
@@ -157,13 +182,18 @@
         <strong>data-wrapper</strong>
         <button @click="close" class="nav-close" aria-label="Close navigation">✕</button>
     </header>
-    <nav class="nav-links" aria-label="Page sections">
+    <nav class="nav-links" aria-label="Site navigation">
         <span class="nav-section-label">Pages</span>
-        <a href="/" @click="close">Home</a>
-        <a href="/framework" @click="close">Framework guide</a>
-        <a href="/info" @click="close">Technical info</a>
-        <span class="nav-section-label">Demos</span>
-        <a href="#todos" @click="close">Todos app</a>
+        <template *list="pages">
+            <a $href="./href" $text="./label" $aria-current="./current?bool=page:false" @click="close"></a>
+        </template>
+
+        <template *if="hasSections">
+            <span class="nav-section-label">On this page</span>
+            <template *list="sections">
+                <a $href="./href" $text="./label" @click="close"></a>
+            </template>
+        </template>
     </nav>
     <footer class="nav-footer">
         <button @click="toggleTheme" class="theme-toggle">◐ Toggle theme (<span $text="theme"></span>)</button>

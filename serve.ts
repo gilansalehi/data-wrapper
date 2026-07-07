@@ -22,9 +22,14 @@ const server = Bun.serve({
         const parts = decodeURIComponent(path).split('/').filter(Boolean);
         if (parts.includes('..')) return new Response('Bad request', { status: 400 });
 
-        const file = Bun.file(`${root}/${parts.join('/')}`);
+        let file = Bun.file(`${root}/${parts.join('/')}`);
 
-        if (!(await file.exists())) return new Response('Not found', { status: 404 });
+        // Mirror Cloudflare Pages' clean-URL behavior locally: /framework -> /framework.html.
+        if (!(await file.exists())) {
+            const htmlFallback = Bun.file(`${root}/${parts.join('/')}.html`);
+            if (await htmlFallback.exists()) file = htmlFallback;
+            else return new Response('Not found', { status: 404 });
+        }
 
         return new Response(file, {
             headers: {
