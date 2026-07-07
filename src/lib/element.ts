@@ -28,7 +28,7 @@ type ShimGlobal = typeof globalThis & { importShim?: ImportShim };
 
 const componentModules = new Map<string, ComponentModuleRecord>();
 let shimPromise: Promise<ImportShim> | undefined;
-const viewSourceOrigin = new URL(document.baseURI).origin;
+const viewSourceOrigin = document.location.origin;
 const isTrustedViewSource = (url: URL): boolean =>
     url.origin === viewSourceOrigin;
 

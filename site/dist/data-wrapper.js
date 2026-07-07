@@ -245,13 +245,11 @@ var CONTROL_CHARS = /[\u0000-\u0020]+/g;
 var DANGEROUS_URL = /^(?:javascript|vbscript):/i;
 var isDangerousUrl = (val) => DANGEROUS_URL.test(String(val).replace(CONTROL_CHARS, ""));
 var setProp = (el, prop, val) => {
-  if (val == null)
-    val = "";
   if (URL_ATTRS.has(prop.toLowerCase()) && isDangerousUrl(val)) {
     console.warn(`data-wrapper: blocked unsafe URL scheme in ${prop}="${String(val)}"`);
     return;
   }
-  const value = prop === "textContent" ? String(val) : val;
+  const value = prop === "textContent" ? String(val ?? "") : val;
   if (prop in el)
     el[prop] = value;
   else
@@ -739,7 +737,7 @@ function action(input) {
 // src/lib/element.ts
 var componentModules = new Map;
 var shimPromise;
-var viewSourceOrigin = new URL(document.baseURI).origin;
+var viewSourceOrigin = document.location.origin;
 var isTrustedViewSource = (url) => url.origin === viewSourceOrigin;
 var canonicalViewURL = (url) => {
   const canonical = new URL(url);

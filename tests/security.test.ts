@@ -116,6 +116,32 @@ test('<data-wrapper src> blocks cross-origin views by default', async () => {
     }
 });
 
+test('a cross-origin base tag cannot define the trusted view origin', async () => {
+    const base = document.createElement('base');
+    base.href = 'https://attacker.example/';
+    document.head.append(base);
+
+    const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(
+        (async () => new Response('<p>should not load</p>')) as unknown as typeof fetch,
+    );
+    const error = spyOn(console, 'error').mockImplementation(() => {});
+    const wrapper = document.createElement('data-wrapper') as unknown as Wrapper;
+
+    try {
+        const freshElementModule = '../src/lib/element.ts?hostile-base';
+        const { load: guardedLoad } = await import(freshElementModule) as typeof import('../src/lib/element.ts');
+
+        await guardedLoad(wrapper, 'https://attacker.example/view.html');
+
+        expect(fetchSpy).not.toHaveBeenCalled();
+        expect(error).toHaveBeenCalledWith(expect.stringContaining('blocked cross-origin src'));
+    } finally {
+        base.remove();
+        fetchSpy.mockRestore();
+        error.mockRestore();
+    }
+});
+
 test('later policy meta tags cannot widen the alpha same-origin guard', async () => {
     const meta = document.createElement('meta');
     meta.name = 'data-wrapper-src-policy';
