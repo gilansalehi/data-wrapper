@@ -59,13 +59,9 @@ import { action, flush, DW_FORMATTERS } from 'data-wrapper';</code></pre>
         resolution fails, so browsers with native support do not download it.
     </p>
 
-    <pre>
-<code data-title="shim fallback">
-&lt;script src="/dist/data-wrapper.js" type="module"
+    <pre><code data-title="shim fallback">&lt;script src="/dist/data-wrapper.js" type="module"
     data-shim-src="https://ga.jspm.io/npm:es-module-shims@2/dist/es-module-shims.js"&gt;
-&lt;/script&gt;
-</code>
-    </pre>
+&lt;/script&gt;</code></pre>
 
     <p>
         A CDN URL is the simplest shim source. Vendoring a copy works the same

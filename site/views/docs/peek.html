@@ -1,0 +1,51 @@
+<script type="module" data-module="@docs/peek">
+    import { action } from 'data-wrapper';
+
+    const value = v => typeof v === 'function' ? v() : v;
+
+    const stringProp = (props, name, fallback = '') => {
+        const v = value(props[name]);
+        return v == null ? fallback : String(v);
+    };
+
+    const boolProp = (props, name) => value(props[name]) === true;
+
+    const lineSlice = (source, range) => {
+        if (!range) return source;
+        const [from, to] = range.split(':');
+        const start = Math.max((Number.parseInt(from || '1', 10) || 1) - 1, 0);
+        const end = to ? Number.parseInt(to, 10) : undefined;
+        return source.split('\n').slice(start, end).join('\n');
+    };
+
+    export default ({ props }) => {
+        const file = stringProp(props, 'file');
+        const title = stringProp(props, 'title', file.split('/').pop() || 'source');
+        const lines = stringProp(props, 'lines');
+        const open = boolProp(props, 'open');
+        let code = file ? 'Loading source...' : '/* missing ?file= */';
+
+        if (file) {
+            fetch(file)
+                .then(res => {
+                    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`.trim());
+                    return res.text();
+                })
+                .then(action(text => { code = lineSlice(text, lines).trim(); }))
+                .catch(action(error => {
+                    code = `/* could not load ${file}: ${error.message} */`;
+                }));
+        }
+
+        return {
+            title,
+            open,
+            get code() { return code; },
+        };
+    };
+</script>
+
+<details class="pitch__peek source-peek" $open="open">
+    <summary>view source</summary>
+    <pre class="pitch__code"><code $data-title="title" $text="code"></code></pre>
+</details>

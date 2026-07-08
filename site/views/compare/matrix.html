@@ -1,0 +1,168 @@
+<script type="module" data-module="@compare/matrix">
+    // The comparison itself is data, rendered by *list — this table is a
+    // live data-wrapper view, not hand-written rows.
+    export const frameworks = [
+        {
+            id: 'data-wrapper', name: 'data-wrapper', self: true,
+            model:      'HTML views + one custom element; islands on any page',
+            templating: 'Your actual HTML — $, @, * attribute tokens',
+            reactivity: 'Re-read subscribed exports on action, publish changes',
+            build:      'None — files are the deployment',
+            ssr:        'None (client-rendered)',
+            ecosystem:  'One hobbyist. This site is the ecosystem.',
+        },
+        {
+            id: 'alpine', name: 'Alpine.js', self: false,
+            model:      'Sprinkle behavior onto server-rendered HTML',
+            templating: 'x-* attributes with inline JS expressions',
+            reactivity: 'Proxy-based; expressions re-evaluate on mutation',
+            build:      'Optional — script tag works',
+            ssr:        'N/A — enhances HTML you already rendered',
+            ecosystem:  'Small but real: plugins, community, Livewire pairing',
+        },
+        {
+            id: 'lit', name: 'Lit', self: false,
+            model:      'Web Components with shadow DOM',
+            templating: 'Tagged template literals in JS',
+            reactivity: 'Reactive properties re-render the component template',
+            build:      'Optional — runs from CDN, tooling recommended',
+            ssr:        'Emerging (lit-labs)',
+            ecosystem:  'Google-backed; interops with the web-components world',
+        },
+        {
+            id: 'mithril', name: 'Mithril.js', self: false,
+            model:      'Minimal SPA framework, batteries included',
+            templating: 'Hyperscript m() calls (or JSX)',
+            reactivity: 'Auto-redraw: re-render + virtual DOM diff after events',
+            build:      'Optional — script tag works',
+            ssr:        'Community solutions',
+            ecosystem:  'Small, stable, mature; router and fetch built in',
+        },
+        {
+            id: 'htmx', name: 'htmx', self: false,
+            model:      'Hypermedia — the server returns HTML fragments',
+            templating: 'Server-side; hx-* attributes drive requests and swaps',
+            reactivity: 'HTTP round-trip per interaction',
+            build:      'None — script tag',
+            ssr:        'Server rendering is the whole idea',
+            ecosystem:  'Growing fast; backend-agnostic',
+        },
+        {
+            id: 'react', name: 'React', self: false,
+            model:      'Component tree; UI as a function of state',
+            templating: 'JSX',
+            reactivity: 'State updates re-render subtree, virtual DOM diff',
+            build:      'Expected (JSX compilation)',
+            ssr:        'First-class via Next.js and friends',
+            ecosystem:  'The largest in the industry, by far',
+        },
+        {
+            id: 'vue', name: 'Vue', self: false,
+            model:      'Single-file components, progressive adoption',
+            templating: 'HTML-like templates (compiled) or JSX',
+            reactivity: 'Proxy reactivity + compiler-optimized virtual DOM',
+            build:      'Recommended; CDN global build exists',
+            ssr:        'First-class via Nuxt / official server renderer',
+            ecosystem:  'Huge; official router, state, devtools',
+        },
+        {
+            id: 'svelte', name: 'Svelte', self: false,
+            model:      'Components compiled to imperative DOM code',
+            templating: 'Svelte single-file syntax',
+            reactivity: 'Compiler wires updates at build time — no runtime diff',
+            build:      'Required — the compiler is the framework',
+            ssr:        'First-class via SvelteKit',
+            ecosystem:  'Large and enthusiastic',
+        },
+        {
+            id: 'solid', name: 'Solid', self: false,
+            model:      'Components run once; signals own updates',
+            templating: 'JSX (compiled)',
+            reactivity: 'Fine-grained signals — no re-render, no virtual DOM',
+            build:      'Required (JSX compilation)',
+            ssr:        'First-class via SolidStart',
+            ecosystem:  'Moderate; strong benchmark reputation',
+        },
+        {
+            id: 'angular', name: 'Angular', self: false,
+            model:      'Full platform: DI, modules, CLI, opinions included',
+            templating: 'HTML templates + Angular template syntax',
+            reactivity: 'Zone-based change detection, moving to signals',
+            build:      'Required — CLI-managed',
+            ssr:        'Built-in (Angular Universal lineage)',
+            ecosystem:  'Enterprise-grade; long-term support culture',
+        },
+    ];
+</script>
+
+<section class="doc-section" id="matrix">
+    <h2>Side by side</h2>
+
+    <p>
+        Alpine, Lit, Mithril, and htmx are the honest neighbors — small tools you
+        can adopt with a script tag. React, Vue, Svelte, Solid, and Angular are a
+        different weight class, and the table says so. Bundle sizes are omitted
+        on purpose: they drift with every release, so check
+        <a href="https://bundlephobia.com" rel="noopener">bundlephobia</a> for
+        current numbers (data-wrapper's own build is ~7&nbsp;kB min+gzip as of
+        this writing).
+    </p>
+
+    <table class="matrix-table">
+        <thead>
+            <tr>
+                <th>Framework</th>
+                <th>Mental model</th>
+                <th>Templating</th>
+                <th>Reactivity</th>
+                <th>Build step</th>
+                <th>SSR</th>
+                <th>Ecosystem</th>
+            </tr>
+        </thead>
+        <tbody>
+            <template *list="frameworks?key=id">
+                <tr $class="./self?bool=matrix-self:">
+                    <th scope="row" $text="./name"></th>
+                    <td $text="./model"></td>
+                    <td $text="./templating"></td>
+                    <td $text="./reactivity"></td>
+                    <td $text="./build"></td>
+                    <td $text="./ssr"></td>
+                    <td $text="./ecosystem"></td>
+                </tr>
+            </template>
+        </tbody>
+    </table>
+
+    <p class="matrix-note">
+        This table is itself a <code>*list</code> over an exported array —
+        view source on this page to see the comparison eating its own dog food.
+    </p>
+</section>
+
+<style>
+    .matrix-table {
+        font-size: .85rem;
+        line-height: 1.45;
+    }
+    .matrix-table th[scope="row"] {
+        white-space: nowrap;
+        font-weight: 700;
+    }
+    .matrix-table thead th {
+        font-size: .75rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--muted);
+    }
+    .matrix-table td { min-width: 11rem; }
+    .matrix-self {
+        background: color-mix(in srgb, var(--link) 7%, transparent);
+    }
+    .matrix-note {
+        font-size: .88rem;
+        color: var(--muted);
+        font-style: italic;
+    }
+</style>

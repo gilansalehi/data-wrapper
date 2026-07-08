@@ -9,17 +9,7 @@
         </p>
 
         <div class="pitch__split">
-            <pre class="pitch__code">
-<code data-title="counter.html">
-&lt;script type="module" data-module="@view/counter"&gt;
-    export let count = 0;
-    export function increment() { count += 1; }
-&lt;/script&gt;
-
-&lt;button @click="increment"&gt;Increment&lt;/button&gt;
-&lt;output $text="count"&gt;&lt;/output&gt;
-</code>
-            </pre>
+            <data-wrapper src="/views/docs/peek.html?file=/views/showcase/counter.v2.html&title=counter.html&open=true"></data-wrapper>
             <figure class="pitch__demo">
                 <figcaption class="pitch__demo-label">live component — click it</figcaption>
                 <data-wrapper src="/views/showcase/counter.v2.html"></data-wrapper>
@@ -27,9 +17,10 @@
         </div>
 
         <p class="pitch__foot">
-            The button calls <code>increment</code>. After the function changes
+            The buttons call exported functions. After a function changes
             <code>count</code>, the <code>$text</code> binding reads the value
-            again and updates the output.
+            again and updates the output. The source shown here is the real
+            file used by the live component.
         </p>
 
         <p class="pitch__mini-title">The three tokens:</p>

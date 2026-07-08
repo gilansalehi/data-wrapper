@@ -1,0 +1,81 @@
+<script type="module" data-module="@compare/positioning"></script>
+
+<section class="doc-section" id="positioning">
+    <h2>Where data-wrapper sits</h2>
+
+    <p>
+        Before comparing anything, be clear about what this is:
+        <strong>data-wrapper is a hobby-scale library, not an industry framework.</strong>
+        It is one custom element and about 1,400 lines of TypeScript —
+        18&nbsp;kB minified, ~7&nbsp;kB gzipped, zero dependencies, no build step.
+        This page compares it to frameworks maintained by companies and
+        thousand-contributor communities. Read the gaps section as seriously as
+        the pitch.
+    </p>
+
+    <h3>The model, in one paragraph</h3>
+    <p>
+        A <code>&lt;data-wrapper src="/views/x.html"&gt;</code> fetches a plain
+        HTML view. The view's <code>&lt;script type="module"&gt;</code> is a real
+        ES module: its named exports are the component's state and actions, and an
+        optional <code>default</code> factory receives <code>props</code>,
+        <code>slots</code>, and <code>cleanup</code> for per-instance scope. Three
+        attribute tokens wire the markup to those exports —
+        <code>$prop</code> binds a value, <code>@event</code> dispatches to an
+        exported function, and <code>*directive</code> on a
+        <code>&lt;template&gt;</code> controls structure. There are exactly three
+        directives: <code>*list</code> (keyed rows), <code>*if</code>
+        (conditional block), and <code>*src</code> (composition — load a view by
+        URL, or project passed-in nodes).
+    </p>
+
+    <h3>How it knows data changed</h3>
+    <p>
+        Every framework's personality comes from this one question. There are
+        roughly four answers in the wild:
+    </p>
+    <ul>
+        <li><strong>Compile it away</strong> — a compiler analyzes assignments and
+            emits surgical DOM updates (Svelte).</li>
+        <li><strong>Track reads</strong> — signals or proxies record who read what,
+            then notify exactly those readers (Solid, Vue, Alpine).</li>
+        <li><strong>Re-render and diff</strong> — re-run the component, diff a
+            virtual DOM, patch the difference (React, Mithril).</li>
+        <li><strong>Re-read on a boundary</strong> — after a known event, re-read
+            watched values and publish the ones that changed (Angular's classic
+            zone-based change detection is the famous ancestor).</li>
+    </ul>
+    <p>
+        data-wrapper takes the fourth road, with a small surface: every binding
+        subscribes to a named export. When an exported action runs (or you call
+        <code>flush()</code>), each live component re-reads its
+        <em>subscribed</em> exports, compares with <code>Object.is</code>, and
+        publishes only the values that changed. No dependency graph, no proxies,
+        no virtual DOM, no compiler. Mutate plain data, and the flush boundary
+        finds it. The cost is proportional to active bindings — cheap for pages
+        and dashboards, and honestly the wrong tool for a 60&nbsp;fps data grid
+        (see the gaps below).
+    </p>
+
+    <h3>Bindings are URLs</h3>
+    <p>
+        The binding expression language is not a new syntax — it is URL grammar.
+        A bare name walks the scope chain; <code>./field</code> reads the current
+        list row; <code>../name</code> steps out to the parent row;
+        <code>/name</code> pins to the component root;
+        <code>//other-id/name</code> reads another wrapper on the page. Query
+        params chain formatters: <code>$text="price?currency=EUR"</code>,
+        <code>*list="todos?sort=-created&amp;key=id"</code>. One grammar, parsed
+        by the platform's own <code>URL</code> class.
+    </p>
+
+    <h3>Guardrails on by default</h3>
+    <p>
+        <code>$innerhtml</code> throws — raw HTML requires the explicit
+        <code>$unsafeHTML</code> opt-in. Bound URL attributes strip
+        <code>javascript:</code> schemes. Views load same-origin only. Event
+        handlers go through <code>@event</code>; <code>$onclick</code>-style
+        bindings are blocked. An unresolvable binding renders as its literal text
+        and warns in the console instead of failing silently.
+    </p>
+</section>

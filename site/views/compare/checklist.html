@@ -1,0 +1,155 @@
+<script type="module" data-module="@compare/checklist">
+    export let signals = [
+        { id: 'nobuild', checked: false, text: 'Shipping files, not build artifacts, is a feature for this project' },
+        { id: 'islands', checked: false, text: 'It’s a content site, dashboard, or admin page with islands of interactivity — not an app-shell SPA' },
+        { id: 'origin',  checked: false, text: 'Views and data live on the same origin' },
+        { id: 'vanilla', checked: false, text: 'The team writes HTML, CSS, and vanilla JS — framework onboarding would be a real cost' },
+        { id: 'source',  checked: false, text: 'You’d rather read 1,400 lines of source than trust a black box' },
+        { id: 'churn',   checked: false, text: 'Pre-1.0 churn is acceptable — this is a side project, prototype, or internal tool' },
+    ];
+
+    export let cautions = [
+        { id: 'seo',    checked: false, text: 'Dynamic content must be server-rendered for SEO or first paint' },
+        { id: 'rate',   checked: false, text: 'State updates at streaming or animation rates (live grids, tickers, games)' },
+        { id: 'spa',    checked: false, text: 'You need routing, code-splitting, and an app shell' },
+        { id: 'eco',    checked: false, text: 'You need an ecosystem: component libraries, devtools, a hiring pool' },
+        { id: 'types',  checked: false, text: 'Type-checked templates are non-negotiable for the team' },
+        { id: 'derisk', checked: false, text: 'Someone else must have de-risked the choice (support, LTS, a vendor to blame)' },
+    ];
+
+    const count = list => list.filter(i => i.checked).length;
+
+    export const score = () =>
+        `${count(signals)} for · ${count(cautions)} against`;
+
+    export const tone = () => {
+        const against = count(cautions);
+        if (against >= 2) return 'stop';
+        if (against === 1) return 'warn';
+        return count(signals) >= 3 ? 'go' : 'idle';
+    };
+
+    export const verdict = () => {
+        const forIt = count(signals);
+        const against = count(cautions);
+        if (forIt === 0 && against === 0)
+            return 'Check what applies to your project.';
+        if (against >= 2)
+            return 'Use a mainstream framework. Two or more of those needs are exactly what React, Vue, Svelte, Solid, or Angular exist to solve — data-wrapper would fight you.';
+        if (against === 1)
+            return 'Borderline. One hard requirement above is unmet — if you can’t design around it, pick a framework that has it built in.';
+        if (forIt >= 3)
+            return 'Good fit. Your project is the kind data-wrapper was built for — try it on one page before committing further.';
+        return 'Plausible fit, weak signal. Nothing rules it out, but nothing argues for it strongly either — vanilla JS might be enough.';
+    };
+
+    export function toggleSignal(event) {
+        const { item } = event.detail;
+        signals = signals.map(s =>
+            s.id === item.id ? { ...s, checked: event.target.checked } : s
+        );
+    }
+
+    export function toggleCaution(event) {
+        const { item } = event.detail;
+        cautions = cautions.map(c =>
+            c.id === item.id ? { ...c, checked: event.target.checked } : c
+        );
+    }
+</script>
+
+<section class="doc-section" id="checklist">
+    <h2>Should you adopt it?</h2>
+
+    <p>
+        Check what's true for your project. The verdict updates live — this
+        checklist is a data-wrapper component, so you're test-driving the
+        library by using it.
+    </p>
+
+    <div class="fit-grid">
+        <fieldset class="fit-group fit-group--for">
+            <legend>Points toward data-wrapper</legend>
+            <template *list="signals">
+                <label class="fit-item">
+                    <input type="checkbox" $checked="./checked" @change="toggleSignal">
+                    <span $text="./text"></span>
+                </label>
+            </template>
+        </fieldset>
+
+        <fieldset class="fit-group fit-group--against">
+            <legend>Points toward an industry framework</legend>
+            <template *list="cautions">
+                <label class="fit-item">
+                    <input type="checkbox" $checked="./checked" @change="toggleCaution">
+                    <span $text="./text"></span>
+                </label>
+            </template>
+        </fieldset>
+    </div>
+
+    <div class="fit-verdict" $data-tone="tone" aria-live="polite">
+        <strong class="fit-score" $text="score"></strong>
+        <p $text="verdict"></p>
+    </div>
+</section>
+
+<style>
+    .fit-grid {
+        display: grid;
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+    @media (min-width: 720px) {
+        .fit-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .fit-group {
+        margin: 0;
+        padding: 1rem 1.1rem;
+        border: var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+    }
+    .fit-group legend {
+        padding: 0 .4rem;
+        font-size: .78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+    }
+    .fit-group--for     legend { color: var(--ok); }
+    .fit-group--against legend { color: var(--err); }
+
+    .fit-item {
+        display: flex;
+        align-items: baseline;
+        gap: .6rem;
+        padding: .4rem 0;
+        font-size: .92rem;
+        line-height: 1.45;
+        cursor: pointer;
+    }
+    .fit-item input { flex: 0 0 auto; }
+
+    .fit-verdict {
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+        padding: 1rem 1.1rem;
+        border: var(--border-strong);
+        border-left: 4px solid var(--muted);
+        border-radius: 8px;
+        background: var(--bg);
+    }
+    .fit-verdict p { margin: 0; }
+    .fit-score {
+        font-family: var(--mono);
+        font-size: .8rem;
+        color: var(--muted);
+    }
+    .fit-verdict[data-tone="go"]   { border-left-color: var(--ok); }
+    .fit-verdict[data-tone="warn"] { border-left-color: color-mix(in srgb, var(--err) 55%, var(--ok)); }
+    .fit-verdict[data-tone="stop"] { border-left-color: var(--err); }
+</style>

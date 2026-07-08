@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>data-wrapper — vs. React, Vue, Svelte &amp; friends</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="canonical" href="https://data-wrapper.org/compare">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="description" content="An honest comparison of data-wrapper against React, Vue, Angular, Svelte, Solid, Mithril, Alpine, Lit, and htmx — including what it can't do, and a checklist to decide if it fits your project.">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="data-wrapper">
+    <meta property="og:title" content="data-wrapper vs. the frameworks">
+    <meta property="og:description" content="An honest comparison against React, Vue, Angular, Svelte, Solid, and friends — gaps included, checklist attached.">
+    <meta property="og:url" content="https://data-wrapper.org/compare">
+    <meta property="og:image" content="https://data-wrapper.org/icon-512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="data-wrapper vs. the frameworks">
+    <meta name="twitter:description" content="An honest comparison against React, Vue, Angular, Svelte, Solid, and friends — gaps included, checklist attached.">
+    <meta name="twitter:image" content="https://data-wrapper.org/icon-512.png">
+    <script type="importmap">{"imports":{"data-wrapper":"/dist/data-wrapper.js","state/":"/state/"}}</script>
+    <script>
+        (() => {
+            try {
+                const v = localStorage.getItem('data-wrapper:theme');
+                if (v === 'light' || v === 'dark') document.documentElement.dataset.theme = v;
+            } catch {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/assets/css/index.css">
+    <script src="/dist/data-wrapper.js" type="module"
+            data-shim-src="https://ga.jspm.io/npm:es-module-shims@2.8.1/dist/es-module-shims.js"></script>
+</head>
+<body class="docs-body">
+
+<data-wrapper id="nav" src="/views/nav.html" $data-nav-open="open"></data-wrapper>
+
+<main class="docs-layout">
+    <aside class="docs-toc" aria-label="Comparison sections">
+        <h1>data-wrapper</h1>
+        <p class="docs-subtitle">vs. the frameworks — honestly</p>
+        <nav>
+            <ol>
+                <li><a href="#positioning">Where it sits</a></li>
+                <li><a href="#matrix">Side by side</a></li>
+                <li><a href="#gaps">What you give up</a></li>
+                <li><a href="#checklist">Should you adopt it?</a></li>
+            </ol>
+        </nav>
+        <p class="docs-sidefoot">
+            <a href="/">← back home</a>
+        </p>
+    </aside>
+
+    <article class="docs-content">
+        <data-wrapper src="/views/compare/positioning.html"></data-wrapper>
+        <data-wrapper src="/views/compare/matrix.html"></data-wrapper>
+        <data-wrapper src="/views/compare/gaps.html"></data-wrapper>
+        <data-wrapper src="/views/compare/checklist.html"></data-wrapper>
+    </article>
+</main>
+
+</body>
+</html>

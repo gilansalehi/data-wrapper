@@ -64,6 +64,11 @@
     gap: 1.25rem;
     max-width: 46rem;
 }
+.pitch__split > data-wrapper,
+.pitch__grid > data-wrapper {
+    display: block;
+    min-width: 0;
+}
 
 /* Code blocks — the docs' gentle-blue slab + data-title label, site-wide. */
 .pitch__code {
