@@ -111,8 +111,18 @@
         <code>props.status</code> directly, so the card template keeps reading
         the current parent values. If the factory called
         <code>props.customer()</code> instead, it would snapshot the current
-        value at mount time. A query value that does not resolve to a binding is
-        a static string, like <code>start=5</code> in the counter example.
+        value at mount time.
+    </p>
+
+    <p>
+        A query value that does not resolve to a binding becomes a static input.
+        Static inputs are parsed with <code>JSON.parse</code> when possible, so
+        <code>start=5</code> becomes the number <code>5</code>,
+        <code>enabled=true</code> becomes <code>true</code>, and encoded JSON can
+        pass arrays or objects. Values that are not valid JSON, such as
+        <code>theme=light</code> or <code>file=/views/demo.html</code>, stay as
+        strings. If a value should be the string <code>"true"</code> instead of
+        the boolean <code>true</code>, quote it as JSON in the URL.
     </p>
 
     <p>

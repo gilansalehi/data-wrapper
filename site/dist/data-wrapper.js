@@ -811,18 +811,26 @@ var importComponent = (script, viewURL) => {
 };
 var isCrossWrapperInputExpression = (raw) => raw.startsWith("//");
 var isReservedInputProtocol = (protocol) => protocol !== "dwrl:";
+var OMIT_INPUT = Symbol("omit-input");
+var parseInputLiteral = (value) => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+};
 var resolveInputAssignment = (expr, ctx) => {
   if (ctx) {
     const { path, isRel, parent, host, protocol } = p(expr);
     if (isReservedInputProtocol(protocol))
-      return null;
+      return OMIT_INPUT;
     const source = resolveSource(ctx, path, isRel, parent, expr, host);
     if (source)
       return () => source.read();
   }
   if (isCrossWrapperInputExpression(expr)) {
     console.warn(`data-wrapper: unresolved cross-wrapper input "${expr}"`);
-    return null;
+    return OMIT_INPUT;
   }
   return expr;
 };
@@ -835,9 +843,9 @@ var inputProps = (src, url, ctx) => {
     seen.add(name);
     const expr = value === "" ? name : value;
     const assignment = resolveInputAssignment(expr, ctx);
-    if (assignment == null)
+    if (assignment === OMIT_INPUT)
       continue;
-    props[name] = assignment;
+    props[name] = value !== "" && typeof assignment === "string" ? parseInputLiteral(assignment) : assignment;
   }
   props.url = src;
   return Object.freeze(props);

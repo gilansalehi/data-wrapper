@@ -127,20 +127,27 @@ const isCrossWrapperInputExpression = (raw: string): boolean =>
 const isReservedInputProtocol = (protocol: string): boolean =>
     protocol !== 'dwrl:';
 
+const OMIT_INPUT = Symbol('omit-input');
+
+const parseInputLiteral = (value: string): unknown => {
+    try { return JSON.parse(value); }
+    catch { return value; }
+};
+
 const resolveInputAssignment = (
     expr: string,
     ctx?: BindingContext,
 ): unknown => {
     if (ctx) {
         const { path, isRel, parent, host, protocol } = p(expr);
-        if (isReservedInputProtocol(protocol)) return null;
+        if (isReservedInputProtocol(protocol)) return OMIT_INPUT;
         const source = resolveSource(ctx, path, isRel, parent, expr, host);
         if (source) return () => source.read();
     }
 
     if (isCrossWrapperInputExpression(expr)) {
         console.warn(`data-wrapper: unresolved cross-wrapper input "${expr}"`);
-        return null;
+        return OMIT_INPUT;
     }
 
     return expr;
@@ -160,9 +167,11 @@ const inputProps = (
 
         const expr = value === '' ? name : value;
         const assignment = resolveInputAssignment(expr, ctx);
-        if (assignment == null) continue;
+        if (assignment === OMIT_INPUT) continue;
 
-        props[name] = assignment;
+        props[name] = value !== '' && typeof assignment === 'string'
+            ? parseInputLiteral(assignment)
+            : assignment;
     }
 
     props.url = src;

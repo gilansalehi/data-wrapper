@@ -124,7 +124,7 @@ test('load delivers src query inputs as factory props, and templates see only fa
 
         expect(typeof captured?.customer).toBe('function');
         expect(typeof captured?.status).toBe('function');
-        expect(captured?.start).toBe('5');
+        expect(captured?.start).toBe(5);
         expect(captured?.url).toBe(src);
         expect(child.querySelector('#name')?.textContent).toBe('Ada');
         expect(child.querySelector('#status')?.textContent).toBe('active');
@@ -137,6 +137,64 @@ test('load delivers src query inputs as factory props, and templates see only fa
     } finally {
         warn.mockRestore();
     }
+});
+
+test('static src query inputs parse JSON literals while live parent inputs stay live', async () => {
+    const moduleName = '@test/004-typed-props';
+    const query = new URLSearchParams({
+        count: '5',
+        price: '5.25',
+        enabled: 'true',
+        disabled: 'false',
+        nil: 'null',
+        options: JSON.stringify({ compact: true }),
+        items: JSON.stringify([1, 'two']),
+        word: 'light',
+        quoted: JSON.stringify('true'),
+        path: '/views/showcase/todos.v3.html',
+        customer: 'customer',
+    });
+    query.append('bare', '');
+
+    const src = `http://example.test/typed.html?${query}`;
+    let customer = { firstName: 'Ada' };
+    let captured: ComponentProps | undefined;
+
+    const parent = document.createElement('data-wrapper') as unknown as Wrapper;
+    parent._component = new ComponentRuntime(parent, {
+        get customer() { return customer; },
+    });
+
+    const child = document.createElement('data-wrapper') as unknown as Wrapper;
+    const html = componentView(moduleName, '<output $text="count"></output>');
+    const module: ComponentModule = {
+        default: (ctx: ComponentContext) => {
+            captured = ctx.props;
+            return { count: ctx.props.count };
+        },
+    };
+
+    await withComponentView(moduleName, html, module, async () => {
+        await load(child, src, rootContext(parent));
+    });
+
+    expect(captured?.count).toBe(5);
+    expect(captured?.price).toBe(5.25);
+    expect(captured?.enabled).toBe(true);
+    expect(captured?.disabled).toBe(false);
+    expect(captured?.nil).toBeNull();
+    expect(captured?.options).toEqual({ compact: true });
+    expect(captured?.items).toEqual([1, 'two']);
+    expect(captured?.word).toBe('light');
+    expect(captured?.quoted).toBe('true');
+    expect(captured?.path).toBe('/views/showcase/todos.v3.html');
+    expect(captured?.bare).toBe('bare');
+    expect(child.querySelector('output')?.textContent).toBe('5');
+
+    const readCustomer = captured?.customer as (() => unknown) | undefined;
+    expect(readCustomer?.()).toEqual({ firstName: 'Ada' });
+    customer = { firstName: 'Grace' };
+    expect(readCustomer?.()).toEqual({ firstName: 'Grace' });
 });
 
 test('child wrappers inside *list receive props from the row mount point', async () => {
