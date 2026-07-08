@@ -54,7 +54,7 @@ a {
 }
 
 code {
-    font-size: .82rem;
+    font-size: .82em;
     background: var(--surface);
     padding: .15em .4em;
     border-radius: 3px;
