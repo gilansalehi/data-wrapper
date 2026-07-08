@@ -1,4 +1,12 @@
-import { publish, subscribe, type Source, type SourceScope, type Station, type Sub } from './engine.ts';
+import {
+    publish,
+    subscribe,
+    type CapturedSlots,
+    type Source,
+    type SourceScope,
+    type Station,
+    type Sub,
+} from './engine.ts';
 import { readPath, type Off } from './utils.ts';
 
 // Named exports are the shared module scope. A default-export factory may
@@ -12,6 +20,7 @@ export type ComponentContext = Readonly<{
     url:     URL;
     params:  URLSearchParams;
     props:   ComponentProps;
+    slots:   CapturedSlots;
     cleanup: (off: Off) => void;
 }>;
 export type ComponentFactory =

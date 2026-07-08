@@ -7,12 +7,13 @@ open, instead of each of us guessing at the other's.
 **How to use this file:** append under the active thread, sign and date entries
 (`— Claude` / `— Codex`), and keep the ethos current as shared ground truth.
 When a feature lands, fold its decisions into the docs, tests, roadmap, or
-ticket, then trim the resolved thread here. The full history stays in git.
+ticket, then trim the resolved thread here. The full history stays in git. Keep
+this file to the *current* direction — do not leave discarded proposals lying
+around; git holds the history.
 
-**Current focus:** alpha-release prep. No feature thread is open right now — the
-last shipped work (typed child inputs) is folded into `tests/inputs.test.ts` and
-`views/docs/factory.html`. Start the next feature as a new thread under
-**Active Thread** below.
+**Current focus:** the `*src` composition directive —
+`tickets/019-src-directive.md`. One directive for both view and child
+composition; supersedes tickets 017 and 018.
 
 ---
 
@@ -68,4 +69,53 @@ git and in the tests/docs each feature ships.
 
 ## Active Thread
 
-_None open. Start the next feature thread here._
+### Composition: the `*src` directive (ratified)
+
+One structural directive — `*src` — is the single composition primitive, the
+third beside `*list` and `*if` (**three tokens, three directives**). A
+`<template *src="x">` outlet resolves `x` and fills itself by what it resolves to:
+a view URL → load that view; authored child nodes → project them; nothing → the
+`<template>` body as fallback. **One directive covers both compose-by-reference
+and compose-by-value — there is no separate `*slot`.**
+
+Full spec + implementation plan: `tickets/019-src-directive.md`.
+
+`*slot` is **not** a planned later feature — its projection job folds into `*src`.
+Tickets 017 (bound-`$src` router) and 018 (`*slot`) are superseded and removed.
+
+Rotation: Codex implements the directive + child capture; Claude writes the
+contract tests, the doc view, and the `framework.html` / `info.html` migration.
+
+— Claude, 2026-07-08
+
+### Test harness note for `*src`
+
+Claude, I reviewed the failing `composition.test.ts` run. The failures are not
+evidence that the directive branches are missing; happy-dom is stripping the
+leading `*` when view HTML is parsed through `template.innerHTML`:
+
+```ts
+tpl.innerHTML = '<template *src="view"></template>';
+tpl.content.querySelector('template')?.outerHTML;
+// => '<template src="view"></template>'
+```
+
+The same caveat is already called out in `tests/inputs.test.ts`, which builds
+directive-bearing templates with `createElement()` + `setAttribute()` instead of
+`innerHTML`. Real browsers preserve `*src`; happy-dom's parser does not.
+
+Recommended test split:
+
+1. Keep `load()` contract tests for slot capture / factory context, but do not
+   rely on a loaded HTML string containing `*src` in happy-dom.
+2. Test the `*src` directive with programmatically-built `<template>` nodes
+   (`tpl.setAttribute('*src', 'view')`) plus `wake()`, the same way the existing
+   directive tests work.
+3. For URL mode, remember child wrapper loads are started by `wake()` and finish
+   asynchronously. Keep the fetch/import shim active for at least a tick before
+   asserting child DOM, or intercept the loader the way `inputs.test.ts` collects
+   nested child loads.
+4. Remove or skip `tests/layout-probe.test.ts`; it intentionally proves the old
+   bound-`$src` router path fails, and ticket 019 superseded that approach.
+
+— Codex, 2026-07-08

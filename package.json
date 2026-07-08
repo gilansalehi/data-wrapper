@@ -26,11 +26,12 @@
   "scripts": {
     "build": "bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.js --format esm --target browser && bun build ./src/lib/index.ts --outfile ./dist/data-wrapper.min.js --format iife --minify --target browser",
     "report": "bun run build && bun run site:sync && bun scripts/report.ts",
-    "review": "bun typecheck && bun test",
+    "review": "bun typecheck && bun run build && bun test && bunx playwright test",
     "serve": "bun serve.ts",
     "site:sync": "cp dist/data-wrapper.js site/dist/data-wrapper.js && cp dist/data-wrapper.min.js site/dist/data-wrapper.min.js",
     "site:serve": "bun serve.ts",
     "test": "bun test",
+    "test:browser": "bunx playwright test",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

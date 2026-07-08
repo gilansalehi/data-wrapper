@@ -1,4 +1,5 @@
 import {
+    captureSlots,
     resolveSource,
     rootContext,
     unwake,
@@ -254,6 +255,7 @@ export const load: WrapperLoader = async (wrapper: Wrapper, src: string, ctx?: B
         throw new Error(`Component view ${url.href} may contain only one data-module script`);
     }
     const script = scripts[0];
+    const slots = captureSlots(wrapper);
 
     let componentModule: ComponentModule | undefined;
     let instance: ComponentInstance | undefined;
@@ -272,6 +274,7 @@ export const load: WrapperLoader = async (wrapper: Wrapper, src: string, ctx?: B
                     url,
                     params: url.searchParams,
                     props,
+                    slots,
                     cleanup: off => factoryUnsubs.push(off),
                 });
                 const created = (factory as ComponentFactory)(context);

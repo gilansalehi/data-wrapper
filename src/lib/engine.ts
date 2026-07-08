@@ -8,6 +8,7 @@ export type Station  = Record<string, Subs>;
 export type Item     = Record<string, unknown>;
 export type Row      = { node: Element; item: Item; subs: Station; unsubs: Off[] };
 export type ListCache = Map<Element, Map<unknown, Row>>;
+export type CapturedSlots = Readonly<Record<string, readonly ChildNode[]>>;
 
 export type BindingContext = {
     wrapper: Wrapper;
@@ -116,6 +117,21 @@ export const unwake = (wrapper: Wrapper) => {
         for (const row of cache.values()) unwire(row.unsubs);
     unwire(wrapper._unsubs);
     for (const el of wakeNodes(wrapper)) el.removeAttribute(LIVE);
+};
+
+const isCapturableSlotNode = (node: ChildNode): boolean =>
+    node.nodeType !== Node.COMMENT_NODE
+    && (node.nodeType !== Node.TEXT_NODE || !!node.textContent?.trim());
+
+export const captureSlots = (wrapper: Element): CapturedSlots => {
+    const slots: Record<string, ChildNode[]> = Object.create(null);
+    for (const node of [...wrapper.childNodes]) {
+        if (!isCapturableSlotNode(node)) continue;
+        const key = node instanceof Element ? node.getAttribute('slot') ?? '' : '';
+        (slots[key] ??= []).push(node);
+    }
+    for (const key of Object.keys(slots)) Object.freeze(slots[key]);
+    return Object.freeze(slots);
 };
 
 // --- registries --------------------------------------------------------------
@@ -648,5 +664,93 @@ const ifDirective: DirectiveHandler = ({ ctx, el, wake, cleanup }) => {
     };
 };
 
+const isChildNode = (value: unknown): value is ChildNode =>
+    value instanceof Node && 'remove' in value;
+
+const isNodeList = (value: unknown): value is readonly ChildNode[] =>
+    Array.isArray(value) && value.every(isChildNode);
+
+const insertFragment = (
+    anchor: ChildNode,
+    fragment: DocumentFragment,
+    ctx: BindingContext,
+    wake: DirectiveContext['wake'],
+    unsubs: Off[],
+): ChildNode[] => {
+    const nodes = [...fragment.childNodes];
+    anchor.parentNode?.insertBefore(fragment, anchor);
+    const nextCtx = blockContext(ctx, unsubs);
+    for (const node of nodes)
+        if (node instanceof Element) wake(node, nextCtx);
+    return nodes;
+};
+
+// `*src` is a composition outlet. A resolved URL string loads a child wrapper;
+// captured child nodes project by value; otherwise the template body is fallback.
+const srcDirective: DirectiveHandler = ({ ctx, el, wake, cleanup }) => {
+    const tpl    = el as HTMLTemplateElement;
+    const anchor = document.createComment('dw-src');
+    tpl.replaceWith(anchor);
+
+    let liveNodes: ChildNode[] = [];
+    let liveUnsubs: Off[] = [];
+
+    const disposeLive = () => {
+        unwire(liveUnsubs);
+        for (const node of liveNodes) node.remove();
+        liveNodes = [];
+        liveUnsubs = [];
+    };
+    cleanup(disposeLive);
+
+    const renderFallback = () => {
+        liveNodes = insertFragment(
+            anchor,
+            tpl.content.cloneNode(true) as DocumentFragment,
+            ctx,
+            wake,
+            liveUnsubs,
+        );
+    };
+
+    return value => {
+        disposeLive();
+        liveUnsubs = [];
+
+        if (typeof value === 'string') {
+            const src = value.trim();
+            if (src && anchor.parentNode) {
+                const child = document.createElement('data-wrapper');
+                child.setAttribute('src', src);
+                anchor.parentNode.insertBefore(child, anchor);
+                liveNodes = [child];
+                wake(child, blockContext(ctx, liveUnsubs));
+                return;
+            }
+        }
+
+        if (isChildNode(value)) {
+            if (value instanceof Element) value.removeAttribute('slot');
+            anchor.parentNode?.insertBefore(value, anchor);
+            liveNodes = [value];
+            if (value instanceof Element) wake(value, blockContext(ctx, liveUnsubs));
+            return;
+        }
+
+        if (isNodeList(value) && value.length) {
+            const fragment = document.createDocumentFragment();
+            for (const node of value) {
+                if (node instanceof Element) node.removeAttribute('slot');
+                fragment.append(node);
+            }
+            liveNodes = insertFragment(anchor, fragment, ctx, wake, liveUnsubs);
+            return;
+        }
+
+        renderFallback();
+    };
+};
+
 DW_DIRECTIVES.set('list', listDirective);
 DW_DIRECTIVES.set('if',   ifDirective);
+DW_DIRECTIVES.set('src',  srcDirective);
