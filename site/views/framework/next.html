@@ -1,0 +1,53 @@
+<script type="module" data-module="@framework/next">
+    export const links = [
+        {
+            kicker: 'Complete guide',
+            title: 'Read the framework docs',
+            body: 'Factories, composition, module imports, binding contexts, events, reactivity, and formatters.',
+            action: 'Open the guide',
+            href: '/framework',
+        },
+        {
+            kicker: 'Release details',
+            title: 'Check package info',
+            body: 'Package metadata, browser support, security policy, download size, and release notes.',
+            action: 'Open info',
+            href: '/info',
+        },
+        {
+            kicker: 'Source code',
+            title: 'Browse the repository',
+            body: 'Read the runtime, docs views, tests, and the no-build site that dogfoods data-wrapper.',
+            action: 'Open GitHub',
+            href: 'https://github.com/gilansalehi/data-wrapper',
+        },
+    ];
+</script>
+
+<section class="pitch pitch--cta">
+    <div class="container">
+        <p class="pitch__kicker">06 — keep going</p>
+        <h2 class="pitch__title">Go deeper when the basics click.</h2>
+        <p class="pitch__lead">
+            The homepage stops at the small-app model on purpose. The full docs
+            cover the features that matter once you start composing views,
+            reusing modules, and polishing a project for release.
+        </p>
+
+        <div class="pitch__next-grid">
+            <template *list="links">
+                <a class="pitch__next-card" $href="./href">
+                    <span class="pitch__next-kicker" $text="./kicker"></span>
+                    <strong $text="./title"></strong>
+                    <span $text="./body"></span>
+                    <em $text="./action"></em>
+                </a>
+            </template>
+        </div>
+
+        <p class="pitch__foot">
+            A longer tutorial path belongs on its own page, where it can build
+            from the same basics without crowding the homepage.
+        </p>
+    </div>
+</section>

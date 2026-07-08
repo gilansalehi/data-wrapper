@@ -301,6 +301,59 @@
     font-size: .76rem;
 }
 
+.pitch__next-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+@media (min-width: 760px) {
+    .pitch__next-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.pitch__next-card {
+    display: grid;
+    align-content: start;
+    gap: .5rem;
+    min-height: 100%;
+    padding: 1.15rem;
+    border: var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.pitch__next-card:hover {
+    border-color: color-mix(in srgb, var(--link) 45%, transparent);
+    text-decoration: none;
+}
+
+.pitch__next-kicker {
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.pitch__next-card strong {
+    font-size: 1.08rem;
+    line-height: 1.25;
+}
+
+.pitch__next-card span:not(.pitch__next-kicker) {
+    color: var(--muted);
+    font-size: .92rem;
+    line-height: 1.45;
+}
+
+.pitch__next-card em {
+    margin-top: .25rem;
+    color: var(--link);
+    font-style: normal;
+    font-weight: 700;
+}
+
 /* playground grid */
 .pitch__grid {
     display: grid;

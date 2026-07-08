@@ -41,7 +41,9 @@
 &lt;/template&gt;</code></pre>
                     </li>
                     <li>
-                        <p>Repeat a template for each item.</p>
+                        <p>Repeat a template for each item. Use path-style
+                        prefixes such as <code>./</code> for data relative to
+                        the current row.</p>
                         <pre class="pitch__code"><code data-title="*list">&lt;template *list="todos"&gt;
     &lt;li $text="./task"&gt;&lt;/li&gt;
 &lt;/template&gt;</code></pre>
