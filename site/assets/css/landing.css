@@ -219,6 +219,35 @@
     line-height: 1.45;
 }
 
+.pitch__feature-grid {
+    display: grid;
+    gap: .85rem;
+    margin-top: 1.5rem;
+}
+
+@media (min-width: 720px) {
+    .pitch__feature-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.pitch__feature-grid article {
+    padding: 1rem;
+    border: var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+}
+
+.pitch__feature-grid h3 {
+    margin: 0 0 .4rem;
+    font-size: 1rem;
+}
+
+.pitch__feature-grid p {
+    margin: 0;
+    color: var(--muted);
+    font-size: .9rem;
+    line-height: 1.45;
+}
+
 /* playground grid */
 .pitch__grid {
     display: grid;

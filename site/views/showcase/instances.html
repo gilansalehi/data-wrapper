@@ -1,0 +1,17 @@
+<section class="instances-demo" aria-label="Reusable instance demo">
+    <data-wrapper src="/views/showcase/instance-counter.html?start=2&label=Drafts"></data-wrapper>
+    <data-wrapper src="/views/showcase/instance-counter.html?start=10&label=Inbox"></data-wrapper>
+</section>
+
+<style>
+    .instances-demo {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+        gap: .75rem;
+    }
+
+    .instances-demo > data-wrapper {
+        display: block;
+        min-width: 0;
+    }
+</style>

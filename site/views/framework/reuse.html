@@ -1,0 +1,27 @@
+<section class="pitch pitch--band">
+    <div class="container">
+        <p class="pitch__kicker">05 — reuse views</p>
+        <h2 class="pitch__title">Pass inputs when one view needs many instances.</h2>
+        <p class="pitch__lead">
+            A view can export shared module state, or it can export a default
+            factory for per-wrapper state. URL params become <code>props</code>,
+            so the same file can mount twice with different starting values,
+            labels, or child inputs.
+        </p>
+
+        <div class="pitch__grid">
+            <data-wrapper src="/views/docs/peek.html?file=/views/showcase/instances.html&title=host%20page&open=true"></data-wrapper>
+
+            <figure class="pitch__widget">
+                <figcaption class="pitch__demo-label">live view — one file, two component instances</figcaption>
+                <data-wrapper src="/views/showcase/instances.html"></data-wrapper>
+            </figure>
+        </div>
+
+        <p class="pitch__foot">
+            The file is shared. The factory closure is not. Each wrapper gets
+            its own <code>count</code>, while the template keeps the same
+            bindings.
+        </p>
+    </div>
+</section>

@@ -1,11 +1,13 @@
 <section class="pitch">
     <div class="container">
-        <p class="pitch__kicker">04 — render lists</p>
-        <h2 class="pitch__title">Use <code>*list</code> when one item becomes many.</h2>
+        <p class="pitch__kicker">04 — render structure</p>
+        <h2 class="pitch__title">Use directives when markup changes shape.</h2>
         <p class="pitch__lead">
-            Lists do not require a new model. <code>*list</code> repeats a
-            template for each item, while <code>$</code> and <code>@</code>
-            keep doing the same value and event work.
+            Lists and conditional blocks do not require a new model.
+            <code>*list</code> repeats a template for each item, and
+            <code>*if</code> renders a template only when its value is truthy.
+            Inside those templates, <code>$</code> and <code>@</code> keep
+            doing the same value and event work.
         </p>
 
         <figure class="pitch__widget">
@@ -15,8 +17,9 @@
         </figure>
 
         <p class="pitch__foot">
-            Open the source to see the actual view file that powers the widget.
-            There is no separate demo version.
+            This is still ordinary HTML. The template creates rows; the row
+            bindings read each todo with <code>./task</code> and
+            <code>./done</code>.
         </p>
     </div>
 </section>

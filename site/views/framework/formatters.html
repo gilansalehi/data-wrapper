@@ -1,0 +1,41 @@
+<section class="pitch pitch--cta">
+    <div class="container">
+        <p class="pitch__kicker">08 — format and extend</p>
+        <h2 class="pitch__title">Keep common display logic in the binding.</h2>
+        <p class="pitch__lead">
+            Formatters are small transforms that run after a value is read and
+            before it reaches the DOM. They cover common presentation work like
+            text cleanup, dates, money, booleans, sorting, joining, and JSON
+            display.
+        </p>
+
+        <div class="pitch__grid">
+            <data-wrapper src="/views/docs/peek.html?file=/views/showcase/formatters.html&title=formatters.html&lines=13:33&open=true"></data-wrapper>
+
+            <figure class="pitch__widget">
+                <figcaption class="pitch__demo-label">live view — formatted bindings</figcaption>
+                <data-wrapper src="/views/showcase/formatters.html"></data-wrapper>
+            </figure>
+        </div>
+
+        <div class="pitch__feature-grid" aria-label="More framework features">
+            <article>
+                <h3>Extension hooks</h3>
+                <p>Add project-specific formatters with <code>DW_FORMATTERS</code> or structural behavior with <code>DW_DIRECTIVES</code>.</p>
+            </article>
+            <article>
+                <h3>Explicit refresh</h3>
+                <p>Use <code>action()</code> around writers and <code>flush()</code> when outside code changes state.</p>
+            </article>
+            <article>
+                <h3>Small helpers</h3>
+                <p><code>on</code>, <code>emit</code>, <code>p</code>, and <code>q</code> are available when a view needs a little glue.</p>
+            </article>
+        </div>
+
+        <div class="pitch__actions">
+            <a class="btn btn-primary" href="/framework#intro">Read the guide</a>
+            <a class="btn btn-outline" href="/info">Package details</a>
+        </div>
+    </div>
+</section>

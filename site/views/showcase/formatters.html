@@ -1,0 +1,78 @@
+<script type="module" data-module="@showcase/formatters">
+    export const name = '  ada lovelace  ';
+    export const amount = 1299;
+    export const active = true;
+    export const people = [
+        { id: 1, name: 'Grace Hopper' },
+        { id: 2, name: 'Ada Lovelace' },
+        { id: 3, name: 'Katherine Johnson' },
+    ];
+</script>
+
+<article class="formatter-demo">
+    <dl>
+        <div>
+            <dt>Name</dt>
+            <dd $text="name?trim&case=title"></dd>
+        </div>
+        <div>
+            <dt>Budget</dt>
+            <dd $text="amount?currency"></dd>
+        </div>
+        <div>
+            <dt>Status</dt>
+            <dd $text="active?bool=ready:paused"></dd>
+        </div>
+    </dl>
+
+    <ol>
+        <template *list="people?sort=name">
+            <li $text="./name"></li>
+        </template>
+    </ol>
+</article>
+
+<style>
+    .formatter-demo {
+        display: grid;
+        gap: 1rem;
+        padding: 1rem;
+        border: var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+    }
+
+    .formatter-demo dl {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+        gap: .65rem;
+        margin: 0;
+    }
+
+    .formatter-demo dl > div {
+        padding: .75rem;
+        border: var(--border);
+        border-radius: var(--radius);
+        background: var(--bg);
+    }
+
+    .formatter-demo dt {
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: .68rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .formatter-demo dd {
+        margin: .2rem 0 0;
+        font-weight: 800;
+    }
+
+    .formatter-demo ol {
+        display: grid;
+        gap: .4rem;
+        margin: 0;
+        padding: 0;
+    }
+</style>

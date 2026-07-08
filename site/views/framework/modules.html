@@ -1,0 +1,25 @@
+<section class="pitch">
+    <div class="container">
+        <p class="pitch__kicker">07 — share state</p>
+        <h2 class="pitch__title">Use browser modules when views need the same state.</h2>
+        <p class="pitch__lead">
+            A view script can register a <code>data-module</code> name. Other
+            views import from that name with normal ESM syntax, so shared state
+            stays in JavaScript modules instead of a framework-specific store.
+        </p>
+
+        <div class="pitch__grid">
+            <data-wrapper src="/views/docs/peek.html?file=/views/showcase/theme-import.html&title=consumer.html&lines=1:3&open=true"></data-wrapper>
+
+            <figure class="pitch__widget">
+                <figcaption class="pitch__demo-label">live view — imported module bindings</figcaption>
+                <data-wrapper src="/views/showcase/theme.html"></data-wrapper>
+            </figure>
+        </div>
+
+        <p class="pitch__foot">
+            The browser owns module identity. data-wrapper only wakes the HTML
+            that reads those exports.
+        </p>
+    </div>
+</section>
