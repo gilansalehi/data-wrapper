@@ -1,9 +1,9 @@
 // Ticket 004 — child-wrapper inputs (Phase 3) and the `/key` root escape (Phase 4),
 // as contract tests over the public surface.
 //
-// DOM is built with createElement/setAttribute and template.content.append — the
-// same shape the passing resolution suite uses — deliberately NOT innerHTML, which
-// happy-dom appears to handle differently for token attributes / <template> bodies.
+// DOM is built with createElement/setAttribute and template.content.append.
+// happy-dom does not preserve every token attribute through innerHTML parsing;
+// parser-sensitive contracts live in the Playwright browser tests.
 //
 // The full browser loader round-trip remains a smoke-test concern, but these tests
 // can stub the browser boundary (`fetch` + import shim) and still exercise the

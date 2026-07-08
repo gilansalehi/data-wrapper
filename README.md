@@ -57,9 +57,11 @@ The template syntax is intentionally small:
 | `*` | `*list="items"` | Read a binding and drive a structural directive. |
 | `@` | `@click="save"` | Listen for an event and invoke a component action. |
 
-The built-in directives are `*list` and `*if`. A `*list` directive creates a row
-binding context for each item, and `*if` inserts or removes a template body based
-on the truthiness of the bound value.
+The built-in directives are `*list`, `*if`, and `*src`. A `*list` directive
+creates a row binding context for each item. A `*if` directive inserts or removes
+a template body based on the truthiness of the bound value. A `*src` directive
+fills a template outlet from a view URL, captured child nodes, or fallback
+content.
 
 ## Reactivity
 
@@ -212,6 +214,39 @@ string.
 Two reserved cases behave differently from ordinary unresolved strings:
 protocol-prefixed inputs such as `localStorage://key` are omitted, and missing
 cross-wrapper inputs such as `//cart/total` warn and are omitted.
+
+## Composition
+
+Use `*src` when a loaded view needs an outlet. The directive resolves a normal
+binding and fills the outlet based on the resolved value:
+
+- a non-empty string loads another view at that position;
+- captured child nodes are projected into the outlet;
+- an empty or missing value renders the template body as fallback.
+
+```html
+<!-- host page -->
+<data-wrapper src="layout.html?panel=/views/profile.html">
+    <nav slot="nav">...</nav>
+</data-wrapper>
+```
+
+```html
+<!-- layout.html -->
+<script type="module" data-module="@view/layout">
+export default ({ props, slots }) => ({
+    panel: props.panel,
+    nav: slots.nav,
+});
+</script>
+
+<template *src="nav"><p>No navigation supplied.</p></template>
+<template *src="panel"><p>Choose a panel.</p></template>
+```
+
+The plain `slot` attribute is only a grouping key for captured light-DOM
+children. The factory decides which captured groups become template bindings by
+returning them.
 
 ## Binding Contexts
 
@@ -416,7 +451,7 @@ site/
 
 src/lib/
     utils.ts       binding parser, readPath, DOM helpers
-    engine.ts      binding contexts, wake/wire/bind, reconcile, *list/*if
+    engine.ts      binding contexts, wake/wire/bind, reconcile, *list/*if/*src
     component.ts   ComponentRuntime, action(), flush()
     element.ts     <data-wrapper> custom element + load()
     index.ts       public package entry + custom element registration
