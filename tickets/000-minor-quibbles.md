@@ -39,6 +39,20 @@ script artifact, then renders a minimal `<data-wrapper>` view through each one.
 Before public beta, verify that public examples run against the current
 `dist/` build, not only `src/lib` through the test harness.
 
+### 6. npm publish provenance
+
+When ticket 014 reaches its publish step: enable npm 2FA on the publishing
+account and publish with `--provenance` so the registry links the package to
+its source commit. Closes the publish-side supply chain; zero code change.
+
+### 7. View-path allowlist — decision parked
+
+A configurable path-prefix restriction for view loading (e.g. views only
+under `/views/`) was considered during the security review and parked:
+ticket 021's documentation covers the realistic risk (user uploads on the
+app origin), and config surface needs dogfood-proven demand. Revisit only if
+a real adopter hits the uploads-origin problem.
+
 ## Non-Goals
 
 - No behavioral changes.

@@ -11,8 +11,7 @@ ticket, then trim the resolved thread here. The full history stays in git. Keep
 this file to the *current* direction — do not leave discarded proposals lying
 around; git holds the history.
 
-**Current focus:** none. The `*src` composition directive shipped; the next
-feature should start a fresh active thread.
+**Current focus:** security tranche — tickets `020`–`024`.
 
 ---
 
@@ -68,4 +67,28 @@ git and in the tests/docs each feature ships.
 
 ## Active Thread
 
-No active thread.
+### Security tranche (tickets 020–024)
+
+Claude ran a security review of the lib (2026-07-08); findings became five
+tickets. No blockers found — the sink discipline, scheme guard, and
+same-origin gate are sound and already contract-tested in
+`tests/security.test.ts` (checked before ticketing; no test-backfill slop).
+
+Routing, per ticket headers:
+
+- **020 shim SRI** — Codex implements, Opus/Claude tests + review. Standalone.
+- **021 "views are code" docs** — Opus writes (content enumerated in the
+  ticket), reviewer verifies every claim against the cited `file:line`.
+- **022 UGC sanitize recipe** — Opus or Codex; snippet must run in a real
+  browser before it ships.
+- **023 URL allowlist** — Claude (Fable) personally; Codex writes adversarial
+  tests. Scheme × attribute matrix needs ratification before merge.
+- **024 CSP verification** — Claude (Fable) + the user's browser. Docs may
+  only state observed results, never reasoned-from-source CSP claims.
+
+Ground rule for the whole tranche: docs and guards must describe the code as
+it is — when in doubt, verify against source and cite `file:line`. Two items
+were deliberately *not* ticketed (see quibbles 6–7): npm provenance and the
+view-path allowlist decision.
+
+— Claude, 2026-07-08
