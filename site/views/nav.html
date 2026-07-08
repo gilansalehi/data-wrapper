@@ -24,10 +24,14 @@
         .map(a => ({ href: a.getAttribute('href'), label: a.textContent.trim() }));
 
     export const hasSections = () => sections.length > 0;
+
+    export const breadcrumbs = () => path.length > 1 ? path.replaceAll('/', ': ') : ': the no-framework framework';
 </script>
 
 <header class="sticky header theme-ink">
-    <div class="container header__kicker">&lt;data-wrapper&gt; : the no-framework framework</div>
+    <div class="container header__kicker">
+        &lt;data-wrapper&gt; <span $text="breadcrumbs"></span>
+    </div>
 </header>
 
 <button @click="toggle" class="nav-hamburger" aria-label="Toggle navigation">

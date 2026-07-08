@@ -1,6 +1,6 @@
 <section class="pitch">
     <div class="container">
-        <p class="pitch__kicker">3 — three tokens</p>
+        <p class="pitch__kicker">03 — three tokens</p>
         <h2 class="pitch__title">Wire your HTML with <code>$</code>, <code>@</code>, and <code>*</code>.</h2>
         <p class="pitch__lead">
             A view exports values and functions from its module script. The HTML
@@ -9,14 +9,17 @@
         </p>
 
         <div class="pitch__split">
-            <pre class="pitch__code"><code data-title="counter.html">&lt;script type="module" data-module="@view/counter"&gt;
+            <pre class="pitch__code">
+<code data-title="counter.html">
+&lt;script type="module" data-module="@view/counter"&gt;
     export let count = 0;
     export function increment() { count += 1; }
 &lt;/script&gt;
 
 &lt;button @click="increment"&gt;Increment&lt;/button&gt;
-&lt;output $text="count"&gt;&lt;/output&gt;</code></pre>
-
+&lt;output $text="count"&gt;&lt;/output&gt;
+</code>
+            </pre>
             <figure class="pitch__demo">
                 <figcaption class="pitch__demo-label">live component — click it</figcaption>
                 <data-wrapper src="/views/showcase/counter.v2.html"></data-wrapper>

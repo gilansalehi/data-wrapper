@@ -4,60 +4,38 @@
     export function increment() {
         count += 1;
     }
+
+    export function decrement() {
+        count -= 1;
+    }
 </script>
 
-<article class="component-counter" aria-label="Counter demo">
-    <button @click="increment">Increment</button>
+<article class="counter" aria-label="Counter demo">
+    <button @click="decrement">–</button>
 
-    <dl class="counter-readout">
-        <div>
-            <dt>count</dt>
-            <dd><output data-output="count" $text="count"></output></dd>
-        </div>
-    </dl>
+    <output data-output="count" $text="count"></output>
+
+    <button @click="increment">+</button>
 </article>
 
 <style>
-    .component-counter {
-        display: grid;
+    .counter {
+        display: flex;
         gap: 1rem;
-    }
+        align-items: baseline;
 
-    .component-counter button {
-        justify-self: start;
-    }
+        button {
+            grid-area: btn;
+            display: inline-flex;
+        }
 
-    .counter-readout {
-        display: grid;
-        gap: .75rem;
-        margin: 0;
-    }
-
-    .counter-readout div {
-        padding: .85rem;
-        border: var(--border);
-        border-radius: var(--radius);
-        background: var(--surface);
-    }
-
-    .counter-readout dt {
-        margin: 0 0 .25rem;
-        color: var(--muted);
-        font-family: var(--mono);
-        font-size: .72rem;
-        text-transform: uppercase;
-        letter-spacing: .08em;
-    }
-
-    .counter-readout dd {
-        margin: 0;
-    }
-
-    .counter-readout output {
-        color: var(--link);
-        font-family: var(--mono);
-        font-size: clamp(2.2rem, 10vw, 4rem);
-        font-weight: 800;
-        line-height: 1;
+        output {
+            width: 2em;
+            grid-area: out;
+            display: inline;
+            font-size: 1.25em;
+            margin: 0;
+            text-align: center;
+        }
     }
 </style>
