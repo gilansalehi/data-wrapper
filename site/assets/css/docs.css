@@ -2,9 +2,12 @@
     display: grid;
     grid-template-columns: 18rem 1fr;
     gap: 2rem;
-    max-width: 1100px;
+    width: min(calc(100% - 3rem), 1100px);
     margin: 2rem auto;
-    padding: 0 1.5rem;
+}
+
+.docs-layout > * {
+    min-width: 0;
 }
 
 .docs-toc {
@@ -48,6 +51,13 @@
 
 .docs-content {
     min-width: 0;
+}
+
+.docs-content > data-wrapper,
+.showcase-block > data-wrapper {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .doc-section {
@@ -94,6 +104,9 @@
 
 .doc-section table {
     border-collapse: collapse;
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
     width: 100%;
     margin: 1rem 0;
 }
@@ -149,12 +162,11 @@
 @media (max-width: 768px) {
     .docs-layout {
         grid-template-columns: 1fr;
+        width: min(calc(100% - 2rem), 1100px);
+        margin-block: 1rem;
     }
 
     .docs-toc {
-        position: static;
-        border-right: 0;
-        border-bottom: var(--border);
-        padding: 0 0 1rem;
+        display: none;
     }
 }

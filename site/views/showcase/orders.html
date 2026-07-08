@@ -112,6 +112,7 @@
         grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
         gap: 1rem;
         align-items: start;
+        min-width: 0;
     }
 
     .orders-demo .order-stats {
@@ -132,6 +133,7 @@
     .orders-demo .order-list {
         display: grid;
         gap: .85rem;
+        min-width: 0;
     }
 
     .orders-demo .order-card {
@@ -139,6 +141,7 @@
         border-radius: var(--radius);
         padding: .9rem;
         background: var(--bg);
+        min-width: 0;
     }
 
     .orders-demo .order-card[data-status="priority"] {
@@ -177,6 +180,7 @@
         margin: .75rem 0 0;
         display: grid;
         gap: .35rem;
+        overflow-x: auto;
     }
 
     .orders-demo .line-item {
