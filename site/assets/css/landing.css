@@ -248,6 +248,59 @@
     line-height: 1.45;
 }
 
+.pitch__deep {
+    display: grid;
+    gap: 1rem;
+}
+
+@media (min-width: 900px) {
+    .pitch__deep { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.pitch__token-panel {
+    display: grid;
+    align-content: start;
+    gap: .85rem;
+    padding: 1rem;
+    border: var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+}
+
+.pitch__token-panel .pitch__mini-title {
+    margin: 0;
+}
+
+.pitch__token-panel h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.25;
+}
+
+.pitch__example-list {
+    display: grid;
+    gap: .85rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pitch__example-list li {
+    display: grid;
+    gap: .45rem;
+}
+
+.pitch__example-list p {
+    margin: 0;
+    color: var(--muted);
+    font-size: .9rem;
+    line-height: 1.4;
+}
+
+.pitch__example-list .pitch__code {
+    font-size: .76rem;
+}
+
 /* playground grid */
 .pitch__grid {
     display: grid;

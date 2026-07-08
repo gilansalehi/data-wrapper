@@ -1,13 +1,12 @@
 <section class="pitch">
     <div class="container">
-        <p class="pitch__kicker">04 — render structure</p>
-        <h2 class="pitch__title">Use directives when markup changes shape.</h2>
+        <p class="pitch__kicker">05 — put it together</p>
+        <h2 class="pitch__title">A small app is still just the three tokens.</h2>
         <p class="pitch__lead">
-            Lists and conditional blocks do not require a new model.
-            <code>*list</code> repeats a template for each item, and
-            <code>*if</code> renders a template only when its value is truthy.
-            Inside those templates, <code>$</code> and <code>@</code> keep
-            doing the same value and event work.
+            The todo view combines value bindings, structural directives, and
+            event actions in one file. There is no component compiler behind
+            it; the browser loads the view, data-wrapper wires the attributes,
+            and the exported functions update the connected DOM.
         </p>
 
         <figure class="pitch__widget">
@@ -17,9 +16,9 @@
         </figure>
 
         <p class="pitch__foot">
-            This is still ordinary HTML. The template creates rows; the row
-            bindings read each todo with <code>./task</code> and
-            <code>./done</code>.
+            Open the source to see the actual file that powers the widget. The
+            list rows use <code>*list</code>, row bindings use <code>./</code>,
+            and the buttons call exported functions with <code>@</code>.
         </p>
     </div>
 </section>

@@ -1,0 +1,84 @@
+<section class="pitch pitch--band">
+    <div class="container">
+        <p class="pitch__kicker">04 — token deep dive</p>
+        <h2 class="pitch__title">Each token has one job.</h2>
+        <p class="pitch__lead">
+            The token at the start of an attribute tells data-wrapper how to
+            treat the binding. Start with simple reads, then add properties,
+            repeated markup, loaded views, and event actions as the interface
+            needs more behavior.
+        </p>
+
+        <div class="pitch__deep">
+            <section class="pitch__token-panel">
+                <p class="pitch__mini-title">04a — <code>$</code> writes values</p>
+                <h3>Read a binding and write it to the DOM.</h3>
+                <ol class="pitch__example-list">
+                    <li>
+                        <p>Write text.</p>
+                        <pre class="pitch__code"><code data-title="$text">&lt;output $text="count"&gt;&lt;/output&gt;</code></pre>
+                    </li>
+                    <li>
+                        <p>Write a property or attribute.</p>
+                        <pre class="pitch__code"><code data-title="$disabled">&lt;button $disabled="isSaving"&gt;Save&lt;/button&gt;</code></pre>
+                    </li>
+                    <li>
+                        <p>Format a value before it lands.</p>
+                        <pre class="pitch__code"><code data-title="$text + formatters">&lt;span $text="name?trim&amp;case=title"&gt;&lt;/span&gt;
+&lt;span $text="amount?currency"&gt;&lt;/span&gt;</code></pre>
+                    </li>
+                </ol>
+            </section>
+
+            <section class="pitch__token-panel">
+                <p class="pitch__mini-title">04b — <code>*</code> renders structure</p>
+                <h3>Use a directive when markup itself changes.</h3>
+                <ol class="pitch__example-list">
+                    <li>
+                        <p>Render fallback or conditional content.</p>
+                        <pre class="pitch__code"><code data-title="*if">&lt;template *if="isReady"&gt;
+    &lt;p&gt;Ready.&lt;/p&gt;
+&lt;/template&gt;</code></pre>
+                    </li>
+                    <li>
+                        <p>Repeat a template for each item.</p>
+                        <pre class="pitch__code"><code data-title="*list">&lt;template *list="todos"&gt;
+    &lt;li $text="./task"&gt;&lt;/li&gt;
+&lt;/template&gt;</code></pre>
+                    </li>
+                    <li>
+                        <p>Fill an outlet with another view.</p>
+                        <pre class="pitch__code"><code data-title="*src">&lt;template *src="panel"&gt;
+    &lt;p&gt;Choose a panel.&lt;/p&gt;
+&lt;/template&gt;</code></pre>
+                    </li>
+                </ol>
+            </section>
+
+            <section class="pitch__token-panel">
+                <p class="pitch__mini-title">04c — <code>@</code> calls actions</p>
+                <h3>Listen for browser events and call exported functions.</h3>
+                <ol class="pitch__example-list">
+                    <li>
+                        <p>Call a function on click.</p>
+                        <pre class="pitch__code"><code data-title="@click">&lt;button @click="increment"&gt;+&lt;/button&gt;</code></pre>
+                    </li>
+                    <li>
+                        <p>Use event modifiers when the browser has defaults.</p>
+                        <pre class="pitch__code"><code data-title="@submit">&lt;form @submit="save?prevent"&gt;
+    &lt;button&gt;Save&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+                    </li>
+                    <li>
+                        <p>Handle row events inside repeated markup.</p>
+                        <pre class="pitch__code"><code data-title="@change in a row">&lt;template *list="todos"&gt;
+    &lt;input type="checkbox"
+           $checked="./done"
+           @change="toggleTodo"&gt;
+&lt;/template&gt;</code></pre>
+                    </li>
+                </ol>
+            </section>
+        </div>
+    </div>
+</section>
