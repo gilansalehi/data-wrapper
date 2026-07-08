@@ -3,17 +3,27 @@
         <p class="pitch__kicker">5 — compose views</p>
         <h2 class="pitch__title">Split bigger screens into smaller files.</h2>
         <p class="pitch__lead">
-            When a page gets larger, add more wrappers instead of changing the
-            model. Each view owns the markup and state it needs, and the parent
-            can pass values through the <code>src</code> URL.
+            When a page gets larger, keep the same model. A wrapper can load a
+            layout view, and that layout can fill its own outlets with
+            <code>*src</code>. The source can be a child view URL or authored
+            content supplied by the host.
         </p>
 
-        <pre class="pitch__code"><code data-title="parent view">&lt;data-wrapper src="customer-card.html?customer"&gt;&lt;/data-wrapper&gt;
-&lt;data-wrapper src="order-list.html?customer"&gt;&lt;/data-wrapper&gt;</code></pre>
+        <div class="pitch__grid">
+            <pre class="pitch__code"><code data-title="layout.html">&lt;template *src="nav"&gt;&lt;/template&gt;
+&lt;template *src="panel"&gt;&lt;/template&gt;</code></pre>
+
+            <figure class="pitch__widget">
+                <figcaption class="pitch__demo-label">
+                    live composition — projected nav, loaded panels
+                </figcaption>
+                <data-wrapper src="/views/showcase/composer.html"></data-wrapper>
+            </figure>
+        </div>
 
         <p class="pitch__foot">
-            The first component can be tiny. The larger app is the same idea
-            repeated with clearer boundaries.
+            The host writes the tabs once. The layout decides where they go and
+            which view appears in the panel.
         </p>
 
         <div class="pitch__actions">

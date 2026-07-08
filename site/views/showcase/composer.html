@@ -1,0 +1,24 @@
+<script type="module" data-module="@showcase/composer"></script>
+
+<article class="composer-demo">
+    <data-wrapper src="/views/showcase/composer-layout.html?title=Support%20desk">
+        <nav slot="nav" class="composer-layout__tabs" aria-label="Demo panels">
+            <button class="composer-layout__tab" value="/views/showcase/composer-profile.html" @click="select" $class="isProfile?bool=is-selected:">
+                Profile
+            </button>
+            <button class="composer-layout__tab" value="/views/showcase/composer-metrics.html" @click="select" $class="isMetrics?bool=is-selected:">
+                Metrics
+            </button>
+            <button class="composer-layout__tab" value="/views/showcase/composer-settings.html" @click="select" $class="isSettings?bool=is-selected:">
+                Settings
+            </button>
+        </nav>
+    </data-wrapper>
+</article>
+
+<style>
+    .composer-demo {
+        display: block;
+        overflow: clip;
+    }
+</style>

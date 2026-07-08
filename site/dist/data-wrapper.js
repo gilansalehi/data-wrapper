@@ -84,6 +84,19 @@ var unwake = (wrapper) => {
   for (const el of wakeNodes(wrapper))
     el.removeAttribute(LIVE);
 };
+var isCapturableSlotNode = (node) => node.nodeType !== Node.COMMENT_NODE && (node.nodeType !== Node.TEXT_NODE || !!node.textContent?.trim());
+var captureSlots = (wrapper) => {
+  const slots = Object.create(null);
+  for (const node of [...wrapper.childNodes]) {
+    if (!isCapturableSlotNode(node))
+      continue;
+    const key = node instanceof Element ? node.getAttribute("slot") ?? "" : "";
+    (slots[key] ??= []).push(node);
+  }
+  for (const key of Object.keys(slots))
+    Object.freeze(slots[key]);
+  return Object.freeze(slots);
+};
 var DW_DIRECTIVES = new Map;
 var text = (value) => value == null ? "" : String(value);
 var numberValue = (value) => {
@@ -548,8 +561,73 @@ var ifDirective = ({ ctx, el, wake: wake2, cleanup }) => {
     }
   };
 };
+var isChildNode = (value) => value instanceof Node && ("remove" in value);
+var isNodeList = (value) => Array.isArray(value) && value.every(isChildNode);
+var insertFragment = (anchor, fragment, ctx, wake2, unsubs) => {
+  const nodes = [...fragment.childNodes];
+  anchor.parentNode?.insertBefore(fragment, anchor);
+  const nextCtx = blockContext(ctx, unsubs);
+  for (const node of nodes)
+    if (node instanceof Element)
+      wake2(node, nextCtx);
+  return nodes;
+};
+var srcDirective = ({ ctx, el, wake: wake2, cleanup }) => {
+  const tpl = el;
+  const anchor = document.createComment("dw-src");
+  tpl.replaceWith(anchor);
+  let liveNodes = [];
+  let liveUnsubs = [];
+  const disposeLive = () => {
+    unwire(liveUnsubs);
+    for (const node of liveNodes)
+      node.remove();
+    liveNodes = [];
+    liveUnsubs = [];
+  };
+  cleanup(disposeLive);
+  const renderFallback = () => {
+    liveNodes = insertFragment(anchor, tpl.content.cloneNode(true), ctx, wake2, liveUnsubs);
+  };
+  return (value) => {
+    disposeLive();
+    liveUnsubs = [];
+    if (typeof value === "string") {
+      const src = value.trim();
+      if (src && anchor.parentNode) {
+        const child = document.createElement("data-wrapper");
+        child.setAttribute("src", src);
+        anchor.parentNode.insertBefore(child, anchor);
+        liveNodes = [child];
+        wake2(child, blockContext(ctx, liveUnsubs));
+        return;
+      }
+    }
+    if (isChildNode(value)) {
+      if (value instanceof Element)
+        value.removeAttribute("slot");
+      anchor.parentNode?.insertBefore(value, anchor);
+      liveNodes = [value];
+      if (value instanceof Element)
+        wake2(value, blockContext(ctx, liveUnsubs));
+      return;
+    }
+    if (isNodeList(value) && value.length) {
+      const fragment = document.createDocumentFragment();
+      for (const node of value) {
+        if (node instanceof Element)
+          node.removeAttribute("slot");
+        fragment.append(node);
+      }
+      liveNodes = insertFragment(anchor, fragment, ctx, wake2, liveUnsubs);
+      return;
+    }
+    renderFallback();
+  };
+};
 DW_DIRECTIVES.set("list", listDirective);
 DW_DIRECTIVES.set("if", ifDirective);
+DW_DIRECTIVES.set("src", srcDirective);
 
 // src/lib/component.ts
 var own2 = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
@@ -908,6 +986,7 @@ var load = async (wrapper, src, ctx) => {
     throw new Error(`Component view ${url.href} may contain only one data-module script`);
   }
   const script = scripts[0];
+  const slots = captureSlots(wrapper);
   let componentModule;
   let instance;
   const factoryUnsubs = [];
@@ -925,6 +1004,7 @@ var load = async (wrapper, src, ctx) => {
           url,
           params: url.searchParams,
           props,
+          slots,
           cleanup: (off) => factoryUnsubs.push(off)
         });
         const created = factory(context);

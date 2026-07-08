@@ -1,0 +1,188 @@
+<script type="module" data-module="@showcase/composer-layout">
+    const PANELS = {
+        profile:  '/views/showcase/composer-profile.html',
+        metrics:  '/views/showcase/composer-metrics.html',
+        settings: '/views/showcase/composer-settings.html',
+    };
+
+    export default ({ props, slots }) => {
+        let panel = PANELS.profile;
+
+        const is = url => () => panel === url;
+
+        return {
+            title: props.title,
+            nav: slots.nav,
+            get panel() { return panel; },
+            select(event) {
+                const button = event.target?.closest?.('button[value]');
+                if (button?.value) panel = button.value;
+            },
+            isProfile:  is(PANELS.profile),
+            isMetrics:  is(PANELS.metrics),
+            isSettings: is(PANELS.settings),
+        };
+    };
+</script>
+
+<section class="composer-layout">
+    <header class="composer-layout__header">
+        <p class="composer-layout__eyebrow">*src composition</p>
+        <h3 $text="title"></h3>
+    </header>
+
+    <template *src="nav">
+        <p class="composer-layout__empty">No navigation was supplied.</p>
+    </template>
+
+    <section class="composer-layout__screen" aria-live="polite">
+        <template *src="panel">
+            <p class="composer-layout__empty">Choose a panel.</p>
+        </template>
+    </section>
+</section>
+
+<style>
+    .composer-layout {
+        display: grid;
+        gap: .9rem;
+        padding: 1rem;
+        border: var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+    }
+
+    .composer-layout__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 1rem;
+        padding-bottom: .8rem;
+        border-bottom: var(--border);
+    }
+
+    .composer-layout__eyebrow {
+        margin: 0;
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: .72rem;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+    }
+
+    .composer-layout h3 {
+        margin: .15rem 0 0;
+        font-size: 1.2rem;
+        line-height: 1.15;
+    }
+
+    .composer-layout__tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .45rem;
+    }
+
+    .composer-layout__tab {
+        padding: .42rem .72rem;
+        border: var(--border);
+        border-radius: 999px;
+        background: var(--bg);
+        color: var(--muted);
+        font: inherit;
+        font-size: .86rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .composer-layout__tab:hover {
+        background: var(--control-hover);
+        color: var(--text);
+    }
+
+    .composer-layout__tab.is-selected {
+        border-color: color-mix(in srgb, var(--link) 45%, transparent);
+        background: color-mix(in srgb, var(--link) 10%, var(--bg));
+        color: var(--link);
+    }
+
+    .composer-layout__screen {
+        min-height: 12rem;
+        border: var(--border);
+        border-radius: var(--radius);
+        background: var(--bg);
+        overflow: clip;
+    }
+
+    .composer-layout__screen > data-wrapper {
+        display: block;
+    }
+
+    .composer-layout__empty {
+        margin: 0;
+        padding: 1rem;
+        color: var(--faint);
+    }
+
+    .composer-panel {
+        display: grid;
+        gap: .9rem;
+        padding: 1rem;
+    }
+
+    .composer-panel h4 {
+        margin: 0;
+        font-size: 1.05rem;
+    }
+
+    .composer-panel p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.45;
+    }
+
+    .composer-panel__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+        gap: .65rem;
+    }
+
+    .composer-panel__cell {
+        padding: .75rem;
+        border: var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+    }
+
+    .composer-panel__label {
+        display: block;
+        margin-bottom: .25rem;
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: .68rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .composer-panel__value {
+        color: var(--text);
+        font-weight: 800;
+    }
+
+    .composer-panel__list {
+        display: grid;
+        gap: .5rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .composer-panel__list li {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: .62rem .72rem;
+        border: var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+    }
+</style>
