@@ -1,69 +1,103 @@
 <script type="module" data-module="@compare/gaps"></script>
 
 <section class="doc-section" id="gaps">
-    <h2>What you give up</h2>
+    <h2>What you give up for good</h2>
 
     <p>
-        Every framework on the table above earns its weight somewhere. Here is
-        what the industry frameworks have that data-wrapper does not — stated
-        plainly, because pretending otherwise would cost you a rewrite later.
+        These gaps are consequences of the core bet — no build step, no
+        compiler, no dependency tracking. They are permanent by definition: if
+        any one of them is a dealbreaker for your project, no future release of
+        data-wrapper fixes it, and you should pick from the right-hand side of
+        the table above.
+    </p>
+
+    <h3>Templates are invisible to TypeScript — forever</h3>
+    <p>
+        Bindings are strings in HTML attributes, and having no compiler is the
+        product. Nothing will ever check at build time that
+        <code>$text="todoCont"</code> should have been <code>todoCount</code> —
+        at runtime it renders the literal text and warns in the console, which
+        is honest but late. Angular, Svelte, and Vue type-check templates
+        during compilation; JSX frameworks get it free from TypeScript itself.
+        If your team leans on the compiler to refactor safely, this is the gap
+        that bites hardest, and it is out of our hands by design.
+    </p>
+
+    <h3>Coarse-grained invalidation is the model</h3>
+    <p>
+        A flush re-reads <em>every subscribed export of every live component</em>
+        and diffs with <code>Object.is</code>. There is no dependency graph to
+        narrow the work, and there never will be — that's the trade that keeps
+        the whole reactivity model explainable in one paragraph. At page scale
+        it's invisible. Streaming data, large keyed grids, or animation-rate
+        state belong with Solid, Svelte, or Vue, which update exactly what
+        changed.
     </p>
 
     <h3>No server rendering, no hydration</h3>
     <p>
-        Every wrapper fetches its view after the page loads. Content inside a
-        wrapper is invisible to first paint and to crawlers that don't execute
-        JavaScript. If your dynamic content is SEO-critical or your users are on
-        slow connections where first-contentful-paint is the metric, Next, Nuxt,
-        SvelteKit, and Angular solved this years ago and data-wrapper has not.
-    </p>
-
-    <h3>Coarse-grained invalidation</h3>
-    <p>
-        A flush re-reads <em>every subscribed export of every live component</em>
-        and diffs with <code>Object.is</code>. There is no dependency tracking to
-        narrow the work. That's a feature at page scale — the model fits in your
-        head, and there's no reactive graph to debug — but Solid, Svelte, and Vue
-        update exactly the bindings that depend on what changed. Streaming data,
-        large keyed grids, or animation-rate state will hit the difference.
-    </p>
-
-    <h3>No router</h3>
-    <p>
-        Pages are pages. <code>*src</code> composes views into layouts, and you
-        can bind it to state to swap views, but there is no URL-driven routing,
-        no history integration, no route guards, no code-splitting story. Every
-        SPA framework in the table has one, often officially maintained.
-    </p>
-
-    <h3>Templates are invisible to TypeScript</h3>
-    <p>
-        Bindings are strings in HTML attributes. No compiler checks that
-        <code>$text="todoCont"</code> should have been <code>todoCount</code> —
-        at runtime it renders the literal text and warns in the console, which is
-        honest but late. Angular, Svelte, and Vue type-check templates at build
-        time; JSX frameworks get it for free. If your team leans on the compiler
-        to refactor safely, this is the gap that will bite hardest.
+        Every wrapper fetches its view after the page loads, so wrapper content
+        is invisible to first paint and to crawlers that don't execute
+        JavaScript. A static prerender helper could soften first paint someday,
+        but a real SSR-and-hydration protocol is a framework-scale commitment
+        that contradicts the ship-files philosophy. If your dynamic content is
+        SEO-critical, Next, Nuxt, SvelteKit, and Angular solved this years ago.
     </p>
 
     <h3>Ecosystem of one</h3>
     <p>
-        No component library, no devtools extension, no Stack Overflow tag, no
-        hiring pool, no LTS policy, and a bus factor of one. React's real product
-        is not the virtual DOM — it's the ten thousand packages, the tutorials,
-        and the person you can hire tomorrow who already knows it. Nothing at
-        this scale can compete with that, and this page won't pretend to.
+        No Stack Overflow tag, no hiring pool, no LTS policy, and a bus factor
+        of one. This isn't a design decision — but no roadmap manufactures a
+        community either. React's real product is not the virtual DOM; it's the
+        ten thousand packages and the person you can hire tomorrow who already
+        knows it. Nothing at hobby scale competes with that, and this page
+        won't pretend to.
+    </p>
+</section>
+
+<section class="doc-section" id="roadmap">
+    <h2>What you're only giving up today</h2>
+
+    <p>
+        These are gaps of the <em>current release</em>, not of the design —
+        each one has a plausible path that doesn't break the no-build,
+        three-token contract. Read this as the de-facto roadmap. No dates and
+        no promises: pre-1.0 means it ships when it's true.
     </p>
 
-    <h3>Young edges</h3>
+    <h3>Router</h3>
     <p>
-        Pre-1.0 means the contract still moves. Some current boundaries, from the
-        <a href="/framework#limitations">limitations section</a> of the guide:
-        bindings don't run inside SVG subtrees; <code>*if</code> and
-        <code>*list</code> bodies need a single root element; keyless list rows
-        fall back to structural identity; views load same-origin only; there is
-        no lifecycle hook matrix beyond the factory and its
-        <code>cleanup</code>. These are documented edges, not hidden bugs — but a
-        mature framework has fewer of them.
+        <code>*src</code> already swaps views when its bound value changes, so
+        a router is not a framework feature — it's a component: a module that
+        reads <code>location</code>, exposes the matched view URL as an export,
+        and handles history on navigation. Adopting today means wiring that
+        yourself; it does not mean SPAs are out of reach.
+    </p>
+
+    <h3>Devtools</h3>
+    <p>
+        The runtime already keeps a registry of every live component, its
+        subscribed exports, and their last published values. An inspector
+        panel can therefore be — what else — a data-wrapper view that lists
+        them. Until it exists, debugging is the console plus the DOM inspector,
+        which stays workable because the DOM you inspect is the DOM you wrote.
+    </p>
+
+    <h3>A component catalog</h3>
+    <p>
+        Views are plain HTML files, so shareable drop-in components (nav
+        drawer, tabs, dialog, data table) need publishing and documentation,
+        not library changes. The showcase widgets on this site are the seed of
+        exactly that.
+    </p>
+
+    <h3>Contract edges</h3>
+    <p>
+        Several current <a href="/framework#limitations">limitations</a> are
+        closable rather than structural: bindings inside SVG subtrees,
+        multi-root <code>*if</code>/<code>*list</code> bodies (the machinery
+        already exists for <code>*src</code> fallback content), a richer
+        lifecycle surface behind the factory context, and first-class testing
+        helpers. Each can land incrementally without new grammar.
     </p>
 </section>

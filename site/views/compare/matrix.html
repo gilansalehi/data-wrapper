@@ -129,6 +129,45 @@
             f.id === item.id ? { ...f, shown: event.target.checked } : f
         );
     }
+
+    // --- best in class ---------------------------------------------------
+    // Champions and runners-up derive live from the grades above (the picker
+    // doesn't affect them — every framework competes). The rationale prose is
+    // editorial and keyed by axis; if a grade gets retuned, the crown moves
+    // and the prose should be re-checked.
+    const rank = grade =>
+        'FEDCBA'.indexOf(grade[0]) * 3 + ({ '+': 2, '': 1, '-': 0 })[grade.slice(1)];
+
+    const rationale = {
+        model: 'Alpine takes it because its mental model is “your HTML, plus attributes” — nothing to restructure, almost nothing to learn. The pack behind it each add one idea: htmx moves the logic to your server, data-wrapper adds a component boundary, Svelte adds a compile step.',
+        templating: 'Svelte’s templates look like HTML but the compiler checks every expression at build time — the best of both worlds, if you accept the build. Vue’s compiled templates run close behind. data-wrapper keeps templates as literal HTML — which is the point — but its bindings stay unchecked strings.',
+        reactivity: 'Solid’s fine-grained signals update exactly the DOM nodes that depend on a changed value — no re-render, no diff, and the benchmark results to show for it. Runner-up Svelte reaches similar output by compiling updates ahead of time, at component-level granularity.',
+        build: 'A three-way tie, and it can’t be broken: data-wrapper, Alpine, and htmx are script-tag-and-go, with no optional compiler you’re missing out on. Mithril trails only because real Mithril apps tend to want bundling for JSX and modules.',
+        ssr: 'htmx wins by definition — server rendering isn’t a feature it supports, it’s the architecture. The frameworks behind it all render on the server too, but each needs a metaframework (Next, Nuxt, SvelteKit) to do what htmx does by existing.',
+        ecosystem: 'React, and it isn’t close: the hiring pool, package count, and tutorial volume run an order of magnitude past everyone else. Vue is the strongest runner-up, with the more curated, officially-maintained core.',
+    };
+
+    export const winners = () => axes.map(axis => {
+        const ranked = [...frameworks]
+            .sort((a, b) => rank(b[axis.key].grade) - rank(a[axis.key].grade));
+        const top    = rank(ranked[0][axis.key].grade);
+        const champs = ranked.filter(f => rank(f[axis.key].grade) === top);
+        const rest   = ranked.filter(f => rank(f[axis.key].grade) < top);
+        const second = rest.length ? rank(rest[0][axis.key].grade) : null;
+        const runners = second === null
+            ? []
+            : rest.filter(f => rank(f[axis.key].grade) === second);
+        return {
+            id:       axis.key,
+            label:    axis.label,
+            champ:    champs.map(f => f.name).join(' · '),
+            grade:    ranked[0][axis.key].grade,
+            runnerUp: runners.length
+                ? `${runners.map(f => f.name).join(', ')} (${runners[0][axis.key].grade})`
+                : '—',
+            why: rationale[axis.key],
+        };
+    });
 </script>
 
 <section class="doc-section" id="matrix">
@@ -188,6 +227,85 @@
         this page to see the comparison eating its own dog food.
     </p>
 </section>
+
+<section class="doc-section" id="winners">
+    <h2>Best in class, row by row</h2>
+
+    <p>
+        Who actually wins each axis, and why. The champion and runner-up below
+        are computed from the table's grade data — not written twice — so they
+        stay honest if the grades get retuned. The reasoning is editorial.
+    </p>
+
+    <dl class="winners">
+        <template *list="winners?key=id">
+            <div class="winner">
+                <dt>
+                    <span class="winner-axis" $text="./label"></span>
+                    <span class="winner-champ">
+                        <strong $text="./champ"></strong>
+                        <span class="grade" $data-grade="./grade" $text="./grade"></span>
+                    </span>
+                </dt>
+                <dd>
+                    <p class="winner-runnerup">runner-up: <span $text="./runnerUp"></span></p>
+                    <p class="winner-why" $text="./why"></p>
+                </dd>
+            </div>
+        </template>
+    </dl>
+</section>
+
+<style>
+    .winners {
+        display: grid;
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+    @media (min-width: 760px) {
+        .winners { grid-template-columns: 1fr 1fr; }
+    }
+    .winner {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem 1.1rem;
+        border: var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+    }
+    .winner dt {
+        display: flex;
+        flex-direction: column;
+        gap: .15rem;
+        margin-bottom: .5rem;
+    }
+    .winner-axis {
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--muted);
+    }
+    .winner-champ {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        font-size: 1.05rem;
+    }
+    .winner-champ .grade { margin-bottom: 0; }
+    .winner dd { margin: 0; }
+    .winner-runnerup {
+        margin: 0 0 .45rem;
+        font-family: var(--mono);
+        font-size: .76rem;
+        color: var(--faint);
+    }
+    .winner-why {
+        margin: 0;
+        font-size: .9rem;
+        line-height: 1.5;
+    }
+</style>
 
 <style>
     .matrix-picker {
