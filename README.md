@@ -379,8 +379,9 @@ so each concept is followed by a live example.
 | Three tokens | `views/docs/tokens.html` |
 | Module & factory | `views/docs/factory.html` |
 | Cross-module imports | `views/docs/modules.html` |
-| Binding contexts | `views/docs/contexts.html` |
+| Composition | `views/docs/composition.html` |
 | Directives | `views/docs/directives.html` |
+| Binding contexts | `views/docs/contexts.html` |
 | Events | `views/docs/events.html` |
 | Reactivity model | `views/docs/reactivity.html` |
 | Error handling | `views/docs/errors.html` |

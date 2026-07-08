@@ -1,0 +1,114 @@
+<script type="module" data-module="@docs/composition"></script>
+
+<section class="doc-section" id="composition">
+    <h2>Composition with <code>*src</code></h2>
+
+    <p>
+        A page often needs more than one view. The wrapper's
+        <code>src</code> attribute mounts the first view, and
+        <code>*src</code> lets that view reserve a place for another source of
+        content. That source can be another view file, or it can be child
+        content the host page already wrote inside the wrapper.
+    </p>
+
+    <p>
+        Think of <code>*src</code> as an outlet. The directive lives on a
+        <code>&lt;template&gt;</code>, resolves a normal binding name, and then
+        fills that position with the resolved value. A non-empty string loads a
+        child view. Captured child nodes are moved into place. If the value is
+        missing or empty, the template body is rendered as fallback content.
+    </p>
+
+    <pre><code data-title="layout.html">&lt;script type="module" data-module="@layout/docs"&gt;
+    export default ({ props, slots }) =&gt; ({
+        heading: props.heading,
+        view: props.view,
+        toc: slots.toc,
+    });
+&lt;/script&gt;
+
+&lt;main class="docs-page"&gt;
+    &lt;aside&gt;
+        &lt;h1 $text="heading"&gt;&lt;/h1&gt;
+        &lt;template *src="toc"&gt;
+            &lt;p&gt;No table of contents yet.&lt;/p&gt;
+        &lt;/template&gt;
+    &lt;/aside&gt;
+
+    &lt;article&gt;
+        &lt;template *src="view"&gt;
+            &lt;p&gt;No page selected yet.&lt;/p&gt;
+        &lt;/template&gt;
+    &lt;/article&gt;
+&lt;/main&gt;</code></pre>
+
+    <p>
+        The factory is still the source of truth for what the template can
+        bind. In this example, the layout exposes <code>heading</code>,
+        <code>view</code>, and <code>toc</code>. The template does not reach
+        into <code>props</code> or <code>slots</code> directly; the factory
+        chooses which values become part of the layout's binding surface.
+    </p>
+
+    <h3>Compose by reference</h3>
+    <p>
+        When the resolved value is a string, <code>*src</code> treats that
+        string as a view URL. The directive creates a child
+        <code>&lt;data-wrapper&gt;</code> at the outlet and loads that view
+        under the current binding context.
+    </p>
+
+    <pre><code data-title="host page">&lt;data-wrapper
+    src="/views/layout.html?heading=Framework&amp;view=/views/pages/framework.html"&gt;
+&lt;/data-wrapper&gt;</code></pre>
+
+    <p>
+        The host passes <code>view</code> through the wrapper URL. The layout
+        factory returns <code>view: props.view</code>, and the
+        <code>&lt;template *src="view"&gt;</code> outlet loads the page view in
+        that position. This gives you layout-style composition without a build
+        step or a router layer.
+    </p>
+
+    <h3>Compose by value</h3>
+    <p>
+        A host can also write content inside the wrapper. data-wrapper captures
+        those child nodes before the loaded view replaces the wrapper contents.
+        A plain <code>slot</code> attribute is used only as a grouping key; this
+        is light DOM projection, not Shadow DOM slotting.
+    </p>
+
+    <pre><code data-title="host page">&lt;data-wrapper src="/views/layout.html?heading=Framework"&gt;
+    &lt;ol slot="toc"&gt;
+        &lt;li&gt;&lt;a href="#intro"&gt;Intro&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;&lt;a href="#tokens"&gt;Three tokens&lt;/a&gt;&lt;/li&gt;
+    &lt;/ol&gt;
+&lt;/data-wrapper&gt;</code></pre>
+
+    <p>
+        The layout receives those captured nodes as <code>slots.toc</code>.
+        When the factory returns <code>toc: slots.toc</code>, the
+        <code>*src="toc"</code> outlet moves the authored list into the
+        layout. Any bindings inside projected content wake in the layout's
+        binding context, so projected HTML can still use the values the layout
+        exposes.
+    </p>
+
+    <h3>Fallback content</h3>
+    <p>
+        The template body is the fallback. It can contain more than one
+        top-level element, and it only appears when the resolved value is
+        missing, empty, or otherwise not loadable.
+    </p>
+
+    <pre><code data-title="fallback">&lt;template *src="view"&gt;
+    &lt;h2&gt;Choose a page&lt;/h2&gt;
+    &lt;p&gt;The selected view will appear here.&lt;/p&gt;
+&lt;/template&gt;</code></pre>
+
+    <p>
+        A string is always interpreted as a view URL. If you want to render text,
+        use <code>$text</code>. This keeps <code>*src</code> focused on
+        composition: reserve a position, resolve a source, and fill the outlet.
+    </p>
+</section>

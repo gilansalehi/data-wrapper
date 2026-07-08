@@ -155,6 +155,7 @@
             <tr><td><code>url</code></td><td><code>URL</code></td><td>The full resolved <code>src</code> URL for this wrapper.</td></tr>
             <tr><td><code>params</code></td><td><code>URLSearchParams</code></td><td>The raw query parameters from the resolved <code>src</code>.</td></tr>
             <tr><td><code>props</code></td><td><code>Readonly object</code></td><td>Resolved input values or function readers. It also includes reserved <code>props.url</code>, the original <code>src</code> string.</td></tr>
+            <tr><td><code>slots</code></td><td><code>Readonly object</code></td><td>Captured host children grouped by their plain <code>slot</code> attribute. These nodes can be exposed to <code>*src</code> outlets.</td></tr>
             <tr><td><code>cleanup</code></td><td><code>function</code></td><td>Registers teardown work owned by this wrapper instance.</td></tr>
         </tbody>
     </table>
