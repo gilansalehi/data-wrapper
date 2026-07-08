@@ -1,165 +1,276 @@
 <script type="module" data-module="@compare/matrix">
-    // The comparison itself is data, rendered by *list — this table is a
-    // live data-wrapper view, not hand-written rows.
-    export const frameworks = [
+    // The comparison is data, rendered by nested *list directives: the outer
+    // list is one row per axis, the inner list is one cell per visible
+    // framework. The binding grammar has no dynamic key lookup, so the module
+    // precomputes each row's cells — data shaping here, rendering in the HTML.
+    const axes = [
+        { key: 'model',      label: 'Mental model' },
+        { key: 'templating', label: 'Templating' },
+        { key: 'reactivity', label: 'Reactivity' },
+        { key: 'build',      label: 'No-build friendliness' },
+        { key: 'ssr',        label: 'SSR & SEO' },
+        { key: 'ecosystem',  label: 'Ecosystem & hiring' },
+    ];
+
+    // Grades are editorial ballparks of strength on each axis — argue with
+    // them, that's what the axis text is for.
+    export let frameworks = [
         {
-            id: 'data-wrapper', name: 'data-wrapper', self: true,
-            model:      'HTML views + one custom element; islands on any page',
-            templating: 'Your actual HTML — $, @, * attribute tokens',
-            reactivity: 'Re-read subscribed exports on action, publish changes',
-            build:      'None — files are the deployment',
-            ssr:        'None (client-rendered)',
-            ecosystem:  'One hobbyist. This site is the ecosystem.',
+            id: 'data-wrapper', name: 'data-wrapper', self: true, shown: true,
+            model:      { grade: 'A-', text: 'One custom element; HTML views as islands' },
+            templating: { grade: 'A-', text: 'Your actual HTML + attribute tokens' },
+            reactivity: { grade: 'C+', text: 'Re-read exports on action, publish changes' },
+            build:      { grade: 'A+', text: 'None — files are the deployment' },
+            ssr:        { grade: 'F',  text: 'None; client-rendered' },
+            ecosystem:  { grade: 'F',  text: 'One hobbyist' },
         },
         {
-            id: 'alpine', name: 'Alpine.js', self: false,
-            model:      'Sprinkle behavior onto server-rendered HTML',
-            templating: 'x-* attributes with inline JS expressions',
-            reactivity: 'Proxy-based; expressions re-evaluate on mutation',
-            build:      'Optional — script tag works',
-            ssr:        'N/A — enhances HTML you already rendered',
-            ecosystem:  'Small but real: plugins, community, Livewire pairing',
+            id: 'alpine', name: 'Alpine.js', self: false, shown: true,
+            model:      { grade: 'A',  text: 'Sprinkle behavior on server HTML' },
+            templating: { grade: 'B+', text: 'x-* attributes, inline expressions' },
+            reactivity: { grade: 'B+', text: 'Proxies re-evaluate expressions' },
+            build:      { grade: 'A+', text: 'Script tag and go' },
+            ssr:        { grade: 'B+', text: 'Enhances HTML you already rendered' },
+            ecosystem:  { grade: 'B-', text: 'Plugins, Livewire pairing' },
         },
         {
-            id: 'lit', name: 'Lit', self: false,
-            model:      'Web Components with shadow DOM',
-            templating: 'Tagged template literals in JS',
-            reactivity: 'Reactive properties re-render the component template',
-            build:      'Optional — runs from CDN, tooling recommended',
-            ssr:        'Emerging (lit-labs)',
-            ecosystem:  'Google-backed; interops with the web-components world',
+            id: 'lit', name: 'Lit', self: false, shown: true,
+            model:      { grade: 'B',  text: 'Web Components + shadow DOM' },
+            templating: { grade: 'B',  text: 'Tagged template literals in JS' },
+            reactivity: { grade: 'B+', text: 'Reactive props re-render the template' },
+            build:      { grade: 'A-', text: 'Runs from CDN; tooling recommended' },
+            ssr:        { grade: 'C',  text: 'Emerging (lit-labs)' },
+            ecosystem:  { grade: 'B',  text: 'Google-backed; web-components interop' },
         },
         {
-            id: 'mithril', name: 'Mithril.js', self: false,
-            model:      'Minimal SPA framework, batteries included',
-            templating: 'Hyperscript m() calls (or JSX)',
-            reactivity: 'Auto-redraw: re-render + virtual DOM diff after events',
-            build:      'Optional — script tag works',
-            ssr:        'Community solutions',
-            ecosystem:  'Small, stable, mature; router and fetch built in',
+            id: 'mithril', name: 'Mithril.js', self: false, shown: true,
+            model:      { grade: 'B+', text: 'Minimal SPA, batteries included' },
+            templating: { grade: 'C+', text: 'Hyperscript m() calls (or JSX)' },
+            reactivity: { grade: 'B-', text: 'Auto-redraw + virtual DOM diff' },
+            build:      { grade: 'A',  text: 'Script tag works' },
+            ssr:        { grade: 'C',  text: 'Community solutions' },
+            ecosystem:  { grade: 'C+', text: 'Small, stable, mature' },
         },
         {
-            id: 'htmx', name: 'htmx', self: false,
-            model:      'Hypermedia — the server returns HTML fragments',
-            templating: 'Server-side; hx-* attributes drive requests and swaps',
-            reactivity: 'HTTP round-trip per interaction',
-            build:      'None — script tag',
-            ssr:        'Server rendering is the whole idea',
-            ecosystem:  'Growing fast; backend-agnostic',
+            id: 'htmx', name: 'htmx', self: false, shown: true,
+            model:      { grade: 'A-', text: 'Hypermedia — server returns HTML' },
+            templating: { grade: 'B',  text: 'Server-side; hx-* drives swaps' },
+            reactivity: { grade: 'C+', text: 'HTTP round-trip per interaction' },
+            build:      { grade: 'A+', text: 'Script tag and go' },
+            ssr:        { grade: 'A+', text: 'Server rendering is the point' },
+            ecosystem:  { grade: 'B',  text: 'Growing fast; backend-agnostic' },
         },
         {
-            id: 'react', name: 'React', self: false,
-            model:      'Component tree; UI as a function of state',
-            templating: 'JSX',
-            reactivity: 'State updates re-render subtree, virtual DOM diff',
-            build:      'Expected (JSX compilation)',
-            ssr:        'First-class via Next.js and friends',
-            ecosystem:  'The largest in the industry, by far',
+            id: 'react', name: 'React', self: false, shown: true,
+            model:      { grade: 'B-', text: 'UI as a function of state' },
+            templating: { grade: 'B+', text: 'JSX' },
+            reactivity: { grade: 'B-', text: 'Re-render subtree + vDOM diff' },
+            build:      { grade: 'C',  text: 'Build expected (JSX)' },
+            ssr:        { grade: 'A',  text: 'First-class via Next.js and friends' },
+            ecosystem:  { grade: 'A+', text: 'Largest in the industry' },
         },
         {
-            id: 'vue', name: 'Vue', self: false,
-            model:      'Single-file components, progressive adoption',
-            templating: 'HTML-like templates (compiled) or JSX',
-            reactivity: 'Proxy reactivity + compiler-optimized virtual DOM',
-            build:      'Recommended; CDN global build exists',
-            ssr:        'First-class via Nuxt / official server renderer',
-            ecosystem:  'Huge; official router, state, devtools',
+            id: 'vue', name: 'Vue', self: false, shown: true,
+            model:      { grade: 'B+', text: 'Progressive single-file components' },
+            templating: { grade: 'A-', text: 'Compiled HTML-like templates' },
+            reactivity: { grade: 'A-', text: 'Proxies + compiler-optimized vDOM' },
+            build:      { grade: 'B-', text: 'Recommended; CDN build exists' },
+            ssr:        { grade: 'A',  text: 'First-class via Nuxt' },
+            ecosystem:  { grade: 'A',  text: 'Official router, state, devtools' },
         },
         {
-            id: 'svelte', name: 'Svelte', self: false,
-            model:      'Components compiled to imperative DOM code',
-            templating: 'Svelte single-file syntax',
-            reactivity: 'Compiler wires updates at build time — no runtime diff',
-            build:      'Required — the compiler is the framework',
-            ssr:        'First-class via SvelteKit',
-            ecosystem:  'Large and enthusiastic',
+            id: 'svelte', name: 'Svelte', self: false, shown: true,
+            model:      { grade: 'A-', text: 'Components compiled to DOM code' },
+            templating: { grade: 'A',  text: 'Svelte single-file syntax' },
+            reactivity: { grade: 'A',  text: 'Compile-time wiring, no runtime diff' },
+            build:      { grade: 'D',  text: 'Required — the compiler is the framework' },
+            ssr:        { grade: 'A',  text: 'First-class via SvelteKit' },
+            ecosystem:  { grade: 'B+', text: 'Large and enthusiastic' },
         },
         {
-            id: 'solid', name: 'Solid', self: false,
-            model:      'Components run once; signals own updates',
-            templating: 'JSX (compiled)',
-            reactivity: 'Fine-grained signals — no re-render, no virtual DOM',
-            build:      'Required (JSX compilation)',
-            ssr:        'First-class via SolidStart',
-            ecosystem:  'Moderate; strong benchmark reputation',
+            id: 'solid', name: 'Solid', self: false, shown: true,
+            model:      { grade: 'B',  text: 'Run-once components + signals' },
+            templating: { grade: 'B+', text: 'JSX (compiled)' },
+            reactivity: { grade: 'A+', text: 'Fine-grained signals, no re-render' },
+            build:      { grade: 'D',  text: 'Required (JSX)' },
+            ssr:        { grade: 'B+', text: 'SolidStart' },
+            ecosystem:  { grade: 'B-', text: 'Moderate; benchmark darling' },
         },
         {
-            id: 'angular', name: 'Angular', self: false,
-            model:      'Full platform: DI, modules, CLI, opinions included',
-            templating: 'HTML templates + Angular template syntax',
-            reactivity: 'Zone-based change detection, moving to signals',
-            build:      'Required — CLI-managed',
-            ssr:        'Built-in (Angular Universal lineage)',
-            ecosystem:  'Enterprise-grade; long-term support culture',
+            id: 'angular', name: 'Angular', self: false, shown: true,
+            model:      { grade: 'C+', text: 'Full platform: DI, CLI, opinions' },
+            templating: { grade: 'B',  text: 'HTML + Angular template syntax' },
+            reactivity: { grade: 'B',  text: 'Zone-based detection, moving to signals' },
+            build:      { grade: 'D',  text: 'Required — CLI-managed' },
+            ssr:        { grade: 'A-', text: 'Built-in' },
+            ecosystem:  { grade: 'A-', text: 'Enterprise-grade; LTS culture' },
         },
     ];
+
+    const visible = () => frameworks.filter(f => f.shown);
+
+    export const header = () =>
+        visible().map(({ id, name, self }) => ({ id, name, self }));
+
+    export const rows = () => axes.map(axis => ({
+        id:    axis.key,
+        label: axis.label,
+        cells: visible().map(f => ({
+            id:    f.id,
+            self:  f.self,
+            grade: f[axis.key].grade,
+            text:  f[axis.key].text,
+        })),
+    }));
+
+    export function toggleShown(event) {
+        const { item } = event.detail;
+        frameworks = frameworks.map(f =>
+            f.id === item.id ? { ...f, shown: event.target.checked } : f
+        );
+    }
 </script>
 
 <section class="doc-section" id="matrix">
     <h2>Side by side</h2>
 
     <p>
-        Alpine, Lit, Mithril, and htmx are the honest neighbors — small tools you
-        can adopt with a script tag. React, Vue, Svelte, Solid, and Angular are a
-        different weight class, and the table says so. Bundle sizes are omitted
-        on purpose: they drift with every release, so check
+        Frameworks read across the columns, comparison axes down the rows.
+        Uncheck frameworks to narrow the field — two side-by-side is often the
+        most useful view. Each cell carries a letter grade for that axis: the
+        grades are editorial ballparks, not benchmarks, and the
+        <em>No-build friendliness</em> row deliberately scores how well each
+        tool serves a ship-files workflow (so a required compiler grades low,
+        however good the compiler is). Bundle sizes are omitted because they
+        drift with every release — check
         <a href="https://bundlephobia.com" rel="noopener">bundlephobia</a> for
         current numbers (data-wrapper's own build is ~7&nbsp;kB min+gzip as of
         this writing).
     </p>
 
+    <fieldset class="matrix-picker">
+        <legend>Frameworks to compare</legend>
+        <template *list="frameworks?key=id">
+            <label class="matrix-pick">
+                <input type="checkbox" $checked="./shown" @change="toggleShown">
+                <span $text="./name"></span>
+            </label>
+        </template>
+    </fieldset>
+
     <table class="matrix-table">
         <thead>
             <tr>
-                <th>Framework</th>
-                <th>Mental model</th>
-                <th>Templating</th>
-                <th>Reactivity</th>
-                <th>Build step</th>
-                <th>SSR</th>
-                <th>Ecosystem</th>
+                <th class="matrix-corner" scope="col">Axis</th>
+                <template *list="header?key=id">
+                    <th scope="col" $text="./name" $class="./self?bool=matrix-self:"></th>
+                </template>
             </tr>
         </thead>
         <tbody>
-            <template *list="frameworks?key=id">
-                <tr $class="./self?bool=matrix-self:">
-                    <th scope="row" $text="./name"></th>
-                    <td $text="./model"></td>
-                    <td $text="./templating"></td>
-                    <td $text="./reactivity"></td>
-                    <td $text="./build"></td>
-                    <td $text="./ssr"></td>
-                    <td $text="./ecosystem"></td>
+            <template *list="rows?key=id">
+                <tr>
+                    <th scope="row" $text="./label"></th>
+                    <template *list="./cells?key=id">
+                        <td $class="./self?bool=matrix-self:">
+                            <span class="grade" $data-grade="./grade" $text="./grade"></span>
+                            <span class="matrix-cell-text" $text="./text"></span>
+                        </td>
+                    </template>
                 </tr>
             </template>
         </tbody>
     </table>
 
     <p class="matrix-note">
-        This table is itself a <code>*list</code> over an exported array —
-        view source on this page to see the comparison eating its own dog food.
+        This table is two nested <code>*list</code> directives over exported
+        data — toggling a checkbox reconciles columns in place. View source on
+        this page to see the comparison eating its own dog food.
     </p>
 </section>
 
 <style>
+    .matrix-picker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .4rem;
+        margin: 1rem 0;
+        padding: .75rem .9rem;
+        border: var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+    }
+    .matrix-picker legend {
+        padding: 0 .4rem;
+        font-size: .74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--muted);
+    }
+    .matrix-pick {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .25rem .7rem;
+        border: var(--border);
+        border-radius: 999px;
+        font-family: var(--mono);
+        font-size: .8rem;
+        cursor: pointer;
+        background: var(--bg);
+    }
+    .matrix-pick:has(input:checked) {
+        border-color: color-mix(in srgb, var(--link) 45%, transparent);
+        color: var(--link);
+    }
+
     .matrix-table {
-        font-size: .85rem;
+        font-size: .84rem;
         line-height: 1.45;
     }
-    .matrix-table th[scope="row"] {
+    .matrix-table thead th {
+        font-size: .78rem;
+        white-space: nowrap;
+    }
+    .matrix-table th[scope="row"],
+    .matrix-table .matrix-corner {
+        position: sticky;
+        left: 0;
+        background: var(--bg);
         white-space: nowrap;
         font-weight: 700;
     }
-    .matrix-table thead th {
-        font-size: .75rem;
+    .matrix-table .matrix-corner {
+        font-size: .72rem;
         text-transform: uppercase;
         letter-spacing: .05em;
         color: var(--muted);
     }
-    .matrix-table td { min-width: 11rem; }
+    .matrix-table td { min-width: 12rem; }
     .matrix-self {
         background: color-mix(in srgb, var(--link) 7%, transparent);
     }
+
+    .grade {
+        display: inline-block;
+        margin-bottom: .3rem;
+        padding: .02rem .45rem;
+        border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+        border-radius: 999px;
+        font-family: var(--mono);
+        font-size: .72rem;
+        font-weight: 700;
+        background: color-mix(in srgb, currentColor 8%, transparent);
+    }
+    .grade[data-grade^="A"] { color: var(--ok); }
+    .grade[data-grade^="B"] { color: var(--link); }
+    .grade[data-grade^="C"] { color: color-mix(in srgb, var(--err) 45%, var(--ok)); }
+    .grade[data-grade^="D"],
+    .grade[data-grade^="F"] { color: var(--err); }
+
+    .matrix-cell-text { display: block; }
+
     .matrix-note {
         font-size: .88rem;
         color: var(--muted);
