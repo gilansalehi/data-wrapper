@@ -1,0 +1,29 @@
+<script type="module" data-module="@play/starter">
+    export let count = 0;
+
+    export function increment() { count += 1; }
+</script>
+
+<div class="starter-counter">
+    <button @click="increment">+1</button>
+    <output $text="count">0</output>
+    <span class="starter-hint">← a whole component: state, action, binding</span>
+</div>
+
+<style>
+    .starter-counter {
+        display: flex;
+        align-items: center;
+        gap: .9rem;
+        font-size: 1.3rem;
+    }
+    .starter-counter output {
+        font-family: var(--mono);
+        font-weight: 700;
+        min-width: 2ch;
+    }
+    .starter-hint {
+        font-size: .78rem;
+        color: var(--faint);
+    }
+</style>

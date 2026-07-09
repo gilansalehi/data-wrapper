@@ -148,8 +148,11 @@ invent APIs (`*for`, `*match`, inline `$count` interpolation, scoped styles)
   peek + structure.css grid. Seed of the component catalog.
 - **027 homepage conversion polish** (CTAs, fit band, footer) — Codex's
   surface. Reuse compare-page fit content; don't write new claims.
-- **028 playground spike** — Claude first (blob-URL loader question must be
-  browser-verified before any UI); Codex builds the MVP if it passes.
+- **028 playground spike** — **PASSED + MVP live** (user-verified in browser,
+  2026-07-09): blob URLs pass the same-origin gate, edited views run with
+  working state, errors surface readably. Zero lib changes. `/playground` is
+  wired into nav + sitemap. Unlocked follow-ups in the ticket: "Open in
+  Playground" on the examples gallery, homepage hero playground.
 - **029 philosophy essay** — Claude drafts, the user owns the voice.
 
 Not ticketed on purpose: changelog (conflicts with 014's ratified non-goal),

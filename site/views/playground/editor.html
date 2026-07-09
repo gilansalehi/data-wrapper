@@ -1,0 +1,158 @@
+<script type="module" data-module="@play/editor">
+    // Playground editor (ticket 028 spike). The hypothesis under test: a
+    // user-edited view can load through the normal loader with zero lib
+    // changes, because a Blob URL carries its creator's origin and therefore
+    // passes the same-origin gate. Each run gets a unique data-module name so
+    // the module cache never serves a stale script.
+    import { action } from 'data-wrapper';
+
+    const STARTER_URL = '/views/playground/starter.html';
+
+    export let status = 'Loading starter source…';
+    export let tone = 'idle';
+
+    let runCount = 0;
+    let liveUrl = null;
+    let starterText = '';
+
+    const editor  = () => document.getElementById('play-source');
+    const preview = () => document.getElementById('play-preview');
+
+    const setStatus = action((text, t = 'idle') => { status = text; tone = t; });
+
+    const describe = reason =>
+        [reason?.message, reason?.cause?.message].filter(Boolean).join(' ← ')
+        || String(reason);
+
+    // Every run needs a fresh module name: the module cache is keyed by
+    // data-module, and a re-registered name from a different URL throws.
+    const uniquify = source => {
+        const name = `@play/run-${++runCount}`;
+        if (/data-module\s*=\s*"[^"]*"/.test(source)) {
+            return source.replace(/data-module\s*=\s*"[^"]*"/, `data-module="${name}"`);
+        }
+        return source.replace('<script type="module"', `<script type="module" data-module="${name}"`);
+    };
+
+    export function run() {
+        const pane = preview();
+        const source = editor()?.value;
+        if (!pane || source == null) return;
+
+        const url = URL.createObjectURL(
+            new Blob([uniquify(source)], { type: 'text/html' })
+        );
+        pane.replaceChildren();
+        const child = document.createElement('data-wrapper');
+        child.setAttribute('src', url);
+        pane.append(child);
+
+        if (liveUrl) URL.revokeObjectURL(liveUrl);
+        liveUrl = url;
+
+        setStatus(`Run ${runCount} — loading…`);
+        setTimeout(() => {
+            if (child.childElementCount > 0) {
+                setStatus(`Run ${runCount} — live. Click it.`, 'ok');
+            }
+        }, 350);
+    }
+
+    export function reset() {
+        const el = editor();
+        if (!el || !starterText) return;
+        el.value = starterText;
+        run();
+    }
+
+    export default ({ cleanup }) => {
+        // Load errors surface as uncaught rejections with src attribution;
+        // runtime errors in the played component fire window 'error'. Both
+        // land in the status line so failures are visible, not console-only.
+        const onRejection = e => setStatus(describe(e.reason), 'err');
+        const onError = e => setStatus(e.message ?? String(e.error ?? e), 'err');
+        window.addEventListener('unhandledrejection', onRejection);
+        window.addEventListener('error', onError);
+        cleanup(() => window.removeEventListener('unhandledrejection', onRejection));
+        cleanup(() => window.removeEventListener('error', onError));
+        cleanup(() => { if (liveUrl) URL.revokeObjectURL(liveUrl); });
+
+        fetch(STARTER_URL)
+            .then(r => r.text())
+            .then(action(text => {
+                starterText = text;
+                const el = editor();
+                if (el && !el.value) el.value = text;
+                status = 'Ready — edit the source, then Run.';
+            }));
+    };
+</script>
+
+<section class="play-editor">
+    <header class="play-editor__bar">
+        <p class="play-pane-label">component source — one html file</p>
+        <span class="play-editor__actions">
+            <button class="btn btn-primary" @click="run">Run ▸</button>
+            <button class="btn btn-outline" @click="reset">Reset</button>
+        </span>
+    </header>
+    <textarea id="play-source" spellcheck="false" autocomplete="off"
+              aria-label="Component source"></textarea>
+    <p class="play-status" $data-tone="tone" $text="status" aria-live="polite"></p>
+</section>
+
+<style>
+    .play-editor {
+        display: flex;
+        flex-direction: column;
+        gap: .6rem;
+        min-width: 0;
+    }
+    .play-editor__bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: .5rem;
+    }
+    .play-editor__actions {
+        display: inline-flex;
+        gap: .5rem;
+    }
+    .play-pane-label {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: .74rem;
+        font-weight: 600;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--faint);
+    }
+    #play-source {
+        min-height: 24rem;
+        padding: .9rem 1.1rem;
+        border: var(--border-strong);
+        border-radius: var(--radius);
+        background: var(--ink);
+        color: var(--ink-text);
+        font-family: var(--mono);
+        font-size: .82rem;
+        line-height: 1.6;
+        resize: vertical;
+        tab-size: 4;
+        white-space: pre;
+        overflow-x: auto;
+    }
+    #play-source:focus-visible {
+        outline: 2px solid color-mix(in srgb, var(--link) 60%, transparent);
+        outline-offset: 2px;
+    }
+    .play-status {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: .78rem;
+        color: var(--muted);
+    }
+    .play-status[data-tone="ok"]  { color: var(--ok); }
+    .play-status[data-tone="err"] { color: var(--err); }
+</style>

@@ -1,5 +1,30 @@
 # Ticket 028: Playground spike — edit a view, see it live
 
+## Status (2026-07-09) — SPIKE PASSED, MVP LIVE
+
+**Browser-verified by the user (2026-07-09):** blob URLs pass the
+same-origin gate; edited views load, run, and hold working state (initial
+value edits, increment-step edits, repeated runs); invalid scripts surface
+readable errors in the status line. **Zero lib changes were needed** — the
+hypothesis held on every point. Now wired into nav + sitemap.
+
+Unlocked and remaining (follow-ups, not this ticket): "Open in Playground"
+buttons on the examples gallery (026's deferred non-goal — needs a way to
+seed the editor with an example's source, e.g. `?src=` param read by the
+editor view); the homepage hero playground (the dazzle centerpiece);
+shareable playground state (still requires its own security design — the
+no-URL-encoded-state rule stands).
+
+Build notes: `site/playground.html`
++ `views/playground/editor.html` (the UI, itself a data-wrapper view) +
+`views/playground/starter.html` (initial preview AND the editor's seed
+text). Implementation follows the hypothesis exactly: Blob URL per run,
+`data-module` rewritten to a unique `@play/run-N` per run, old blob revoked,
+errors surfaced to the status line via `unhandledrejection` + window
+`error`. Preview pane sits outside the editor wrapper (nested wrappers
+don't self-load). Deliberately NOT in nav/sitemap until the spike passes —
+navigate to /playground directly.
+
 **Source:** site-shape brief §3.7 / §4.1 / §8-Ticket-4 — its "centerpiece."
 **Suggested owner: Claude (Fable) spikes the loader question; then Codex
 builds the UI if the spike passes.** Flagged: NOT low-hanging fruit — this is

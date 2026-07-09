@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>data-wrapper — playground</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="canonical" href="https://data-wrapper.org/playground">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="description" content="Edit a data-wrapper view and watch it run — one HTML file with state, actions, and bindings, loaded live with no build step.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="data-wrapper">
+    <meta property="og:title" content="data-wrapper — playground">
+    <meta property="og:description" content="Edit a view, watch it run. No build step, in your browser.">
+    <meta property="og:url" content="https://data-wrapper.org/playground">
+    <meta property="og:image" content="https://data-wrapper.org/icon-512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="data-wrapper — playground">
+    <meta name="twitter:description" content="Edit a view, watch it run. No build step, in your browser.">
+    <meta name="twitter:image" content="https://data-wrapper.org/icon-512.png">
+    <script type="importmap">{"imports":{"data-wrapper":"/dist/data-wrapper.js","state/":"/state/"}}</script>
+    <script>
+        (() => {
+            try {
+                const v = localStorage.getItem('data-wrapper:theme');
+                if (v === 'light' || v === 'dark') document.documentElement.dataset.theme = v;
+            } catch {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/assets/css/index.css">
+    <style>
+        /* Page-owned layout: editor view on the left, preview pane on the
+           right. The preview lives OUTSIDE the editor's wrapper on purpose —
+           a <data-wrapper> appended inside another wrapper counts as nested
+           and will not self-load. */
+        .play-grid {
+            display: grid;
+            gap: 1.25rem;
+            margin-block: 2rem 3rem;
+            align-items: start;
+        }
+        @media (min-width: 60rem) {
+            .play-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+        }
+        .play-preview-pane {
+            display: flex;
+            flex-direction: column;
+            gap: .6rem;
+        }
+        #play-preview {
+            min-height: 24rem;
+            padding: 1.25rem;
+            border: var(--border-strong);
+            border-radius: var(--radius);
+            background:
+                linear-gradient(135deg, color-mix(in srgb, var(--link) 8%, transparent), transparent 40%),
+                var(--bg);
+        }
+        #play-preview > data-wrapper { display: block; }
+        .play-fineprint {
+            margin: 0;
+            font-size: .78rem;
+            color: var(--faint);
+        }
+    </style>
+    <script src="/dist/data-wrapper.js" type="module"
+            data-shim-src="https://ga.jspm.io/npm:es-module-shims@2.8.1/dist/es-module-shims.js"></script>
+</head>
+<body>
+
+<data-wrapper id="nav" src="/views/nav.html" $data-nav-open="open"></data-wrapper>
+
+<header class="page-hero">
+    <div class="container">
+        <p class="page-hero__kicker">playground</p>
+        <h1 class="page-hero__title">Edit a view. Watch it run.</h1>
+        <p class="page-hero__lead">
+            The pane on the left is a complete data-wrapper component — one
+            HTML file with a module script, markup, and styles. Change it,
+            hit Run, and the same loader that powers this site loads your
+            edit live. No build step, no bundler, no server round-trip.
+        </p>
+        <p class="page-hero__motif" aria-hidden="true">
+            <span class="hero-chip"><b>✎</b> edit the file</span>
+            <span class="hero-chip"><b>▸</b> run it</span>
+            <span class="hero-chip"><b>◉</b> it's just the browser</span>
+        </p>
+    </div>
+</header>
+
+<main class="container">
+    <div class="play-grid">
+        <data-wrapper id="play" src="/views/playground/editor.html"></data-wrapper>
+
+        <div class="play-preview-pane">
+            <p class="play-pane-label">result — live component</p>
+            <div id="play-preview">
+                <data-wrapper src="/views/playground/starter.html"></data-wrapper>
+            </div>
+            <p class="play-fineprint">
+                The playground runs whatever you type, in your own browser, on
+                this page. Nothing is saved or shared.
+            </p>
+        </div>
+    </div>
+</main>
+
+<data-wrapper src="/views/footer.html"></data-wrapper>
+</body>
+</html>
