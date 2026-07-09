@@ -40,21 +40,30 @@ const canonicalViewURL = (url: URL) => {
     return canonical.href;
 };
 
-const shimSource = () =>
-    document.querySelector<HTMLScriptElement>('script[data-shim-src]')?.dataset.shimSrc;
+const shimConfig = () =>
+    document.querySelector<HTMLScriptElement>('script[data-shim-src]');
 
-const loadShim = (): Promise<ImportShim> => {
+const shimSource = () =>
+    shimConfig()?.dataset.shimSrc;
+
+export const loadShim = (): Promise<ImportShim> => {
     const global = globalThis as ShimGlobal;
     if (global.importShim) return Promise.resolve(global.importShim);
     if (shimPromise) return shimPromise;
 
-    const src = shimSource();
+    const config = shimConfig();
+    const src = config?.dataset.shimSrc;
     if (!src) return Promise.reject(new Error('No data-shim-src configured'));
 
     shimPromise = new Promise((resolve, reject) => {
         const script = document.createElement('script');
         script.src = src;
         script.async = true;
+        const integrity = config.dataset.shimIntegrity?.trim();
+        if (integrity) {
+            script.integrity = integrity;
+            script.crossOrigin = 'anonymous';
+        }
         script.onload = () => global.importShim
             ? resolve(global.importShim)
             : reject(new Error(`Module shim ${src} did not expose importShim()`));

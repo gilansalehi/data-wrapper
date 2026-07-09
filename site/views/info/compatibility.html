@@ -12,13 +12,13 @@
     </p>
 
     <table>
-        <thead><tr><th>Browser</th><th>Target</th><th>Notes</th></tr></thead>
+        <thead><tr><th>Browser</th><th>Status</th><th>Target</th><th>Notes</th></tr></thead>
         <tbody>
-            <tr><td>Chrome / Edge</td><td>Current evergreen releases</td><td>Expected to run natively with import maps.</td></tr>
-            <tr><td>Firefox</td><td>Current evergreen releases</td><td>Expected to run natively with import maps in current releases.</td></tr>
-            <tr><td>Safari / iOS Safari</td><td>Current evergreen releases</td><td>Expected to run natively in current releases; verify on real Safari before public beta.</td></tr>
-            <tr><td>Older evergreen browsers</td><td>Best effort with shim</td><td>Use <code>data-shim-src</code> for import-map fallback where native support is missing or inconsistent.</td></tr>
-            <tr><td>Internet Explorer</td><td>Unsupported</td><td>Missing required Web Component and module primitives.</td></tr>
+            <tr><td>Chrome / Edge</td><td><span class="status status--ok">Native</span></td><td>Current evergreen releases</td><td>Expected to run natively with import maps.</td></tr>
+            <tr><td>Firefox</td><td><span class="status status--ok">Native</span></td><td>Current evergreen releases</td><td>Expected to run natively with import maps in current releases.</td></tr>
+            <tr><td>Safari / iOS Safari</td><td><span class="status status--ok">Native</span></td><td>Current evergreen releases</td><td>Expected to run natively in current releases; verify on real Safari before public beta.</td></tr>
+            <tr><td>Older evergreen browsers</td><td><span class="status status--part">Shim</span></td><td>Best effort</td><td>Use <code>data-shim-src</code> for import-map fallback where native support is missing or inconsistent.</td></tr>
+            <tr><td>Internet Explorer</td><td><span class="status status--no">Unsupported</span></td><td>—</td><td>Missing required Web Component and module primitives.</td></tr>
         </tbody>
     </table>
 

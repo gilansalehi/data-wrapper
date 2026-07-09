@@ -79,31 +79,35 @@
 
     <h3>OWASP DOM-XSS Cheat Sheet conformance</h3>
     <table>
-        <thead><tr><th>Cheat Sheet guidance</th><th>data-wrapper</th></tr></thead>
+        <thead><tr><th>Cheat Sheet guidance</th><th>Status</th><th>How</th></tr></thead>
         <tbody>
             <tr>
                 <td>RULE #6 / #7, GUIDELINE #3 — populate the DOM with safe
                     properties (<code>textContent</code>)</td>
-                <td>Met by default: bindings write DOM properties and
+                <td><span class="status status--ok">Met</span></td>
+                <td>Bindings write DOM properties and
                     <code>textContent</code>, never parsed markup.</td>
             </tr>
             <tr>
                 <td>GUIDELINE #4 — avoid <code>innerHTML</code> /
                     <code>outerHTML</code> / <code>document.write</code></td>
-                <td>Enforced: bare HTML-sink bindings throw; raw HTML requires the
+                <td><span class="status status--ok">Enforced</span></td>
+                <td>Bare HTML-sink bindings throw; raw HTML requires the
                     named <code>$unsafeHTML</code> opt-in.</td>
             </tr>
             <tr>
                 <td>RULE #5 — untrusted data in a URL attribute context</td>
-                <td>Met with an allowlist across the URL-attr set: only
-                    affirmatively allowed schemes bind (per-attribute matrix
-                    above); unknown schemes drop, and the check resists
+                <td><span class="status status--ok">Met</span></td>
+                <td>Allowlist across the URL-attr set: only affirmatively
+                    allowed schemes bind (per-attribute matrix above); unknown
+                    schemes drop, and the check resists
                     control-character-obfuscated forms.</td>
             </tr>
             <tr>
                 <td>RULE #3, GUIDELINE #5 / #10 — no event-handler or implicit
                     <code>eval</code> sinks</td>
-                <td>Met: no <code>eval</code> / <code>Function</code>; binding an
+                <td><span class="status status--ok">Met</span></td>
+                <td>No <code>eval</code> / <code>Function</code>; binding an
                     event handler via <code>$on*</code> is rejected — events use
                     the <code>@event</code> interface only.</td>
             </tr>
@@ -112,12 +116,32 @@
 
     <h3>Standards status</h3>
     <table>
-        <thead><tr><th>Standard</th><th>Status</th></tr></thead>
+        <thead><tr><th>Standard</th><th>Status</th><th>Notes</th></tr></thead>
         <tbody>
-            <tr><td>OWASP DOM-XSS Prevention Cheat Sheet</td><td>Applicable rules followed by default (table above).</td></tr>
-            <tr><td>CWE-79 (Cross-site Scripting)</td><td>Mitigated for framework-rendered contexts under the stated threat model.</td></tr>
-            <tr><td>CSP Level 3</td><td>Partial. An app may set <code>object-src 'none'</code>, <code>base-uri</code>, and <code>frame-ancestors</code> strictly. <code>script-src</code> must currently allow <code>blob:</code> (module composition) plus any <code>data-shim-src</code> host, so a strict <code>script-src</code> is not yet supported.</td></tr>
-            <tr><td>Trusted Types (<code>require-trusted-types-for 'script'</code>)</td><td>Not yet. The module loader and the <code>$unsafeHTML</code> / <code>srcdoc</code> sinks write raw strings to Trusted-Types-protected sinks. Full enforcement compatibility is the acceptance metric for the planned step-up tier.</td></tr>
+            <tr>
+                <td>OWASP DOM-XSS Prevention Cheat Sheet</td>
+                <td><p class="status-stack"><span class="status status--ok">Met</span>
+                    <span class="meter" style="--pct: 100%"><span class="meter__fill"></span></span></p></td>
+                <td>Applicable rules followed by default (table above).</td>
+            </tr>
+            <tr>
+                <td>CWE-79 (Cross-site Scripting)</td>
+                <td><p class="status-stack"><span class="status status--ok">Mitigated</span>
+                    <span class="meter" style="--pct: 100%"><span class="meter__fill"></span></span></p></td>
+                <td>For framework-rendered contexts under the stated threat model.</td>
+            </tr>
+            <tr>
+                <td>CSP Level 3</td>
+                <td><p class="status-stack"><span class="status status--part">Partial</span>
+                    <span class="meter" style="--pct: 50%"><span class="meter__fill"></span></span></p></td>
+                <td>An app may set <code>object-src 'none'</code>, <code>base-uri</code>, and <code>frame-ancestors</code> strictly. <code>script-src</code> must currently allow <code>blob:</code> (module composition) plus any <code>data-shim-src</code> host, so a strict <code>script-src</code> is not yet supported.</td>
+            </tr>
+            <tr>
+                <td>Trusted Types (<code>require-trusted-types-for 'script'</code>)</td>
+                <td><p class="status-stack"><span class="status status--no">Not yet</span>
+                    <span class="meter" style="--pct: 10%"><span class="meter__fill"></span></span></p></td>
+                <td>The module loader and the <code>$unsafeHTML</code> / <code>srcdoc</code> sinks write raw strings to Trusted-Types-protected sinks. Full enforcement compatibility is the acceptance metric for the planned step-up tier.</td>
+            </tr>
         </tbody>
     </table>
 

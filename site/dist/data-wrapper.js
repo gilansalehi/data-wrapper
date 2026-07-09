@@ -257,11 +257,23 @@ var URL_ATTRS = new Set([
   "background"
 ]);
 var CONTROL_CHARS = /[\u0000-\u0020]+/g;
-var DANGEROUS_URL = /^(?:javascript|vbscript):/i;
-var isDangerousUrl = (val) => DANGEROUS_URL.test(String(val).replace(CONTROL_CHARS, ""));
+var URL_SCHEME = /^[a-z][a-z0-9+.-]*(?=:)/i;
+var URL_SCHEMES_COMMON = new Set(["http", "https"]);
+var URL_SCHEMES_EXTRA = {
+  href: new Set(["mailto", "tel"]),
+  src: new Set(["data", "blob"]),
+  poster: new Set(["data", "blob"])
+};
+var isAllowedUrl = (prop, val) => {
+  const scheme = String(val).replace(CONTROL_CHARS, "").match(URL_SCHEME)?.[0].toLowerCase();
+  if (!scheme)
+    return true;
+  return URL_SCHEMES_COMMON.has(scheme) || (URL_SCHEMES_EXTRA[prop]?.has(scheme) ?? false);
+};
 var setProp = (el, prop, val) => {
-  if (URL_ATTRS.has(prop.toLowerCase()) && isDangerousUrl(val)) {
-    console.warn(`data-wrapper: blocked unsafe URL scheme in ${prop}="${String(val)}"`);
+  const urlProp = prop.toLowerCase();
+  if (URL_ATTRS.has(urlProp) && !isAllowedUrl(urlProp, val)) {
+    console.warn(`data-wrapper: blocked disallowed URL scheme in ${prop}="${String(val)}"`);
     return;
   }
   const value = prop === "textContent" ? String(val ?? "") : val;
@@ -825,20 +837,27 @@ var canonicalViewURL = (url) => {
   canonical.hash = "";
   return canonical.href;
 };
-var shimSource = () => document.querySelector("script[data-shim-src]")?.dataset.shimSrc;
+var shimConfig = () => document.querySelector("script[data-shim-src]");
+var shimSource = () => shimConfig()?.dataset.shimSrc;
 var loadShim = () => {
   const global = globalThis;
   if (global.importShim)
     return Promise.resolve(global.importShim);
   if (shimPromise)
     return shimPromise;
-  const src = shimSource();
+  const config = shimConfig();
+  const src = config?.dataset.shimSrc;
   if (!src)
     return Promise.reject(new Error("No data-shim-src configured"));
   shimPromise = new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
+    const integrity = config.dataset.shimIntegrity?.trim();
+    if (integrity) {
+      script.integrity = integrity;
+      script.crossOrigin = "anonymous";
+    }
     script.onload = () => global.importShim ? resolve(global.importShim) : reject(new Error(`Module shim ${src} did not expose importShim()`));
     script.onerror = () => reject(new Error(`Failed to load module shim ${src}`));
     document.head.append(script);

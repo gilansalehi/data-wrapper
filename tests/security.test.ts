@@ -215,3 +215,40 @@ test('later policy meta tags cannot widen the alpha same-origin guard', async ()
         error.mockRestore();
     }
 });
+
+test('module shim fallback carries opt-in subresource integrity', async () => {
+    const config = document.createElement('script');
+    config.dataset.shimSrc = 'https://cdn.example/es-module-shims.js';
+    config.dataset.shimIntegrity = 'sha384-testhash';
+    document.head.append(config);
+
+    const global = globalThis as typeof globalThis & {
+        importShim?: (specifier: string) => Promise<Record<string, unknown>>;
+    };
+    const previousShim = global.importShim;
+    delete global.importShim;
+    let injected: HTMLScriptElement | undefined;
+    const appendSpy = spyOn(document.head, 'append').mockImplementation(((...nodes: (Node | string)[]) => {
+        injected = nodes.find((node): node is HTMLScriptElement => node instanceof HTMLScriptElement);
+    }) as typeof document.head.append);
+
+    try {
+        const freshElementModule = '../src/lib/element.ts?shim-integrity';
+        const { loadShim: guardedLoadShim } = await import(freshElementModule) as typeof import('../src/lib/element.ts');
+        const pending = guardedLoadShim();
+
+        expect(appendSpy).toHaveBeenCalled();
+        expect(injected?.src).toBe('https://cdn.example/es-module-shims.js');
+        expect(injected?.integrity).toBe('sha384-testhash');
+        expect(injected?.crossOrigin).toBe('anonymous');
+
+        global.importShim = async () => ({});
+        injected?.dispatchEvent(new Event('load'));
+        await pending;
+    } finally {
+        appendSpy.mockRestore();
+        config.remove();
+        if (previousShim) global.importShim = previousShim;
+        else delete global.importShim;
+    }
+});

@@ -71,6 +71,93 @@
     padding-left: 0;
 }
 
+/* ============================================================
+   Status badges & meters — the tone atoms with a glyph and a job.
+   Semantic color in small doses via currentColor: border, glyph,
+   and text share one hue. Use in status columns of tables.
+   ============================================================ */
+
+.status {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .35em;
+    padding: .1em .6em;
+    border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, currentColor 7%, transparent);
+    font-family: var(--mono);
+    font-size: .72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.status::before { font-weight: 700; }
+.status--ok           { color: var(--ok); }
+.status--ok::before   { content: "✓"; }
+.status--part         { color: var(--warn); }
+.status--part::before { content: "◐"; }
+.status--pending         { color: var(--warn); }
+.status--pending::before { content: "○"; }
+.status--no           { color: var(--err); }
+.status--no::before   { content: "✗"; }
+.status--off          { color: var(--faint); }
+.status--off::before  { content: "—"; }
+
+/* Stack a pill over a meter inside a table's status cell. */
+.status-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .4rem;
+    margin: 0;
+}
+
+/* Meter — first-class style-attr override: <span class="meter"
+   style="--pct: 50%"> (or a bound $style on the fill). */
+.meter {
+    display: inline-block;
+    inline-size: 6rem;
+    block-size: .45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, currentColor 12%, transparent);
+    overflow: hidden;
+    vertical-align: middle;
+}
+.meter__fill {
+    display: block;
+    block-size: 100%;
+    inline-size: var(--pct, 0%);
+    border-radius: inherit;
+    background: var(--link);
+}
+
+/* Labeled meter rows (e.g. the size-target list on the info page). */
+.budget-meters {
+    list-style: none;
+    margin: 1rem 0;
+    padding: 0;
+    display: grid;
+    gap: .5rem;
+    max-width: 26rem;
+}
+.budget-meters li {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+.budget-meters .meter { inline-size: auto; flex: 1; }
+.budget-label {
+    flex: 0 0 7rem;
+    font-family: var(--mono);
+    font-size: .76rem;
+    color: var(--muted);
+}
+.budget-pct {
+    font-family: var(--mono);
+    font-size: .76rem;
+    color: var(--faint);
+    white-space: nowrap;
+}
+
 /* Collapsible section. Pair with a <data-wrapper> carrying data-collapsed
    and an h2 with @click="toggle". The heading stays; following siblings hide.
    Reusable without the <details>/<summary> shape, which the reset styles
