@@ -720,16 +720,6 @@ const srcDirective: DirectiveHandler = ({ ctx, el, wake, cleanup }) => {
     };
     cleanup(disposeLive);
 
-    const renderFallback = () => {
-        liveNodes = insertFragment(
-            anchor,
-            tpl.content.cloneNode(true) as DocumentFragment,
-            ctx,
-            wake,
-            liveUnsubs,
-        );
-    };
-
     return value => {
         disposeLive();
         liveUnsubs = [];
@@ -764,7 +754,13 @@ const srcDirective: DirectiveHandler = ({ ctx, el, wake, cleanup }) => {
             return;
         }
 
-        renderFallback();
+        liveNodes = insertFragment(
+            anchor,
+            tpl.content.cloneNode(true) as DocumentFragment,
+            ctx,
+            wake,
+            liveUnsubs,
+        );
     };
 };
 

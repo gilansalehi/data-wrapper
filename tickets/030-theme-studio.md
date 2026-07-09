@@ -2,7 +2,10 @@
 
 ## Status
 
-Implemented by Codex (2026-07-09); awaiting browser/design review.
+COMPLETED (2026-07-09).
+
+Browser/design review passed in the local site. The user confirmed that the
+Theme Studio looks good and works as expected.
 
 Shipped as `/theme-studio` with a normal data-wrapper page shell and
 `/views/theme-studio/studio.html` as the app view. The MVP follows Fable's

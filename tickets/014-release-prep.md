@@ -10,9 +10,21 @@ finds a concrete bug.
 
 ## Current Status
 
-Final local preflight is green. The package is versioned as `0.1.0`, licensed
-MIT, builds to `dist/`, publishes only the intended package surface, and the
-packed tarball installs into a separate temporary project.
+Final local preflight is green as of 2026-07-09. The package is versioned as
+`0.1.0`, licensed MIT, builds to `dist/`, publishes only the intended package
+surface, and the packed tarball installs into a separate temporary project.
+
+Latest local evidence:
+
+- `bun run review` passes when Playwright is allowed to launch outside the
+  sandbox. The sandboxed run failed at Chromium launch with
+  `bootstrap_check_in ... Permission denied`, not with a test assertion.
+- `bun run report` passes and updated `site/views/info/size.html`.
+- `bun run site:check` passes across the deploy tree: 67 HTML files, 11 CSS
+  files, 91 public files total.
+- `npm pkg get ...` validates package metadata.
+- `npm pack --dry-run --cache /private/tmp/datacomponents-npm-cache` lists only
+  `LICENSE`, `README.md`, `package.json`, and the two dist artifacts.
 
 Known external blockers:
 
@@ -37,7 +49,7 @@ Known external blockers:
   directory `site`.
 - [x] Public site root excludes repo-private files such as tickets, tests,
   TypeScript source, tarballs, and collaboration notes.
-- [x] `site/` passes static reference smoke.
+- [x] `site/` passes `bun run site:check`.
 - [x] Public GitHub repository exists.
 - [x] Git remote is configured locally.
 - [x] Current release branch is pushed to GitHub.
@@ -74,6 +86,11 @@ Known external blockers:
 - [ ] Home page renders and the landing demos work.
 - [ ] Framework guide renders all sections in the intended order.
 - [ ] Technical info page renders all sections.
+- [ ] Examples gallery renders; source peeks and "open in playground" links
+  work.
+- [ ] Playground runs, resets, and surfaces an invalid-script error.
+- [ ] Theme Studio renders; token edits, preview swapping, reset, copy CSS, and
+  apply-to-site/clear work.
 - [ ] Security section matches the current runtime contract.
 - [ ] Theme toggle, docs nav, source peeks, todos, orders, and formatter demos
   work in the browser.
@@ -104,6 +121,7 @@ Known external blockers:
 ```sh
 bun run review
 bun report
+bun run site:check
 npm pkg get name version description license author keywords main module exports files
 npm pack --dry-run
 npm pack

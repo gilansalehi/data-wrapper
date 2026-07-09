@@ -598,9 +598,6 @@ var srcDirective = ({ ctx, el, wake: wake2, cleanup }) => {
     liveUnsubs = [];
   };
   cleanup(disposeLive);
-  const renderFallback = () => {
-    liveNodes = insertFragment(anchor, tpl.content.cloneNode(true), ctx, wake2, liveUnsubs);
-  };
   return (value) => {
     disposeLive();
     liveUnsubs = [];
@@ -634,7 +631,7 @@ var srcDirective = ({ ctx, el, wake: wake2, cleanup }) => {
       liveNodes = insertFragment(anchor, fragment, ctx, wake2, liveUnsubs);
       return;
     }
-    renderFallback();
+    liveNodes = insertFragment(anchor, tpl.content.cloneNode(true), ctx, wake2, liveUnsubs);
   };
 };
 DW_DIRECTIVES.set("list", listDirective);
