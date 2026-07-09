@@ -1,0 +1,222 @@
+<script type="module" data-module="@view/hero-tag">
+    import { flush } from 'data-wrapper';
+
+    // The hero performs the product: the tag types its own src, then the
+    // "view" loads — a live clock proving the page is already reactive.
+    const ATTR = 'src="/views/hello.html"';
+
+    export let chars = 0;
+    export let now = new Date();
+
+    export const typed  = () => ATTR.slice(0, chars);
+    export const loaded = () => chars >= ATTR.length;
+    export const clock  = () => now.toLocaleTimeString('en-GB', { hour12: false });
+
+    export default ({ cleanup }) => {
+        let type;
+        const start = setTimeout(() => {
+            type = setInterval(() => {
+                chars += 1;
+                if (chars >= ATTR.length) clearInterval(type);
+                flush();
+            }, 65);
+        }, 600);
+        const tick = setInterval(() => { now = new Date(); flush(); }, 1000);
+        cleanup(() => { clearTimeout(start); clearInterval(type); clearInterval(tick); });
+    };
+</script>
+
+<section class="tag-hero" $data-loaded="loaded" aria-labelledby="tag-hero-title">
+    <div class="tag-hero__stage container">
+        <p class="tag-hero__code" aria-hidden="true">
+            <span class="tag-hero__punct">&lt;</span><b>data-wrapper</b> <span class="tag-hero__attr" $text="typed"></span><i class="tag-hero__caret"></i><span class="tag-hero__punct">&gt;</span>
+        </p>
+
+        <div class="tag-hero__loadzone" aria-hidden="true">
+            <template *if="loaded">
+                <p class="tag-hero__result">Hello — it's <span $text="clock"></span>, and this HTML is already reactive.</p>
+            </template>
+        </div>
+
+        <h1 class="tag-hero__title" id="tag-hero-title">One tag. Three tokens. Zero dependencies.</h1>
+        <p class="tag-hero__copy">
+            data-wrapper turns plain HTML files into live components with the
+            browser primitives you already know. No build step, nothing to install.
+        </p>
+        <p class="tag-hero__actions">
+            <a class="btn btn-primary" href="#nobuild">Get started</a>
+            <a class="btn btn-outline" href="/playground">Playground</a>
+            <a class="btn btn-outline" href="https://github.com/gilansalehi/data-wrapper" rel="noopener">GitHub</a>
+        </p>
+    </div>
+    <a class="tag-hero__more" href="#nobuild" aria-label="Scroll to the first section">↓</a>
+</section>
+
+<style>
+    .tag-hero {
+        position: relative;
+        display: grid;
+        align-content: center;
+        /* Fill the first screen minus the breadcrumb band above. */
+        min-height: calc(98svh - 3.25rem);
+        background:
+            radial-gradient(46rem 26rem at 50% 42%,
+                color-mix(in srgb, var(--link) 9%, transparent), transparent 70%),
+            var(--ink);
+        color: var(--hero-fg);
+        overflow: clip;
+        text-align: center;
+    }
+
+    .tag-hero__stage {
+        display: grid;
+        gap: 0;
+        justify-items: center;
+        padding-block: clamp(3rem, 8vh, 5rem);
+    }
+
+    /* ── the tag ── */
+    .tag-hero__code {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: clamp(1.15rem, 4.2vw, 2.7rem);
+        font-weight: 400;
+        line-height: 1.35;
+        color: var(--hero-fg);
+    }
+    .tag-hero__code b {
+        font-weight: 700;
+        letter-spacing: -.01em;
+    }
+    .tag-hero__punct {
+        color: var(--hero-faint);
+    }
+    .tag-hero__attr {
+        display: inline-block;      /* wraps as a unit on small screens */
+        color: var(--ink-text);
+        font-weight: 400;
+    }
+    .tag-hero__caret {
+        display: inline-block;
+        width: .07em;
+        height: .95em;
+        margin-inline: .04em;
+        vertical-align: -.12em;
+        background: var(--ink-text);
+        animation: tag-blink 1.05s steps(2, start) infinite;
+    }
+    .tag-hero[data-loaded="true"] .tag-hero__caret {
+        opacity: 0;
+        transition: opacity .4s var(--ease) 1.2s;
+        animation: none;
+    }
+    @keyframes tag-blink {
+        50% { opacity: 0; }
+    }
+
+    /* ── the loaded view ── */
+    .tag-hero__loadzone {
+        display: grid;
+        align-content: center;
+        min-height: 3.4rem;          /* reserved: no layout shift on load */
+        margin-top: clamp(1rem, 3vh, 1.8rem);
+    }
+    .tag-hero__result {
+        margin: 0;
+        font-size: clamp(.95rem, 2vw, 1.15rem);
+        color: var(--hero-mute);
+        animation: tag-materialize .7s var(--ease) both .25s;
+    }
+    .tag-hero__result span {
+        color: color-mix(in srgb, var(--ok) 70%, var(--hero-fg));
+        font-family: var(--mono);
+        font-variant-numeric: tabular-nums;
+    }
+    @keyframes tag-materialize {
+        from { opacity: 0; translate: 0 .5rem; filter: blur(4px); }
+    }
+
+    /* ── copy & actions: present by default (no-JS safe), gently
+         staggered in once the tag has "loaded" ── */
+    .tag-hero__title {
+        max-width: 22ch;
+        margin: clamp(1.6rem, 4vh, 2.6rem) 0 0;
+        font-size: clamp(1.5rem, 3.6vw, 2.3rem);
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -.02em;
+        color: var(--hero-fg);
+    }
+    .tag-hero__copy {
+        max-width: 40rem;
+        margin: .9rem 0 0;
+        font-size: 1.02rem;
+        line-height: 1.55;
+        color: var(--hero-mute);
+    }
+    .tag-hero__actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: .65rem;
+        margin: clamp(1.4rem, 3vh, 2rem) 0 0;
+    }
+
+    .tag-hero__title,
+    .tag-hero__copy,
+    .tag-hero__actions {
+        transition: opacity .6s var(--ease), translate .6s var(--ease);
+    }
+    .tag-hero[data-loaded="false"] .tag-hero__title,
+    .tag-hero[data-loaded="false"] .tag-hero__copy,
+    .tag-hero[data-loaded="false"] .tag-hero__actions {
+        opacity: 0;
+        translate: 0 .5rem;
+    }
+    .tag-hero[data-loaded="true"] .tag-hero__title   { transition-delay: .5s; }
+    .tag-hero[data-loaded="true"] .tag-hero__copy    { transition-delay: .65s; }
+    .tag-hero[data-loaded="true"] .tag-hero__actions { transition-delay: .8s; }
+
+    @supports (text-wrap: balance) {
+        .tag-hero__title, .tag-hero__copy { text-wrap: balance; }
+    }
+
+    .tag-hero .btn {
+        border-color: var(--hero-faint);
+        background: transparent;
+        color: var(--hero-fg);
+    }
+    .tag-hero .btn:hover {
+        background: color-mix(in srgb, var(--hero-fg) 8%, transparent);
+        border-color: color-mix(in srgb, var(--hero-fg) 50%, transparent);
+    }
+    .tag-hero .btn-primary {
+        background: var(--hero-fg);
+        border-color: var(--hero-fg);
+        color: var(--ink);
+    }
+    .tag-hero .btn-primary:hover {
+        background: color-mix(in srgb, var(--hero-fg) 92%, white);
+        border-color: color-mix(in srgb, var(--hero-fg) 92%, white);
+        color: var(--ink);
+    }
+
+    /* ── fold affordance ── */
+    .tag-hero__more {
+        position: absolute;
+        bottom: 1.1rem;
+        left: 0;
+        right: 0;
+        width: fit-content;
+        margin-inline: auto;
+        padding: .2em .6em;
+        color: var(--hero-faint);
+        text-decoration: none;
+        font-size: 1.1rem;
+        animation: tag-nudge 2.4s ease-in-out infinite;
+    }
+    .tag-hero__more:hover { color: var(--hero-fg); }
+    @keyframes tag-nudge {
+        50% { translate: 0 .3rem; }
+    }
+</style>

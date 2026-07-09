@@ -1,0 +1,15 @@
+<script type="module" data-module="@view/hello">
+    import { flush } from 'data-wrapper';
+
+    // The view the homepage hero types into its src. If you were curious
+    // enough to load it for real: hello — it works exactly as advertised.
+    export let now = new Date();
+    export const clock = () => now.toLocaleTimeString('en-GB', { hour12: false });
+
+    export default ({ cleanup }) => {
+        const id = setInterval(() => { now = new Date(); flush(); }, 1000);
+        cleanup(() => clearInterval(id));
+    };
+</script>
+
+<p>Hello — it's <output $text="clock"></output>, and this HTML is already reactive.</p>

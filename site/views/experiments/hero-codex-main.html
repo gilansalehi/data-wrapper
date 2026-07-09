@@ -1,0 +1,301 @@
+<script type="module" data-module="@experiments/hero-codex-main">
+    import { flush } from 'data-wrapper';
+
+    const CUES = [
+        {
+            attr: 'src="/views/app.html"',
+            line: 'Load an HTML view directly into the page.',
+            token: 'src',
+        },
+        {
+            attr: '$text="count"',
+            line: 'Write reactive values with plain attributes.',
+            token: '$',
+        },
+        {
+            attr: '@click="increment"',
+            line: 'Call module exports from native DOM events.',
+            token: '@',
+        },
+        {
+            attr: '*src="panel"',
+            line: 'Compose views without a compiler or build step.',
+            token: '*',
+        },
+    ];
+
+    export let index = 0;
+
+    export const cue = () => CUES[index % CUES.length];
+    export const attr = () => cue().attr;
+    export const line = () => cue().line;
+    export const phase = () => cue().token;
+    export const tokens = () => CUES.map(item => ({
+        label: item.token,
+        active: item.token === cue().token,
+    }));
+
+    export default ({ cleanup }) => {
+        const id = setInterval(() => {
+            index += 1;
+            flush();
+        }, 2600);
+        cleanup(() => clearInterval(id));
+    };
+</script>
+
+<section class="dw-main-hero" $data-phase="phase" aria-labelledby="dw-main-hero-title">
+    <div class="dw-main-hero__grid" aria-hidden="true"></div>
+
+    <div class="dw-main-hero__inner">
+        <p class="dw-main-hero__kicker">candidate · main site hero</p>
+
+        <h1 class="dw-main-hero__tag" id="dw-main-hero-title">
+            <span>&lt;</span><b>data-wrapper</b>
+            <em $text="attr"></em><span>&gt;</span>
+        </h1>
+
+        <p class="dw-main-hero__line" $text="line"></p>
+
+        <ul class="dw-main-hero__tokens" aria-label="data-wrapper surfaces">
+            <template *list="tokens?key=label">
+                <li $data-active="./active"><code $text="./label"></code></li>
+            </template>
+        </ul>
+
+        <p class="dw-main-hero__copy">
+            A zero-dependency HTML-first reactivity layer: one custom element,
+            three binding tokens, and JavaScript modules the browser already
+            understands.
+        </p>
+
+        <p class="dw-main-hero__actions">
+            <a class="btn btn-primary" href="/framework#intro">Read the guide</a>
+            <a class="btn btn-outline" href="/playground">Try the playground</a>
+        </p>
+    </div>
+</section>
+
+<style>
+    .dw-main-hero {
+        position: relative;
+        isolation: isolate;
+        display: grid;
+        align-items: center;
+        min-height: calc(100svh - 3.25rem);
+        overflow: clip;
+        background:
+            linear-gradient(180deg, color-mix(in srgb, var(--hero-fg) 3%, transparent), transparent 34%),
+            var(--ink);
+        color: var(--hero-fg);
+        text-align: center;
+    }
+
+    .dw-main-hero__grid {
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background:
+            linear-gradient(90deg, color-mix(in srgb, var(--hero-fg) 7%, transparent) 1px, transparent 1px),
+            linear-gradient(color-mix(in srgb, var(--hero-fg) 6%, transparent) 1px, transparent 1px);
+        background-size: 5rem 5rem;
+        mask-image:
+            linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent),
+            linear-gradient(180deg, transparent, #000 14%, #000 88%, transparent);
+        mask-composite: intersect;
+    }
+
+    .dw-main-hero::before,
+    .dw-main-hero::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        z-index: -1;
+        width: min(72rem, calc(100% - 2rem));
+        height: 1px;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            color-mix(in srgb, var(--ink-text) 42%, transparent),
+            transparent
+        );
+        transform: translateX(-50%);
+    }
+
+    .dw-main-hero::before { top: 28%; }
+    .dw-main-hero::after  { bottom: 28%; }
+
+    .dw-main-hero__inner {
+        display: grid;
+        justify-items: center;
+        width: min(100% - 2rem, 68rem);
+        margin-inline: auto;
+        padding-block: 5.5rem 4rem;
+    }
+
+    .dw-main-hero__kicker {
+        margin: 0 0 1.3rem;
+        color: var(--ink-text);
+        font-family: var(--mono);
+        font-size: .78rem;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: uppercase;
+    }
+
+    .dw-main-hero__tag {
+        display: inline-flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: baseline;
+        gap: .32em;
+        max-width: 100%;
+        margin: 0;
+        padding: .32em .42em;
+        border: 1px solid color-mix(in srgb, var(--hero-fg) 16%, transparent);
+        border-radius: var(--radius);
+        background: color-mix(in srgb, var(--ink) 88%, transparent);
+        box-shadow: 0 1.4rem 4rem rgb(0 0 0 / .22);
+        color: var(--hero-fg);
+        font-family: var(--mono);
+        font-size: 2rem;
+        font-weight: 500;
+        line-height: 1.25;
+    }
+
+    @media (min-width: 48rem) {
+        .dw-main-hero__tag {
+            font-size: 3.3rem;
+        }
+    }
+
+    @media (min-width: 86rem) {
+        .dw-main-hero__tag {
+            font-size: 4.65rem;
+        }
+    }
+
+    .dw-main-hero__tag span {
+        color: var(--hero-faint);
+    }
+
+    .dw-main-hero__tag b {
+        font-weight: 800;
+    }
+
+    .dw-main-hero__tag em {
+        min-width: 0;
+        color: var(--ink-text);
+        font-style: normal;
+        font-weight: 500;
+    }
+
+    .dw-main-hero__line {
+        min-height: 1.6em;
+        margin: 1.25rem 0 0;
+        color: var(--hero-mute);
+        font-size: 1.08rem;
+        line-height: 1.55;
+    }
+
+    @media (min-width: 48rem) {
+        .dw-main-hero__line {
+            font-size: 1.24rem;
+        }
+    }
+
+    .dw-main-hero__tokens {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: .45rem;
+        margin: 1.2rem 0 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .dw-main-hero__tokens li {
+        display: grid;
+        place-items: center;
+        width: 2.35rem;
+        aspect-ratio: 1;
+        border: 1px solid color-mix(in srgb, var(--hero-fg) 18%, transparent);
+        border-radius: var(--radius);
+        background: color-mix(in srgb, var(--hero-fg) 5%, transparent);
+        color: var(--hero-mute);
+        transition: background-color .3s, border-color .3s, color .3s, transform .3s;
+    }
+
+    .dw-main-hero__tokens li[data-active="true"] {
+        border-color: color-mix(in srgb, var(--ink-text) 64%, transparent);
+        background: color-mix(in srgb, var(--ink-text) 15%, transparent);
+        color: var(--ink-text);
+        transform: translateY(-.12rem);
+    }
+
+    .dw-main-hero__tokens code {
+        padding: 0;
+        background: transparent;
+        color: inherit;
+        font-family: var(--mono);
+        font-size: 1rem;
+        font-weight: 800;
+    }
+
+    .dw-main-hero__copy {
+        max-width: 44rem;
+        margin: 1.4rem 0 0;
+        color: var(--hero-mute);
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .dw-main-hero__actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: .65rem;
+        margin: 1.75rem 0 0;
+    }
+
+    .dw-main-hero .btn {
+        border-color: var(--hero-faint);
+        background: transparent;
+        color: var(--hero-fg);
+    }
+
+    .dw-main-hero .btn:hover {
+        background: color-mix(in srgb, var(--hero-fg) 8%, transparent);
+        border-color: color-mix(in srgb, var(--hero-fg) 50%, transparent);
+    }
+
+    .dw-main-hero .btn-primary {
+        background: var(--hero-fg);
+        border-color: var(--hero-fg);
+        color: var(--ink);
+    }
+
+    .dw-main-hero .btn-primary:hover {
+        background: color-mix(in srgb, var(--hero-fg) 92%, white);
+        border-color: color-mix(in srgb, var(--hero-fg) 92%, white);
+        color: var(--ink);
+    }
+
+    @supports (text-wrap: balance) {
+        .dw-main-hero__line,
+        .dw-main-hero__copy {
+            text-wrap: balance;
+        }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .dw-main-hero__tag {
+            animation: dw-main-breathe 5.2s ease-in-out infinite;
+        }
+    }
+
+    @keyframes dw-main-breathe {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-.25rem); }
+    }
+</style>
