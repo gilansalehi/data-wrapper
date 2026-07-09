@@ -1,0 +1,52 @@
+/* ============================================================
+   Shared source-code slabs for the docs and promo pages.
+   Component-specific code previews may still colocate their CSS.
+   ============================================================ */
+
+.pitch__code,
+.doc-section pre,
+main section details > pre,
+main section > pre {
+    background: var(--ink);
+    color: var(--ink-text);
+    padding: .85rem 1.1rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    font-family: var(--mono);
+    font-size: .82rem;
+    line-height: 1.65;
+    overflow-x: auto;
+}
+
+.pitch__code {
+    margin: 0;
+}
+
+.pitch__code code,
+.doc-section pre code,
+main section details > pre code,
+main section > pre code {
+    background: none;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    padding: 0;
+}
+
+.pitch__code code[data-title],
+.doc-section pre code[data-title] {
+    display: block;
+}
+
+.pitch__code code[data-title]::before,
+.doc-section pre code[data-title]::before {
+    content: attr(data-title);
+    display: block;
+    margin: -.85rem -1.1rem .85rem;
+    padding: .45rem 1.1rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--ink-text) 18%, transparent);
+    background: var(--ink);
+    color: color-mix(in srgb, var(--ink-text) 72%, transparent);
+    font-size: .78rem;
+    font-weight: 600;
+}

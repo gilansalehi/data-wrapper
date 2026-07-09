@@ -90,39 +90,6 @@
     margin-top: 0;
 }
 
-/* Same slab as landing's .pitch__code — one code look site-wide. */
-.doc-section pre {
-    background: var(--ink);
-    color: var(--ink-text);
-    padding: .85rem 1.1rem;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    font-size: .82rem;
-    line-height: 1.65;
-    overflow-x: auto;
-}
-
-.doc-section pre code {
-    color: inherit;
-    background: none;
-}
-
-.doc-section pre code[data-title] {
-    display: block;
-}
-
-.doc-section pre code[data-title]::before {
-    content: attr(data-title);
-    display: block;
-    margin: -.85rem -1.1rem .85rem;
-    padding: .45rem 1.1rem;
-    border-bottom: 1px solid color-mix(in srgb, var(--ink-text) 18%, transparent);
-    background: var(--ink);
-    color: color-mix(in srgb, var(--ink-text) 72%, transparent);
-    font-size: .78rem;
-    font-weight: 600;
-}
-
 .doc-section table {
     border-collapse: collapse;
     display: block;
@@ -179,3 +146,36 @@
     font-weight: 700;
 }
 
+.budget-meters {
+    list-style: none;
+    margin: 1rem 0;
+    padding: 0;
+    display: grid;
+    gap: .5rem;
+    max-width: 26rem;
+}
+
+.budget-meters li {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+.budget-meters .meter {
+    inline-size: auto;
+    flex: 1;
+}
+
+.budget-label {
+    flex: 0 0 7rem;
+    font-family: var(--mono);
+    font-size: .76rem;
+    color: var(--muted);
+}
+
+.budget-pct {
+    font-family: var(--mono);
+    font-size: .76rem;
+    color: var(--faint);
+    white-space: nowrap;
+}

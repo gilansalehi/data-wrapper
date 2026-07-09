@@ -1,10 +1,10 @@
 /* ============================================================
-   theme.css — the design tokens. This is the framework's public
-   API: the stable set is the 11 colors (--bg --surface --text
-   --muted --faint --link --ok --warn --err --ink --ink-text)
-   plus --radius — exactly what the Theme Studio exposes. Derive
-   every other color from these with color-mix(); a hex literal
-   outside this file is a defect.
+   theme.css — design tokens for dw.css.
+
+   The editable theme surface is the color set plus --radius.
+   The remaining variables are framework defaults for layout,
+   type, borders, shadows, controls, and page chrome. Outside this
+   file, prefer tokens and color-mix() over new hard-coded colors.
    ============================================================ */
 
 :root {

@@ -66,29 +66,6 @@ main a:not(.btn):hover {
     font-weight: inherit;          /* cancel the global bold-on-hover shift */
 }
 
-/* ── Code block snippets (framework pages) ───────────────────
-   A bare prose <pre> uses the same dark slab as titled examples. Scoped to a
-   direct child so <details> code-reveal widgets are left alone. */
-main section details > pre,
-main section > pre {
-    background: var(--ink);
-    color: var(--ink-text);
-    padding: 1.1rem 1.25rem;
-    font-family: var(--mono);
-    font-size: .8rem;
-    line-height: 1.7;
-    overflow-x: auto;
-    box-shadow: var(--shadow);
-}
-main section details > pre code,
-main section > pre code {
-    background: none;
-    padding: 0;
-    border: 0;
-    color: inherit;
-    font-size: inherit;
-}
-
 /* ── Tables — a quiet row hover on the content pages ─────────── */
 
 main tbody tr { transition: background-color .12s; }
