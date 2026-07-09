@@ -1,0 +1,167 @@
+<script type="module" data-module="@tutorial/cousins">
+    // One view, many instances: the host page mounts this after each tutorial
+    // section with ?section=<key>, and the factory returns that section's
+    // field notes as instance scope. Unknown keys throw loudly.
+    const SECTIONS = {
+        nobuild: {
+            hook: 'No build!',
+            tagline: 'A script tag is the whole install. The nearest neighbors make the same promise; the majors ask for a toolchain first.',
+            compare: [
+                { name: 'Alpine.js', note: 'also installs as one script tag — drop it into any existing page and start.' },
+                { name: 'htmx',      note: 'same zero-tooling instinct: one script, no project scaffold.' },
+            ],
+            contrast: [
+                { name: 'React',   note: 'JSX needs compilation, so real projects start with a bundler or framework CLI.' },
+                { name: 'Svelte',  note: 'no build, no Svelte — the compiler is the product.' },
+                { name: 'Angular', note: 'a CLI-managed workspace stands between you and hello world.' },
+            ],
+        },
+        views: {
+            hook: 'HTML files as components',
+            tagline: 'The unit of composition is a fetchable HTML file, placed by a custom element.',
+            compare: [
+                { name: 'htmx', note: 'fetches HTML fragments into the page with hx-get — the same “HTML over the wire” instinct, though the server renders it.' },
+                { name: 'Lit',  note: 'custom elements as mount points in plain HTML — same platform bones, but Lit components are authored in JS.' },
+            ],
+            contrast: [
+                { name: 'React', note: 'a component is a function you import into a build — not a file the browser fetches.' },
+                { name: 'Vue',   note: '.vue single-file components compile away; the browser never sees the file.' },
+            ],
+        },
+        tokens: {
+            hook: 'Three attribute tokens',
+            tagline: 'Behavior attaches to markup through attributes — $ reads, @ calls, * renders.',
+            compare: [
+                { name: 'Vue',       note: 'template directives with the same instincts — @click is literally Vue’s event shorthand too.' },
+                { name: 'Alpine.js', note: 'x-text, x-on, x-for: attributes as the wiring, evaluated in place.' },
+            ],
+            contrast: [
+                { name: 'React',   note: 'no template grammar at all — markup and logic merge in JSX.' },
+                { name: 'Mithril', note: 'goes the other way: markup written as JavaScript calls (hyperscript).' },
+            ],
+        },
+        deepdive: {
+            hook: 'One token, one job',
+            tagline: 'Structure changes ride on <template> directives; values and events stay on the elements they affect.',
+            compare: [
+                { name: 'Vue',       note: 'v-if and v-for map almost one-to-one onto *if and *list.' },
+                { name: 'Alpine.js', note: 'x-if and x-for also live on <template> tags — the same platform trick.' },
+            ],
+            contrast: [
+                { name: 'React', note: 'conditionals are ternaries and lists are .map() — full JavaScript power, full JavaScript noise.' },
+                { name: 'Solid', note: 'wraps control flow in components (<Show>, <For>) so its compiler can track it.' },
+            ],
+        },
+        todos: {
+            hook: 'A whole app, still no compiler',
+            tagline: 'One HTML file: a module script for state, tokens for wiring, CSS alongside. That is the entire todo app.',
+            compare: [
+                { name: 'Alpine.js', note: 'an app this size is Alpine’s sweet spot too — state and handlers inline, no project.' },
+                { name: 'Mithril',   note: 'small complete apps on a tiny runtime, no mandatory tooling.' },
+            ],
+            contrast: [
+                { name: 'React',   note: 'the same app conventionally wants a scaffold, hooks for state, and a dev server.' },
+                { name: 'Angular', note: 'brings dependency injection and a workspace to a 40-line todo list.' },
+            ],
+        },
+    };
+
+    export default ({ props }) => {
+        const entry = SECTIONS[props.section];
+        if (!entry) throw new Error(`@tutorial/cousins: unknown section "${props.section}"`);
+        return entry;
+    };
+</script>
+
+<aside class="cousins">
+    <div class="container">
+        <p class="cousins__kicker">field notes — <span $text="hook"></span></p>
+        <p class="cousins__tagline" $text="tagline"></p>
+        <div class="cousins__grid">
+            <div class="cousins__col cousins__col--compare">
+                <p class="cousins__label">Compare</p>
+                <ul>
+                    <template *list="compare?key=name">
+                        <li><strong $text="./name"></strong><span $text="./note"></span></li>
+                    </template>
+                </ul>
+            </div>
+            <div class="cousins__col cousins__col--contrast">
+                <p class="cousins__label">Contrast</p>
+                <ul>
+                    <template *list="contrast?key=name">
+                        <li><strong $text="./name"></strong><span $text="./note"></span></li>
+                    </template>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<style>
+    .cousins {
+        padding-block: 1.4rem;
+        background: color-mix(in srgb, var(--link) 5%, var(--surface));
+        border-block: var(--border);
+    }
+    .cousins__kicker {
+        margin: 0 0 .35rem;
+        font-family: var(--mono);
+        font-size: .74rem;
+        font-weight: 600;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--link);
+    }
+    .cousins__tagline {
+        margin: 0 0 .9rem;
+        max-width: 46rem;
+        font-size: .92rem;
+        color: var(--muted);
+    }
+    .cousins__grid {
+        display: grid;
+        gap: 1rem;
+    }
+    @media (min-width: 720px) {
+        .cousins__grid { grid-template-columns: 1fr 1fr; }
+    }
+    .cousins__label {
+        margin: 0 0 .4rem;
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+    }
+    .cousins__col--compare .cousins__label { color: var(--ok); }
+    .cousins__col--contrast .cousins__label { color: var(--err); }
+
+    .cousins ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: .45rem;
+    }
+    .cousins li {
+        display: flex;
+        gap: .5rem;
+        align-items: baseline;
+        font-size: .88rem;
+        line-height: 1.45;
+    }
+    .cousins li::before {
+        flex: 0 0 auto;
+        font-weight: 700;
+    }
+    .cousins__col--compare li::before {
+        content: "✓";
+        color: var(--ok);
+    }
+    .cousins__col--contrast li::before {
+        content: "✗";
+        color: var(--err);
+    }
+    .cousins li strong { white-space: nowrap; }
+    .cousins li strong::after { content: " —"; font-weight: 400; color: var(--faint); }
+</style>

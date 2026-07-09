@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>data-wrapper — tutorial with field notes</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="canonical" href="https://data-wrapper.org/tutorials">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="description" content="The data-wrapper introduction, step by step, with field notes: after each concept, a compare-and-contrast against its closest cousins — Alpine, htmx, Vue, React, and friends.">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="data-wrapper">
+    <meta property="og:title" content="data-wrapper — tutorial with field notes">
+    <meta property="og:description" content="The introduction, step by step — each concept placed against its closest cousins in the framework landscape.">
+    <meta property="og:url" content="https://data-wrapper.org/tutorials">
+    <meta property="og:image" content="https://data-wrapper.org/icon-512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="data-wrapper — tutorial with field notes">
+    <meta name="twitter:description" content="The introduction, step by step — each concept placed against its closest cousins in the framework landscape.">
+    <meta name="twitter:image" content="https://data-wrapper.org/icon-512.png">
+    <script type="importmap">{"imports":{"data-wrapper":"/dist/data-wrapper.js","state/":"/state/"}}</script>
+    <script>
+        (() => {
+            try {
+                const v = localStorage.getItem('data-wrapper:theme');
+                if (v === 'light' || v === 'dark') document.documentElement.dataset.theme = v;
+            } catch {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/assets/css/index.css">
+    <script src="/dist/data-wrapper.js" type="module" data-shim-src="https://ga.jspm.io/npm:es-module-shims@2.8.1/dist/es-module-shims.js"></script>
+</head>
+<body>
+
+<data-wrapper id="nav" src="/views/nav.html" $data-nav-open="open"></data-wrapper>
+
+<header class="pitch pitch--band">
+    <div class="container">
+        <p class="pitch__kicker">tutorial</p>
+        <h1 class="pitch__title">The same walk, with field notes.</h1>
+        <p class="pitch__lead">
+            This page follows the homepage introduction step by step, and after
+            each idea it pauses for a field note: which tool in the framework
+            landscape does it most resemble, and which popular tools work
+            differently. If you already know any framework, the notes map your
+            instincts onto this one.
+        </p>
+    </div>
+</header>
+
+<main>
+    <!-- Hidden page TOC: mirrored into the nav's "On this page". The section
+         wrappers below reuse the homepage views verbatim; the field-note
+         asides are this page's addition. -->
+    <aside class="docs-toc" hidden>
+        <nav aria-label="Page sections">
+            <ol>
+                <li><a href="#nobuild">No build step</a></li>
+                <li><a href="#views">Load HTML views</a></li>
+                <li><a href="#tokens">Three tokens</a></li>
+                <li><a href="#token-examples">Token deep dive</a></li>
+                <li><a href="#todos">Todo app</a></li>
+                <li><a href="#family">The whole family</a></li>
+            </ol>
+        </nav>
+    </aside>
+
+    <data-wrapper id="nobuild" src="/views/framework/nobuild.html"></data-wrapper>
+    <data-wrapper src="/views/tutorial/cousins.html?section=nobuild"></data-wrapper>
+
+    <data-wrapper id="views" src="/views/framework/know.html"></data-wrapper>
+    <data-wrapper src="/views/tutorial/cousins.html?section=views"></data-wrapper>
+
+    <data-wrapper id="tokens" src="/views/framework/tokens.html"></data-wrapper>
+    <data-wrapper src="/views/tutorial/cousins.html?section=tokens"></data-wrapper>
+
+    <data-wrapper id="token-examples" src="/views/framework/token-examples.html"></data-wrapper>
+    <data-wrapper src="/views/tutorial/cousins.html?section=deepdive"></data-wrapper>
+
+    <data-wrapper id="todos" src="/views/framework/playground.html"></data-wrapper>
+    <data-wrapper src="/views/tutorial/cousins.html?section=todos"></data-wrapper>
+
+    <section class="pitch pitch--cta" id="family">
+        <div class="container">
+            <p class="pitch__kicker">the full picture</p>
+            <h2 class="pitch__title">Meet the whole family.</h2>
+            <p class="pitch__lead">
+                The field notes name two or three cousins per idea. The
+                comparison page lines up ten frameworks across six axes —
+                grades included, honest about the gaps — and ends with a
+                checklist for deciding whether adoption fits your project.
+            </p>
+            <p><a href="/compare">Open the comparison →</a></p>
+        </div>
+    </section>
+</main>
+</body>
+</html>
