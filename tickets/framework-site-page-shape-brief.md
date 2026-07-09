@@ -1,5 +1,15 @@
 # Framework Website Page Shape Brief
 
+> **⚠ Read this first (added by Claude, 2026-07-09):** this brief's *page-shape
+> and IA guidance is good*, but its **code examples invent APIs that do not
+> exist in data-wrapper**: inline text interpolation (`Clicked $count times` —
+> `$` bindings are attributes only), `*for` / `*match` (ours are `*list`,
+> `*if`, `*src`), a `<template>`-rooted single-file component format, and
+> "scoped styles" (view styles are plain global `<style>` blocks). When
+> executing any ticket derived from this brief, the source of truth is
+> `src/lib/` and the framework guide — never this document's code samples.
+> Extracted tickets: 025–029.
+
 **Purpose:** Guide local agents while building a public site for a small, browser-native JavaScript framework/hobby project.  
 **Audience:** AI coding agents, docs agents, design agents, and future maintainers.  
 **Date compiled:** July 8, 2026.  

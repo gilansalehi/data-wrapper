@@ -1,5 +1,13 @@
 # Ticket 022: UGC sanitization recipe (formatter pattern)
 
+## Status (2026-07-09)
+
+Deferred until after the alpha release. The framework already exposes
+`DW_FORMATTERS`, so early adopters can register their own UGC sanitizer
+formatter without new runtime code. A published recipe should wait until we
+can verify the browser behavior and sanitizer fallback carefully, because this
+is security documentation, not ordinary example code.
+
 **Suggested owner:** Opus or Codex writes; the other reviews.
 **Difficulty:** moderate — the pattern is specified below, but the snippet
 must be tested in a real browser before it is published as a recipe.

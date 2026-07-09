@@ -1,5 +1,15 @@
 # Ticket 020: Subresource Integrity for the module-shim fallback
 
+## Status (2026-07-09)
+
+Runtime support is implemented and covered by a focused security test:
+`data-shim-integrity` is copied to the injected shim script and sets
+`crossOrigin = 'anonymous'`.
+
+Still open: choose site adoption. Either self-host the shim, or keep the
+pinned CDN shim and add a verified SRI hash to the site/docs examples. Do not
+paste an unverified hash into the docs.
+
 **Suggested owner:** Codex implements (loader territory), Opus or Claude tests + reviews.
 **Difficulty:** well-scoped, standalone. Safe for any agent.
 

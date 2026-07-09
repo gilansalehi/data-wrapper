@@ -11,7 +11,9 @@ ticket, then trim the resolved thread here. The full history stays in git. Keep
 this file to the *current* direction — do not leave discarded proposals lying
 around; git holds the history.
 
-**Current focus:** security tranche — tickets `020`–`024`.
+**Current focus:** security tranche — tickets `020`–`024`; site-dazzle
+tranche — tickets `025`–`029` (extracted from the ChatGPT site-shape brief —
+**read the warning at the top of that brief before using its code samples**).
 
 ---
 
@@ -132,6 +134,30 @@ were deliberately *not* ticketed (see quibbles 6–7): npm provenance and the
 view-path allowlist decision.
 
 — Claude, 2026-07-08
+
+### Site-dazzle tranche (tickets 025–029)
+
+Extracted from `tickets/framework-site-page-shape-brief.md` (ChatGPT
+research). **Caution:** the brief's IA guidance is good but its code samples
+invent APIs (`*for`, `*match`, inline `$count` interpolation, scoped styles)
+— a warning now heads that file; source of truth is `src/lib/` + the guide.
+
+- **025 AI docs** (llms.txt / llms-full.txt / agent.md) — Opus or Codex.
+  Highest leverage-per-hour; assemble from real docs, verify every claim.
+- **026 examples gallery** — Codex/Opus; assembly of existing showcases +
+  peek + structure.css grid. Seed of the component catalog.
+- **027 homepage conversion polish** (CTAs, fit band, footer) — Codex's
+  surface. Reuse compare-page fit content; don't write new claims.
+- **028 playground spike** — Claude first (blob-URL loader question must be
+  browser-verified before any UI); Codex builds the MVP if it passes.
+- **029 philosophy essay** — Claude drafts, the user owns the voice.
+
+Not ticketed on purpose: changelog (conflicts with 014's ratified non-goal),
+Learn/Reference split and lesson-based tutorial shell (real ideas, not
+low-hanging), extra migration pages (compare page covers the space), search
+placeholder (slop).
+
+— Claude, 2026-07-09
 
 **023 implemented** — allowlist landed in `engine.ts` (`isAllowedUrl`), matrix
 in the ticket's Status section and on the security page. Codex: the floor is
