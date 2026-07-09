@@ -1,5 +1,18 @@
 # Ticket 023: URL scheme guard — blocklist → allowlist
 
+## Status (2026-07-08)
+
+**Implemented by Claude; awaiting Codex's adversarial tests and the user's
+matrix ratification.** The matrix as shipped (`src/lib/engine.ts`,
+`isAllowedUrl`): schemeless + `http:`/`https:` everywhere; `mailto:`/`tel:`
+additionally on `href`; `data:`/`blob:` additionally on `src`/`poster`
+(attribute-based, so a `data:` iframe src passes — opaque origin, accepted
+and documented). Unknown schemes drop with the existing warn shape. No
+config surface; exotic schemes are authored statically. Site audit found
+only relative and `https:` bindings — nothing breaks. Seven matrix tests
+added to `tests/security.test.ts`; all 67 unit tests + 6 Playwright tests
+green. Security page bullet + OWASP RULE #5 row rewritten for the allowlist.
+
 **Suggested owner: Claude (Fable) personally.** Flagged as unsuitable for a
 smaller model: the diff is small but the judgment isn't — over-blocking
 breaks legitimate apps quietly, under-blocking defeats the guard, and the

@@ -25,6 +25,16 @@
         <strong>out of scope today</strong>: an app that renders untrusted HTML
         owns sanitization until the Trusted-Types tier lands (see below).
     </p>
+    <p>
+        A loaded view is trusted code. When <code>load()</code> fetches a view,
+        it parses that HTML and imports the view's
+        <code>data-module</code> script with full page privileges. Two rules
+        follow from that: never flow user input into a wrapper
+        <code>src</code> or a <code>*src</code> binding, and never serve
+        user-uploaded files from the application origin. If uploads live at
+        <code>/uploads/...</code>, an attacker-controlled upload can become a
+        same-origin view candidate. Serve uploads from a separate origin.
+    </p>
 
     <h3>Default protections</h3>
     <ul>
@@ -34,12 +44,24 @@
             <code>$outerHTML</code> throw. Raw HTML requires the explicit
             <code>$unsafeHTML</code> opt-in, so the dangerous sink can never be
             reached by accident.</li>
-        <li><strong>URL-scheme neutralization.</strong> <code>javascript:</code>
-            and <code>vbscript:</code> values are dropped from every URL-bearing
+        <li><strong>URL-scheme allowlist.</strong> A bound value with a scheme
+            is written only if that scheme is affirmatively allowed for the
+            attribute; unknown schemes are dropped with a console warning, and
+            the check resists control-character obfuscation such as
+            <code>java&#9;script:</code>. Schemeless values (relative paths,
+            <code>//host</code>, query, fragment) always pass. The matrix:
+            <code>http:</code> / <code>https:</code> on every URL-bearing
             attribute (<code>href</code>, <code>src</code>, <code>action</code>,
             <code>formaction</code>, <code>data</code>, <code>ping</code>,
-            <code>poster</code>, <code>background</code>), and the check resists
-            control-character obfuscation such as <code>java&#9;script:</code>.</li>
+            <code>poster</code>, <code>background</code>);
+            <code>mailto:</code> and <code>tel:</code> additionally on
+            <code>href</code>; <code>data:</code> and <code>blob:</code>
+            additionally on <code>src</code> and <code>poster</code> for media
+            embedding. The <code>src</code> allowance is attribute-based, so a
+            <code>data:</code> iframe <code>src</code> passes — it renders with
+            an opaque origin and cannot reach the page. An exotic legitimate
+            scheme can still be authored statically; the guard covers bound
+            values only.</li>
         <li><strong>Event handlers only via <code>@event</code>.</strong>
             Binding an <code>$on*</code> property throws and points to the
             <code>@event</code> interface, so the event-handler sink cannot be
@@ -50,7 +72,9 @@
             <code>eval</code>.</li>
         <li><strong>Same-origin view loading.</strong> A
             <code>&lt;data-wrapper src&gt;</code> only loads views from the page's
-            origin, limiting injected-<code>src</code> escalation.</li>
+            origin. A string rendered through <code>*src</code> creates a child
+            wrapper and goes through the same origin gate. The value is still
+            trusted code input; bind application state, not user input.</li>
     </ul>
 
     <h3>OWASP DOM-XSS Cheat Sheet conformance</h3>
@@ -71,8 +95,10 @@
             </tr>
             <tr>
                 <td>RULE #5 — untrusted data in a URL attribute context</td>
-                <td>Met across the URL-attr set: dangerous schemes are
-                    neutralized, including control-character-obfuscated forms.</td>
+                <td>Met with an allowlist across the URL-attr set: only
+                    affirmatively allowed schemes bind (per-attribute matrix
+                    above); unknown schemes drop, and the check resists
+                    control-character-obfuscated forms.</td>
             </tr>
             <tr>
                 <td>RULE #3, GUIDELINE #5 / #10 — no event-handler or implicit
@@ -101,12 +127,15 @@
         these remain the application's to own:
     </p>
     <ul>
-        <li>Do not pass untrusted content to <code>$unsafeHTML</code> or to an
-            <code>&lt;iframe $srcdoc&gt;</code> — both are raw-HTML sinks by
-            definition.</li>
+        <li>Treat the dangerous sinks as trusted-input-only:
+            <code>src</code> and <code>*src</code> load and execute view code;
+            <code>$unsafeHTML</code> and <code>$srcdoc</code> write raw HTML.</li>
         <li>Sanitize backend data before binding it into an HTML sink. URL
-            bindings block executable schemes, but they do not decide whether a
-            normal <code>https:</code> destination is appropriate for the app.</li>
+            bindings enforce a scheme allowlist, but they do not decide whether
+            a normal <code>https:</code> destination is appropriate for the app.</li>
+        <li>Do not bind untrusted input to <code>$style</code>. CSS injection is
+            not script execution in modern browsers, but it can still deface UI
+            or enable browser-specific data exfiltration tricks.</li>
         <li>Set defense-in-depth the framework cannot: <code>HttpOnly</code>
             cookies, Subresource Integrity on the CDN framework script, and the
             CSP directives noted above.</li>

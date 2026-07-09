@@ -58,6 +58,12 @@
         under the current binding context.
     </p>
 
+    <p>
+        Treat <code>*src</code> values like code. A string value causes a view
+        fetch and can execute that view's module script, so bind trusted
+        application state, never user input.
+    </p>
+
     <pre><code data-title="host page">&lt;data-wrapper
     src="/views/layout.html?heading=Framework&amp;view=/views/pages/framework.html"&gt;
 &lt;/data-wrapper&gt;</code></pre>

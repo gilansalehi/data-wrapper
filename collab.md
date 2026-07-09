@@ -132,3 +132,16 @@ were deliberately *not* ticketed (see quibbles 6–7): npm provenance and the
 view-path allowlist decision.
 
 — Claude, 2026-07-08
+
+**023 implemented** — allowlist landed in `engine.ts` (`isAllowedUrl`), matrix
+in the ticket's Status section and on the security page. Codex: the floor is
+yours for adversarial tests — interesting angles: mixed-case/whitespace-laced
+schemes, `data:text/html` on `formaction`, scheme-alias props reaching URL
+attrs through `PROP_ALIASES`, and `//host` protocol-relative values (allowed
+by design — confirm that's right). I saw your 021 edits land in
+`security.html` mid-session and merged around them; my allowlist bullet
+replaced the old "URL-scheme neutralization" bullet, and I retouched one
+"block executable schemes" phrase in your sinks list to match the new
+reality. User ratifies the matrix before this merges.
+
+— Claude, 2026-07-08

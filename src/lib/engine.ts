@@ -291,16 +291,33 @@ const URL_ATTRS = new Set([
 ]);
 // A browser's URL parser ignores ASCII whitespace and C0 control characters, so
 // `java\tscript:` still resolves to the javascript: scheme. Strip those from a
-// copy before testing the prefix; the original value is what we store or drop.
+// copy before reading the scheme; the original value is what we store or drop.
 const CONTROL_CHARS = /[\u0000-\u0020]+/g;
-const DANGEROUS_URL = /^(?:javascript|vbscript):/i;
+// Bound URL values pass an allowlist, not a blocklist: a value with a scheme
+// is written only if that scheme is affirmatively allowed for the attribute.
+// Schemeless values (relative paths, //host, ?query, #fragment) always pass.
+// `href` adds the link schemes; `src`/`poster` add the media-embedding ones —
+// which means a data: iframe src slips through the attr-name check (opaque
+// origin, so no parent access; accepted and documented). Anything else can be
+// authored statically — the guard covers bound values only.
+const URL_SCHEME = /^[a-z][a-z0-9+.-]*(?=:)/i;
+const URL_SCHEMES_COMMON = new Set(['http', 'https']);
+const URL_SCHEMES_EXTRA: Record<string, ReadonlySet<string>> = {
+    href:   new Set(['mailto', 'tel']),
+    src:    new Set(['data', 'blob']),
+    poster: new Set(['data', 'blob']),
+};
 
-const isDangerousUrl = (val: unknown): boolean =>
-    DANGEROUS_URL.test(String(val).replace(CONTROL_CHARS, ''));
+const isAllowedUrl = (prop: string, val: unknown): boolean => {
+    const scheme = String(val).replace(CONTROL_CHARS, '').match(URL_SCHEME)?.[0].toLowerCase();
+    if (!scheme) return true;
+    return URL_SCHEMES_COMMON.has(scheme) || (URL_SCHEMES_EXTRA[prop]?.has(scheme) ?? false);
+};
 
 const setProp = (el: Element, prop: string, val: unknown) => {
-    if (URL_ATTRS.has(prop.toLowerCase()) && isDangerousUrl(val)) {
-        console.warn(`data-wrapper: blocked unsafe URL scheme in ${prop}="${String(val)}"`);
+    const urlProp = prop.toLowerCase();
+    if (URL_ATTRS.has(urlProp) && !isAllowedUrl(urlProp, val)) {
+        console.warn(`data-wrapper: blocked disallowed URL scheme in ${prop}="${String(val)}"`);
         return;
     }
     const value = prop === 'textContent' ? String(val ?? '') : val;

@@ -65,6 +65,42 @@ test('a dangerous scheme is blocked across the URL-attr set (formaction)', () =>
     expect(child.getAttribute('formaction')).toBeNull();
 });
 
+test('mailto: is allowed on href (link schemes must not break)', () => {
+    const { child } = mountChild('a', '$href', 'link', { link: 'mailto:hi@example.com' });
+    expect(child.getAttribute('href')).toBe('mailto:hi@example.com');
+});
+
+test('tel: is allowed on href', () => {
+    const { child } = mountChild('a', '$href', 'link', { link: 'tel:+15551234567' });
+    expect(child.getAttribute('href')).toBe('tel:+15551234567');
+});
+
+test('link schemes do not leak into form sinks (mailto: formaction dropped)', () => {
+    const { child } = mountChild('button', '$formaction', 'go', { go: 'mailto:hi@example.com' });
+    expect(child.getAttribute('formaction')).toBeNull();
+});
+
+test('data: is allowed on a media src', () => {
+    const gif = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+    const { child } = mountChild('img', '$src', 'pic', { pic: gif });
+    expect(child.getAttribute('src')).toBe(gif);
+});
+
+test('data: is dropped from href (navigation sink)', () => {
+    const { child } = mountChild('a', '$href', 'link', { link: 'data:text/html,<b>x</b>' });
+    expect(child.getAttribute('href')).toBeNull();
+});
+
+test('an unknown scheme is dropped (allowlist, not blocklist)', () => {
+    const { child } = mountChild('a', '$href', 'link', { link: 'foo:whatever' });
+    expect(child.getAttribute('href')).toBeNull();
+});
+
+test('a schemeless relative path still binds', () => {
+    const { child } = mountChild('a', '$href', 'link', { link: '/framework#tokens' });
+    expect(child.getAttribute('href')).toBe('/framework#tokens');
+});
+
 test('binding an event handler with $ throws and points to @event', () => {
     const wrapper = document.createElement('data-wrapper') as unknown as Wrapper;
     const child = document.createElement('button');
