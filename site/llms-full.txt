@@ -1,0 +1,886 @@
+data-wrapper AI Reference
+=========================
+
+data-wrapper is a zero-dependency, HTML-first reactivity library built around
+one custom element: <data-wrapper>. It loads ordinary HTML view files and binds
+DOM effects to ES module exports with a small attribute syntax.
+
+There is no JSX, virtual DOM, compiler, text interpolation, signal API, or
+component class API. The framework syntax is HTML attributes plus normal ES
+modules.
+
+
+1. Install and Mount
+--------------------
+
+Load the browser artifact and mount a view:
+
+```html
+<script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"></script>
+<data-wrapper src="/views/counter.html"></data-wrapper>
+```
+
+When a component module imports from "data-wrapper", the host page needs an
+import map:
+
+```html
+<script type="importmap">
+{
+    "imports": {
+        "data-wrapper": "https://unpkg.com/data-wrapper/dist/data-wrapper.js"
+    }
+}
+</script>
+```
+
+
+2. View Files
+-------------
+
+A view is an HTML file. It may contain one module script:
+
+```html
+<script type="module" data-module="@view/counter">
+    export let count = 0;
+    export function increment() {
+        count += 1;
+    }
+</script>
+
+<button @click="increment">+</button>
+<output $text="count"></output>
+```
+
+The module script is removed before the view body is inserted. The module is
+registered through an import map using its `data-module` name.
+
+Rules:
+
+- A view may contain zero or one `script[type="module"][data-module]`.
+- A component module script must have a `data-module` name.
+- A `data-module` name may be reused only by the same canonical view URL.
+- A default export, when present, must be a factory function.
+- A factory may return an object of per-wrapper instance bindings or nothing.
+- Instance bindings shadow named module exports with the same name.
+
+
+3. The Three Tokens
+-------------------
+
+The template syntax has exactly three token prefixes:
+
+- `$`: read a binding and write to a DOM property or attribute.
+- `*`: read a binding and drive a structural directive.
+- `@`: listen for a DOM event and invoke or emit an action.
+
+Examples:
+
+```html
+<output $text="count"></output>
+<img $src="avatarUrl">
+<button @click="save?prevent">Save</button>
+
+<template *list="todos">
+    <li $text="./task"></li>
+</template>
+
+<template *if="todos?count">
+    <p>There are todos.</p>
+</template>
+
+<template *src="panel">
+    <p>Choose a panel.</p>
+</template>
+```
+
+Do not invent other binding syntaxes. There is no `{{ value }}` interpolation,
+no `*for`, no `*each`, no `*match`, no `bind:value`, and no inline JavaScript
+expression syntax.
+
+
+4. `$` Property Bindings
+------------------------
+
+`$prop="binding"` reads a binding and writes it to a DOM property if that
+property exists. Otherwise it writes an attribute.
+
+Common aliases:
+
+- `$text` writes `textContent`.
+- `$class` appends a class string to the element's existing class list.
+- `$unsafeHTML` writes `innerHTML` and is an explicit raw-HTML opt-in.
+
+Blocked sinks:
+
+- `$innerHTML` throws. Use `$text` or `$unsafeHTML`.
+- `$outerHTML` throws. Use `$text` or `$unsafeHTML`.
+- `$onclick` and other `$on*` event-handler sinks throw. Use `@click`.
+
+Nullish text clears to an empty string. URL-shaped bound attributes pass a
+scheme allowlist before being written.
+
+
+5. `@` Event Bindings
+---------------------
+
+`@event="action"` listens for a browser event on the element. The assignment is
+a data-wrapper path, not inline JavaScript.
+
+```html
+<form @submit="addTodo?prevent">
+    <input name="task">
+    <button>Add</button>
+</form>
+```
+
+Supported event modifiers are query params:
+
+- `?prevent` calls `event.preventDefault()`.
+- `?stop` calls `event.stopPropagation()`.
+- `?immediate` calls `event.stopImmediatePropagation()`.
+
+If the path names an exported function, the component runtime invokes that
+function when the event fires. If there is no matching function, the binding
+emits a bubbling CustomEvent with the assigned path as the event name. This is
+useful for child-to-parent signaling.
+
+The CustomEvent detail contains:
+
+- `originalEvent`: the original DOM event.
+- `path`: the assigned action path.
+- `isRel`: whether the path was relative.
+- `item`: the nearest `*list` row item, when inside a row.
+
+
+6. `*` Directives
+-----------------
+
+There are exactly three built-in directives:
+
+- `*list`
+- `*if`
+- `*src`
+
+Directives live on `<template>` elements. Structural template bodies should use
+one root element because the runtime clones the first element child.
+
+`*list`
+
+`*list` reads an array and clones the template body once per item. Each row gets
+a row binding context. The default row key is `id`; override it with `?key=...`.
+
+```html
+<ul>
+    <template *list="todos?key=id">
+        <li>
+            <input type="checkbox" $checked="./done" @change="toggleTodo">
+            <span $text="./task"></span>
+        </li>
+    </template>
+</ul>
+```
+
+`*if`
+
+`*if` inserts the template body when the bound value is truthy and removes it
+when the value is falsy.
+
+```html
+<template *if="todos?count">
+    <p>You have todos.</p>
+</template>
+```
+
+`*src`
+
+`*src` is a composition outlet. It fills the outlet from one of three sources:
+
+- a non-empty string: creates a child `<data-wrapper src="...">`;
+- a ChildNode or array of ChildNodes: projects captured children;
+- otherwise: renders the template body as fallback.
+
+```html
+<template *src="panel">
+    <p>Choose a panel.</p>
+</template>
+```
+
+
+7. Binding Path Grammar
+-----------------------
+
+Bindings use DWRL path syntax. The parser is exported as `p` and `pURL`.
+
+- `name` reads the nearest row that owns `name`, then parent rows, then the
+  component instance or module.
+- `name/path` reads nested data through slash paths.
+- `./name` reads from the nearest row only.
+- `../name` reads from the parent row. Repeat `../` for higher row scopes.
+- `/name` reads from the component root scope and bypasses row scopes.
+- `//wrapperId/name` reads the root scope of another loaded
+  `<data-wrapper id="wrapperId">`.
+- `?formatter` and `?formatter=value` apply formatters on `$` and `*`.
+- `?prevent`, `?stop`, and `?immediate` modify `@` event handling.
+
+Protocol-prefixed forms such as `localStorage://key` are reserved for future
+source resolvers. They are inert today.
+
+Examples:
+
+```html
+<span $text="title"></span>
+<span $text="./task"></span>
+<span $text="../project/name"></span>
+<span $text="/title"></span>
+<span $text="//orders/orderCount"></span>
+<span $text="name?trim&case=title"></span>
+```
+
+
+8. Module and Factory Contract
+------------------------------
+
+Named exports are the shared module state surface. If a view is mounted more
+than once, named exports are shared by every wrapper using that module.
+
+Use a default factory for per-wrapper state:
+
+```html
+<script type="module" data-module="@view/counter">
+    import { action } from 'data-wrapper';
+
+    export const label = 'Counter';
+
+    export default ({ props, cleanup }) => {
+        let count = Number(props.start ?? 0);
+        const timer = setInterval(() => {}, 1000);
+        cleanup(() => clearInterval(timer));
+
+        return {
+            get count() { return count; },
+            increment: action(() => { count += 1; }),
+        };
+    };
+</script>
+
+<h2 $text="label"></h2>
+<button @click="increment">+</button>
+<output $text="count"></output>
+```
+
+The factory receives:
+
+- `wrapper`: the `<data-wrapper>` element.
+- `url`: a URL object for the loaded view.
+- `params`: `url.searchParams`.
+- `props`: resolved query-param inputs plus `props.url`.
+- `slots`: captured light-DOM child groups keyed by `slot`.
+- `cleanup(off)`: registers teardown callbacks.
+
+Query params on `src` become props. Assigned literal values are parsed with
+`JSON.parse` when possible:
+
+```html
+<data-wrapper src="/views/counter.html?start=5&debug=true"></data-wrapper>
+```
+
+If a query value resolves to a parent binding, the prop is a stable reader
+function. If it does not resolve, it becomes a static value.
+
+The original full `src` string is always available as `props.url`.
+
+
+9. Reactivity
+-------------
+
+data-wrapper does not track individual property reads. Each component runtime
+tracks active DOM sinks and re-reads them during a flush. Changed outputs are
+published with `Object.is` comparison.
+
+Use `action()` for functions that mutate state:
+
+```js
+import { action } from 'data-wrapper';
+
+export let count = 0;
+export const increment = action(() => {
+    count += 1;
+});
+```
+
+When a wrapped action returns, a microtask flush is scheduled. If the action
+returns a Promise, another flush runs when the Promise settles.
+
+Use `flush()` when mutation happens outside an action:
+
+```js
+import { flush } from 'data-wrapper';
+
+setTimeout(() => {
+    count += 1;
+    flush();
+}, 1000);
+```
+
+When a binding reads a function as a value, the function is called with no
+arguments. This is how computed exports work:
+
+```js
+export const doubled = () => count * 2;
+```
+
+Then:
+
+```html
+<output $text="doubled"></output>
+```
+
+
+10. Formatters
+--------------
+
+Formatters run left-to-right from query params on `$` bindings and `*`
+directive sources. Formatter arguments are static strings.
+
+Built-in formatters:
+
+- `default`
+- `bool`
+- `case`
+- `trim`
+- `truncate`
+- `count`
+- `join`
+- `sort`
+- `unique`
+- `number`
+- `fixed`
+- `percent`
+- `currency`
+- `date`
+- `time`
+- `datetime`
+- `json`
+
+Examples:
+
+```html
+<span $text="name?trim&case=title"></span>
+<span $text="price?currency=EUR"></span>
+<span $text="done?bool=done:active"></span>
+<template *list="orders?unique=id&sort=-createdAt"></template>
+```
+
+Register custom formatters through `DW_FORMATTERS`:
+
+```js
+import { DW_FORMATTERS } from 'data-wrapper';
+
+DW_FORMATTERS.set('initials', value => {
+    return String(value ?? '')
+        .trim()
+        .split(/\s+/)
+        .map(part => part[0] ?? '')
+        .join('')
+        .toUpperCase();
+});
+```
+
+
+11. Public Exports
+------------------
+
+Public runtime exports:
+
+- `action`
+- `flush`
+- `DW_DIRECTIVES`
+- `DW_FORMATTERS`
+- `nearestItem`
+- `emit`
+- `on`
+- `p`
+- `pURL`
+- `q`
+
+Public types include component context/factory/module types, directive types,
+formatter type, item type, dispatch detail type, and `Off`.
+
+
+12. Security Contract
+---------------------
+
+Loaded views are trusted code. A view loaded through `src` or through a string
+value passed to `*src` may execute its module script with full page privileges.
+
+Rules:
+
+- Never flow user input into `<data-wrapper src="...">`.
+- Never flow user input into a string used by `*src`.
+- Do not serve user uploads from the same origin as the app.
+- Use `$text` for untrusted text.
+- Use `$unsafeHTML` only for trusted or sanitized HTML.
+- `$srcdoc` is an explicit raw-HTML sink.
+
+Same-origin loading:
+
+- `load()` resolves `src` against `document.baseURI`.
+- It trusts only `document.location.origin`.
+- Cross-origin view URLs are blocked before fetch.
+
+Bound URL allowlist:
+
+- Schemeless values pass.
+- `http:` and `https:` pass for URL-shaped attributes.
+- `mailto:` and `tel:` additionally pass on `href`.
+- `data:` and `blob:` additionally pass on `src` and `poster`.
+- Unknown schemes are dropped with a console warning.
+
+The es-module-shims fallback can be configured with `data-shim-src`. If
+`data-shim-integrity` is present on the same script tag, the injected shim
+script receives `integrity` and `crossOrigin = 'anonymous'`.
+
+
+13. Error Behavior
+------------------
+
+The runtime throws for:
+
+- unknown directives such as `*for`;
+- `$innerHTML`, `$outerHTML`, and `$on*` property bindings;
+- failed view fetches, with status attribution;
+- more than one `script[type="module"][data-module]` in a view;
+- missing `data-module` names;
+- duplicate `data-module` names from different view URLs;
+- default exports that are not factory functions;
+- factories that return non-object values.
+
+The runtime warns for:
+
+- unresolved bindings that render as static literals;
+- unresolved cross-wrapper bindings;
+- blocked URL schemes.
+
+
+14. Complete Example: Counter
+-----------------------------
+
+Source: /views/showcase/counter.v2.html
+
+```html
+<script type="module" data-module="@view/counter">
+    export let count = 0;
+
+    export function increment() {
+        count += 1;
+    }
+
+    export function decrement() {
+        count -= 1;
+    }
+</script>
+
+<article class="counter" aria-label="Counter demo">
+    <button @click="decrement">–</button>
+
+    <output data-output="count" $text="count"></output>
+
+    <button @click="increment">+</button>
+</article>
+
+<style>
+    .counter {
+        display: flex;
+        gap: 1rem;
+        align-items: baseline;
+
+        button {
+            grid-area: btn;
+            display: inline-flex;
+        }
+
+        output {
+            width: 2em;
+            grid-area: out;
+            display: inline;
+            font-size: 1.25em;
+            margin: 0;
+            text-align: center;
+        }
+    }
+</style>
+```
+
+
+15. Complete Example: Todos
+---------------------------
+
+Source: /views/showcase/todos.v3.html
+
+```html
+<script type="module" data-module="@view/todos">
+    export let filter = 'all';
+    export let todos  = [
+        { id: 1, task: 'Master the DOM',    done: true  },
+        { id: 2, task: 'Ship data-wrapper', done: false },
+        { id: 3, task: 'Write the docs',    done: false },
+    ];
+
+    export const view = () => todos.filter(t =>
+          filter === 'all'    ? true
+        : filter === 'active' ? !t.done
+        :                        t.done
+    );
+
+    export const activeCount = () => todos.filter(t => !t.done).length;
+
+    export function addTodo(event) {
+        const form = event.target;
+        const task = form.task.value.trim();
+        if (!task) return;
+        todos = [...todos, { id: Date.now(), task, done: false }];
+        form.reset();
+    }
+
+    export function removeTodo(event) {
+        const { item } = event.detail;
+        todos = todos.filter(t => t.id !== item.id);
+    }
+
+    export function toggleTodo(event) {
+        const { item } = event.detail;
+        todos = todos.map(t =>
+            t.id === item.id ? { ...t, done: event.target.checked } : t
+        );
+    }
+
+    export function setFilter(event) {
+        filter = event.target.value;
+    }
+
+    export function clearDone() {
+        todos = todos.filter(t => !t.done);
+    }
+</script>
+
+<article class="todo-demo">
+    <header class="todo-demo__header">
+        <div>
+            <p class="todo-demo__eyebrow">live todo view</p>
+            <h3>Ship the beta</h3>
+        </div>
+        <strong class="todo-demo__count"><span $text="activeCount">0</span> active</strong>
+    </header>
+
+    <form @submit="addTodo?prevent">
+        <input name="task" type="text" placeholder="What needs doing?" required autocomplete="off">
+        <button type="submit">Add</button>
+    </form>
+
+    <ul class="todo-list">
+        <template *list="view">
+            <li class="todo-item" $class="./done?bool=done:active">
+                <input type="checkbox" $checked="./done" @change="toggleTodo" aria-label="Toggle todo completion">
+                <span $text="./task"></span>
+                <template *if="./done"><strong class="done-badge">done</strong></template>
+                <button class="delete-btn" @click="removeTodo" aria-label="Remove">✕</button>
+            </li>
+        </template>
+    </ul>
+
+    <div class="controls">
+        <button @click="clearDone">Clear done</button>
+        <div class="filter-btns" role="group" aria-label="Filter todos">
+            <button @click="setFilter" value="all">All</button>
+            <button @click="setFilter" value="active">Active</button>
+            <button @click="setFilter" value="done">Done</button>
+        </div>
+    </div>
+</article>
+
+<style>
+    .todo-demo {
+        border: var(--border);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: .4rem;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: clip;
+
+        & p:first-child { margin-top: 0; }
+        & p:last-child  { margin-bottom: 0; }
+    }
+
+    .todo-demo__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: .9rem;
+        border-bottom: var(--border);
+    }
+
+    .todo-demo__eyebrow {
+        margin: 0;
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: .72rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .todo-demo h3 {
+        margin: .1rem 0 0;
+        font-size: 1.2rem;
+        line-height: 1.15;
+    }
+
+    .todo-demo__count {
+        flex: 0 0 auto;
+        padding: .25rem .6rem;
+        border: 1px solid color-mix(in srgb, var(--link) 35%, transparent);
+        border-radius: 999px;
+        color: var(--link);
+        font-family: var(--mono);
+        font-size: .78rem;
+        font-weight: 700;
+        background: color-mix(in srgb, var(--link) 8%, transparent);
+    }
+
+    .todo-demo form {
+        display: flex;
+        gap: .5rem;
+        margin-bottom: .75rem;
+
+        & input  { flex: 1; margin: 0; }
+        & button { white-space: nowrap; }
+    }
+
+    .todo-list {
+        list-style: none;
+        padding: 0;
+        margin: .75rem 0;
+    }
+
+    .todo-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        border-bottom: var(--border);
+        background: var(--bg);
+
+        &.done span { text-decoration: line-through; opacity: .45; }
+    }
+
+    .todo-item:first-child {
+        border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .todo-item:last-child {
+        border-bottom: 0;
+        border-radius: 0 0 var(--radius) var(--radius);
+    }
+
+    .done-badge {
+        font-size: .68rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--ok);
+        border: 1px solid color-mix(in srgb, var(--ok) 40%, transparent);
+        border-radius: 999px;
+        padding: .05rem .45rem;
+    }
+
+    .todo-demo .delete-btn {
+        margin-left: auto;
+        color: var(--err);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: .15rem .4rem;
+        font-size: 1rem;
+        min-height: 0;
+    }
+
+    .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: .75rem;
+        font-size: .88rem;
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+
+    .filter-btns button { margin-left: .2rem; }
+</style>
+```
+
+
+16. Complete Example: Formatters
+--------------------------------
+
+Source: /views/showcase/formatters.html
+
+```html
+<script type="module" data-module="@showcase/formatters">
+    export const name = '  ada lovelace  ';
+    export const amount = 1299;
+    export const active = true;
+    export const people = [
+        { id: 1, name: 'Grace Hopper' },
+        { id: 2, name: 'Ada Lovelace' },
+        { id: 3, name: 'Katherine Johnson' },
+    ];
+</script>
+
+<article class="formatter-demo">
+    <dl>
+        <div>
+            <dt>Name</dt>
+            <dd $text="name?trim&case=title"></dd>
+        </div>
+        <div>
+            <dt>Budget</dt>
+            <dd $text="amount?currency"></dd>
+        </div>
+        <div>
+            <dt>Status</dt>
+            <dd $text="active?bool=ready:paused"></dd>
+        </div>
+    </dl>
+
+    <ol>
+        <template *list="people?sort=name">
+            <li $text="./name"></li>
+        </template>
+    </ol>
+</article>
+
+<style>
+    .formatter-demo {
+        display: grid;
+        gap: 1rem;
+        padding: 1rem;
+        border: var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+    }
+
+    .formatter-demo dl {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+        gap: .65rem;
+        margin: 0;
+    }
+
+    .formatter-demo dl > div {
+        padding: .75rem;
+        border: var(--border);
+        border-radius: var(--radius);
+        background: var(--bg);
+    }
+
+    .formatter-demo dt {
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: .68rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .formatter-demo dd {
+        margin: .2rem 0 0;
+        font-weight: 800;
+    }
+
+    .formatter-demo ol {
+        display: grid;
+        gap: .4rem;
+        margin: 0;
+        padding: 0;
+    }
+</style>
+```
+
+
+17. Complete Example: Cross-Wrapper Monitor
+-------------------------------------------
+
+Source: /views/showcase/orders-monitor.html
+
+```html
+<style>
+    .orders-monitor {
+        display: grid;
+        gap: .75rem;
+        border: var(--border);
+        border-radius: var(--radius);
+        padding: .9rem;
+        background: var(--surface);
+    }
+
+    .orders-monitor h3,
+    .orders-monitor p {
+        margin: 0;
+    }
+
+    .orders-monitor h3 {
+        font-size: 1rem;
+    }
+
+    .orders-monitor p {
+        color: var(--muted);
+        font-size: .88rem;
+    }
+
+    .orders-monitor dl {
+        display: grid;
+        gap: .5rem;
+        margin: 0;
+    }
+
+    .orders-monitor dl > div {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        border-top: 1px solid color-mix(in srgb, var(--muted) 18%, transparent);
+        padding-top: .5rem;
+    }
+
+    .orders-monitor dt {
+        color: var(--muted);
+        font-size: .82rem;
+    }
+
+    .orders-monitor dd {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+</style>
+
+<aside class="orders-monitor" aria-label="Operations monitor">
+    <h3>Operations monitor</h3>
+    <p>Fulfillment snapshot</p>
+    <dl>
+        <div>
+            <dt>Orders</dt>
+            <dd $text="//orders/orderCount"></dd>
+        </div>
+        <div>
+            <dt>Lines</dt>
+            <dd $text="//orders/lineCount"></dd>
+        </div>
+        <div>
+            <dt>Packed</dt>
+            <dd $text="//orders/packedCount"></dd>
+        </div>
+    </dl>
+</aside>
+```
