@@ -1,0 +1,353 @@
+<script type="module" data-module="@experiments/nav-codex">
+    export const pages = [
+        { href: '/', label: 'Home', current: true },
+        { href: '/tutorials', label: 'Tutorial' },
+        { href: '/examples', label: 'Examples' },
+        { href: '/theme-studio', label: 'Theme Studio' },
+        { href: '/playground', label: 'Playground' },
+        { href: '/framework', label: 'Framework guide' },
+        { href: '/compare', label: 'Comparison' },
+        { href: '/info', label: 'Technical info' },
+    ];
+
+    export const sections = [
+        { href: '#nobuild', label: 'No build step' },
+        { href: '#views', label: 'Load HTML views' },
+        { href: '#tokens', label: 'Three tokens' },
+        { href: '#todos', label: 'Todo app' },
+    ];
+</script>
+
+<section class="nav-study" aria-labelledby="nav-study-title">
+    <div class="nav-study__shell">
+        <header class="nav-study__bar">
+            <a class="nav-study__brand" href="/">
+                <span>&lt;data-wrapper&gt;</span>
+                <small>: the no-framework framework</small>
+            </a>
+            <button class="nav-study__trigger" type="button" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+        </header>
+
+        <div class="nav-study__canvas">
+            <article class="nav-study__copy">
+                <p class="nav-study__kicker">candidate · sticky header and menu</p>
+                <h2 id="nav-study-title">Minimal, but with more taste.</h2>
+                <p>
+                    The header stays quiet and technical. The panel still slides from the right,
+                    but it feels more deliberate: stronger grouping, softer surface treatment,
+                    clearer active state, and a footer action that reads like part of the system.
+                </p>
+            </article>
+
+            <aside class="nav-study__panel" aria-label="Navigation preview">
+                <div class="nav-study__panel-head">
+                    <div>
+                        <p>Navigation</p>
+                        <strong>data-wrapper</strong>
+                    </div>
+                    <button type="button" aria-label="Close navigation">×</button>
+                </div>
+
+                <nav class="nav-study__links" aria-label="Site navigation preview">
+                    <span>Pages</span>
+                    <template *list="pages">
+                        <a $href="./href" $aria-current="./current?bool=page:false">
+                            <b $text="./label"></b>
+                        </a>
+                    </template>
+
+                    <span>On this page</span>
+                    <template *list="sections">
+                        <a $href="./href"><b $text="./label"></b></a>
+                    </template>
+                </nav>
+
+                <footer class="nav-study__panel-foot">
+                    <button type="button">◐ Theme: dark</button>
+                    <p>Clean URLs, local routes, and page sections all stay data-driven.</p>
+                </footer>
+            </aside>
+        </div>
+    </div>
+</section>
+
+<style>
+    .nav-study {
+        padding: 3rem 1rem;
+        background:
+            linear-gradient(180deg, var(--surface), var(--bg));
+        color: var(--text);
+    }
+
+    .nav-study__shell {
+        width: min(100%, 86rem);
+        min-height: 42rem;
+        margin-inline: auto;
+        border: var(--border-strong);
+        border-radius: calc(var(--radius) * 2);
+        background: var(--bg);
+        box-shadow: var(--shadow);
+        overflow: clip;
+    }
+
+    .nav-study__bar {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        min-height: 3.6rem;
+        padding: .65rem .85rem .65rem 1rem;
+        border-bottom: var(--border);
+        background: color-mix(in srgb, var(--ink) 92%, transparent);
+        color: var(--hero-fg);
+    }
+
+    .nav-study__brand {
+        display: inline-flex;
+        align-items: baseline;
+        gap: .45rem;
+        min-width: 0;
+        color: inherit;
+        font-family: var(--mono);
+        text-decoration: none;
+    }
+
+    .nav-study__brand span {
+        flex: 0 0 auto;
+        color: var(--hero-fg);
+        font-size: .92rem;
+        font-weight: 800;
+    }
+
+    .nav-study__brand small {
+        min-width: 0;
+        color: var(--hero-mute);
+        font-size: .78rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .nav-study__trigger {
+        display: grid;
+        align-content: center;
+        gap: .24rem;
+        width: 2.35rem;
+        aspect-ratio: 1;
+        min-height: 0;
+        padding: .55rem;
+        border-color: color-mix(in srgb, var(--hero-fg) 18%, transparent);
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--hero-fg) 7%, transparent);
+        color: var(--hero-fg);
+    }
+
+    .nav-study__trigger span {
+        height: 1.5px;
+        border-radius: 999px;
+        background: currentColor;
+    }
+
+    .nav-study__canvas {
+        position: relative;
+        display: grid;
+        min-height: 38rem;
+        padding: clamp(1rem, 3vw, 2rem);
+        background:
+            linear-gradient(90deg, color-mix(in srgb, var(--link) 7%, transparent), transparent 38%),
+            var(--bg);
+    }
+
+    .nav-study__copy {
+        align-self: end;
+        max-width: 34rem;
+        padding: 1rem;
+    }
+
+    .nav-study__kicker {
+        margin: 0 0 .8rem;
+        color: var(--link);
+        font-family: var(--mono);
+        font-size: .74rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .nav-study__copy h2 {
+        margin: 0;
+        font-size: 3rem;
+        line-height: .95;
+        font-weight: 900;
+        color: var(--text);
+    }
+
+    .nav-study__copy p:last-child {
+        max-width: 32rem;
+        margin: 1rem 0 0;
+        color: var(--muted);
+        line-height: 1.6;
+    }
+
+    .nav-study__panel {
+        position: absolute;
+        inset: 1rem 1rem 1rem auto;
+        display: flex;
+        flex-direction: column;
+        width: min(23rem, calc(100% - 2rem));
+        border: var(--border-strong);
+        border-radius: calc(var(--radius) * 2);
+        background:
+            linear-gradient(180deg, color-mix(in srgb, var(--surface) 82%, var(--bg)), var(--bg));
+        color: var(--text);
+        box-shadow: 0 1.5rem 4rem rgb(0 0 0 / .16);
+        overflow: hidden;
+    }
+
+    .nav-study__panel-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem;
+        border-bottom: var(--border);
+        background: color-mix(in srgb, var(--surface) 70%, var(--bg));
+    }
+
+    .nav-study__panel-head p {
+        margin: 0 0 .18rem;
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: .72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .nav-study__panel-head strong {
+        display: block;
+        font-family: var(--mono);
+        font-size: .98rem;
+    }
+
+    .nav-study__panel-head button {
+        width: 2rem;
+        aspect-ratio: 1;
+        min-height: 0;
+        padding: 0;
+        border-color: transparent;
+        background: transparent;
+        color: var(--muted);
+        font-size: 1.2rem;
+    }
+
+    .nav-study__panel-head button:hover {
+        background: var(--surface);
+        color: var(--text);
+    }
+
+    .nav-study__links {
+        display: flex;
+        flex-direction: column;
+        padding: .65rem;
+        overflow-y: auto;
+    }
+
+    .nav-study__links span {
+        padding: .7rem .55rem .35rem;
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: .7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .nav-study__links a {
+        display: flex;
+        align-items: center;
+        min-height: 2.35rem;
+        padding: .4rem .55rem;
+        border-radius: var(--radius);
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .nav-study__links a:hover {
+        background: color-mix(in srgb, var(--link) 8%, transparent);
+        color: var(--link);
+    }
+
+    .nav-study__links a[aria-current="page"] {
+        background: color-mix(in srgb, var(--link) 12%, transparent);
+        color: var(--link);
+    }
+
+    .nav-study__links a[aria-current="page"]::before {
+        content: "";
+        width: .45rem;
+        aspect-ratio: 1;
+        margin-right: .55rem;
+        border-radius: 999px;
+        background: currentColor;
+    }
+
+    .nav-study__links b {
+        font-size: .88rem;
+        font-weight: 650;
+    }
+
+    .nav-study__panel-foot {
+        margin-top: auto;
+        padding: .8rem 1rem 1rem;
+        border-top: var(--border);
+        background: color-mix(in srgb, var(--surface) 42%, transparent);
+    }
+
+    .nav-study__panel-foot button {
+        width: 100%;
+        justify-content: flex-start;
+        min-height: 2.35rem;
+        border-color: color-mix(in srgb, var(--link) 18%, transparent);
+        background: color-mix(in srgb, var(--link) 7%, transparent);
+        color: var(--link);
+        font-size: .86rem;
+        font-weight: 700;
+    }
+
+    .nav-study__panel-foot p {
+        margin: .75rem 0 0;
+        color: var(--muted);
+        font-size: .78rem;
+        line-height: 1.45;
+    }
+
+    @media (max-width: 680px) {
+        .nav-study {
+            padding-inline: 0;
+        }
+
+        .nav-study__shell {
+            border-inline: 0;
+            border-radius: 0;
+        }
+
+        .nav-study__canvas {
+            min-height: 44rem;
+        }
+
+        .nav-study__copy {
+            align-self: start;
+        }
+
+        .nav-study__copy h2 {
+            font-size: 2.25rem;
+        }
+
+        .nav-study__panel {
+            top: 9rem;
+            bottom: 1rem;
+        }
+    }
+</style>

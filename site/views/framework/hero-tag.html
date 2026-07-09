@@ -1,44 +1,130 @@
 <script type="module" data-module="@view/hero-tag">
     import { flush } from 'data-wrapper';
 
-    // The hero performs the product: the tag types its own src, then the
-    // "view" loads — a live clock proving the page is already reactive.
-    const ATTR = 'src="/views/hello.html"';
+    // The hero performs the wrapper's own semantics: the tag never moves,
+    // only its src retypes — and when the new value lands, the "loaded
+    // view" markup and its live widget swap in beneath it. Hovering or
+    // clicking a locator replays that slide.
+    const SLIDES = [
+        { id: 'text',  label: '$text',  src: '/hello.html',
+          inner: '    <h2 $text="greeting">' },
+        { id: 'click', label: '@click', src: '/count.html',
+          inner: '    <button @click="increment">\n        +1\n    </button>' },
+        { id: 'list',  label: '*list',  src: '/todos.html',
+          inner: '    <template *list="todos">\n        <li $text="./task">' },
+    ];
+    const STEP_MS    = 65;
+    const HOLD_TICKS = 66;   // ~4.3s of stillness after each slide lands
 
+    // Idle mode: on hover-capable devices the hero rests as a bare
+    // <data-wrapper> until the cursor enters; touch devices (no hover)
+    // animate from load.
+    const canHover = matchMedia('(hover: hover)').matches;
+
+    export let active = !canHover;
+    export let slide = 0;
     export let chars = 0;
-    export let now = new Date();
+    export let count = 0;
+    let hold = 0;
 
-    export const typed  = () => ATTR.slice(0, chars);
-    export const loaded = () => chars >= ATTR.length;
-    export const clock  = () => now.toLocaleTimeString('en-GB', { hour12: false });
+    const current = () => SLIDES[slide];
+
+    export function wake() {
+        if (active) return;
+        active = true;
+        chars = 0;
+        hold  = 0;
+    }
+    export function sleep() {
+        active = false;
+        chars = 0;
+        hold  = 0;
+    }
+
+    export const typed = () => current().src.slice(0, chars);
+    export const inner = () => '\n' + current().inner;
+    export const done  = () => chars >= current().src.length;
+
+    export const showText  = () => done() && current().id === 'text';
+    export const showClick = () => done() && current().id === 'click';
+    export const showList  = () => done() && current().id === 'list';
+
+    export const greeting = () => {
+        const h = new Date().getHours();
+        return h < 12 ? 'Good morning.' : h < 18 ? 'Good afternoon.' : 'Good evening.';
+    };
+    export function increment() { count += 1; }
+
+    export const todos = [
+        { id: 1, task: 'fetch the view' },
+        { id: 2, task: 'wire the bindings' },
+        { id: 3, task: 'skip the build' },
+    ];
+
+    export const slides = () => SLIDES.map((s, i) => ({ ...s, index: i, active: i === slide }));
+
+    export function goTo(event) {
+        const target = event.detail.item;
+        active = true;   // keyboard activation reaches here without mouseenter
+        slide = target.index;
+        chars = 0;
+        hold  = 0;
+    }
 
     export default ({ cleanup }) => {
-        let type;
+        let step;
         const start = setTimeout(() => {
-            type = setInterval(() => {
-                chars += 1;
-                if (chars >= ATTR.length) clearInterval(type);
+            step = setInterval(() => {
+                if (!active) return;
+                if (chars < current().src.length) {
+                    chars += 1;
+                } else if (++hold >= HOLD_TICKS) {
+                    slide = (slide + 1) % SLIDES.length;
+                    chars = 0;
+                    hold  = 0;
+                } else if (hold > 1) {
+                    return;   // holding still: nothing changed, skip the flush
+                }
                 flush();
-            }, 65);
+            }, STEP_MS);
         }, 600);
-        const tick = setInterval(() => { now = new Date(); flush(); }, 1000);
-        cleanup(() => { clearTimeout(start); clearInterval(type); clearInterval(tick); });
+        cleanup(() => { clearTimeout(start); clearInterval(step); });
     };
 </script>
 
-<section class="tag-hero" $data-loaded="loaded" aria-labelledby="tag-hero-title">
+<section class="tag-hero" $data-awake="active" @mouseenter="wake" @mouseleave="sleep" aria-labelledby="tag-hero-title">
     <div class="tag-hero__stage container">
-        <p class="tag-hero__code" aria-hidden="true">
-            <span class="tag-hero__punct">&lt;</span><b>data-wrapper</b> <span class="tag-hero__attr" $text="typed"></span><i class="tag-hero__caret"></i><span class="tag-hero__punct">&gt;</span>
-        </p>
+        <h1 class="tag-hero__kicker" id="tag-hero-title">One tag. Three tokens. Zero dependencies.</h1>
 
-        <div class="tag-hero__loadzone" aria-hidden="true">
-            <template *if="loaded">
-                <p class="tag-hero__result">Hello — it's <span $text="clock"></span>, and this HTML is already reactive.</p>
+        <div class="tag-hero__loadzone">
+            <template *if="showText">
+                <p class="tag-hero__result tag-hero__result--shout" $text="greeting"></p>
+            </template>
+            <template *if="showClick">
+                <p class="tag-hero__result tag-hero__result--play">
+                    <button type="button" class="tag-hero__demo-btn" @click="increment">+1</button>
+                    <output class="tag-hero__count" $text="count"></output>
+                    <small>go on — it's a real binding</small>
+                </p>
+            </template>
+            <template *if="showList">
+                <ul class="tag-hero__result tag-hero__result--list">
+                    <template *list="todos"><li $text="./task"></li></template>
+                </ul>
             </template>
         </div>
+        <!-- Contiguous on one line: the box is white-space: pre-wrap, so
+             markup whitespace inside it would render. The wrapper frame is
+             static; the whole src part hides in idle mode, then only the
+             src value types, then the "loaded" inner markup fades in. -->
+        <p class="tag-hero__code" $data-done="done" aria-hidden="true"><span class="tag-hero__punct">&lt;</span><b>data-wrapper</b><span class="tag-hero__src"><span class="tag-hero__attr"> src="</span><span class="tag-hero__attr" $text="typed"></span><i class="tag-hero__caret"></i><span class="tag-hero__attr">"</span></span><span class="tag-hero__punct">&gt;</span><span class="tag-hero__inner" $text="inner"></span></p>
 
-        <h1 class="tag-hero__title" id="tag-hero-title">One tag. Three tokens. Zero dependencies.</h1>
+        <nav class="tag-hero__dots" aria-label="Hero examples">
+            <template *list="slides?key=id">
+                <button type="button" class="tag-hero__dot" $data-active="./active" $aria-pressed="./active" $text="./label" @click="goTo" @mouseenter="goTo"></button>
+            </template>
+        </nav>
+
         <p class="tag-hero__copy">
             data-wrapper turns plain HTML files into live components with the
             browser primitives you already know. No build step, nothing to install.
@@ -59,10 +145,14 @@
         align-content: center;
         /* Fill the first screen minus the breadcrumb band above. */
         min-height: calc(98svh - 3.25rem);
+        /* Seamless at both seams: ink at the top melts into the sticky
+           header; the bottom fades into the page bg — so each theme gets
+           its own gradient for free (bg moves, ink doesn't). Text lives
+           in the ink zone; only the fold hint sits in the fade. */
         background:
-            radial-gradient(46rem 26rem at 50% 42%,
+            radial-gradient(46rem 26rem at 50% 38%,
                 color-mix(in srgb, var(--link) 9%, transparent), transparent 70%),
-            var(--ink);
+            linear-gradient(to bottom, var(--ink) 0%, var(--ink) 62%, var(--bg) 100%);
         color: var(--hero-fg);
         overflow: clip;
         text-align: center;
@@ -72,17 +162,39 @@
         display: grid;
         gap: 0;
         justify-items: center;
-        padding-block: clamp(3rem, 8vh, 5rem);
+        padding-block: clamp(2.5rem, 6vh, 4rem) clamp(5rem, 14vh, 9rem);
     }
 
-    /* ── the tag ── */
-    .tag-hero__code {
-        margin: 0;
+    .tag-hero__kicker {
+        margin: 0 0 3.35rem;
         font-family: var(--mono);
-        font-size: clamp(1.15rem, 4.2vw, 2.7rem);
+        font-size: .74rem;
+        font-weight: 600;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--link);
+    }
+
+    /* ── the tag ──
+       Fixed 4-line, fixed-width box: one wrapper line plus up to three
+       lines of loaded-view markup fit inside it, and typing extends
+       rightward from a stable left edge, so nothing below ever moves
+       (layout shift was re-triggering @mouseenter on the locators
+       under a stationary cursor). */
+    .tag-hero__code {
+        width: min(100%, 34ch);
+        height: calc(4 * 1.35em);
+        margin: 0;
+        overflow: hidden;
+        font-family: var(--mono);
+        /* min sized so the 34ch wrapper line never wraps on a 360px phone */
+        font-size: clamp(.92rem, 3.4vw, 2.1rem);
         font-weight: 400;
         line-height: 1.35;
         color: var(--hero-fg);
+        text-align: left;
+        white-space: pre-wrap;
+        transition: translate .45s var(--ease);
     }
     .tag-hero__code b {
         font-weight: 700;
@@ -92,9 +204,33 @@
         color: var(--hero-faint);
     }
     .tag-hero__attr {
-        display: inline-block;      /* wraps as a unit on small screens */
         color: var(--ink-text);
         font-weight: 400;
+    }
+    /* Idle mode (also the pre-hydration / no-JS state, hence :not):
+       the whole src part vanishes, leaving <data-wrapper>, and the box
+       slides so the bare tag sits optically centered — 50% of the box
+       minus half the 14ch tag. Wake transitions it back to the stable
+       left-anchored typing position. */
+    .tag-hero:not([data-awake="true"]) .tag-hero__src {
+        display: none;
+    }
+    .tag-hero:not([data-awake="true"]) .tag-hero__code {
+        translate: calc(50% - 7ch) 0;
+    }
+    /* The loaded view's markup: always in the text flow (the box is
+       fixed, so it costs no layout), revealed as one "load" moment.
+       The transition lives ONLY on the visible state, so it fades in
+       but snaps out — its $text swaps to the next slide's markup in
+       the same flush that un-dones the box, and a two-way transition
+       would flash that new markup while fading the old opacity out. */
+    .tag-hero__inner {
+        color: color-mix(in srgb, var(--hero-fg) 72%, transparent);
+        opacity: 0;
+    }
+    .tag-hero__code[data-done="true"] .tag-hero__inner {
+        opacity: 1;
+        transition: opacity .55s var(--ease) .15s;
     }
     .tag-hero__caret {
         display: inline-block;
@@ -104,10 +240,10 @@
         vertical-align: -.12em;
         background: var(--ink-text);
         animation: tag-blink 1.05s steps(2, start) infinite;
+        transition: opacity .3s var(--ease);
     }
-    .tag-hero[data-loaded="true"] .tag-hero__caret {
+    .tag-hero__code[data-done="true"] .tag-hero__caret {
         opacity: 0;
-        transition: opacity .4s var(--ease) 1.2s;
         animation: none;
     }
     @keyframes tag-blink {
@@ -118,29 +254,139 @@
     .tag-hero__loadzone {
         display: grid;
         align-content: center;
-        min-height: 3.4rem;          /* reserved: no layout shift on load */
-        margin-top: clamp(1rem, 3vh, 1.8rem);
+        justify-items: center;
+        height: 7rem;               /* reserved, viewport-independent: the
+                                       widget pops in without moving a thing */
+        margin-top: clamp(.5rem, 1.5vh, 1rem);
     }
+    /* Base-hidden, animated TO visible: a freshly inserted widget can
+       never flash — any frame before the animation applies paints
+       nothing. The .65s delay staggers it half a beat after the inner
+       markup (.15s), so the <h2> lands before the greeting does. */
     .tag-hero__result {
         margin: 0;
         font-size: clamp(.95rem, 2vw, 1.15rem);
         color: var(--hero-mute);
-        animation: tag-materialize .7s var(--ease) both .25s;
-    }
-    .tag-hero__result span {
-        color: color-mix(in srgb, var(--ok) 70%, var(--hero-fg));
-        font-family: var(--mono);
-        font-variant-numeric: tabular-nums;
+        opacity: 0;
+        translate: 0 .5rem;
+        filter: blur(4px);
+        animation: tag-materialize .6s var(--ease) forwards .65s;
     }
     @keyframes tag-materialize {
-        from { opacity: 0; translate: 0 .5rem; filter: blur(4px); }
+        to { opacity: 1; translate: 0 0; filter: blur(0); }
+    }
+    .tag-hero__result--shout {
+        font-size: clamp(1.4rem, 3.4vw, 2.1rem);
+        font-weight: 800;
+        letter-spacing: .04em;
+        color: var(--hero-fg);
+    }
+    .tag-hero__result--play {
+        display: flex;
+        align-items: center;
+        gap: .9rem;
+    }
+    .tag-hero__demo-btn {
+        min-height: 2.3em;
+        padding: .3em .9em;
+        border: 1px solid color-mix(in srgb, var(--hero-fg) 30%, transparent);
+        border-radius: var(--radius);
+        background: color-mix(in srgb, var(--hero-fg) 6%, transparent);
+        color: var(--hero-fg);
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .tag-hero__demo-btn:hover {
+        background: color-mix(in srgb, var(--hero-fg) 14%, transparent);
+    }
+    .tag-hero__count {
+        min-width: 1.5ch;
+        font-family: var(--mono);
+        font-size: 1.5rem;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        color: var(--ink-text);
+    }
+    .tag-hero__result--play small {
+        font-size: .78rem;
+        color: var(--hero-faint);
+    }
+    .tag-hero__result--list {
+        display: grid;
+        gap: .3rem;
+        padding: 0;
+        list-style: none;
+        text-align: left;
+        font-size: .95rem;
+    }
+    .tag-hero__result--list li {
+        display: flex;
+        align-items: baseline;
+        gap: .55em;
+        opacity: 0;
+        translate: 0 .5rem;
+        filter: blur(4px);
+        animation: tag-materialize .5s var(--ease) forwards;
+        animation-delay: 0;
+    }
+    .tag-hero__result--list li:nth-child(2) { animation-delay: .5s; }
+    .tag-hero__result--list li:nth-child(3) { animation-delay: .75s; }
+    .tag-hero__result--list li:nth-child(4) { animation-delay: .9s; }
+
+    /* Reduced motion: the reset kills all animations, and the widgets are
+       base-hidden — without this override they would never appear. (The
+       inner markup needs no override: its data-done opacity flip still
+       fires with transitions disabled.) */
+    @media (prefers-reduced-motion: reduce) {
+        .tag-hero__result,
+        .tag-hero__result--list li {
+            opacity: 1;
+            translate: none;
+            filter: none;
+        }
+    }
+    .tag-hero__result--list li::before {
+        content: "✓";
+        color: color-mix(in srgb, var(--ok) 70%, var(--hero-fg));
+        font-weight: 700;
     }
 
-    /* ── copy & actions: present by default (no-JS safe), gently
-         staggered in once the tag has "loaded" ── */
+    /* ── carousel locators ── */
+    .tag-hero__dots {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: .35rem;
+        margin-top: clamp(.7rem, 2vh, 1.2rem);
+    }
+    .tag-hero__dot {
+        min-height: 0;
+        padding: .3em .7em;
+        border: 0;
+        border-radius: 999px;
+        background: none;
+        color: var(--hero-faint);
+        font-family: var(--mono);
+        font-size: .78rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: color .2s, background-color .2s;
+    }
+    .tag-hero__dot:hover {
+        color: var(--hero-fg);
+        background: color-mix(in srgb, var(--hero-fg) 8%, transparent);
+    }
+    .tag-hero__dot[data-active="true"] {
+        color: var(--ink-text);
+        background: color-mix(in srgb, var(--ink-text) 12%, transparent);
+    }
+
+    /* ── slogan above, copy & actions below — all static, so the hero
+         at rest is a complete composition around the centered tag ── */
     .tag-hero__title {
-        max-width: 22ch;
-        margin: clamp(1.6rem, 4vh, 2.6rem) 0 0;
+        max-width: 26ch;
+        margin: 0 0 clamp(1.6rem, 4vh, 2.6rem);
         font-size: clamp(1.5rem, 3.6vw, 2.3rem);
         font-weight: 800;
         line-height: 1.15;
@@ -149,7 +395,7 @@
     }
     .tag-hero__copy {
         max-width: 40rem;
-        margin: .9rem 0 0;
+        margin: clamp(1.4rem, 3.5vh, 2.2rem) 0 0;
         font-size: 1.02rem;
         line-height: 1.55;
         color: var(--hero-mute);
@@ -161,21 +407,6 @@
         gap: .65rem;
         margin: clamp(1.4rem, 3vh, 2rem) 0 0;
     }
-
-    .tag-hero__title,
-    .tag-hero__copy,
-    .tag-hero__actions {
-        transition: opacity .6s var(--ease), translate .6s var(--ease);
-    }
-    .tag-hero[data-loaded="false"] .tag-hero__title,
-    .tag-hero[data-loaded="false"] .tag-hero__copy,
-    .tag-hero[data-loaded="false"] .tag-hero__actions {
-        opacity: 0;
-        translate: 0 .5rem;
-    }
-    .tag-hero[data-loaded="true"] .tag-hero__title   { transition-delay: .5s; }
-    .tag-hero[data-loaded="true"] .tag-hero__copy    { transition-delay: .65s; }
-    .tag-hero[data-loaded="true"] .tag-hero__actions { transition-delay: .8s; }
 
     @supports (text-wrap: balance) {
         .tag-hero__title, .tag-hero__copy { text-wrap: balance; }
@@ -201,7 +432,7 @@
         color: var(--ink);
     }
 
-    /* ── fold affordance ── */
+    /* ── fold affordance: lives in the fade zone, so theme colors ── */
     .tag-hero__more {
         position: absolute;
         bottom: 1.1rem;
@@ -210,12 +441,12 @@
         width: fit-content;
         margin-inline: auto;
         padding: .2em .6em;
-        color: var(--hero-faint);
+        color: var(--faint);
         text-decoration: none;
         font-size: 1.1rem;
         animation: tag-nudge 2.4s ease-in-out infinite;
     }
-    .tag-hero__more:hover { color: var(--hero-fg); }
+    .tag-hero__more:hover { color: var(--text); }
     @keyframes tag-nudge {
         50% { translate: 0 .3rem; }
     }

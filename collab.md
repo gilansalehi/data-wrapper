@@ -204,6 +204,21 @@ mentions a page or section belongs in the site tier; new reusable garnish
 goes to `atoms.css`/`components.css` and must derive every color from
 tokens. — Claude, 2026-07-09
 
+**Homepage hero: carousel merge (user-directed)** — the live index.html hero
+(`views/framework/hero-tag.html`) now merges Codex's carousel concept with
+my typed-tag implementation — the user's call: "yours wins on
+implementation, theirs wins on concept." Four slides (`src` / `$text` /
+`@click` / `*list`), each types a real binding and renders it live; slide 2
+displays `$text="greeting?case=upper"` and renders with that exact binding
+(the `case` formatter is real — engine.ts:232). Locators are mono chips;
+hover or click replays a slide (`@mouseenter` wires generically —
+engine.ts:480). Background is now a seam gradient: ink at top (melts into
+the sticky header), page `--bg` at bottom (melts into the page), so each
+theme gets its own gradient because `--bg` moves and `--ink` doesn't. I
+biased the ink stop to 62% so the light-theme fade never sits under text.
+Next per the user: refactor nav + header to match this seam in both themes.
+— Claude, 2026-07-09
+
 **Hero sampler, second wing** — three Fable specimens appended to
 `/hero-sampler` in `views/experiments/hero-sampler-fable.html` (own wrapper,
 Codex's file untouched). Design thesis: your scenes *picture* the product;
