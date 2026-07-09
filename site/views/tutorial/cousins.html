@@ -2,66 +2,113 @@
     // One view, many instances: the host page mounts this after each tutorial
     // section with ?section=<key>, and the factory returns that section's
     // field notes as instance scope. Unknown keys throw loudly.
+    //
+    // Every entry carries a `code` key (empty string when no snippet earns
+    // its place) so `*if="./code"` resolves in row scope instead of falling
+    // through to the static-literal fallback.
     const SECTIONS = {
         nobuild: {
             hook: 'No build!',
             tagline: 'A script tag is the whole install. The nearest neighbors make the same promise; the majors ask for a toolchain first.',
+            self: [
+                { name: 'data-wrapper', note: 'one script tag registers the element and the runtime — the page you are reading runs on it.',
+                  code: '<script src="https://unpkg.com/data-wrapper"><\/script>' },
+            ],
             compare: [
-                { name: 'Alpine.js', note: 'also installs as one script tag — drop it into any existing page and start.' },
-                { name: 'htmx',      note: 'same zero-tooling instinct: one script, no project scaffold.' },
+                { name: 'Alpine.js', note: 'also installs as one script tag — drop it into any existing page and start.',
+                  code: '<script src="//unpkg.com/alpinejs" defer><\/script>' },
+                { name: 'htmx', note: 'same zero-tooling instinct: one script, no project scaffold.',
+                  code: '<script src="https://unpkg.com/htmx.org"><\/script>' },
             ],
             contrast: [
-                { name: 'React',   note: 'JSX needs compilation, so real projects start with a bundler or framework CLI.' },
-                { name: 'Svelte',  note: 'no build, no Svelte — the compiler is the product.' },
-                { name: 'Angular', note: 'a CLI-managed workspace stands between you and hello world.' },
+                { name: 'React', note: 'JSX needs compilation, so real projects start with a bundler or framework CLI.',
+                  code: 'npm create vite@latest my-app' },
+                { name: 'Svelte', note: 'no build, no Svelte — the compiler is the product.',
+                  code: '' },
+                { name: 'Angular', note: 'a CLI-managed workspace stands between you and hello world.',
+                  code: 'ng new my-app' },
             ],
         },
         views: {
             hook: 'HTML files as components',
             tagline: 'The unit of composition is a fetchable HTML file, placed by a custom element.',
+            self: [
+                { name: 'data-wrapper', note: 'point a wrapper at an HTML file — the browser fetches it, the runtime wires it in place.',
+                  code: '<data-wrapper src="counter.html"></data-wrapper>' },
+            ],
             compare: [
-                { name: 'htmx', note: 'fetches HTML fragments into the page with hx-get — the same “HTML over the wire” instinct, though the server renders it.' },
-                { name: 'Lit',  note: 'custom elements as mount points in plain HTML — same platform bones, but Lit components are authored in JS.' },
+                { name: 'htmx', note: 'fetches HTML fragments into the page — the same “HTML over the wire” instinct, though the server renders it.',
+                  code: '<div hx-get="/counter.html" hx-trigger="load"></div>' },
+                { name: 'Lit', note: 'custom elements as mount points in plain HTML — same platform bones, but Lit components are authored in JS.',
+                  code: '<my-counter></my-counter>' },
             ],
             contrast: [
-                { name: 'React', note: 'a component is a function you import into a build — not a file the browser fetches.' },
-                { name: 'Vue',   note: '.vue single-file components compile away; the browser never sees the file.' },
+                { name: 'React', note: 'a component is a function you import into a build — not a file the browser fetches.',
+                  code: "import Counter from './Counter.jsx'" },
+                { name: 'Vue', note: '.vue single-file components compile away; the browser never sees the file.',
+                  code: "import Counter from './Counter.vue'" },
             ],
         },
         tokens: {
             hook: 'Three attribute tokens',
-            tagline: 'Behavior attaches to markup through attributes — $ reads, @ calls, * renders.',
+            tagline: 'Behavior attaches to markup through attributes — $ reads, @ calls, * renders. Each token has an ancestor in the framework space.',
+            self: [
+                { name: 'data-wrapper', note: '$ reads an export, @ calls one, * renders structure — one grammar for all three.',
+                  code: '<output $text="count"></output>' },
+            ],
             compare: [
-                { name: 'Vue',       note: 'template directives with the same instincts — @click is literally Vue’s event shorthand too.' },
-                { name: 'Alpine.js', note: 'x-text, x-on, x-for: attributes as the wiring, evaluated in place.' },
+                { name: 'Vue', note: 'template directives with the same instincts — @click is literally Vue’s event shorthand too.',
+                  code: '<button @click="increment">+</button>' },
+                { name: 'Angular', note: 'the * token is Angular’s own — *ngIf and *ngFor pioneered the structural-directive spelling.',
+                  code: '<li *ngFor="let todo of todos">' },
+                { name: 'Alpine.js', note: 'x-text, x-on, x-for: attributes as the wiring, evaluated in place.',
+                  code: '<span x-text="count"></span>' },
             ],
             contrast: [
-                { name: 'React',   note: 'no template grammar at all — markup and logic merge in JSX.' },
-                { name: 'Mithril', note: 'goes the other way: markup written as JavaScript calls (hyperscript).' },
+                { name: 'React', note: 'no template grammar at all — markup and logic merge in JSX.',
+                  code: '<button onClick={increment}>+</button>' },
+                { name: 'Mithril', note: 'goes the other way: markup written as JavaScript calls (hyperscript).',
+                  code: "m('button', { onclick: increment }, '+')" },
             ],
         },
         deepdive: {
             hook: 'One token, one job',
             tagline: 'Structure changes ride on <template> directives; values and events stay on the elements they affect.',
+            self: [
+                { name: 'data-wrapper', note: 'the template is the row; ./ paths read the current item.',
+                  code: '<template *list="todos">\n    <li $text="./task"></li>\n</template>' },
+            ],
             compare: [
-                { name: 'Vue',       note: 'v-if and v-for map almost one-to-one onto *if and *list.' },
-                { name: 'Alpine.js', note: 'x-if and x-for also live on <template> tags — the same platform trick.' },
+                { name: 'Vue', note: 'v-if and v-for map almost one-to-one onto *if and *list.',
+                  code: '<li v-for="todo in todos">' },
+                { name: 'Alpine.js', note: 'x-if and x-for also live on <template> tags — the same platform trick.',
+                  code: '<template x-for="todo in todos">' },
             ],
             contrast: [
-                { name: 'React', note: 'conditionals are ternaries and lists are .map() — full JavaScript power, full JavaScript noise.' },
-                { name: 'Solid', note: 'wraps control flow in components (<Show>, <For>) so its compiler can track it.' },
+                { name: 'React', note: 'conditionals are ternaries and lists are .map() — full JavaScript power, full JavaScript noise.',
+                  code: '{todos.map(t => <li>{t.task}</li>)}' },
+                { name: 'Solid', note: 'wraps control flow in components so its compiler can track it.',
+                  code: '<For each={todos}>{t => <li>{t.task}</li>}</For>' },
             ],
         },
         todos: {
             hook: 'A whole app, still no compiler',
             tagline: 'One HTML file: a module script for state, tokens for wiring, CSS alongside. That is the entire todo app.',
+            self: [
+                { name: 'data-wrapper', note: 'state is a module export; mutate it in an exported function and the bindings follow.',
+                  code: 'export let todos = []' },
+            ],
             compare: [
-                { name: 'Alpine.js', note: 'an app this size is Alpine’s sweet spot too — state and handlers inline, no project.' },
-                { name: 'Mithril',   note: 'small complete apps on a tiny runtime, no mandatory tooling.' },
+                { name: 'Alpine.js', note: 'an app this size is Alpine’s sweet spot too — state and handlers inline, no project.',
+                  code: '<div x-data="{ todos: [] }">' },
+                { name: 'Mithril', note: 'small complete apps on a tiny runtime, no mandatory tooling.',
+                  code: 'm.mount(root, TodoApp)' },
             ],
             contrast: [
-                { name: 'React',   note: 'the same app conventionally wants a scaffold, hooks for state, and a dev server.' },
-                { name: 'Angular', note: 'brings dependency injection and a workspace to a 40-line todo list.' },
+                { name: 'React', note: 'the same app conventionally wants a scaffold, hooks for state, and a dev server.',
+                  code: 'const [todos, setTodos] = useState([])' },
+                { name: 'Angular', note: 'brings dependency injection and a workspace to a 40-line todo list.',
+                  code: "@Component({ selector: 'todo-list' })" },
             ],
         },
     };
@@ -78,11 +125,33 @@
         <p class="cousins__kicker">field notes — <span $text="hook"></span></p>
         <p class="cousins__tagline" $text="tagline"></p>
         <div class="cousins__grid">
+            <div class="cousins__col cousins__col--self">
+                <p class="cousins__label">data-wrapper</p>
+                <ul>
+                    <template *list="self?key=name">
+                        <li class="cousin-card">
+                            <p class="cousin-card__name" $text="./name"></p>
+                            <hr>
+                            <p class="cousin-card__note" $text="./note"></p>
+                            <template *if="./code">
+                                <pre class="cousin-card__code"><code $text="./code"></code></pre>
+                            </template>
+                        </li>
+                    </template>
+                </ul>
+            </div>
             <div class="cousins__col cousins__col--compare">
                 <p class="cousins__label">Compare</p>
                 <ul>
                     <template *list="compare?key=name">
-                        <li><strong $text="./name"></strong><span $text="./note"></span></li>
+                        <li class="cousin-card">
+                            <p class="cousin-card__name" $text="./name"></p>
+                            <hr>
+                            <p class="cousin-card__note" $text="./note"></p>
+                            <template *if="./code">
+                                <pre class="cousin-card__code"><code $text="./code"></code></pre>
+                            </template>
+                        </li>
                     </template>
                 </ul>
             </div>
@@ -90,7 +159,14 @@
                 <p class="cousins__label">Contrast</p>
                 <ul>
                     <template *list="contrast?key=name">
-                        <li><strong $text="./name"></strong><span $text="./note"></span></li>
+                        <li class="cousin-card">
+                            <p class="cousin-card__name" $text="./name"></p>
+                            <hr>
+                            <p class="cousin-card__note" $text="./note"></p>
+                            <template *if="./code">
+                                <pre class="cousin-card__code"><code $text="./code"></code></pre>
+                            </template>
+                        </li>
                     </template>
                 </ul>
             </div>
@@ -122,9 +198,15 @@
     .cousins__grid {
         display: grid;
         gap: 1rem;
+        align-items: start;
+
     }
-    @media (min-width: 720px) {
-        .cousins__grid { grid-template-columns: 1fr 1fr; }
+    @media (min-width: 75rem) {
+        .cousins__grid {
+            grid-template-columns: 1fr 1fr 1fr;
+            margin-left: -16.66vw;
+            width: 150%;
+        }
     }
     .cousins__label {
         margin: 0 0 .4rem;
@@ -133,7 +215,8 @@
         text-transform: uppercase;
         letter-spacing: .06em;
     }
-    .cousins__col--compare .cousins__label { color: var(--ok); }
+    .cousins__col--self     .cousins__label { color: var(--link); }
+    .cousins__col--compare  .cousins__label { color: var(--ok); }
     .cousins__col--contrast .cousins__label { color: var(--err); }
 
     .cousins ul {
@@ -141,27 +224,72 @@
         padding: 0;
         list-style: none;
         display: grid;
-        gap: .45rem;
+        gap: .6rem;
     }
-    .cousins li {
+
+    .cousin-card {
+        padding: .8rem .95rem;
+        background: var(--bg);
+        border: var(--border);
+        border-radius: var(--radius);
+    }
+    .cousin-card__name {
         display: flex;
-        gap: .5rem;
         align-items: baseline;
-        font-size: .88rem;
-        line-height: 1.45;
+        gap: .5rem;
+        margin: 0;
+        font-weight: 700;
+        font-size: .92rem;
     }
-    .cousins li::before {
+    .cousin-card__name::before {
         flex: 0 0 auto;
         font-weight: 700;
     }
-    .cousins__col--compare li::before {
+    .cousins__col--self .cousin-card__name::before {
+        content: "◆";
+        color: var(--link);
+    }
+    .cousins__col--compare .cousin-card__name::before {
         content: "✓";
         color: var(--ok);
     }
-    .cousins__col--contrast li::before {
+    .cousins__col--contrast .cousin-card__name::before {
         content: "✗";
         color: var(--err);
     }
-    .cousins li strong { white-space: nowrap; }
-    .cousins li strong::after { content: " —"; font-weight: 400; color: var(--faint); }
+    .cousin-card hr {
+        border: 0;
+        margin: .5rem 0 .55rem;
+    }
+    .cousins__col--self .cousin-card hr {
+        border-top: 1px solid color-mix(in srgb, var(--link) 35%, transparent);
+    }
+    .cousins__col--compare .cousin-card hr {
+        border-top: 1px solid color-mix(in srgb, var(--ok) 35%, transparent);
+    }
+    .cousins__col--contrast .cousin-card hr {
+        border-top: 1px solid color-mix(in srgb, var(--err) 35%, transparent);
+    }
+    .cousin-card__note {
+        margin: 0;
+        font-size: .85rem;
+        line-height: 1.5;
+        color: var(--text);
+    }
+    .cousin-card__code {
+        margin: .55rem 0 0;
+        padding: .45rem .65rem;
+        background: var(--ink);
+        color: var(--ink-text);
+        border-radius: var(--radius);
+        font-size: .74rem;
+        line-height: 1.5;
+        overflow-x: auto;
+    }
+    .cousin-card__code code {
+        padding: 0;
+        background: none;
+        color: inherit;
+        font-family: var(--mono);
+    }
 </style>

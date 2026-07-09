@@ -65,6 +65,46 @@ git and in the tests/docs each feature ships.
 
 ---
 
+## House visual style
+
+Rules distilled from the components the user flagged as noticeably
+higher-quality (compare page matrix/winners/checklist, tutorial field notes).
+Apply them to new views and when touching old CSS; reference implementation is
+`site/views/tutorial/cousins.html`.
+
+1. **Never invent a color; derive it.** Only theme tokens (`--ok`, `--err`,
+   `--link`, `--muted`, `--faint`, `--ink`, `--surface`, `--bg`) or a
+   `color-mix()` of one with transparency (tints: 5–8% over a surface;
+   hairlines/borders: 35–45% over transparent). Derived colors can't clash
+   and survive the theme toggle for free. A hex literal in a component is a
+   defect.
+2. **Color means something or it doesn't appear.** Green = for/similar,
+   red = against/different, link-blue = us/brand. Small doses only — icons,
+   labels, hairlines — never large filled areas. Gray card + one green tick
+   reads designed; green card reads as a toast.
+3. **Contrast through weight, case, and color — not size.** Inside a
+   component stay within a narrow size span (~.72–.92rem) and build hierarchy
+   with the kicker pattern: tiny + mono + uppercase + letterspaced
+   (.06–.12em) + semantic color, against bold names, against regular text.
+   Size jumps are for page titles only.
+4. **One spacing scale, reused.** Gaps .4/.5/.6/.75/1rem; card padding
+   ~.8–1.25rem; reading line-height 1.45–1.5. No per-element nudging —
+   inconsistent spacing, not bad color, is what makes a page look messy.
+5. **Icons are CSS, not markup.** Status glyphs (✓ ✗ ◆) live in `::before`
+   content on the labeled element, so they size with the text and sit on the
+   same flex baseline. They can't drift because they're typography.
+6. **Steal the house DNA.** New components reuse existing patterns —
+   `pitch__kicker` for eyebrows, the `--ink` slab for code, `var(--radius)`
+   and `var(--border)` everywhere. A new component should look like the site
+   hired it, not like it transferred in.
+
+Known debt against these rules: `docs.css` hardcodes `4px`/`8px` radii and
+one-off paddings where `landing.css` uses tokens. A mechanical
+replace-literals-with-tokens pass is a good standalone task; the rules above
+make the diff checkable.
+
+---
+
 ## Active Thread
 
 ### Security tranche (tickets 020–024)
