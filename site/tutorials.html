@@ -36,16 +36,21 @@
 
 <data-wrapper id="nav" src="/views/nav.html" $data-nav-open="open"></data-wrapper>
 
-<header class="pitch pitch--band">
+<header class="page-hero">
     <div class="container">
-        <p class="pitch__kicker">tutorial</p>
-        <h1 class="pitch__title">The same walk, with field notes.</h1>
-        <p class="pitch__lead">
+        <p class="page-hero__kicker">tutorial</p>
+        <h1 class="page-hero__title">The same walk, with field notes.</h1>
+        <p class="page-hero__lead">
             This page follows the homepage introduction step by step, and after
             each idea it pauses for a field note: which tool in the framework
             landscape does it most resemble, and which popular tools work
             differently. If you already know any framework, the notes map your
             instincts onto this one.
+        </p>
+        <p class="page-hero__motif" aria-hidden="true">
+            <span class="hero-pill hero-pill--info">◆ the data-wrapper way</span>
+            <span class="hero-pill hero-pill--ok">✓ compare</span>
+            <span class="hero-pill hero-pill--err">✗ contrast</span>
         </p>
     </div>
 </header>
@@ -96,5 +101,7 @@
         </div>
     </section>
 </main>
+
+<data-wrapper src="/views/footer.html"></data-wrapper>
 </body>
 </html>

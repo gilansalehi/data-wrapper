@@ -1,5 +1,20 @@
 # Ticket 027: Homepage conversion polish — CTAs, fit section, footer
 
+## Status (2026-07-09)
+
+**Implemented by Claude (user reassigned from Codex); awaiting browser pass.**
+- Hero CTAs: kept `Get Started` (#nobuild) primary; added `Tutorial` and
+  `GitHub`; kept `Docs`; dropped `Specs` (/info now lives in the footer).
+  No Playground CTA until 028 ships.
+- Fit band: `views/framework/fit.html`, mounted as `#fit` between the todos
+  and keep-going sections; TOC + nav pick it up. Content is a verbatim
+  4+4 subset of the compare checklist (source-of-truth comment in the file);
+  links to /compare#checklist for the interactive version.
+- Footer: `views/footer.html` (static view, no module), mounted on index,
+  framework, info, compare, tutorials. Guide/Tutorial/Comparison/Info/GitHub
+  links + "this site is built with data-wrapper" note. No npm link until
+  the package is actually published.
+
 **Source:** site-shape brief §6 / §8-Ticket-2 (the parts not already built).
 **Suggested owner:** Codex — the homepage is their surface; Claude reviews.
 **Effort:** small.

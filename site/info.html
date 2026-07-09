@@ -37,9 +37,26 @@
 
 <data-wrapper id="nav" src="/views/nav.html" $data-nav-open="open"></data-wrapper>
 
+<header class="page-hero">
+    <div class="container">
+        <p class="page-hero__kicker">technical info</p>
+        <h1 class="page-hero__title">Just the facts.</h1>
+        <p class="page-hero__lead">
+            Package shape, public API, download size, browser support,
+            security posture, release checks — measured, current, and honest
+            about what's still pending.
+        </p>
+        <p class="page-hero__motif" aria-hidden="true">
+            <span class="hero-pill hero-pill--ok">✓ shipped</span>
+            <span class="hero-pill hero-pill--warn">◐ partial</span>
+            <span class="hero-pill hero-pill--err">✗ not yet</span>
+        </p>
+    </div>
+</header>
+
 <main class="docs-layout">
     <aside class="docs-toc" aria-label="Technical info sections">
-        <h1>Technical Info</h1>
+        <p class="docs-title">Technical Info</p>
         <p class="docs-subtitle">Release-facing facts for data-wrapper</p>
         <nav>
             <ol>
@@ -69,5 +86,6 @@
     </article>
 </main>
 
+<data-wrapper src="/views/footer.html"></data-wrapper>
 </body>
 </html>

@@ -37,9 +37,28 @@
 
 <data-wrapper id="nav" src="/views/nav.html" $data-nav-open="open"></data-wrapper>
 
+<header class="page-hero">
+    <div class="container">
+        <p class="page-hero__kicker">comparison</p>
+        <h1 class="page-hero__title">vs. the frameworks — honestly.</h1>
+        <p class="page-hero__lead">
+            Ten frameworks, six axes, letter grades, and the gaps we're not
+            pretending away. It ends with a fit checklist that will talk you
+            out of adopting when it should.
+        </p>
+        <p class="page-hero__motif" aria-hidden="true">
+            <span class="hero-pill hero-pill--ok">A+</span>
+            <span class="hero-pill hero-pill--ok">A−</span>
+            <span class="hero-pill hero-pill--info">B+</span>
+            <span class="hero-pill hero-pill--warn">C</span>
+            <span class="hero-pill hero-pill--err">F</span>
+        </p>
+    </div>
+</header>
+
 <main class="docs-layout">
     <aside class="docs-toc" aria-label="Comparison sections">
-        <h1>data-wrapper</h1>
+        <p class="docs-title">data-wrapper</p>
         <p class="docs-subtitle">vs. the frameworks — honestly</p>
         <nav>
             <ol>
@@ -64,5 +83,6 @@
     </article>
 </main>
 
+<data-wrapper src="/views/footer.html"></data-wrapper>
 </body>
 </html>

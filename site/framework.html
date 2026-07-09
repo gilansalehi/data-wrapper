@@ -37,9 +37,26 @@
 
 <data-wrapper id="nav" src="/views/nav.html" $data-nav-open="open"></data-wrapper>
 
+<header class="page-hero">
+    <div class="container">
+        <p class="page-hero__kicker">the complete guide</p>
+        <h1 class="page-hero__title">Three tokens, all the way down.</h1>
+        <p class="page-hero__lead">
+            Install to known limitations in thirteen sections — and every one
+            of them is a live data-wrapper view, so the docs can't drift from
+            the framework they describe.
+        </p>
+        <p class="page-hero__motif" aria-hidden="true">
+            <span class="hero-chip"><b>$</b> read a value</span>
+            <span class="hero-chip"><b>@</b> call a function</span>
+            <span class="hero-chip"><b>*</b> render structure</span>
+        </p>
+    </div>
+</header>
+
 <main class="docs-layout">
     <aside class="docs-toc" aria-label="Documentation sections">
-        <h1>data-wrapper</h1>
+        <p class="docs-title">data-wrapper</p>
         <p class="docs-subtitle">HTML-first reactivity — full guide</p>
         <nav>
             <ol>
@@ -96,5 +113,6 @@
     </article>
 </main>
 
+<data-wrapper src="/views/footer.html"></data-wrapper>
 </body>
 </html>

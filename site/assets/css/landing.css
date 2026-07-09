@@ -387,3 +387,76 @@
     font-size: .8rem;
     color: var(--faint);
 }
+
+/* ============================================================
+   Page heroes — one ink band per page, each previewing that
+   page's own visual language: tokens on the guide, grade pills
+   on the comparison, status pills on info, field-note marks on
+   the tutorial. Semantic colors are lifted toward --hero-fg so
+   they keep contrast on the fixed-dark band in both themes.
+   ============================================================ */
+.page-hero {
+    background: var(--ink);
+    color: var(--ink-text);
+    overflow: clip;
+}
+.page-hero .container {
+    display: grid;
+    gap: .65rem;
+    padding-block: clamp(1.9rem, 5vw, 3.25rem);
+    justify-items: start;
+}
+.page-hero__kicker {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: .74rem;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--hero-mute);
+}
+.page-hero__title {
+    margin: 0;
+    font-size: clamp(1.9rem, 5vw, 3.1rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    color: var(--hero-fg);
+}
+@supports (text-wrap: balance) { .page-hero__title { text-wrap: balance; } }
+.page-hero__lead {
+    max-width: 46rem;
+    margin: 0;
+    font-size: 1.02rem;
+    line-height: 1.55;
+    color: var(--hero-mute);
+}
+.page-hero__motif {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin: .55rem 0 0;
+}
+.hero-chip,
+.hero-pill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .45em;
+    padding: .3em .85em;
+    border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, currentColor 10%, transparent);
+    font-family: var(--mono);
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--hero-fg);
+}
+.hero-chip b {
+    font-size: 1.3em;
+    font-weight: 800;
+    color: color-mix(in srgb, var(--link) 65%, var(--hero-fg));
+}
+.hero-pill--ok   { color: color-mix(in srgb, var(--ok)   65%, var(--hero-fg)); }
+.hero-pill--warn { color: color-mix(in srgb, var(--warn) 65%, var(--hero-fg)); }
+.hero-pill--err  { color: color-mix(in srgb, var(--err)  65%, var(--hero-fg)); }
+.hero-pill--info { color: color-mix(in srgb, var(--link) 65%, var(--hero-fg)); }

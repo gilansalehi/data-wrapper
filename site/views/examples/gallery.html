@@ -1,0 +1,238 @@
+<script type="module" data-module="@examples/gallery">
+    const orders = document.createElement('data-wrapper');
+    orders.id = 'orders';
+    orders.setAttribute('src', '/views/showcase/orders.html');
+
+    const tags = (...labels) => labels.map(label => ({
+        id: label.toLowerCase().replaceAll(' ', '-'),
+        label,
+    }));
+
+    export const examples = [
+        {
+            id: 'bind',
+            title: 'Input binding',
+            summary: 'A small controlled input: the event updates module state, and $text renders a computed greeting.',
+            preview: '/views/showcase/bind.html',
+            file: '/views/showcase/bind.html',
+            sourceTitle: 'bind.html',
+            guide: '/framework#tokens',
+            guideLabel: 'Three tokens',
+            tags: tags('state', 'events', 'computed'),
+        },
+        {
+            id: 'counter',
+            title: 'Counter',
+            summary: 'The smallest useful loop: @click mutates an exported value and $text reflects it.',
+            preview: '/views/showcase/counter.v2.html',
+            file: '/views/showcase/counter.v2.html',
+            sourceTitle: 'counter.v2.html',
+            guide: '/framework#intro',
+            guideLabel: 'Intro',
+            tags: tags('state', 'events'),
+        },
+        {
+            id: 'todos',
+            title: 'Todos',
+            summary: 'A complete mini app with list rows, relative row paths, event detail, filters, and conditional badges.',
+            preview: '/views/showcase/todos.v3.html',
+            file: '/views/showcase/todos.v3.html',
+            sourceTitle: 'todos.v3.html',
+            guide: '/framework#directives',
+            guideLabel: 'Directives',
+            wide: true,
+            tags: tags('list', 'if', 'events', 'relative paths'),
+        },
+        {
+            id: 'instances',
+            title: 'Component instances',
+            summary: 'Two wrappers load the same module but receive separate factory state through src query params.',
+            preview: '/views/showcase/instances.html',
+            file: '/views/showcase/instance-counter.html',
+            sourceTitle: 'instance-counter.html',
+            guide: '/framework#factory',
+            guideLabel: 'Module & factory',
+            tags: tags('factory', 'props', 'instances'),
+        },
+        {
+            id: 'theme',
+            title: 'Module imports',
+            summary: 'One component exports theme state, another imports it by data-module name, and both stay live.',
+            preview: '/views/showcase/theme.html',
+            file: '/views/showcase/theme.html',
+            sourceTitle: 'theme.html',
+            guide: '/framework#modules',
+            guideLabel: 'Cross-module imports',
+            tags: tags('imports', 'shared state', 'actions'),
+        },
+        {
+            id: 'formatters',
+            title: 'Formatters',
+            summary: 'Formatter params transform values at the binding edge without moving presentation logic into the DOM.',
+            preview: '/views/showcase/formatters.html',
+            file: '/views/showcase/formatters.html',
+            sourceTitle: 'formatters.html',
+            guide: '/framework#formatters',
+            guideLabel: 'Formatters',
+            tags: tags('formatters', 'sort', 'text'),
+        },
+        {
+            id: 'composer',
+            title: 'Composition outlet',
+            summary: 'A layout view projects authored nav and loads panels through *src, creating router-like composition with plain HTML.',
+            preview: '/views/showcase/composer.html',
+            file: '/views/showcase/composer-layout.html',
+            sourceTitle: 'composer-layout.html',
+            guide: '/framework#composition',
+            guideLabel: 'Composition',
+            wide: true,
+            tags: tags('composition', 'slots', 'src'),
+        },
+        {
+            id: 'orders',
+            title: 'Nested contexts',
+            summary: 'Nested lists create nested binding contexts, while a monitor reads aggregate state through a cross-wrapper path.',
+            preview: orders,
+            file: '/views/showcase/orders.html',
+            sourceTitle: 'orders.html',
+            guide: '/framework#contexts',
+            guideLabel: 'Binding contexts',
+            wide: true,
+            tags: tags('nested lists', 'cross-wrapper', 'events'),
+        },
+    ];
+</script>
+
+<section class="doc-section examples-page" id="examples-gallery">
+    <p class="pitch__kicker">examples</p>
+    <h2>Live patterns, not screenshots.</h2>
+    <p class="examples-lead">
+        Each card mounts the real showcase view and links to the guide section
+        that explains the pattern. The source peeks fetch the same files that
+        power the live previews, so the demo and the code cannot drift apart.
+    </p>
+
+    <div class="examples-grid">
+        <template *list="examples">
+            <article class="example-card" $class="./wide?bool=example-card--wide:">
+                <header class="example-card__header">
+                    <div>
+                        <h3 $text="./title"></h3>
+                        <p $text="./summary"></p>
+                    </div>
+                    <a class="btn btn-outline" $href="./guide" $text="./guideLabel"></a>
+                </header>
+
+                <div class="example-card__tags" aria-label="Feature tags">
+                    <template *list="./tags">
+                        <span class="chip outline muted" $text="./label"></span>
+                    </template>
+                </div>
+
+                <div class="example-card__preview">
+                    <template *src="./preview">
+                        <p class="note">Preview unavailable.</p>
+                    </template>
+                </div>
+
+                <data-wrapper src="/views/docs/peek.html?file=./file&title=./sourceTitle"></data-wrapper>
+            </article>
+        </template>
+    </div>
+</section>
+
+<style>
+    .examples-page {
+        border-top: 0;
+    }
+
+    .examples-page h2 {
+        margin-bottom: .6rem;
+    }
+
+    .examples-lead {
+        max-width: 44rem;
+        margin: 0 0 1.5rem;
+        color: var(--muted);
+        font-size: 1.02rem;
+        line-height: 1.55;
+    }
+
+    .examples-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+        gap: 1rem;
+    }
+
+    .example-card {
+        display: grid;
+        align-content: start;
+        gap: 1rem;
+        min-width: 0;
+        padding: 1rem;
+        border: var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+    }
+
+    .example-card--wide {
+        grid-column: 1 / -1;
+    }
+
+    .example-card__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .example-card__header h3 {
+        margin: 0 0 .35rem;
+        font-size: 1.15rem;
+        line-height: 1.2;
+    }
+
+    .example-card__header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: .92rem;
+        line-height: 1.45;
+    }
+
+    .example-card__header .btn {
+        flex: 0 0 auto;
+        font-size: .82rem;
+        white-space: nowrap;
+    }
+
+    .example-card__tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .35rem;
+    }
+
+    .example-card__preview {
+        min-width: 0;
+        padding: 1rem;
+        border: var(--border);
+        border-radius: var(--radius);
+        background: var(--bg);
+        overflow: auto;
+    }
+
+    .example-card__preview > data-wrapper {
+        display: block;
+        min-width: 0;
+    }
+
+    .example-card .source-peek {
+        margin-top: 0;
+    }
+
+    @media (max-width: 640px) {
+        .example-card__header {
+            flex-direction: column;
+        }
+    }
+</style>

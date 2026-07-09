@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>data-wrapper — examples gallery</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="canonical" href="https://data-wrapper.org/examples">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="description" content="Live data-wrapper examples: counters, todos, formatters, module imports, component instances, composition outlets, and nested binding contexts.">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="data-wrapper">
+    <meta property="og:title" content="data-wrapper — examples gallery">
+    <meta property="og:description" content="Live examples with source peeks for the core data-wrapper patterns.">
+    <meta property="og:url" content="https://data-wrapper.org/examples">
+    <meta property="og:image" content="https://data-wrapper.org/icon-512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="data-wrapper — examples gallery">
+    <meta name="twitter:description" content="Live examples with source peeks for the core data-wrapper patterns.">
+    <meta name="twitter:image" content="https://data-wrapper.org/icon-512.png">
+    <script type="importmap">{"imports":{"data-wrapper":"/dist/data-wrapper.js","state/":"/state/"}}</script>
+    <script>
+        (() => {
+            try {
+                const v = localStorage.getItem('data-wrapper:theme');
+                if (v === 'light' || v === 'dark') document.documentElement.dataset.theme = v;
+            } catch {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/assets/css/index.css">
+    <script src="/dist/data-wrapper.js" type="module"
+            data-shim-src="https://ga.jspm.io/npm:es-module-shims@2.8.1/dist/es-module-shims.js"></script>
+</head>
+<body class="docs-body">
+
+<data-wrapper id="nav" src="/views/nav.html" $data-nav-open="open"></data-wrapper>
+
+<main class="docs-layout">
+    <aside class="docs-toc" aria-label="Examples sections">
+        <h1>Examples</h1>
+        <p class="docs-subtitle">Live components, source included</p>
+        <nav>
+            <ol>
+                <li><a href="#examples-gallery">Gallery</a></li>
+            </ol>
+        </nav>
+        <p class="docs-sidefoot">
+            <a href="/framework">Framework guide</a><br>
+            <a href="/tutorials">Tutorial</a>
+        </p>
+    </aside>
+
+    <article class="docs-content">
+        <data-wrapper src="/views/examples/gallery.html"></data-wrapper>
+    </article>
+</main>
+
+<data-wrapper src="/views/footer.html"></data-wrapper>
+</body>
+</html>

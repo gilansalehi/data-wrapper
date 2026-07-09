@@ -9,6 +9,7 @@ Canonical docs:
 - Framework guide: /framework
 - Technical info: /info
 - Framework comparison: /compare
+- Live examples: /examples
 - Tutorials: /tutorials
 - Full AI reference: /llms-full.txt
 - Agent authoring guide: /agent.md

@@ -1,0 +1,95 @@
+<!-- Fit-check band. The claims below are a verbatim subset of the compare
+     page's adoption checklist (views/compare/checklist.html) — that page is
+     the source of truth; edit there first, mirror here. -->
+<section class="pitch pitch--band">
+    <div class="container">
+        <p class="pitch__kicker">fit check</p>
+        <h2 class="pitch__title">Good fit, bad fit.</h2>
+        <p class="pitch__lead">
+            Every tool has a shape. Here's an honest sketch of this one — and
+            if you want the longer answer, the comparison page grades
+            data-wrapper against nine other frameworks and ends with an
+            interactive version of this checklist.
+        </p>
+
+        <div class="fit-band">
+            <div class="fit-band__col fit-band__col--for">
+                <p class="fit-band__label">Reach for it when</p>
+                <ul>
+                    <li>Shipping files, not build artifacts, is a feature for this project</li>
+                    <li>It's a content site, dashboard, or admin page with islands of interactivity — not an app-shell SPA</li>
+                    <li>The team writes HTML, CSS, and vanilla JS — framework onboarding would be a real cost</li>
+                    <li>Pre-1.0 churn is acceptable — a side project, prototype, or internal tool</li>
+                </ul>
+            </div>
+            <div class="fit-band__col fit-band__col--against">
+                <p class="fit-band__label">Reach for something else when</p>
+                <ul>
+                    <li>Dynamic content must be server-rendered for SEO or first paint</li>
+                    <li>You need routing, code-splitting, and an app shell</li>
+                    <li>You need an ecosystem: component libraries, devtools, a hiring pool</li>
+                    <li>State updates at streaming or animation rates — live grids, tickers, games</li>
+                </ul>
+            </div>
+        </div>
+
+        <p class="pitch__foot">
+            Undecided? <a href="/compare#checklist">Take the interactive fit
+            checklist</a> — it's honest, and it will tell you to use React
+            when you should use React.
+        </p>
+    </div>
+</section>
+
+<style>
+    .fit-band {
+        display: grid;
+        gap: 1rem;
+        margin-top: 1.4rem;
+    }
+    @media (min-width: 720px) {
+        .fit-band { grid-template-columns: 1fr 1fr; }
+    }
+    .fit-band__col {
+        padding: 1.1rem 1.25rem;
+        background: var(--bg);
+        border: var(--border);
+        border-radius: calc(var(--radius) * 2);
+    }
+    .fit-band__label {
+        margin: 0 0 .6rem;
+        font-size: .74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+    }
+    .fit-band__col--for     .fit-band__label { color: var(--ok); }
+    .fit-band__col--against .fit-band__label { color: var(--err); }
+
+    .fit-band ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: .55rem;
+    }
+    .fit-band li {
+        display: flex;
+        gap: .6rem;
+        align-items: baseline;
+        font-size: .92rem;
+        line-height: 1.5;
+    }
+    .fit-band li::before {
+        flex: 0 0 auto;
+        font-weight: 700;
+    }
+    .fit-band__col--for li::before {
+        content: "✓";
+        color: var(--ok);
+    }
+    .fit-band__col--against li::before {
+        content: "✗";
+        color: var(--err);
+    }
+</style>

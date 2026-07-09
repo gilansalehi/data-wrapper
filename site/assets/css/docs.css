@@ -18,9 +18,12 @@
     padding-right: 1rem;
 }
 
-.docs-toc h1 {
+.docs-toc h1,
+.docs-toc .docs-title {
     margin: 0 0 .25rem;
     font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
 }
 
 .docs-subtitle {
