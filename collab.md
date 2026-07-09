@@ -100,10 +100,25 @@ Apply them to new views and when touching old CSS; reference implementation is
    and `var(--border)` everywhere. A new component should look like the site
    hired it, not like it transferred in.
 
-Known debt against these rules: `docs.css` hardcodes `4px`/`8px` radii and
-one-off paddings where `landing.css` uses tokens. A mechanical
-replace-literals-with-tokens pass is a good standalone task; the rules above
-make the diff checkable.
+The CSS now has an explicit two-tier boundary (2026-07-09):
+
+- **`dw.css` is the framework** ("gift #2") — imports `theme.css` (tokens =
+  the public API; the Theme Studio edits exactly these), `reset.css` (pure
+  element defaults — no classes), `layout.css` (utilities), `components.css`
+  (`.btn`, the code-reveal `<details>`), `atoms.css` (tones, status pills,
+  meters), `motion.css`. Nothing in this tier may know about the site's
+  pages. Portable by construction: one import themes a whole project.
+- **Site tier** — `article.css`, `docs.css`, `landing.css`, imported by
+  `index.css` after `dw.css`. Page-specific and editorial styles live here.
+
+New-rule corollary: adding a style? Decide its tier first. If it mentions a
+page, a section id, or a `.pitch`/`.docs` family, it's site tier.
+
+Debt status: the docs.css literal radii are tokenized and its code slab now
+matches landing's `.pitch__code` values (one code look site-wide);
+`.form-group` (dead) and the duplicate `--header-*` tokens are gone.
+`hero.css` is dead (import was already commented out) — deletion is queued
+with the user.
 
 ---
 
@@ -164,6 +179,16 @@ low-hanging), extra migration pages (compare page covers the space), search
 placeholder (slop).
 
 — Claude, 2026-07-09
+
+**CSS framework boundary (gift #2) drawn** — see "House visual style" above
+for the two-tier layout (`dw.css` framework / site tier). Codex: two notes
+for you. (1) Theme Studio review feedback, small: the swatch checkerboard in
+`studio.html` uses `#ddd` literals — derive instead, e.g.
+`color-mix(in srgb, var(--text) 15%, transparent)`, so it reads in dark
+theme too. (2) When you touch views, anything you'd add to `docs.css` that
+mentions a page or section belongs in the site tier; new reusable garnish
+goes to `atoms.css`/`components.css` and must derive every color from
+tokens. — Claude, 2026-07-09
 
 **023 implemented** — allowlist landed in `engine.ts` (`isAllowedUrl`), matrix
 in the ticket's Status section and on the security page. Codex: the floor is

@@ -1,3 +1,11 @@
+/* ============================================================
+   Framework components — multi-property garnish with a job.
+   Buttons and the code-reveal disclosure. Everything derives
+   from tokens; nothing here knows about this site's pages.
+   ============================================================ */
+
+/* ── Buttons — <a> and <button> share one look ── */
+
 .btn {
     display: inline-flex;
     align-items: center;
@@ -32,4 +40,46 @@
 
 .btn-outline {
     background: transparent;
+}
+
+/* ── Code reveal — bare <details><summary>…</summary><pre> ── */
+
+details {
+    border: var(--border);
+    border-radius: var(--radius);
+}
+
+details summary {
+    padding: .4rem .85rem;
+    font-size: .75rem;
+    font-family: var(--mono);
+    color: var(--muted);
+    background: var(--surface);
+    border-radius: var(--radius);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+
+    &:hover { font-weight: 600; }
+}
+
+details summary::marker       { content: '+ '; }
+details[open] summary::marker { content: '− '; }
+
+details[open] summary {
+    border-radius: var(--radius) var(--radius) 0 0;
+    border-bottom: var(--border);
+}
+
+details pre {
+    margin: 0;
+    padding: 1rem 1.1rem;
+    background: var(--bg);
+    color: var(--text);
+    border-radius: 0 0 var(--radius) var(--radius);
+    font-size: .78rem;
+    font-family: var(--mono);
+    line-height: 1.75;
+    overflow-x: auto;
+    white-space: pre;
 }

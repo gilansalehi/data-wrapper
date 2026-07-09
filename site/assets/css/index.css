@@ -1,11 +1,10 @@
+/* Site entry. Two tiers:
+   dw.css  — the framework (tokens, element defaults, garnish);
+             portable, no site-specific selectors.
+   the rest — this site's editorial + page components. */
 
-@import 'theme.css';
-@import 'reset.css';
-@import 'layout.css';
-@import 'components.css';
-/* @import 'hero.css'; */
+@import 'dw.css';
+
 @import 'article.css';
 @import 'docs.css';
-@import 'atoms.css';
 @import 'landing.css';
-@import 'motion.css';

@@ -395,6 +395,20 @@
    the tutorial. Semantic colors are lifted toward --hero-fg so
    they keep contrast on the fixed-dark band in both themes.
    ============================================================ */
+/* The slim breadcrumb band above every page — same ink family. */
+.header {
+    margin: 0;
+    padding: 1em 0;
+    background: var(--ink);
+    color: color-mix(in srgb, var(--hero-fg) 60%, transparent);
+    overflow: clip;
+    font-family: var(--mono);
+    font-size: .78rem;
+    font-weight: 500;
+    letter-spacing: .14em;
+    text-transform: lowercase;
+}
+
 .page-hero {
     background: var(--ink);
     color: var(--ink-text);

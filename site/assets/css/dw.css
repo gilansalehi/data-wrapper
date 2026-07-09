@@ -1,0 +1,26 @@
+/* ============================================================
+   dw.css — the data-wrapper mini CSS framework ("gift #2").
+
+   Self-contained: drop this one import into any project and you
+   get themed, slick-by-default HTML. Three ideas, in order:
+
+   1. theme.css   — the design tokens. This is the public API;
+                    the Theme Studio edits exactly these.
+   2. reset.css   — HTML element defaults. No classes: plain
+                    markup should already look considered.
+   3. garnish     — layout.css (utilities), components.css
+                    (.btn, code-reveal), atoms.css (tones,
+                    status pills, meters), motion.css (opt-in
+                    enter/exit primitives, in @layer motion).
+
+   House rule for anything added here: never invent a color —
+   derive it from a token with color-mix(). See collab.md
+   "House visual style".
+   ============================================================ */
+
+@import 'theme.css';
+@import 'reset.css';
+@import 'layout.css';
+@import 'components.css';
+@import 'atoms.css';
+@import 'motion.css';

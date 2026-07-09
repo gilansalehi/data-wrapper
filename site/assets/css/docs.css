@@ -76,11 +76,15 @@
     margin-top: 0;
 }
 
+/* Same slab as landing's .pitch__code — one code look site-wide. */
 .doc-section pre {
     background: var(--ink);
     color: var(--ink-text);
-    padding: .75rem 1rem;
-    border-radius: 4px;
+    padding: .85rem 1.1rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    font-size: .82rem;
+    line-height: 1.65;
     overflow-x: auto;
 }
 
@@ -96,8 +100,8 @@
 .doc-section pre code[data-title]::before {
     content: attr(data-title);
     display: block;
-    margin: -.75rem -1rem .75rem;
-    padding: .45rem 1rem;
+    margin: -.85rem -1.1rem .85rem;
+    padding: .45rem 1.1rem;
     border-bottom: 1px solid color-mix(in srgb, var(--ink-text) 18%, transparent);
     background: var(--ink);
     color: color-mix(in srgb, var(--ink-text) 72%, transparent);
@@ -125,7 +129,7 @@
 .doc-section .demo {
     background: var(--surface);
     padding: 1rem;
-    border-radius: 4px;
+    border-radius: var(--radius);
     margin: 1rem 0;
 }
 
@@ -144,7 +148,7 @@
     margin: 1rem 0 2rem;
     padding: 1rem;
     border: 1px dashed color-mix(in srgb, currentColor 26%, transparent);
-    border-radius: 4px;
+    border-radius: var(--radius);
     background: var(--surface);
 }
 

@@ -1,3 +1,12 @@
+/* ============================================================
+   theme.css — the design tokens. This is the framework's public
+   API: the stable set is the 11 colors (--bg --surface --text
+   --muted --faint --link --ok --warn --err --ink --ink-text)
+   plus --radius — exactly what the Theme Studio exposes. Derive
+   every other color from these with color-mix(); a hex literal
+   outside this file is a defect.
+   ============================================================ */
+
 :root {
     --measure:   768px;
     --pad:       2rem 1.25rem 4rem;
