@@ -53,6 +53,17 @@ ticket 021's documentation covers the realistic risk (user uploads on the
 app origin), and config surface needs dogfood-proven demand. Revisit only if
 a real adopter hits the uploads-origin problem.
 
+### 8. Homepage ↔ tutorials duplication — direction ratified, refactor deferred
+
+The user's call (2026-07-09): the industry shape is homepage = splashy CTAs /
+social proof, tutorials page = the teaching walk. Today the homepage steps
+(01–03 etc.) duplicate much of /tutorials. Not ready for the large-scale
+refactor; detail passes are landing meanwhile (steps 01/02 now use the
+`.pitch__code` titled slab; `counter.v2.html` simplified to `plus`/`minus`
+with two style rules). When the big pass happens: homepage keeps the hero +
+one taste of the product + CTAs; the step-by-step content consolidates into
+/tutorials.
+
 ## Non-Goals
 
 - No behavioral changes.

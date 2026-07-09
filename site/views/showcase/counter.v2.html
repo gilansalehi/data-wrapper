@@ -1,41 +1,17 @@
 <script type="module" data-module="@view/counter">
     export let count = 0;
 
-    export function increment() {
-        count += 1;
-    }
-
-    export function decrement() {
-        count -= 1;
-    }
+    export function plus()  { count += 1; }
+    export function minus() { count -= 1; }
 </script>
 
-<article class="counter" aria-label="Counter demo">
-    <button @click="decrement">–</button>
-
-    <output data-output="count" $text="count"></output>
-
-    <button @click="increment">+</button>
-</article>
+<p class="counter">
+    <button @click="minus">−</button>
+    <output $text="count"></output>
+    <button @click="plus">+</button>
+</p>
 
 <style>
-    .counter {
-        display: flex;
-        gap: 1rem;
-        align-items: baseline;
-
-        button {
-            grid-area: btn;
-            display: inline-flex;
-        }
-
-        output {
-            width: 2em;
-            grid-area: out;
-            display: inline;
-            font-size: 1.25em;
-            margin: 0;
-            text-align: center;
-        }
-    }
+    .counter { display: flex; align-items: baseline; gap: 1rem; }
+    .counter output { min-width: 2ch; text-align: center; font-size: 1.25em; }
 </style>
