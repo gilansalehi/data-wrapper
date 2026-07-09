@@ -1,0 +1,59 @@
+<script type="module" data-module="@docs/copy">
+    import { action } from 'data-wrapper';
+
+    // Drop-in copy button for code slabs. Mount INSIDE the <pre>, right
+    // after the <code>:
+    //
+    //   …</code><data-wrapper src="/views/docs/copy.html"></data-wrapper></pre>
+    //
+    // Contiguous markup matters at the call site AND in this file's
+    // top-level nodes below: any stray text node inside a <pre> renders
+    // as literal whitespace in the code block.
+    export default ({ wrapper, cleanup }) => {
+        let label = 'copy';
+        let timer;
+        cleanup(() => clearTimeout(timer));
+        return {
+            get label() { return label; },
+            copy() {
+                const code = wrapper.closest('pre')?.querySelector('code');
+                if (!code) return;
+                navigator.clipboard.writeText(code.textContent.trim())
+                    .then(action(() => {
+                        label = 'copied ✓';
+                        clearTimeout(timer);
+                        timer = setTimeout(action(() => { label = 'copy'; }), 1500);
+                    }))
+                    .catch(action(() => { label = '✗'; }));
+            },
+        };
+    };
+</script><button type="button" class="code-copy" @click="copy" $text="label"></button><style>
+    pre:has(.code-copy) { position: relative; }
+
+    /* Sits in the slab's title bar; quiet until the block is hovered.
+       color: inherit → the slab's own --ink-text, so the button matches
+       any code surface it lands on. */
+    .code-copy {
+        position: absolute;
+        top: .35rem;
+        right: .5rem;
+        min-height: 0;
+        padding: .1em .6em;
+        border: 0;
+        border-radius: 999px;
+        background: color-mix(in srgb, currentColor 10%, transparent);
+        color: inherit;
+        font-family: var(--mono);
+        font-size: .68rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        white-space: nowrap;
+        cursor: pointer;
+        opacity: .55;
+        transition: opacity .2s, background-color .2s;
+    }
+    pre:hover .code-copy,
+    .code-copy:focus-visible { opacity: 1; }
+    .code-copy:hover { background: color-mix(in srgb, currentColor 18%, transparent); }
+</style>
