@@ -9,7 +9,7 @@
         { id: 'text',  label: '$text',  src: '/hello.html',
           inner: '    <h2 $text="greeting">' },
         { id: 'click', label: '@click', src: '/count.html',
-          inner: '    <button @click="increment">\n        +1\n    </button>' },
+          inner: '    <button @click="plus">\n        +1\n    </button>' },
         { id: 'list',  label: '*list',  src: '/todos.html',
           inner: '    <template *list="todos">\n        <li $text="./task">' },
     ];
@@ -53,7 +53,7 @@
         const h = new Date().getHours();
         return h < 12 ? 'Good morning.' : h < 18 ? 'Good afternoon.' : 'Good evening.';
     };
-    export function increment() { count += 1; }
+    export function plus() { count += 1; }
 
     export const todos = [
         { id: 1, task: 'fetch the view' },
@@ -102,9 +102,9 @@
             </template>
             <template *if="showClick">
                 <p class="tag-hero__result tag-hero__result--play">
-                    <button type="button" class="tag-hero__demo-btn" @click="increment">+1</button>
+                    <button type="button" class="tag-hero__demo-btn" @click="plus">+1</button>
                     <output class="tag-hero__count" $text="count"></output>
-                    <small>go on — it's a real binding</small>
+                    <span class="live-badge">live</span>
                 </p>
             </template>
             <template *if="showList">
@@ -308,9 +308,9 @@
         font-variant-numeric: tabular-nums;
         color: var(--ink-text);
     }
-    .tag-hero__result--play small {
-        font-size: .78rem;
-        color: var(--hero-faint);
+    /* Lift the badge's green toward the hero fg for the ink band. */
+    .tag-hero .live-badge {
+        color: color-mix(in srgb, var(--ok) 70%, var(--hero-fg));
     }
     .tag-hero__result--list {
         display: grid;

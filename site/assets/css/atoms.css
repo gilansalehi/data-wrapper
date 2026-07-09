@@ -129,3 +129,44 @@
     border-radius: inherit;
     background: var(--link);
 }
+
+/* ============================================================
+   Live badge — the one repeatable signal that a demo is really
+   running (and usually interactive): pulsing dot + mono LIVE.
+   Tint-only per the border rules. Color defaults to --ok and the
+   tint derives from currentColor, so ink-band contexts restyle it
+   with a single color override.
+   ============================================================ */
+.live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .45em;
+    padding: .2em .7em;
+    border-radius: 999px;
+    background: color-mix(in srgb, currentColor 9%, transparent);
+    color: var(--ok);
+    font-family: var(--mono);
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.live-badge::before {
+    content: "";
+    inline-size: .5em;
+    block-size: .5em;
+    border-radius: 999px;
+    background: currentColor;
+    animation: live-pulse 1.8s ease-in-out infinite;
+}
+@keyframes live-pulse {
+    50% { opacity: .3; }
+}
+/* Pin to a corner of a demo frame (the frame needs position: relative),
+   freeing the demo itself to center in the space. */
+.live-badge--corner {
+    position: absolute;
+    top: .65rem;
+    right: .75rem;
+}
