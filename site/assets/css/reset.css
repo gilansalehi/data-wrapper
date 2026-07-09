@@ -4,8 +4,14 @@
 
 /* ── Scroll & motion ── */
 
+/* The page never scrolls sideways: wide content (tables, code slabs)
+   scrolls inside its own overflow-x:auto container, so any horizontal
+   document overflow is a bug — usually fixed/offscreen chrome nudging
+   the mobile layout viewport. clip, not hidden: clip doesn't create a
+   scroll container, so position:sticky keeps working. */
 html {
     min-height: 100%;
+    overflow-x: clip;
     scroll-behavior: smooth;
 }
 
@@ -19,6 +25,7 @@ html {
 body {
     min-height: 100%;
     margin: 0;
+    overflow-x: clip;
     background: var(--bg);
     color: var(--text);
     font-family: var(--sans);

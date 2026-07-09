@@ -1,9 +1,18 @@
+/* Mobile-first: single column, no toc; the sidebar joins at width. */
 .docs-layout {
     display: grid;
-    grid-template-columns: 18rem 1fr;
+    grid-template-columns: 1fr;
     gap: 2rem;
-    width: min(calc(100% - 3rem), 1100px);
-    margin: 2rem auto;
+    width: min(calc(100% - 2rem), 1100px);
+    margin: 1rem auto;
+}
+
+@media (min-width: 48rem) {
+    .docs-layout {
+        grid-template-columns: 18rem 1fr;
+        width: min(calc(100% - 3rem), 1100px);
+        margin: 2rem auto;
+    }
 }
 
 .docs-layout > * {
@@ -11,11 +20,16 @@
 }
 
 .docs-toc {
+    display: none;
     position: sticky;
     top: 3.5rem;
     align-self: start;
     border-right: var(--border);
     padding-right: 1rem;
+}
+
+@media (min-width: 48rem) {
+    .docs-toc { display: block; }
 }
 
 .docs-toc h1,
@@ -147,7 +161,6 @@
 .showcase-block {
     margin: 1rem 0 2rem;
     padding: 1rem;
-    border: 1px dashed color-mix(in srgb, currentColor 26%, transparent);
     border-radius: var(--radius);
     background: var(--surface);
 }
@@ -166,14 +179,3 @@
     font-weight: 700;
 }
 
-@media (max-width: 768px) {
-    .docs-layout {
-        grid-template-columns: 1fr;
-        width: min(calc(100% - 2rem), 1100px);
-        margin-block: 1rem;
-    }
-
-    .docs-toc {
-        display: none;
-    }
-}

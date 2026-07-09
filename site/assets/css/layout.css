@@ -7,8 +7,10 @@
 .absolute { position: absolute; }
 .sticky { position: sticky; top: 0; }
 
+/* Query-free responsive: exact measure when wide, 1em gutters when
+   narrow. Mobile needs no special case because narrow IS the default. */
 .container {
-    max-width: var(--measure);
+    width: min(100% - 2em, var(--measure));
     margin-inline: auto;
 }
 
@@ -37,6 +39,3 @@
 .gap-md { gap: .75rem; }
 .gap-lg { gap: 1.25rem; }
 
-@media screen and (max-width: 768px) {
-    .container { padding-left: 1em; padding-right: 1em; }
-}

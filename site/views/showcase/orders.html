@@ -84,13 +84,15 @@
 </script>
 
     <style>
+    /* Flat demo root: the hosting frame draws the box; nesting inside
+       reads through bg alternation, not more borders. Sized by its
+       container (card, pane, or page), not the viewport. */
     .orders-demo {
-        border: var(--border);
-        border-radius: 8px;
+        container-type: inline-size;
+        border-radius: calc(var(--radius) * 2);
         padding: 1.25rem;
         margin-bottom: .4rem;
         background: var(--surface);
-        box-shadow: var(--shadow);
     }
 
     .orders-demo .orders-head,
@@ -107,12 +109,19 @@
 
     .orders-demo .orders-head { margin-bottom: 1rem; }
 
+    /* Mobile-first: one column; the side monitor joins at width. */
     .orders-demo .orders-layout {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
+        grid-template-columns: 1fr;
         gap: 1rem;
         align-items: start;
         min-width: 0;
+    }
+
+    @container (width >= 44rem) {
+        .orders-demo .orders-layout {
+            grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
+        }
     }
 
     .orders-demo .order-stats {
@@ -123,7 +132,6 @@
     }
 
     .orders-demo .order-stats span {
-        border: var(--border);
         border-radius: var(--radius);
         padding: .35rem .6rem;
         background: var(--bg);
@@ -205,11 +213,6 @@
         white-space: nowrap;
     }
 
-    @media (max-width: 820px) {
-        .orders-demo .orders-layout {
-            grid-template-columns: 1fr;
-        }
-    }
 </style>
 
 <section class="orders-demo">

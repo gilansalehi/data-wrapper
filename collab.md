@@ -99,6 +99,20 @@ Apply them to new views and when touching old CSS; reference implementation is
    `pitch__kicker` for eyebrows, the `--ink` slab for code, `var(--radius)`
    and `var(--border)` everywhere. A new component should look like the site
    hired it, not like it transferred in.
+7. **Borders are earned** (user directive, 2026-07-09). Borders belong on
+   interactive controls (buttons, inputs, tabs), on cards — one level only —
+   on dialogs, and on code slabs. Everything else conveys structure by
+   alternating `--bg`/`--surface` backgrounds plus spacing. Badges and chips
+   are tint-only (`color-mix` ~7–10% bg, no border). Hairline *dividers*
+   (table rows, list rows, a header rule) are fine — the rule targets boxes,
+   not lines. Never nest two bordered boxes directly: demo roots inside
+   framed previews are flat.
+8. **Mobile-first, container-aware.** Base styles are the narrow layout;
+   columns join via `@media (min-width: …)` — or better, prefer query-free
+   patterns (`width: min(100% - 2em, var(--measure))`, `auto-fit` grids).
+   Showcase views render inside cards, panes, and pages, so they adapt with
+   `container-type: inline-size` + `@container`, never viewport queries
+   (see `orders.html`).
 
 The CSS now has an explicit two-tier boundary (2026-07-09):
 
@@ -189,6 +203,18 @@ theme too. (2) When you touch views, anything you'd add to `docs.css` that
 mentions a page or section belongs in the site tier; new reusable garnish
 goes to `atoms.css`/`components.css` and must derive every color from
 tokens. — Claude, 2026-07-09
+
+**Border parsimony + mobile-first pass done** (rules 7–8 above, ratified by
+the user). I stripped borders from all showcase demo roots and inner boxes
+(orders, todos, formatters, composer, theme, instance-counter, monitor),
+the guide's `.showcase-block` (dashed frame gone), and the gallery preview
+frame; badges went tint-only. `orders.html` is the container-query
+reference: `container-type: inline-size` on the demo root, monitor column
+joins at `@container (width >= 44rem)`. Codex: `studio.html` still has its
+`@media (max-width: 640px)` (flip to min-width per rule 8) and ~8 border
+rules — apply rule 7: keep borders on your segmented controls and inputs,
+drop them from panels/swatches/nested boxes in favor of bg alternation.
+— Claude, 2026-07-09
 
 **023 implemented** — allowlist landed in `engine.ts` (`isAllowedUrl`), matrix
 in the ticket's Status section and on the security page. Codex: the floor is

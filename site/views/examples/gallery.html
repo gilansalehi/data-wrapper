@@ -133,7 +133,7 @@
 
                 <div class="example-card__tags" aria-label="Feature tags">
                     <template *list="./tags">
-                        <span class="chip outline muted" $text="./label"></span>
+                        <span class="chip tint muted" $text="./label"></span>
                     </template>
                 </div>
 
@@ -263,7 +263,6 @@
     .example-card__preview {
         min-width: 0;
         padding: 1.1rem;
-        border: var(--border-strong);
         border-radius: var(--radius);
         background:
             linear-gradient(135deg, color-mix(in srgb, var(--link) 8%, transparent), transparent 40%),

@@ -80,12 +80,10 @@
 
 <style>
     .todo-demo {
-        border: var(--border);
-        border-radius: 8px;
+        border-radius: calc(var(--radius) * 2);
         padding: 1.25rem;
         margin-bottom: .4rem;
         background: var(--surface);
-        box-shadow: var(--shadow);
         overflow: clip;
 
         & p:first-child { margin-top: 0; }
@@ -120,7 +118,6 @@
     .todo-demo__count {
         flex: 0 0 auto;
         padding: .25rem .6rem;
-        border: 1px solid color-mix(in srgb, var(--link) 35%, transparent);
         border-radius: 999px;
         color: var(--link);
         font-family: var(--mono);
@@ -169,7 +166,7 @@
         letter-spacing: .08em;
         text-transform: uppercase;
         color: var(--ok);
-        border: 1px solid color-mix(in srgb, var(--ok) 40%, transparent);
+        background: color-mix(in srgb, var(--ok) 10%, transparent);
         border-radius: 999px;
         padding: .05rem .45rem;
     }

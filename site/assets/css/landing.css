@@ -159,7 +159,7 @@
     align-items: center;
     gap: .45em;
     padding: .32em .75em;
-    border: var(--border);
+    background: color-mix(in srgb, currentColor 7%, transparent);
     border-radius: 999px;
     font-family: var(--mono);
     font-size: .82rem;
