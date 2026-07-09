@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>data-wrapper — Theme Studio</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="canonical" href="https://data-wrapper.org/theme-studio">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="description" content="Tune data-wrapper theme tokens, preview real components, and export CSS variables — all with ordinary HTML views and no build step.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="data-wrapper">
+    <meta property="og:title" content="data-wrapper — Theme Studio">
+    <meta property="og:description" content="A live no-build theme editor powered by data-wrapper.">
+    <meta property="og:url" content="https://data-wrapper.org/theme-studio">
+    <meta property="og:image" content="https://data-wrapper.org/icon-512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="data-wrapper — Theme Studio">
+    <meta name="twitter:description" content="A live no-build theme editor powered by data-wrapper.">
+    <meta name="twitter:image" content="https://data-wrapper.org/icon-512.png">
+    <script type="importmap">{"imports":{"data-wrapper":"/dist/data-wrapper.js","state/":"/state/"}}</script>
+    <script>
+        (() => {
+            try {
+                const v = localStorage.getItem('data-wrapper:theme');
+                if (v === 'light' || v === 'dark') document.documentElement.dataset.theme = v;
+            } catch {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/assets/css/index.css">
+    <style>
+        .theme-studio-shell {
+            width: min(calc(100% - 2rem), 1180px);
+            margin-inline: auto;
+        }
+    </style>
+    <script src="/dist/data-wrapper.js" type="module"
+            data-shim-src="https://ga.jspm.io/npm:es-module-shims@2.8.1/dist/es-module-shims.js"></script>
+</head>
+<body>
+
+<data-wrapper id="nav" src="/views/nav.html" $data-nav-open="open"></data-wrapper>
+
+<header class="page-hero">
+    <div class="container">
+        <p class="page-hero__kicker">theme studio</p>
+        <h1 class="page-hero__title">Tune the tokens. Watch the UI move.</h1>
+        <p class="page-hero__lead">
+            Theme Studio edits the same CSS custom properties the site uses.
+            Native controls update a local preview root, real data-wrapper
+            components inherit the changes, and the export panel shows the CSS
+            you can take with you.
+        </p>
+        <p class="page-hero__motif" aria-hidden="true">
+            <span class="hero-chip"><b>$</b> live token values</span>
+            <span class="hero-chip"><b>*</b> preview by source</span>
+            <span class="hero-chip"><b>@</b> edit and export</span>
+        </p>
+    </div>
+</header>
+
+<main class="theme-studio-shell">
+    <data-wrapper src="/views/theme-studio/studio.html"></data-wrapper>
+</main>
+
+<data-wrapper src="/views/footer.html"></data-wrapper>
+</body>
+</html>

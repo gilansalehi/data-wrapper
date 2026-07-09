@@ -21,6 +21,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://data-wrapper.org/theme-studio</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://data-wrapper.org/playground</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

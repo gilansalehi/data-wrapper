@@ -10,6 +10,7 @@ Canonical docs:
 - Technical info: /info
 - Framework comparison: /compare
 - Live examples: /examples
+- Theme Studio: /theme-studio
 - Tutorials: /tutorials
 - Full AI reference: /llms-full.txt
 - Agent authoring guide: /agent.md

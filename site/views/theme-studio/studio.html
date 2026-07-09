@@ -1,0 +1,641 @@
+<script type="module" data-module="@theme/studio">
+    const TOKEN_SPECS = [
+        { name: '--bg',       label: 'Background' },
+        { name: '--surface',  label: 'Surface' },
+        { name: '--text',     label: 'Text' },
+        { name: '--muted',    label: 'Muted text' },
+        { name: '--faint',    label: 'Faint text' },
+        { name: '--link',     label: 'Link / primary' },
+        { name: '--ok',       label: 'Success' },
+        { name: '--warn',     label: 'Warning' },
+        { name: '--err',      label: 'Error' },
+        { name: '--ink',      label: 'Code background' },
+        { name: '--ink-text', label: 'Code text' },
+        { name: '--radius',   label: 'Radius', kind: 'range', min: 0, max: 24, step: 1, unit: 'px' },
+    ];
+
+    const PREVIEWS = [
+        { id: 'bind',       label: 'Input',      src: '/views/showcase/bind.html' },
+        { id: 'counter',    label: 'Counter',    src: '/views/showcase/counter.v2.html' },
+        { id: 'formatters', label: 'Formatters', src: '/views/showcase/formatters.html' },
+        { id: 'todos',      label: 'Todos',      src: '/views/showcase/todos.v3.html' },
+    ];
+
+    const expandHex = value =>
+        value.replace(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i, '#$1$1$2$2$3$3');
+
+    const colorValue = value => {
+        const hex = expandHex(String(value || '').trim());
+        return /^#[0-9a-f]{6}$/i.test(hex) ? hex.toLowerCase() : '#000000';
+    };
+
+    const radiusValue = value => {
+        const n = Number.parseFloat(String(value || '0'));
+        return Number.isFinite(n) ? String(Math.max(0, Math.min(24, Math.round(n)))) : '0';
+    };
+
+    const readToken = spec => {
+        const raw = getComputedStyle(document.documentElement).getPropertyValue(spec.name).trim();
+        const value = spec.kind === 'range'
+            ? radiusValue(raw)
+            : colorValue(raw);
+        return {
+            ...spec,
+            id: spec.name.slice(2),
+            kind: spec.kind || 'color',
+            isColor: spec.kind !== 'range',
+            isRange: spec.kind === 'range',
+            value,
+            swatchStyle: spec.kind === 'range' ? '' : `--swatch: ${value}`,
+        };
+    };
+
+    const readDefaults = () => TOKEN_SPECS.map(readToken);
+    const defaults = readDefaults();
+    const root = document.documentElement;
+    export let tokens = defaults.map(t => ({ ...t }));
+    export let selectedPreviewId = 'bind';
+    export let copyStatus = 'CSS is ready.';
+    export let appliedToSite = false;
+
+    const byName = name => tokens.find(t => t.name === name)?.value || '';
+    const declaration = token => `${token.name}: ${token.value}${token.unit || ''};`;
+    const rootValue = token => `${token.value}${token.unit || ''}`;
+    const syncSite = () => tokens.forEach(t => root.style.setProperty(t.name, rootValue(t)));
+    const clearSite = () => TOKEN_SPECS.forEach(t => root.style.removeProperty(t.name));
+
+    export const previewStyle = () =>
+        tokens.map(declaration).join(' ')
+        + ' --control-bg: var(--bg); --control-hover: var(--surface);';
+
+    export const cssText = () =>
+        `:root {\n${tokens.map(t => `    ${declaration(t)}`).join('\n')}\n}`;
+
+    export const previews = () =>
+        PREVIEWS.map(p => ({ ...p, selected: p.id === selectedPreviewId }));
+
+    export const selectedPreview = () =>
+        PREVIEWS.find(p => p.id === selectedPreviewId)?.src || PREVIEWS[0].src;
+
+    export const siteApplyLabel = () =>
+        appliedToSite ? 'Clear site preview' : 'Apply to site';
+
+    export const siteApplyNote = () =>
+        appliedToSite
+            ? 'Site preview is active. Clear it before judging the saved theme toggle.'
+            : 'Edits are local to the preview until you apply them.';
+
+    const hexRgb = hex => {
+        const value = colorValue(hex).slice(1);
+        return [0, 2, 4].map(i => Number.parseInt(value.slice(i, i + 2), 16) / 255);
+    };
+
+    const luminance = hex => {
+        const channels = hexRgb(hex).map(v =>
+            v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+        );
+        return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+    };
+
+    const contrast = (a, b) => {
+        const light = Math.max(luminance(a), luminance(b));
+        const dark = Math.min(luminance(a), luminance(b));
+        return (light + 0.05) / (dark + 0.05);
+    };
+
+    const contrastRow = (id, label, fg, bg) => {
+        const ratio = contrast(fg, bg);
+        const ok = ratio >= 4.5;
+        const large = ratio >= 3;
+        return {
+            id,
+            label,
+            ratio: `${ratio.toFixed(2)}:1`,
+            grade: ok ? 'AA' : large ? 'AA large' : 'fails',
+            className: ok ? 'status--ok' : large ? 'status--part' : 'status--no',
+        };
+    };
+
+    export const contrastChecks = () => {
+        const bg = byName('--bg');
+        return [
+            contrastRow('text', 'Text on background', byName('--text'), bg),
+            contrastRow('muted', 'Muted text on background', byName('--muted'), bg),
+        ];
+    };
+
+    export function setToken(event) {
+        const token = event.detail.item;
+        const target = event.target;
+        const next = token.kind === 'range'
+            ? radiusValue(target.value)
+            : colorValue(target.value);
+        tokens = tokens.map(t =>
+            t.name === token.name
+                ? { ...t, value: next, swatchStyle: t.kind === 'range' ? '' : `--swatch: ${next}` }
+                : t
+        );
+        if (appliedToSite) syncSite();
+        copyStatus = 'CSS updated.';
+    }
+
+    export function selectPreview(event) {
+        selectedPreviewId = event.detail.item.id;
+    }
+
+    export function reset() {
+        tokens = defaults.map(t => ({ ...t }));
+        if (appliedToSite) syncSite();
+        copyStatus = 'Reset to the current site theme.';
+    }
+
+    export function toggleSitePreview() {
+        appliedToSite = !appliedToSite;
+        if (appliedToSite) {
+            syncSite();
+            copyStatus = 'Applied to the page. Use Clear site preview to undo.';
+        } else {
+            clearSite();
+            copyStatus = 'Cleared the page-level preview.';
+        }
+    }
+
+    export async function copyCss() {
+        try {
+            await navigator.clipboard.writeText(cssText());
+            copyStatus = 'Copied CSS to clipboard.';
+        } catch {
+            copyStatus = 'Select the CSS and copy it manually.';
+        }
+    }
+
+    export default ({ cleanup }) => {
+        cleanup(() => { if (appliedToSite) clearSite(); });
+    };
+</script>
+
+<section class="theme-studio" aria-labelledby="theme-studio-title">
+    <header class="theme-studio__intro">
+        <p class="pitch__kicker">gift #2</p>
+        <h2 id="theme-studio-title">A tiny theme editor for the token API.</h2>
+        <p>
+            The controls below are generated from one exported token array.
+            That same array drives the preview style, contrast checks, and CSS
+            export, so the demo has one source of truth.
+        </p>
+    </header>
+
+    <div class="theme-studio__layout">
+        <section class="theme-studio__panel theme-studio__panel--controls" aria-label="Theme token controls">
+            <header class="theme-studio__panel-head">
+                <h3>Tokens</h3>
+                <span class="theme-studio__actions">
+                    <button class="btn btn-outline" type="button" @click="reset">Reset</button>
+                    <button class="btn btn-primary" type="button" @click="toggleSitePreview" $text="siteApplyLabel"></button>
+                </span>
+            </header>
+            <p class="theme-studio__scope-note" $text="siteApplyNote"></p>
+
+            <div class="theme-token-list">
+                <template *list="tokens?key=name">
+                    <label class="theme-token">
+                        <span class="theme-token__meta">
+                            <span class="theme-token__swatch" $style="./swatchStyle" aria-hidden="true"></span>
+                            <span>
+                                <strong $text="./label"></strong>
+                                <code $text="./name"></code>
+                            </span>
+                        </span>
+
+                        <template *if="./isColor">
+                            <span class="theme-token__control">
+                                <input type="color" $value="./value" @input="setToken">
+                                <output $text="./value"></output>
+                            </span>
+                        </template>
+
+                        <template *if="./isRange">
+                            <span class="theme-token__control">
+                                <input type="range" $min="./min" $max="./max" $step="./step" $value="./value" @input="setToken">
+                                <output><span $text="./value"></span><span>px</span></output>
+                            </span>
+                        </template>
+                    </label>
+                </template>
+            </div>
+
+            <div class="theme-studio__contrast">
+                <h3>Contrast checks</h3>
+                <ul>
+                    <template *list="contrastChecks">
+                        <li>
+                            <span class="status" $class="./className" $text="./grade"></span>
+                            <span $text="./label"></span>
+                            <code $text="./ratio"></code>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </section>
+
+        <section class="theme-studio__panel theme-studio__panel--preview" aria-label="Theme preview">
+            <header class="theme-studio__panel-head">
+                <h3>Preview</h3>
+                <div class="theme-preview-tabs" role="group" aria-label="Preview component">
+                    <template *list="previews?key=id">
+                        <button type="button" @click="selectPreview" $class="./selected?bool=is-selected:" $text="./label"></button>
+                    </template>
+                </div>
+            </header>
+
+            <div class="theme-preview-root" $style="previewStyle">
+                <section class="theme-preview-card">
+                    <p class="theme-preview-kicker">local preview root</p>
+                    <h3>All of this inherits edited tokens.</h3>
+                    <p>
+                        Buttons, forms, badges, code, and loaded component views
+                        all read from the same local custom-property cascade.
+                    </p>
+                    <p class="theme-preview-actions">
+                        <button class="btn btn-primary" type="button">Primary</button>
+                        <button class="btn btn-outline" type="button">Secondary</button>
+                        <span class="status status--ok">Ready</span>
+                        <span class="status status--part">Watch</span>
+                    </p>
+                </section>
+
+                <form class="theme-preview-form">
+                    <label>
+                        <span>Name</span>
+                        <input type="text" value="Ada Lovelace" aria-label="Preview name">
+                    </label>
+                    <label>
+                        <span>Status</span>
+                        <select aria-label="Preview status">
+                            <option>Ready</option>
+                            <option>Reviewing</option>
+                        </select>
+                    </label>
+                </form>
+
+                <pre class="theme-preview-code"><code>button { color: var(--link); }</code></pre>
+
+                <section class="theme-preview-showcase" aria-label="Loaded showcase preview">
+                    <template *src="selectedPreview">
+                        <p class="note">Choose a preview.</p>
+                    </template>
+                </section>
+            </div>
+        </section>
+    </div>
+
+    <section class="theme-studio__panel theme-studio__export" aria-label="Exported CSS">
+        <header class="theme-studio__panel-head">
+            <div>
+                <h3>Export</h3>
+                <p $text="copyStatus" aria-live="polite"></p>
+            </div>
+            <button class="btn btn-primary" type="button" @click="copyCss">Copy CSS</button>
+        </header>
+        <pre class="pitch__code"><code data-title="theme-tokens.css" $text="cssText"></code></pre>
+    </section>
+</section>
+
+<style>
+    .theme-studio {
+        display: grid;
+        gap: 1.25rem;
+        margin-block: 2rem 3rem;
+    }
+
+    .theme-studio__intro {
+        display: grid;
+        gap: .5rem;
+        max-width: 48rem;
+    }
+
+    .theme-studio__intro h2,
+    .theme-studio__intro p {
+        margin: 0;
+    }
+
+    .theme-studio__intro p:last-child {
+        color: var(--muted);
+        line-height: 1.55;
+    }
+
+    .theme-studio__layout {
+        display: grid;
+        gap: 1rem;
+        align-items: start;
+    }
+
+    @media (min-width: 70rem) {
+        .theme-studio__layout {
+            grid-template-columns: minmax(18rem, .72fr) minmax(0, 1.28fr);
+        }
+    }
+
+    .theme-studio__panel {
+        min-width: 0;
+        padding: 1rem;
+        border: var(--border);
+        border-radius: calc(var(--radius) * 2);
+        background: var(--surface);
+    }
+
+    .theme-studio__panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: .9rem;
+    }
+
+    .theme-studio__panel-head h3,
+    .theme-studio__panel-head p {
+        margin: 0;
+    }
+
+    .theme-studio__panel-head h3 {
+        font-size: 1rem;
+    }
+
+    .theme-studio__panel-head p {
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: .75rem;
+    }
+
+    .theme-studio__actions {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        justify-content: flex-end;
+    }
+
+    .theme-studio__scope-note {
+        margin: -.35rem 0 .9rem;
+        color: var(--faint);
+        font-size: .78rem;
+        line-height: 1.4;
+    }
+
+    .theme-token-list {
+        display: grid;
+        gap: .55rem;
+    }
+
+    .theme-token {
+        display: grid;
+        gap: .55rem;
+        padding: .75rem;
+        border: var(--border);
+        border-radius: var(--radius);
+        background: var(--bg);
+    }
+
+    .theme-token__meta,
+    .theme-token__control {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        min-width: 0;
+    }
+
+    .theme-token__meta {
+        justify-content: space-between;
+    }
+
+    .theme-token__meta > span:last-child {
+        display: grid;
+        gap: .1rem;
+        min-width: 0;
+        margin-right: auto;
+    }
+
+    .theme-token__meta strong {
+        font-size: .9rem;
+    }
+
+    .theme-token__meta code,
+    .theme-token__control output {
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: .72rem;
+    }
+
+    .theme-token__swatch {
+        flex: 0 0 auto;
+        width: 1.65rem;
+        height: 1.65rem;
+        border: var(--border-strong);
+        border-radius: var(--radius);
+        background:
+            linear-gradient(45deg, #ddd 25%, transparent 25% 75%, #ddd 75%),
+            linear-gradient(45deg, #ddd 25%, transparent 25% 75%, #ddd 75%),
+            var(--swatch, transparent);
+        background-position: 0 0, .35rem .35rem, 0 0;
+        background-size: .7rem .7rem, .7rem .7rem, auto;
+    }
+
+    .theme-token__control {
+        justify-content: space-between;
+    }
+
+    .theme-token__control input[type="color"] {
+        width: 3rem;
+        height: 2rem;
+        padding: 0;
+        border: var(--border-strong);
+        border-radius: var(--radius);
+        background: transparent;
+    }
+
+    .theme-token__control input[type="range"] {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .theme-studio__contrast {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: var(--border);
+    }
+
+    .theme-studio__contrast h3 {
+        margin: 0 0 .7rem;
+        font-size: .9rem;
+    }
+
+    .theme-studio__contrast ul {
+        display: grid;
+        gap: .5rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .theme-studio__contrast li {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: .55rem;
+        color: var(--muted);
+        font-size: .86rem;
+    }
+
+    .theme-studio__contrast code {
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: .72rem;
+    }
+
+    .theme-preview-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .4rem;
+        justify-content: flex-end;
+    }
+
+    .theme-preview-tabs button {
+        padding: .3rem .65rem;
+        border: var(--border);
+        border-radius: 999px;
+        background: var(--bg);
+        color: var(--muted);
+        font: inherit;
+        font-size: .8rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .theme-preview-tabs button.is-selected {
+        border-color: color-mix(in srgb, var(--link) 45%, transparent);
+        background: color-mix(in srgb, var(--link) 10%, var(--bg));
+        color: var(--link);
+    }
+
+    .theme-preview-root {
+        display: grid;
+        gap: 1rem;
+        min-width: 0;
+        padding: 1rem;
+        border: var(--border-strong);
+        border-radius: calc(var(--radius) * 2);
+        background: var(--bg);
+        color: var(--text);
+    }
+
+    .theme-preview-card,
+    .theme-preview-form,
+    .theme-preview-showcase {
+        min-width: 0;
+        padding: 1rem;
+        border: var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+    }
+
+    .theme-preview-kicker {
+        margin: 0 0 .35rem;
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .09em;
+        text-transform: uppercase;
+    }
+
+    .theme-preview-card h3,
+    .theme-preview-card p {
+        margin-top: 0;
+    }
+
+    .theme-preview-card p:not(.theme-preview-kicker) {
+        color: var(--muted);
+        line-height: 1.45;
+    }
+
+    .theme-preview-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        align-items: center;
+        margin-bottom: 0;
+    }
+
+    .theme-preview-form {
+        display: grid;
+        gap: .75rem;
+    }
+
+    @media (min-width: 44rem) {
+        .theme-preview-form {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    .theme-preview-form label {
+        display: grid;
+        gap: .35rem;
+        color: var(--muted);
+        font-size: .85rem;
+    }
+
+    .theme-preview-form input,
+    .theme-preview-form select {
+        min-width: 0;
+        padding: .48rem .65rem;
+        border: var(--border-strong);
+        border-radius: var(--radius);
+        background: var(--control-bg);
+        color: var(--text);
+        font: inherit;
+    }
+
+    .theme-preview-code {
+        margin: 0;
+        padding: .8rem 1rem;
+        border-radius: var(--radius);
+        background: var(--ink);
+        color: var(--ink-text);
+        overflow-x: auto;
+    }
+
+    .theme-preview-code code {
+        padding: 0;
+        background: none;
+        color: inherit;
+        font-family: var(--mono);
+    }
+
+    .theme-preview-showcase {
+        background: var(--bg);
+        overflow: auto;
+    }
+
+    .theme-preview-showcase > data-wrapper {
+        display: block;
+        min-width: 0;
+    }
+
+    .theme-studio__export .pitch__code {
+        margin: 0;
+    }
+
+    @media (max-width: 640px) {
+        .theme-studio__panel-head {
+            flex-direction: column;
+        }
+
+        .theme-preview-tabs {
+            justify-content: flex-start;
+        }
+
+        .theme-studio__contrast li {
+            grid-template-columns: 1fr;
+            align-items: start;
+        }
+    }
+</style>
