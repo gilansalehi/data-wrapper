@@ -199,7 +199,15 @@
         display: grid;
         gap: 1rem;
         align-items: start;
+    }
 
+    /* Grid items default to min-width:auto, so the unbreakable code
+       snippets set a min-content floor and the cards blow out their
+       track. min-width:0 at both grid levels (columns, then cards)
+       lets them shrink so the pre's own overflow-x:auto takes over. */
+    .cousins__grid > *,
+    .cousins ul > * {
+        min-width: 0;
     }
     @media (min-width: 75rem) {
         .cousins__grid {
