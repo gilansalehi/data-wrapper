@@ -8,7 +8,14 @@
         label,
     }));
 
-    export const examples = [
+    // Each card's `file` doubles as its playground seed: /playground?src=…
+    // loads the same file into the editor and auto-runs it.
+    const withPlayground = examples => examples.map(e => ({
+        ...e,
+        playground: `/playground?src=${encodeURIComponent(e.file)}`,
+    }));
+
+    export const examples = withPlayground([
         {
             id: 'bind',
             title: 'Input binding',
@@ -100,7 +107,7 @@
             wide: true,
             tags: tags('nested lists', 'cross-wrapper', 'events'),
         },
-    ];
+    ]);
 </script>
 
 <section class="doc-section examples-page" id="examples-gallery">
@@ -116,11 +123,8 @@
         <template *list="examples">
             <article class="example-card" $class="./wide?bool=example-card--wide:">
                 <header class="example-card__header">
-                    <div>
-                        <h3 $text="./title"></h3>
-                        <p $text="./summary"></p>
-                    </div>
-                    <a class="btn btn-outline" $href="./guide" $text="./guideLabel"></a>
+                    <h3 $text="./title"></h3>
+                    <p $text="./summary"></p>
                 </header>
 
                 <div class="example-card__tags" aria-label="Feature tags">
@@ -129,13 +133,21 @@
                     </template>
                 </div>
 
-                <div class="example-card__preview">
-                    <template *src="./preview">
-                        <p class="note">Preview unavailable.</p>
-                    </template>
+                <div class="example-card__stage">
+                    <p class="example-card__label">live preview</p>
+                    <div class="example-card__preview">
+                        <template *src="./preview">
+                            <p class="note">Preview unavailable.</p>
+                        </template>
+                    </div>
                 </div>
 
                 <data-wrapper src="/views/docs/peek.html?file=./file&title=./sourceTitle"></data-wrapper>
+
+                <footer class="example-card__actions">
+                    <a class="btn btn-primary" $href="./playground">Open in playground ▸</a>
+                    <a class="btn btn-outline" $href="./guide">Guide: <span $text="./guideLabel"></span></a>
+                </footer>
             </article>
         </template>
     </div>
@@ -167,24 +179,25 @@
     .example-card {
         display: grid;
         align-content: start;
-        gap: 1rem;
+        gap: .9rem;
         min-width: 0;
-        padding: 1rem;
+        padding: 1.1rem 1.25rem;
         border: var(--border);
-        border-radius: 8px;
+        border-radius: calc(var(--radius) * 2);
         background: var(--surface);
-        box-shadow: var(--shadow);
+        transition: border-color var(--speed) var(--ease),
+                    transform var(--speed) var(--ease);
+    }
+    .example-card:hover {
+        border-color: color-mix(in srgb, var(--link) 40%, transparent);
+        transform: translateY(-2px);
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .example-card, .example-card:hover { transform: none; }
     }
 
     .example-card--wide {
         grid-column: 1 / -1;
-    }
-
-    .example-card__header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 1rem;
     }
 
     .example-card__header h3 {
@@ -197,13 +210,7 @@
         margin: 0;
         color: var(--muted);
         font-size: .92rem;
-        line-height: 1.45;
-    }
-
-    .example-card__header .btn {
-        flex: 0 0 auto;
-        font-size: .82rem;
-        white-space: nowrap;
+        line-height: 1.5;
     }
 
     .example-card__tags {
@@ -211,13 +218,34 @@
         flex-wrap: wrap;
         gap: .35rem;
     }
+    .example-card__tags .chip {
+        font-family: var(--mono);
+        font-size: .72rem;
+        font-weight: 600;
+    }
 
+    .example-card__stage {
+        display: grid;
+        gap: .4rem;
+        min-width: 0;
+    }
+    .example-card__label {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: .72rem;
+        font-weight: 600;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--faint);
+    }
     .example-card__preview {
         min-width: 0;
-        padding: 1rem;
-        border: var(--border);
+        padding: 1.1rem;
+        border: var(--border-strong);
         border-radius: var(--radius);
-        background: var(--bg);
+        background:
+            linear-gradient(135deg, color-mix(in srgb, var(--link) 8%, transparent), transparent 40%),
+            var(--bg);
         overflow: auto;
     }
 
@@ -230,9 +258,14 @@
         margin-top: 0;
     }
 
-    @media (max-width: 640px) {
-        .example-card__header {
-            flex-direction: column;
-        }
+    .example-card__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        align-items: center;
+    }
+    .example-card__actions .btn {
+        font-size: .82rem;
+        white-space: nowrap;
     }
 </style>

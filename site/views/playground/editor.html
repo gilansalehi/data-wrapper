@@ -8,6 +8,17 @@
 
     const STARTER_URL = '/views/playground/starter.html';
 
+    // "Open in playground" support: ?src=/views/….html seeds the editor with
+    // that file and auto-runs it. Same-origin paths only — a path is the same
+    // capability any static wrapper on the site already has; raw source in
+    // the URL would be a reflected-XSS shape and stays banned (ticket 028).
+    const seedSource = () => {
+        const src = new URLSearchParams(location.search).get('src');
+        if (!src) return null;
+        if (!src.startsWith('/') || src.startsWith('//') || !src.endsWith('.html')) return null;
+        return src;
+    };
+
     export let status = 'Loading starter source…';
     export let tone = 'idle';
 
@@ -77,14 +88,20 @@
         cleanup(() => window.removeEventListener('error', onError));
         cleanup(() => { if (liveUrl) URL.revokeObjectURL(liveUrl); });
 
-        fetch(STARTER_URL)
-            .then(r => r.text())
+        const seed = seedSource();
+        fetch(seed ?? STARTER_URL)
+            .then(r => {
+                if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+                return r.text();
+            })
             .then(action(text => {
                 starterText = text;
                 const el = editor();
                 if (el && !el.value) el.value = text;
-                status = 'Ready — edit the source, then Run.';
-            }));
+                if (seed) run();
+                else status = 'Ready — edit the source, then Run.';
+            }))
+            .catch(e => setStatus(`Could not load ${seed ?? STARTER_URL} — ${e.message}`, 'err'));
     };
 </script>
 

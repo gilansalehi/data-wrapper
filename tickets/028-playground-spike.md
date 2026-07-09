@@ -8,12 +8,16 @@ value edits, increment-step edits, repeated runs); invalid scripts surface
 readable errors in the status line. **Zero lib changes were needed** — the
 hypothesis held on every point. Now wired into nav + sitemap.
 
-Unlocked and remaining (follow-ups, not this ticket): "Open in Playground"
-buttons on the examples gallery (026's deferred non-goal — needs a way to
-seed the editor with an example's source, e.g. `?src=` param read by the
-editor view); the homepage hero playground (the dazzle centerpiece);
-shareable playground state (still requires its own security design — the
-no-URL-encoded-state rule stands).
+**"Open in Playground" shipped (2026-07-09):** the editor accepts
+`?src=/views/….html` (same-origin path only — leading `/`, no `//`, `.html`
+suffix; raw source in URLs stays banned), fetches it, seeds the textarea,
+and auto-runs. Every gallery card now carries an "Open in playground ▸"
+button (`gallery.html` computes the link from each card's `file`). Reset
+returns to the opened example, not the counter.
+
+Remaining follow-ups (not this ticket): the homepage hero playground (the
+dazzle centerpiece); shareable playground state (still requires its own
+security design — the no-URL-encoded-state rule stands).
 
 Build notes: `site/playground.html`
 + `views/playground/editor.html` (the UI, itself a data-wrapper view) +

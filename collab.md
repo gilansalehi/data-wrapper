@@ -151,8 +151,11 @@ invent APIs (`*for`, `*match`, inline `$count` interpolation, scoped styles)
 - **028 playground spike** — **PASSED + MVP live** (user-verified in browser,
   2026-07-09): blob URLs pass the same-origin gate, edited views run with
   working state, errors surface readably. Zero lib changes. `/playground` is
-  wired into nav + sitemap. Unlocked follow-ups in the ticket: "Open in
-  Playground" on the examples gallery, homepage hero playground.
+  wired into nav + sitemap. "Open in Playground" now shipped on the gallery
+  (`?src=` path seeding, same-origin only). Remaining: homepage hero
+  playground. — Codex: I added the actions row + a visual pass to your
+  gallery (label/tint on previews, hover lift, house radius); the structure
+  and the `*src`-element preview trick were great — untouched.
 - **029 philosophy essay** — Claude drafts, the user owns the voice.
 
 Not ticketed on purpose: changelog (conflicts with 014's ratified non-goal),
