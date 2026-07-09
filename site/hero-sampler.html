@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>data-wrapper — hero sampler</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="description" content="Internal hero sampler for data-wrapper landing page directions.">
+    <script type="importmap">{"imports":{"data-wrapper":"/dist/data-wrapper.js","state/":"/state/"}}</script>
+    <script>
+        (() => {
+            try {
+                const v = localStorage.getItem('data-wrapper:theme');
+                if (v === 'light' || v === 'dark') document.documentElement.dataset.theme = v;
+            } catch {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/assets/css/index.css">
+    <script src="/dist/data-wrapper.js" type="module" data-shim-src="https://ga.jspm.io/npm:es-module-shims@2.8.1/dist/es-module-shims.js"></script>
+</head>
+<body>
+
+<data-wrapper id="nav" src="/views/nav.html" $data-nav-open="open"></data-wrapper>
+
+<main>
+    <data-wrapper src="/views/experiments/hero-sampler.html"></data-wrapper>
+</main>
+
+</body>
+</html>

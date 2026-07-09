@@ -1,0 +1,669 @@
+<script type="module" data-module="@experiments/hero-sampler">
+    export const count = () => 7;
+    export const files = () => 3;
+    export const tokens = () => 3;
+</script>
+
+<section class="hero-lab hero-lab--console" aria-labelledby="console-hero-title">
+    <div class="hero-lab__scene hero-console-scene" aria-hidden="true">
+        <div class="console-window console-window--main">
+            <p class="console-window__bar"><span></span><span></span><span></span><b>views/counter.html</b></p>
+            <pre><code>&lt;script type="module" data-module="@counter"&gt;
+    export let count = 0;
+    export const increment = action(() =&gt; count++);
+&lt;/script&gt;
+
+&lt;button @click="increment"&gt;+&lt;/button&gt;
+&lt;output $text="count"&gt;&lt;/output&gt;</code></pre>
+        </div>
+        <div class="console-window console-window--preview">
+            <p class="console-window__bar"><span></span><span></span><span></span><b>live DOM</b></p>
+            <div class="hero-counter">
+                <button type="button">+</button>
+                <output $text="count"></output>
+                <small>zero dependencies</small>
+            </div>
+        </div>
+        <div class="console-ribbon console-ribbon--one">&lt;data-wrapper src="/views/showcase/counter.v2.html"&gt;</div>
+        <div class="console-ribbon console-ribbon--two">$text · @click · *list</div>
+    </div>
+
+    <div class="hero-lab__content">
+        <p class="hero-lab__eyebrow">one script, ordinary HTML</p>
+        <h1 id="console-hero-title">Build reactive interfaces without leaving the browser.</h1>
+        <p class="hero-lab__lead">
+            data-wrapper turns fetchable HTML files into live components. Write a module script, add
+            three attribute tokens, and let the platform do the loading.
+        </p>
+        <p class="hero-lab__actions">
+            <a class="btn btn-primary" href="/framework#intro">Read the guide</a>
+            <a class="btn btn-outline" href="/examples">See examples</a>
+        </p>
+    </div>
+</section>
+
+<section class="hero-lab hero-lab--map" aria-labelledby="map-hero-title">
+    <div class="hero-lab__content">
+        <p class="hero-lab__eyebrow">component composition, no compiler</p>
+        <h1 id="map-hero-title">HTML views can compose like application modules.</h1>
+        <p class="hero-lab__lead">
+            A page can load views, pass typed URL inputs, project children through <code>*src</code>,
+            and share exports through import maps. The architecture stays visible in the markup.
+        </p>
+        <dl class="hero-stats" aria-label="Framework shape">
+            <div><dt $text="files"></dt><dd>HTML view files</dd></div>
+            <div><dt $text="tokens"></dt><dd>binding tokens</dd></div>
+            <div><dt>0</dt><dd>build steps</dd></div>
+        </dl>
+    </div>
+
+    <div class="hero-lab__scene hero-map-scene" aria-hidden="true">
+        <div class="module-card module-card--root">
+            <span>index.html</span>
+            <code>&lt;data-wrapper src="/views/app.html"&gt;</code>
+        </div>
+        <div class="module-card module-card--layout">
+            <span>layout.html</span>
+            <code>&lt;template *src="view"&gt;</code>
+        </div>
+        <div class="module-card module-card--state">
+            <span>state/cart.js</span>
+            <code>export const total = () =&gt; ...</code>
+        </div>
+        <div class="module-card module-card--view">
+            <span>checkout.html</span>
+            <code>$text="total?currency=USD"</code>
+        </div>
+        <div class="module-card module-card--event">
+            <span>actions</span>
+            <code>@submit="placeOrder"</code>
+        </div>
+    </div>
+</section>
+
+<section class="hero-lab hero-lab--studio" aria-labelledby="studio-hero-title">
+    <div class="hero-lab__scene hero-studio-scene" aria-hidden="true">
+        <div class="studio-board">
+            <div class="studio-toolbar">
+                <span></span><span></span><span></span>
+                <b>theme-studio.html</b>
+            </div>
+            <div class="studio-grid">
+                <div class="studio-panel studio-panel--controls">
+                    <p>tokens</p>
+                    <label><span>surface</span><i style="--swatch: var(--surface)"></i></label>
+                    <label><span>link</span><i style="--swatch: var(--link)"></i></label>
+                    <label><span>radius</span><strong>6px</strong></label>
+                </div>
+                <div class="studio-panel studio-panel--preview">
+                    <p>live preview</p>
+                    <article>
+                        <small>component</small>
+                        <h2>Every demo is real HTML.</h2>
+                        <button type="button">Apply to site</button>
+                    </article>
+                </div>
+                <pre class="studio-panel studio-panel--code"><code>:root {
+  --bg: #ffffff;
+  --link: #0066cc;
+  --radius: 6px;
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-lab__content">
+        <p class="hero-lab__eyebrow">small runtime, real tools</p>
+        <h1 id="studio-hero-title">The demos are not illustrations. They are the framework.</h1>
+        <p class="hero-lab__lead">
+            Counters, todos, layout composition, formatters, source peeks, and Theme Studio all run
+            as data-wrapper views. The landing page can prove the pitch by using the product.
+        </p>
+        <p class="hero-lab__actions">
+            <a class="btn btn-primary" href="/theme-studio">Open Theme Studio</a>
+            <a class="btn btn-outline" href="/playground">Open Playground</a>
+        </p>
+    </div>
+</section>
+
+<style>
+    .hero-lab {
+        position: relative;
+        isolation: isolate;
+        display: grid;
+        min-height: 100svh;
+        overflow: clip;
+        background: var(--ink);
+        color: var(--hero-fg);
+    }
+
+    .hero-lab::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background:
+            linear-gradient(90deg, color-mix(in srgb, var(--hero-fg) 6%, transparent) 1px, transparent 1px),
+            linear-gradient(color-mix(in srgb, var(--hero-fg) 5%, transparent) 1px, transparent 1px);
+        background-size: 4rem 4rem;
+        mask-image: linear-gradient(110deg, transparent, #000 20%, #000 76%, transparent);
+    }
+
+    .hero-lab::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: repeating-linear-gradient(
+            120deg,
+            transparent 0 2.8rem,
+            color-mix(in srgb, var(--link) 12%, transparent) 2.8rem 2.9rem
+        );
+        mask-image: linear-gradient(100deg, transparent, #000 48%, transparent 88%);
+        opacity: .8;
+    }
+
+    .hero-lab + .hero-lab {
+        border-top: 1px solid color-mix(in srgb, var(--hero-fg) 18%, transparent);
+    }
+
+    .hero-lab__content {
+        position: relative;
+        z-index: 2;
+        align-self: center;
+        width: min(100% - 2rem, 42rem);
+        padding: clamp(5.5rem, 9vw, 8rem) clamp(1rem, 4vw, 5rem);
+    }
+
+    .hero-lab__eyebrow {
+        margin: 0 0 1rem;
+        color: var(--ink-text);
+        font-family: var(--mono);
+        font-size: .78rem;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: uppercase;
+    }
+
+    .hero-lab h1 {
+        max-width: 13ch;
+        margin: 0;
+        color: var(--hero-fg);
+        font-size: 3.7rem;
+        font-weight: 900;
+        line-height: .85;
+    }
+
+    @media (min-width: 72rem) {
+        .hero-lab h1 {
+            font-size: 6.5rem;
+        }
+    }
+
+    @media (min-width: 110rem) {
+        .hero-lab h1 {
+            font-size: 8.25rem;
+        }
+    }
+
+    @supports (text-wrap: balance) {
+        .hero-lab h1,
+        .hero-lab__lead {
+            text-wrap: balance;
+        }
+    }
+
+    .hero-lab__lead {
+        max-width: 38rem;
+        margin: clamp(1.25rem, 3vw, 2rem) 0 0;
+        color: var(--hero-mute);
+        font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+        line-height: 1.55;
+    }
+
+    .hero-lab__lead code {
+        color: var(--ink-text);
+        background: color-mix(in srgb, var(--ink-text) 10%, transparent);
+    }
+
+    .hero-lab__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .75rem;
+        margin: clamp(1.75rem, 3vw, 2.5rem) 0 0;
+    }
+
+    .hero-lab .btn {
+        border-color: color-mix(in srgb, var(--hero-fg) 26%, transparent);
+        background: color-mix(in srgb, var(--hero-fg) 4%, transparent);
+        color: var(--hero-fg);
+        backdrop-filter: blur(18px);
+    }
+
+    .hero-lab .btn-primary {
+        background: var(--hero-fg);
+        color: var(--ink);
+        border-color: var(--hero-fg);
+    }
+
+    .hero-lab__scene {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+    }
+
+    .console-window,
+    .module-card,
+    .studio-board {
+        border: 1px solid color-mix(in srgb, var(--hero-fg) 18%, transparent);
+        background: color-mix(in srgb, var(--ink) 82%, transparent);
+        box-shadow: 0 2rem 5rem rgb(0 0 0 / .35);
+        backdrop-filter: blur(24px);
+    }
+
+    .console-window {
+        position: absolute;
+        border-radius: calc(var(--radius) * 2);
+        overflow: hidden;
+    }
+
+    .console-window__bar,
+    .studio-toolbar {
+        display: flex;
+        align-items: center;
+        gap: .45rem;
+        margin: 0;
+        padding: .65rem .8rem;
+        border-bottom: 1px solid color-mix(in srgb, var(--hero-fg) 14%, transparent);
+        color: color-mix(in srgb, var(--hero-fg) 62%, transparent);
+        font-family: var(--mono);
+        font-size: .78rem;
+    }
+
+    .console-window__bar span,
+    .studio-toolbar span {
+        width: .62rem;
+        aspect-ratio: 1;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--hero-fg) 30%, transparent);
+    }
+
+    .console-window__bar b,
+    .studio-toolbar b {
+        margin-left: .35rem;
+        font-weight: 600;
+    }
+
+    .console-window pre {
+        margin: 0;
+        padding: 1rem 1.1rem 1.25rem;
+        color: var(--ink-text);
+        font-family: var(--mono);
+        font-size: .88rem;
+        line-height: 1.65;
+    }
+
+    @media (min-width: 100rem) {
+        .console-window pre {
+            font-size: .98rem;
+        }
+    }
+
+    .console-window--main {
+        top: 13vh;
+        right: 5vw;
+        width: min(52vw, 58rem);
+        transform: rotate(1deg);
+    }
+
+    .console-window--preview {
+        right: 11vw;
+        bottom: 13vh;
+        width: min(24rem, 28vw);
+        transform: rotate(-2.5deg);
+    }
+
+    .hero-counter {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: .7rem 1rem;
+        align-items: center;
+        padding: 1.4rem;
+    }
+
+    .hero-counter button {
+        width: 3.25rem;
+        aspect-ratio: 1;
+        border: 0;
+        border-radius: var(--radius);
+        background: var(--ink-text);
+        color: var(--ink);
+        font: inherit;
+        font-size: 1.4rem;
+        font-weight: 800;
+    }
+
+    .hero-counter output {
+        color: var(--hero-fg);
+        font-size: 4.5rem;
+        font-weight: 900;
+        line-height: .85;
+    }
+
+    .hero-counter small {
+        grid-column: 1 / -1;
+        color: var(--hero-mute);
+        font-family: var(--mono);
+    }
+
+    .console-ribbon {
+        position: absolute;
+        right: 4vw;
+        padding: .55rem .8rem;
+        border: 1px solid color-mix(in srgb, var(--ink-text) 35%, transparent);
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--ink-text) 12%, transparent);
+        color: var(--ink-text);
+        font-family: var(--mono);
+        font-size: .86rem;
+        box-shadow: 0 1rem 3rem rgb(0 0 0 / .3);
+    }
+
+    .console-ribbon--one { top: 8vh; }
+    .console-ribbon--two { bottom: 7vh; right: 27vw; }
+
+    .hero-lab--map {
+        background: color-mix(in srgb, var(--ink) 86%, var(--link));
+    }
+
+    .hero-lab--map .hero-lab__content {
+        margin-left: auto;
+    }
+
+    .hero-map-scene {
+        width: min(62rem, 56vw);
+        left: 4vw;
+        right: auto;
+    }
+
+    .module-card {
+        position: absolute;
+        display: grid;
+        gap: .65rem;
+        width: clamp(15rem, 18vw, 24rem);
+        padding: 1rem;
+        border-radius: calc(var(--radius) * 2);
+    }
+
+    .module-card::before {
+        content: "";
+        position: absolute;
+        inset: 50% auto auto 100%;
+        width: clamp(5rem, 8vw, 11rem);
+        height: 1px;
+        background: color-mix(in srgb, var(--ink-text) 45%, transparent);
+        transform-origin: left center;
+    }
+
+    .module-card span {
+        color: var(--hero-fg);
+        font-weight: 800;
+    }
+
+    .module-card code {
+        color: var(--ink-text);
+        background: transparent;
+        font-size: .82rem;
+        white-space: normal;
+    }
+
+    .module-card--root {
+        top: 14vh;
+        left: 9vw;
+    }
+
+    .module-card--layout {
+        top: 34vh;
+        left: 27vw;
+    }
+
+    .module-card--state {
+        top: 58vh;
+        left: 8vw;
+    }
+
+    .module-card--view {
+        top: 68vh;
+        left: 31vw;
+    }
+
+    .module-card--event {
+        top: 26vh;
+        left: 45vw;
+    }
+
+    .module-card--event::before,
+    .module-card--view::before {
+        display: none;
+    }
+
+    .hero-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .75rem;
+        max-width: 34rem;
+        margin: clamp(1.75rem, 3vw, 2.4rem) 0 0;
+    }
+
+    .hero-stats div {
+        padding: 1rem;
+        border: 1px solid color-mix(in srgb, var(--hero-fg) 16%, transparent);
+        border-radius: var(--radius);
+        background: color-mix(in srgb, var(--hero-fg) 6%, transparent);
+    }
+
+    .hero-stats dt {
+        color: var(--hero-fg);
+        font-size: 2.2rem;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .hero-stats dd {
+        margin: .35rem 0 0;
+        color: var(--hero-mute);
+        font-size: .82rem;
+        line-height: 1.3;
+    }
+
+    .hero-lab--studio {
+        background:
+            linear-gradient(120deg, color-mix(in srgb, var(--ok) 18%, transparent), transparent 40%),
+            var(--ink);
+    }
+
+    .hero-lab--studio .hero-lab__content {
+        margin-left: auto;
+        margin-right: 3vw;
+    }
+
+    .studio-board {
+        position: absolute;
+        top: 12vh;
+        left: 5vw;
+        width: min(54vw, 66rem);
+        border-radius: calc(var(--radius) * 2);
+        overflow: hidden;
+        transform: perspective(1100px) rotateY(8deg) rotateX(2deg);
+        transform-origin: left center;
+    }
+
+    .studio-grid {
+        display: grid;
+        grid-template-columns: minmax(12rem, .78fr) minmax(18rem, 1.3fr);
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .studio-panel {
+        min-width: 0;
+        margin: 0;
+        padding: 1rem;
+        border: 1px solid color-mix(in srgb, var(--hero-fg) 14%, transparent);
+        border-radius: var(--radius);
+        background: color-mix(in srgb, var(--hero-fg) 5%, transparent);
+    }
+
+    .studio-panel p {
+        margin: 0 0 .9rem;
+        color: var(--ink-text);
+        font-family: var(--mono);
+        font-size: .76rem;
+        letter-spacing: 0;
+        text-transform: uppercase;
+    }
+
+    .studio-panel label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: .8rem 0;
+        border-top: 1px solid color-mix(in srgb, var(--hero-fg) 12%, transparent);
+        color: var(--hero-mute);
+        font-family: var(--mono);
+        font-size: .85rem;
+    }
+
+    .studio-panel i {
+        width: 2.2rem;
+        aspect-ratio: 1;
+        border-radius: var(--radius);
+        border: 1px solid color-mix(in srgb, var(--hero-fg) 22%, transparent);
+        background: var(--swatch);
+    }
+
+    .studio-panel strong {
+        color: var(--hero-fg);
+    }
+
+    .studio-panel--preview article {
+        min-height: 19rem;
+        padding: 1.2rem;
+        border-radius: calc(var(--radius) * 2);
+        background: var(--bg);
+        color: var(--text);
+        box-shadow: var(--shadow);
+    }
+
+    .studio-panel--preview small {
+        color: var(--muted);
+        font-family: var(--mono);
+    }
+
+    .studio-panel--preview h2 {
+        max-width: 14ch;
+        margin: 1.25rem 0;
+        font-size: 2.6rem;
+        line-height: .9;
+    }
+
+    @media (min-width: 100rem) {
+        .studio-panel--preview h2 {
+            font-size: 4rem;
+        }
+    }
+
+    .studio-panel--preview button {
+        padding: .6rem .9rem;
+        border: 0;
+        border-radius: var(--radius);
+        background: var(--link);
+        color: var(--bg);
+        font: inherit;
+        font-weight: 700;
+    }
+
+    .studio-panel--code {
+        grid-column: 1 / -1;
+        color: var(--ink-text);
+        font-family: var(--mono);
+        line-height: 1.55;
+    }
+
+    @media (max-width: 900px) {
+        .hero-lab {
+            min-height: auto;
+        }
+
+        .hero-lab__content {
+            width: auto;
+            padding-block: 5.5rem 2rem;
+        }
+
+        .hero-lab__scene {
+            position: relative;
+            min-height: 28rem;
+        }
+
+        .console-window--main,
+        .console-window--preview,
+        .studio-board {
+            left: 1rem;
+            right: 1rem;
+            width: auto;
+        }
+
+        .console-window--main { top: 1rem; }
+        .console-window--preview { bottom: 1.5rem; }
+        .console-ribbon { display: none; }
+
+        .hero-map-scene {
+            width: auto;
+            left: auto;
+        }
+
+        .module-card {
+            position: relative;
+            top: auto;
+            left: auto;
+            width: auto;
+            margin: .75rem 1rem;
+        }
+
+        .module-card::before {
+            display: none;
+        }
+
+        .studio-board {
+            top: 1rem;
+            transform: none;
+        }
+
+        .studio-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .studio-panel--code {
+            grid-column: auto;
+        }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .console-window--main,
+        .module-card--layout,
+        .studio-board {
+            animation: hero-float 9s ease-in-out infinite;
+        }
+
+        .console-window--preview,
+        .module-card--view {
+            animation: hero-float 11s ease-in-out infinite reverse;
+        }
+    }
+
+    @keyframes hero-float {
+        0%, 100% { translate: 0 0; }
+        50% { translate: 0 -1rem; }
+    }
+</style>
