@@ -34,10 +34,13 @@
 </script>
 
 <header class="sticky header theme-ink">
-    <div class="container header__kicker">
-        <span class="display-sm">&lt;dw&gt;</span>
-        <span class="display-lg">&lt;data-wrapper&gt;</span>
-        &nbsp;<span $text="breadcrumbs"></span>
+    <div class="container header__bar">
+        <a class="header__brand" href="/">
+            <span class="display-sm"><i>&lt;</i>dw<i>&gt;</i></span>
+            <span class="display-lg"><i>&lt;</i>data-wrapper<i>&gt;</i></span>
+        </a>
+        <span class="header__crumbs" $text="breadcrumbs"></span>
+        <span class="header__tokens" aria-hidden="true">$ @ *</span>
     </div>
 </header>
 
@@ -50,7 +53,7 @@
 <dialog $open="open" aria-label="Site navigation">
     <div class="nav-panel">
         <header class="nav-header">
-            <strong>data-wrapper</strong>
+            <strong><i>&lt;</i>data-wrapper<i>&gt;</i></strong>
             <button @click="close" class="nav-close" aria-label="Close navigation">✕</button>
         </header>
         <nav class="nav-links" aria-label="Site navigation">
@@ -77,10 +80,72 @@
 <style>
     #nav { --nav-width: 240px; }
 
+    /* ── sticky header ──
+       Solid ink at rest so the hero seam stays invisible; once the page
+       scrolls it goes glassy and lifts — scroll-driven CSS, no JS.
+       Browsers without scroll timelines (and reduced-motion users, via
+       the global animation kill) just keep the solid band. */
+    .header {
+        z-index: 15;
+        margin: 0;
+        padding: .9em 0;
+        background: var(--ink);
+        overflow: clip;
+        color: color-mix(in srgb, var(--hero-fg) 60%, transparent);
+        font-family: var(--mono);
+        font-size: .78rem;
+        font-weight: 500;
+        letter-spacing: .14em;
+        text-transform: lowercase;
+    }
+
+    @supports (animation-timeline: scroll()) {
+        .header {
+            animation: header-glass linear both;
+            animation-timeline: scroll();
+            animation-range: 0 160px;
+        }
+        @keyframes header-glass {
+            to {
+                background: color-mix(in srgb, var(--ink) 82%, transparent);
+                backdrop-filter: blur(14px);
+                box-shadow:
+                    0 1px 0 color-mix(in srgb, var(--hero-fg) 10%, transparent),
+                    0 .5rem 1.5rem rgb(0 0 0 / .18);
+            }
+        }
+    }
+
+    .header__bar {
+        display: flex;
+        align-items: baseline;
+        gap: .5ch;
+    }
+    .header__brand {
+        color: var(--hero-fg);
+        font-weight: 700;
+        text-decoration: none;
+        transition: color .2s;
+    }
+    .header__brand:hover {
+        color: var(--ink-text);
+        text-decoration: none;
+    }
+    .header__brand i {
+        font-style: normal;
+        color: var(--hero-faint);
+    }
+    .header__tokens {
+        margin-left: auto;
+        color: var(--hero-faint);
+        letter-spacing: .4em;
+    }
+
     .nav-backdrop {
         position: fixed;
         inset: 0;
-        background: rgb(0 0 0 / .35);
+        background: rgb(0 0 0 / .3);
+        backdrop-filter: blur(3px);
         z-index: 20;
         cursor: pointer;
     }
@@ -102,12 +167,21 @@
         height: 38px;
         padding: 9px;
         border-radius: 50%;
-        background: var(--bg);
-        border: var(--border-strong);
+        background: color-mix(in srgb, var(--bg) 72%, transparent);
+        border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
         box-shadow: var(--shadow);
-        backdrop-filter: blur(4px);
+        backdrop-filter: blur(10px);
         min-height: 0;
-        transition: right var(--speed) var(--ease);
+        transition: right var(--speed) var(--ease),
+                    border-color .25s var(--ease),
+                    box-shadow .25s var(--ease);
+    }
+
+    .nav-hamburger:hover {
+        border-color: color-mix(in srgb, var(--link) 45%, transparent);
+        box-shadow:
+            0 0 0 4px color-mix(in srgb, var(--link) 12%, transparent),
+            var(--shadow);
     }
 
     .nav-hamburger hr {
@@ -149,14 +223,15 @@
         visibility: visible;
     }
 
+    /* Borderless glass panel: the blur + shadow carry the edge. */
     .nav-panel {
         display: flex;
         flex-direction: column;
         width: min(var(--nav-width), 100%);
         height: 100%;
-        border-left: var(--border-strong);
-        box-shadow: var(--shadow);
-        background: var(--bg);
+        box-shadow: -1rem 0 3rem rgb(0 0 0 / .22);
+        background: color-mix(in srgb, var(--bg) 86%, transparent);
+        backdrop-filter: blur(20px);
         color: var(--text);
         overflow-y: auto;
         pointer-events: auto;
@@ -172,10 +247,10 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 1rem 1.1rem .9rem;
-        border-bottom: var(--border);
+        padding: 1rem 1.1rem .4rem;
 
-        & strong { font-size: .95rem; }
+        & strong { font-size: .95rem; font-family: var(--mono); }
+        & strong i { font-style: normal; font-weight: 400; color: var(--faint); }
     }
 
     .nav-close {
@@ -201,15 +276,32 @@
             color: var(--text);
             font-size: .88rem;
             line-height: 1.3;
+            transition: padding-left .25s var(--ease),
+                        background-color .2s, color .2s;
 
-            &:hover { background: var(--surface); color: var(--link); font-weight: inherit; }
+            &:hover {
+                padding-left: 1.35rem;
+                background: color-mix(in srgb, var(--link) 7%, transparent);
+                color: var(--link);
+                font-weight: inherit;
+            }
         }
     }
 
     .nav-links a[aria-current="page"] {
         color: var(--link);
         font-weight: 600;
-        background: var(--surface);
+        background: color-mix(in srgb, var(--link) 8%, transparent);
+        box-shadow: inset 2px 0 0 var(--link);
+    }
+
+    /* Section anchors get their href's own grammar as decoration. */
+    .nav-group a::before {
+        content: "#";
+        margin-right: .45em;
+        font-family: var(--mono);
+        font-size: .85em;
+        color: var(--faint);
     }
 
     /* Single root so the *if body is one element (cloneTemplate keeps only
@@ -227,7 +319,6 @@
 
     .nav-footer {
         padding: .75rem 1.1rem 1.1rem;
-        border-top: var(--border);
         margin-top: auto;
     }
 
