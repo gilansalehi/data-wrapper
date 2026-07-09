@@ -39,3 +39,13 @@
 .gap-md { gap: .75rem; }
 .gap-lg { gap: 1.25rem; }
 
+@media screen and (min-width: 768px) {
+    .display-sm {
+        display: none;
+    }
+}
+@media screen and (max-width: 767px) {
+    .display-lg {
+        display: none;
+    }
+}

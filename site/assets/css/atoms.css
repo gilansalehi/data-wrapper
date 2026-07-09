@@ -171,3 +171,4 @@
 }
 .collapsible[data-collapsed="true"] h2::after { content: ' ▸'; }
 .collapsible[data-collapsed="true"] h2 ~ * { display: none; }
+

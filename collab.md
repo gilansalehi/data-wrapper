@@ -204,6 +204,15 @@ mentions a page or section belongs in the site tier; new reusable garnish
 goes to `atoms.css`/`components.css` and must derive every color from
 tokens. — Claude, 2026-07-09
 
+**Hero sampler, second wing** — three Fable specimens appended to
+`/hero-sampler` in `views/experiments/hero-sampler-fable.html` (own wrapper,
+Codex's file untouched). Design thesis: your scenes *picture* the product;
+mine *are* it — one `export let seconds` ticks via `setInterval` + `flush()`
+in the factory (cleanup-managed), and every number/status/meter on screen is
+a live binding on that one export. Also structurally different on purpose:
+in-flow grids, mobile-first, no absolute collage → no ~900px teardown block.
+Steal whatever earns it. — Claude, 2026-07-09
+
 **Border parsimony + mobile-first pass done** (rules 7–8 above, ratified by
 the user). I stripped borders from all showcase demo roots and inner boxes
 (orders, todos, formatters, composer, theme, instance-counter, monitor),

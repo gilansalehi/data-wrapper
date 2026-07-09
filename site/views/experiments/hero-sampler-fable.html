@@ -1,0 +1,579 @@
+<script type="module" data-module="@experiments/hero-fable">
+    import { flush } from 'data-wrapper';
+
+    // One export drives all three heroes below. The module ticks once a
+    // second; every scene is a live binding reading it. Nothing is a mockup.
+    export let seconds = 0;
+
+    /* — specimen 1: the headline is a binding — */
+    const WORDS = ['alive.', 'reactive.', 'composable.', 'disposable.', 'enough.'];
+    export const word = () => WORDS[Math.floor(seconds / 3) % WORDS.length];
+
+    export const uptime = () => {
+        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const s = String(seconds % 60).padStart(2, '0');
+        return `${m}:${s}`;
+    };
+
+    /* — specimen 2: one value, five instruments — */
+    export const pulse  = () => String(seconds % 100).padStart(2, '0');
+    export const meter  = () => `--pct: ${seconds % 100}%`;
+    export const phase  = () => ['charging', 'steady', 'peak', 'cooling'][Math.floor((seconds % 100) / 25)];
+    export const parity = () => seconds % 2 ? 'high' : 'low';
+    export const hex    = () => '0x' + (seconds % 256).toString(16).padStart(2, '0').toUpperCase();
+
+    /* — specimen 3: the departure board — */
+    export const clock = () => new Date().toLocaleTimeString('en-GB', { hour12: false });
+
+    const CANCELLED = [
+        { gate: '—', name: 'BUILD STEP',   status: 'CANCELLED', tone: 'no' },
+        { gate: '—', name: 'VIRTUAL DOM',  status: 'CANCELLED', tone: 'no' },
+        { gate: '—', name: 'NODE_MODULES', status: 'CANCELLED', tone: 'no' },
+        { gate: '—', name: 'HYDRATION',    status: 'CANCELLED', tone: 'no' },
+        { gate: '—', name: 'JSX',          status: 'CANCELLED', tone: 'no' },
+    ];
+    const HTML_STATUS = [
+        { status: 'BOARDING',    tone: 'soon' },
+        { status: 'NOW LOADING', tone: 'soon' },
+        { status: 'ON TIME',     tone: 'ok' },
+        { status: 'ON TIME',     tone: 'ok' },
+    ];
+    export const board = () => [
+        ...CANCELLED,
+        { gate: '$ @ *', name: 'YOUR HTML', ...HTML_STATUS[Math.floor(seconds / 4) % HTML_STATUS.length] },
+    ];
+
+    export default ({ cleanup }) => {
+        const id = setInterval(() => { seconds += 1; flush(); }, 1000);
+        cleanup(() => clearInterval(id));
+    };
+</script>
+
+<!-- ═══ specimen: kinetic type — the headline is a binding ═══ -->
+<section class="fh fh--type" aria-labelledby="fh-type-title">
+    <div class="container fh__inner">
+        <p class="fh__eyebrow">kinetic type · this headline is a binding</p>
+        <h1 id="fh-type-title" class="fh-type__title">
+            HTML that is<br>
+            <span class="fh-type__word" $text="word"></span><i class="fh-type__caret" aria-hidden="true"></i>
+        </h1>
+        <p class="fh-type__src" aria-hidden="true">&lt;h1&gt;HTML that is &lt;span $text="word"&gt;&lt;/h1&gt; — the module ticks, the DOM follows.</p>
+        <p class="fh__actions">
+            <a class="btn btn-primary" href="/framework#nobuild">Get started</a>
+            <a class="btn btn-outline" href="/playground">Open the playground</a>
+        </p>
+        <p class="fh-type__uptime" aria-hidden="true"><i></i> this page has been reactive for <span $text="uptime"></span></p>
+    </div>
+</section>
+
+<!-- ═══ specimen: the instrument panel — one export, five sinks ═══ -->
+<section class="fh fh--flow" aria-labelledby="fh-flow-title">
+    <div class="container fh__inner fh-flow__inner">
+        <div class="fh__copy">
+            <p class="fh__eyebrow">one export · five sinks</p>
+            <h1 id="fh-flow-title">One value.<br>Every binding follows.</h1>
+            <p class="fh__lead">
+                No subscriptions, no selectors, no dependency arrays. A module
+                mutates, a flush runs, and every binding that reads the export
+                re-renders. The five instruments beside this sentence share one
+                integer.
+            </p>
+        </div>
+        <figure class="fh-flow" role="img" aria-label="Five live instruments — a counter, a meter, a phase pill, a parity lamp, and a hex readout — all rendering the same exported value.">
+            <figcaption class="fh-flow__module">
+                <code>export let seconds = 0</code>
+                <code class="fh-flow__quiet">setInterval(() => { seconds++; flush() }, 1000)</code>
+            </figcaption>
+            <div class="fh-flow__bus"></div>
+            <div class="fh-flow__sinks">
+                <div class="fh-sink">
+                    <p class="fh-sink__tag">$text</p>
+                    <span class="fh-sink__big" $text="pulse"></span>
+                </div>
+                <div class="fh-sink">
+                    <p class="fh-sink__tag">$style</p>
+                    <span class="fh-meter"><span class="fh-meter__fill" $style="meter"></span></span>
+                    <span class="fh-sink__sub"><span $text="pulse"></span>%</span>
+                </div>
+                <div class="fh-sink">
+                    <p class="fh-sink__tag">computed</p>
+                    <span class="fh-sink__pill" $text="phase" $data-phase="phase"></span>
+                </div>
+                <div class="fh-sink">
+                    <p class="fh-sink__tag">$data-*</p>
+                    <span class="fh-lamp" $data-parity="parity"></span>
+                    <span class="fh-sink__sub" $text="parity"></span>
+                </div>
+                <div class="fh-sink">
+                    <p class="fh-sink__tag">derived</p>
+                    <span class="fh-sink__hex" $text="hex"></span>
+                </div>
+            </div>
+        </figure>
+    </div>
+</section>
+
+<!-- ═══ specimen: the departure board ═══ -->
+<section class="fh fh--board" aria-labelledby="fh-board-title">
+    <div class="container fh__inner fh-board__inner">
+        <div class="fh-board" role="img" aria-label="A departure board: build step, virtual DOM, node_modules, hydration, and JSX are cancelled. Your HTML is on time.">
+            <header class="fh-board__head">
+                <p>departures · runtime intl</p>
+                <span class="fh-board__clock" $text="clock"></span>
+            </header>
+            <ul class="fh-board__rows">
+                <template *list="board?key=name">
+                    <li class="fh-board__row" $data-tone="./tone">
+                        <span class="fh-board__gate" $text="./gate"></span>
+                        <span class="fh-board__name" $text="./name"></span>
+                        <span class="fh-board__status" $text="./status"></span>
+                    </li>
+                </template>
+            </ul>
+            <p class="fh-board__ticker">
+                <span>*list · *if · *src · $text · $style · @click · @input · action() · flush() · zero dependencies · no build step ·&nbsp;</span><span>*list · *if · *src · $text · $style · @click · @input · action() · flush() · zero dependencies · no build step ·&nbsp;</span>
+            </p>
+        </div>
+        <div class="fh__copy">
+            <p class="fh__eyebrow">travel light</p>
+            <h1 id="fh-board-title">Everything heavy got cancelled.</h1>
+            <p class="fh__lead">
+                The build step, the virtual DOM, the dependency tree — none of
+                them board. Your HTML flies direct: one script tag, three
+                attribute tokens, and the browser does the rest.
+            </p>
+            <p class="fh__actions">
+                <a class="btn btn-primary" href="/compare">See the comparison</a>
+                <a class="btn btn-outline" href="/examples">Live examples</a>
+            </p>
+        </div>
+    </div>
+</section>
+
+<style>
+    /* ════════════════════════════════════════════════════════════
+       Fable specimens. Shared band: ink, in-flow content (no absolute
+       collage), mobile-first — narrow needs no teardown because narrow
+       is the default. Every number on screen is a live binding.
+       ════════════════════════════════════════════════════════════ */
+    .fh {
+        display: grid;
+        align-content: center;
+        min-height: 100svh;
+        background: var(--ink);
+        color: var(--hero-fg);
+        overflow: clip;
+        position: relative;
+        isolation: isolate;
+    }
+    /* Top border on every band: the previous specimen may live in a
+       different wrapper, so sibling combinators can't reach across. */
+    .fh {
+        border-top: 1px solid color-mix(in srgb, var(--hero-fg) 18%, transparent);
+    }
+    .fh__inner {
+        display: grid;
+        gap: 1.1rem;
+        width: min(100% - 2rem, 74rem);
+        padding-block: clamp(4rem, 10vh, 7rem);
+        justify-items: start;
+    }
+    .fh__eyebrow {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: .74rem;
+        font-weight: 700;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: var(--ink-text);
+    }
+    .fh h1 {
+        margin: 0;
+        font-size: clamp(2.4rem, 7vw, 4.6rem);
+        font-weight: 900;
+        line-height: .95;
+        letter-spacing: -.02em;
+        color: var(--hero-fg);
+    }
+    .fh__lead {
+        max-width: 36rem;
+        margin: 0;
+        font-size: clamp(1rem, 1.5vw, 1.15rem);
+        line-height: 1.55;
+        color: var(--hero-mute);
+    }
+    .fh__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .65rem;
+        margin: .5rem 0 0;
+    }
+    .fh .btn {
+        border-color: color-mix(in srgb, var(--hero-fg) 26%, transparent);
+        background: color-mix(in srgb, var(--hero-fg) 5%, transparent);
+        color: var(--hero-fg);
+    }
+    .fh .btn-primary {
+        background: var(--hero-fg);
+        border-color: var(--hero-fg);
+        color: var(--ink);
+    }
+    .fh__copy {
+        display: grid;
+        gap: 1.1rem;
+        justify-items: start;
+        align-content: center;
+    }
+
+    /* ── specimen 1: kinetic type ─────────────────────────────── */
+    .fh--type::before {
+        content: "$ @ *";
+        position: absolute;
+        z-index: -1;
+        right: -2vw;
+        bottom: -4vh;
+        font-family: var(--mono);
+        font-size: clamp(8rem, 28vw, 26rem);
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -.05em;
+        color: color-mix(in srgb, var(--hero-fg) 4%, transparent);
+    }
+    .fh--type::after {
+        content: "";
+        position: absolute;
+        z-index: -2;
+        inset: 0;
+        background: radial-gradient(50rem 30rem at 12% 18%,
+            color-mix(in srgb, var(--link) 14%, transparent), transparent 70%);
+    }
+    .fh-type__title {
+        font-size: clamp(3rem, 11vw, 8rem);
+        line-height: .92;
+    }
+    .fh-type__word {
+        display: inline-block;
+        background: linear-gradient(100deg,
+            var(--hero-fg) 10%,
+            var(--ink-text) 45%,
+            color-mix(in srgb, var(--link) 60%, var(--hero-fg)) 70%,
+            var(--hero-fg) 95%);
+        background-size: 250% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: fh-sheen 7s linear infinite;
+    }
+    @keyframes fh-sheen {
+        to { background-position: -250% 0; }
+    }
+    .fh-type__caret {
+        display: inline-block;
+        width: .06em;
+        height: .78em;
+        margin-left: .08em;
+        background: var(--ink-text);
+        animation: fh-blink 1.1s steps(2, start) infinite;
+    }
+    @keyframes fh-blink {
+        50% { opacity: 0; }
+    }
+    .fh-type__src {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: .78rem;
+        color: var(--hero-faint);
+    }
+    .fh-type__uptime {
+        display: inline-flex;
+        align-items: baseline;
+        gap: .5em;
+        margin: 1.2rem 0 0;
+        font-family: var(--mono);
+        font-size: .78rem;
+        color: var(--hero-mute);
+    }
+    .fh-type__uptime i {
+        display: inline-block;
+        width: .55em;
+        height: .55em;
+        align-self: center;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--ok) 70%, var(--hero-fg));
+        animation: fh-breathe 2s ease-in-out infinite;
+    }
+    @keyframes fh-breathe {
+        50% { opacity: .35; }
+    }
+
+    /* ── specimen 2: the instrument panel ─────────────────────── */
+    .fh--flow {
+        background:
+            radial-gradient(circle at 50% 50%,
+                color-mix(in srgb, var(--hero-fg) 5%, transparent) 1px, transparent 1px)
+            0 0 / 2.2rem 2.2rem,
+            var(--ink);
+    }
+    .fh-flow__inner {
+        gap: 2.5rem;
+    }
+    .fh-flow {
+        justify-self: stretch;
+        display: grid;
+        gap: 0;
+        margin: 0;
+        min-width: 0;
+    }
+    .fh-flow__module {
+        justify-self: center;
+        display: grid;
+        gap: .3rem;
+        padding: .9rem 1.2rem;
+        border: 1px solid color-mix(in srgb, var(--ink-text) 35%, transparent);
+        border-radius: calc(var(--radius) * 2);
+        background: color-mix(in srgb, var(--ink-text) 8%, transparent);
+        box-shadow: 0 0 3rem color-mix(in srgb, var(--link) 18%, transparent);
+    }
+    .fh-flow__module code {
+        background: none;
+        padding: 0;
+        color: var(--ink-text);
+        font-size: .84rem;
+    }
+    .fh-flow__module .fh-flow__quiet {
+        color: color-mix(in srgb, var(--ink-text) 55%, transparent);
+        font-size: .74rem;
+    }
+    .fh-flow__bus {
+        justify-self: center;
+        width: 2px;
+        height: clamp(2rem, 5vh, 3.5rem);
+        background: repeating-linear-gradient(to bottom,
+            var(--ink-text) 0 6px, transparent 6px 12px);
+        animation: fh-bus 1s linear infinite;
+    }
+    @keyframes fh-bus {
+        to { background-position: 0 12px; }
+    }
+    .fh-flow__sinks {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+        gap: .75rem;
+        min-width: 0;
+    }
+    .fh-flow__sinks > * { min-width: 0; }
+    .fh-sink {
+        display: grid;
+        gap: .55rem;
+        align-content: start;
+        justify-items: start;
+        padding: .9rem 1rem;
+        border: 1px solid color-mix(in srgb, var(--hero-fg) 14%, transparent);
+        border-radius: calc(var(--radius) * 2);
+        background: color-mix(in srgb, var(--hero-fg) 5%, transparent);
+    }
+    .fh-sink__tag {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: .68rem;
+        font-weight: 700;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--ink-text);
+    }
+    .fh-sink__big {
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+        color: var(--hero-fg);
+    }
+    .fh-sink__sub {
+        font-family: var(--mono);
+        font-size: .8rem;
+        color: var(--hero-mute);
+    }
+    .fh-meter {
+        display: block;
+        width: 100%;
+        height: .55rem;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--hero-fg) 12%, transparent);
+        overflow: hidden;
+    }
+    .fh-meter__fill {
+        display: block;
+        height: 100%;
+        width: var(--pct, 0%);
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--ink-text),
+            color-mix(in srgb, var(--link) 60%, var(--hero-fg)));
+        transition: width .6s var(--ease);
+    }
+    .fh-sink__pill {
+        display: inline-block;
+        padding: .2em .75em;
+        border-radius: 999px;
+        font-family: var(--mono);
+        font-size: .8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        background: color-mix(in srgb, currentColor 12%, transparent);
+    }
+    .fh-sink__pill[data-phase="charging"] { color: color-mix(in srgb, var(--warn) 70%, var(--hero-fg)); }
+    .fh-sink__pill[data-phase="steady"]   { color: color-mix(in srgb, var(--ok)   70%, var(--hero-fg)); }
+    .fh-sink__pill[data-phase="peak"]     { color: color-mix(in srgb, var(--link) 70%, var(--hero-fg)); }
+    .fh-sink__pill[data-phase="cooling"]  { color: var(--hero-mute); }
+    .fh-lamp {
+        display: block;
+        width: 1.1rem;
+        height: 1.1rem;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--hero-fg) 14%, transparent);
+        transition: background-color .3s, box-shadow .3s;
+    }
+    .fh-lamp[data-parity="high"] {
+        background: color-mix(in srgb, var(--ok) 75%, var(--hero-fg));
+        box-shadow: 0 0 1rem color-mix(in srgb, var(--ok) 55%, transparent);
+    }
+    .fh-sink__hex {
+        font-family: var(--mono);
+        font-size: 1.5rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        color: var(--ink-text);
+    }
+
+    @media (min-width: 60rem) {
+        .fh-flow__inner {
+            grid-template-columns: .85fr 1.15fr;
+            align-items: center;
+            gap: 4rem;
+        }
+    }
+
+    /* ── specimen 3: the departure board ──────────────────────── */
+    .fh--board {
+        background:
+            radial-gradient(60rem 40rem at 85% 10%,
+                color-mix(in srgb, var(--warn) 7%, transparent), transparent 70%),
+            var(--ink);
+    }
+    .fh-board__inner {
+        gap: 2.5rem;
+    }
+    .fh-board {
+        justify-self: stretch;
+        min-width: 0;
+        border: 1px solid color-mix(in srgb, var(--hero-fg) 16%, transparent);
+        border-radius: calc(var(--radius) * 2);
+        background: color-mix(in srgb, var(--ink) 72%, black);
+        box-shadow: 0 2rem 5rem rgb(0 0 0 / .4);
+        overflow: clip;
+        font-family: var(--mono);
+    }
+    .fh-board__head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1rem;
+        padding: .8rem 1.1rem;
+        border-bottom: 1px solid color-mix(in srgb, var(--hero-fg) 14%, transparent);
+    }
+    .fh-board__head p {
+        margin: 0;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+        color: var(--hero-mute);
+    }
+    .fh-board__clock {
+        font-size: .82rem;
+        font-variant-numeric: tabular-nums;
+        color: var(--ink-text);
+    }
+    .fh-board__rows {
+        display: grid;
+        margin: 0;
+        padding: .35rem 0;
+        list-style: none;
+    }
+    .fh-board__row {
+        display: grid;
+        grid-template-columns: 3.5rem 1fr auto;
+        align-items: baseline;
+        gap: .8rem;
+        padding: .55rem 1.1rem;
+        font-size: clamp(.72rem, 2.4vw, .92rem);
+        letter-spacing: .08em;
+        animation: fh-drop .45s var(--ease) both;
+    }
+    .fh-board__row:nth-child(2) { animation-delay: .07s; }
+    .fh-board__row:nth-child(3) { animation-delay: .14s; }
+    .fh-board__row:nth-child(4) { animation-delay: .21s; }
+    .fh-board__row:nth-child(5) { animation-delay: .28s; }
+    .fh-board__row:nth-child(6) { animation-delay: .35s; }
+    @keyframes fh-drop {
+        from { opacity: 0; translate: 0 -.5rem; }
+    }
+    .fh-board__row + .fh-board__row {
+        border-top: 1px solid color-mix(in srgb, var(--hero-fg) 7%, transparent);
+    }
+    .fh-board__gate {
+        font-size: .78em;
+        color: var(--hero-faint);
+    }
+    .fh-board__name {
+        font-weight: 700;
+        color: color-mix(in srgb, var(--hero-fg) 80%, transparent);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .fh-board__status {
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .fh-board__row[data-tone="no"] .fh-board__status {
+        color: color-mix(in srgb, var(--err) 65%, var(--hero-fg));
+        text-decoration: line-through;
+        text-decoration-thickness: 1px;
+        opacity: .85;
+    }
+    .fh-board__row[data-tone="soon"] .fh-board__status {
+        color: color-mix(in srgb, var(--warn) 70%, var(--hero-fg));
+        animation: fh-blink 1s steps(2, start) infinite;
+    }
+    .fh-board__row[data-tone="ok"] .fh-board__status {
+        color: color-mix(in srgb, var(--ok) 70%, var(--hero-fg));
+        text-shadow: 0 0 1.2rem color-mix(in srgb, var(--ok) 50%, transparent);
+    }
+    .fh-board__row[data-tone="soon"],
+    .fh-board__row[data-tone="ok"] {
+        background: color-mix(in srgb, var(--ok) 5%, transparent);
+    }
+    .fh-board__ticker {
+        display: flex;
+        width: max-content;
+        margin: 0;
+        padding: .55rem 0;
+        border-top: 1px solid color-mix(in srgb, var(--hero-fg) 14%, transparent);
+        font-size: .74rem;
+        color: var(--hero-faint);
+        white-space: nowrap;
+        animation: fh-ticker 26s linear infinite;
+    }
+    @keyframes fh-ticker {
+        to { translate: -50% 0; }
+    }
+
+    @media (min-width: 64rem) {
+        .fh-board__inner {
+            grid-template-columns: 1.15fr .85fr;
+            align-items: center;
+            gap: 4rem;
+        }
+    }
+</style>
