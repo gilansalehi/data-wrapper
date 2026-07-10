@@ -237,6 +237,16 @@
     .pitch__deep { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* Desktop breakout: the three panels take 150% of the measure, centered
+   (-25% = half the 50% overhang) — same shape as the tutorial's
+   compare/contrast columns. */
+@media (min-width: 75rem) {
+    .pitch__deep {
+        width: 150%;
+        margin-left: -25%;
+    }
+}
+
 .pitch__token-panel {
     display: grid;
     align-content: start;
@@ -305,7 +315,6 @@
 
 .pitch__next-card:hover {
     border-color: color-mix(in srgb, var(--link) 45%, transparent);
-    text-decoration: none;
 }
 
 .pitch__next-kicker {

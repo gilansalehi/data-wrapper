@@ -212,7 +212,10 @@
     @media (min-width: 75rem) {
         .cousins__grid {
             grid-template-columns: 1fr 1fr 1fr;
-            margin-left: -16.66vw;
+            /* -25% of the container = half the 50% overhang: stays
+               centered at every viewport, unlike the old -16.66vw
+               which drifted left on wide screens. */
+            margin-left: -25%;
             width: 150%;
         }
     }
