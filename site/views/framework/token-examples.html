@@ -11,7 +11,7 @@
 
         <div class="pitch__deep">
             <section class="pitch__token-panel">
-                <p class="pitch__mini-title">04a — <code>$</code> writes values</p>
+                <p class="pitch__mini-title"><code class="token-highlight">$</code> writes values</p>
                 <h3>Read a binding and write it to the DOM.</h3>
                 <ol class="pitch__example-list">
                     <li>
@@ -31,7 +31,7 @@
             </section>
 
             <section class="pitch__token-panel">
-                <p class="pitch__mini-title">04b — <code>*</code> renders structure</p>
+                <p class="pitch__mini-title"><code class="token-highlight">*</code> renders structure</p>
                 <h3>Use a directive when markup itself changes.</h3>
                 <ol class="pitch__example-list">
                     <li>
@@ -58,7 +58,7 @@
             </section>
 
             <section class="pitch__token-panel">
-                <p class="pitch__mini-title">04c — <code>@</code> calls actions</p>
+                <p class="pitch__mini-title"><code class="token-highlight">@</code> calls actions</p>
                 <h3>Listen for browser events and call exported functions.</h3>
                 <ol class="pitch__example-list">
                     <li>
@@ -84,3 +84,12 @@
         </div>
     </div>
 </section>
+
+<style>
+.pitch__mini-title { text-align: center; }
+.token-highlight {
+    font-size: 1.35em;
+    font-weight: 800;
+    color: var(--link);
+}
+</style>
