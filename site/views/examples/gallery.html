@@ -198,6 +198,9 @@
         gap: 1rem;
     }
 
+    /* Card on page bg; the preview stage inside is the surface layer,
+       so demo item cards alternate back to --bg — same chain as the
+       homepage pitch frames. */
     .example-card {
         display: grid;
         align-content: start;
@@ -206,18 +209,10 @@
         padding: 1.1rem 1.25rem;
         border: var(--border);
         border-radius: calc(var(--radius) * 2);
-        background: var(--surface);
+        background: var(--bg);
         transition: border-color var(--speed) var(--ease),
                     transform var(--speed) var(--ease);
     }
-    .example-card:hover {
-        border-color: color-mix(in srgb, var(--link) 40%, transparent);
-        transform: translateY(-2px);
-    }
-    @media (prefers-reduced-motion: reduce) {
-        .example-card, .example-card:hover { transform: none; }
-    }
-
     .example-card--wide {
         grid-column: 1 / -1;
     }
@@ -264,9 +259,7 @@
         min-width: 0;
         padding: 1.1rem;
         border-radius: var(--radius);
-        background:
-            linear-gradient(135deg, color-mix(in srgb, var(--link) 8%, transparent), transparent 40%),
-            var(--bg);
+        background: var(--surface);
         overflow: auto;
     }
 

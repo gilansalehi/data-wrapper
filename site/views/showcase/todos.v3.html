@@ -12,7 +12,7 @@
         :                        t.done
     );
 
-    export const activeCount = () => todos.filter(t => !t.done).length;
+    export const doneCount = () => todos.filter(t => t.done).length;
 
     export function addTodo(event) {
         const form = event.target;
@@ -44,12 +44,9 @@
 </script>
 
 <article class="todo-demo">
-    <header class="todo-demo__header">
-        <div>
-            <p class="todo-demo__eyebrow">live todo view</p>
-            <h3>Ship the beta</h3>
-        </div>
-        <strong class="todo-demo__count"><span $text="activeCount">0</span> active</strong>
+    <header>
+        <h3>Todos</h3>
+        <strong class="chip pill tint info mono"><span $text="doneCount">0</span>&nbsp;done</strong>
     </header>
 
     <form @submit="addTodo?prevent">
@@ -62,135 +59,70 @@
             <li class="todo-item" $class="./done?bool=done:active">
                 <input type="checkbox" $checked="./done" @change="toggleTodo" aria-label="Toggle todo completion">
                 <span $text="./task"></span>
-                <template *if="./done"><strong class="done-badge">done</strong></template>
-                <button class="delete-btn" @click="removeTodo" aria-label="Remove">✕</button>
+                <template *if="./done"><strong class="status status--ok">done</strong></template>
+                <button class="btn-ghost error" @click="removeTodo" aria-label="Remove">✕</button>
             </li>
         </template>
     </ul>
 
-    <div class="controls">
+    <footer>
         <button @click="clearDone">Clear done</button>
-        <div class="filter-btns" role="group" aria-label="Filter todos">
+        <div class="row" role="group" aria-label="Filter todos">
             <button @click="setFilter" value="all">All</button>
             <button @click="setFilter" value="active">Active</button>
             <button @click="setFilter" value="done">Done</button>
         </div>
-    </div>
+    </footer>
 </article>
 
 <style>
-    .todo-demo {
-        border-radius: calc(var(--radius) * 2);
-        padding: 1.25rem;
-        margin-bottom: .4rem;
-        background: var(--surface);
-        overflow: clip;
-
-        & p:first-child { margin-top: 0; }
-        & p:last-child  { margin-bottom: 0; }
-    }
-
-    .todo-demo__header {
+    /* Only the layout this demo owns; looks come from the reset and
+       the atoms (chip/tint, status, btn-ghost, row). */
+    .todo-demo header {
         display: flex;
         justify-content: space-between;
-        align-items: start;
+        align-items: center;
         gap: 1rem;
-        margin-bottom: 1rem;
+        margin: 1rem 0;
         padding-bottom: .9rem;
         border-bottom: var(--border);
-    }
 
-    .todo-demo__eyebrow {
-        margin: 0;
-        color: var(--faint);
-        font-family: var(--mono);
-        font-size: .72rem;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-    }
-
-    .todo-demo h3 {
-        margin: .1rem 0 0;
-        font-size: 1.2rem;
-        line-height: 1.15;
-    }
-
-    .todo-demo__count {
-        flex: 0 0 auto;
-        padding: .25rem .6rem;
-        border-radius: 999px;
-        color: var(--link);
-        font-family: var(--mono);
-        font-size: .78rem;
-        font-weight: 700;
-        background: color-mix(in srgb, var(--link) 8%, transparent);
+        & h3 { margin: 0; font-size: 1.2rem; }
     }
 
     .todo-demo form {
         display: flex;
         gap: .5rem;
-        margin-bottom: .75rem;
 
         & input  { flex: 1; margin: 0; }
         & button { white-space: nowrap; }
     }
 
+    /* The list clips its rows' corners; rows separate with one rule. */
     .todo-list {
-        list-style: none;
-        padding: 0;
         margin: .75rem 0;
+        border-radius: var(--radius);
+        overflow: clip;
     }
 
     .todo-item {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 10px;
-        border-bottom: var(--border);
+        gap: .6rem;
+        padding: .6rem;
         background: var(--bg);
 
+        & span { flex: 1; }
         &.done span { text-decoration: line-through; opacity: .45; }
     }
+    .todo-item + .todo-item { border-top: var(--border); }
 
-    .todo-item:first-child {
-        border-radius: var(--radius) var(--radius) 0 0;
-    }
-
-    .todo-item:last-child {
-        border-bottom: 0;
-        border-radius: 0 0 var(--radius) var(--radius);
-    }
-
-    .done-badge {
-        font-size: .68rem;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-        color: var(--ok);
-        background: color-mix(in srgb, var(--ok) 10%, transparent);
-        border-radius: 999px;
-        padding: .05rem .45rem;
-    }
-
-    .todo-demo .delete-btn {
-        margin-left: auto;
-        color: var(--err);
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: .15rem .4rem;
-        font-size: 1rem;
-        min-height: 0;
-    }
-
-    .controls {
+    .todo-demo footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: .75rem;
-        font-size: .88rem;
         flex-wrap: wrap;
         gap: .5rem;
+        font-size: .88rem;
     }
-
-    .filter-btns button { margin-left: .2rem; }
 </style>

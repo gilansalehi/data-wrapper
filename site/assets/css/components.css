@@ -42,6 +42,22 @@
     background: transparent;
 }
 
+/* Ghost button — a bare glyph control (✕ ▸ ◐). Tone it with the
+   color atoms: class="btn-ghost error". */
+.btn-ghost {
+    min-height: 0;
+    padding: .15rem .4rem;
+    border: 0;
+    border-radius: var(--radius);
+    background: none;
+    color: inherit;
+    cursor: pointer;
+}
+.btn-ghost:hover:not(:disabled) {
+    border: 0;
+    background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
 /* ── Code reveal — bare <details><summary>…</summary><pre> ── */
 
 details {

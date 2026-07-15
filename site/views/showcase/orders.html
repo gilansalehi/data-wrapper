@@ -84,15 +84,10 @@
 </script>
 
     <style>
-    /* Flat demo root: the hosting frame draws the box; nesting inside
-       reads through bg alternation, not more borders. Sized by its
+    /* Naked root: the hosting stage paints the surface. Sized by its
        container (card, pane, or page), not the viewport. */
     .orders-demo {
         container-type: inline-size;
-        border-radius: calc(var(--radius) * 2);
-        padding: 1.25rem;
-        margin-bottom: .4rem;
-        background: var(--surface);
     }
 
     .orders-demo .orders-head,

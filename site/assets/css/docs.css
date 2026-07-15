@@ -126,9 +126,10 @@
 }
 
 .showcase-block {
+    position: relative;          /* anchors .live-badge--corner */
     margin: 1rem 0 2rem;
-    padding: 1rem;
-    border-radius: var(--radius);
+    padding: 1.25rem;
+    border-radius: calc(var(--radius) * 2);
     background: var(--surface);
 }
 

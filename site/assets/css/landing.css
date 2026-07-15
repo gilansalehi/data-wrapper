@@ -53,7 +53,7 @@
 .pitch__mini-title {
     margin: 1.5rem 0 .65rem;
     color: var(--muted);
-    font-size: .86rem;
+    font-size: 1.5rem;
     font-weight: 700;
 }
 
@@ -70,7 +70,8 @@
     min-width: 0;
 }
 
-/* demo + widget frames */
+/* demo + widget frames — THE stage: frames own the surface color,
+   demo roots stay naked, item cards inside alternate back to --bg. */
 .pitch__demo,
 .pitch__widget {
     position: relative;         /* anchors .live-badge--corner */
@@ -78,11 +79,10 @@
     flex-direction: column;
     gap: .75rem;
     margin: 0;
-    padding: 1.25rem;
-    background: var(--bg);
-    border: var(--border-strong);
+    padding: 1rem;
+    background: var(--surface);
+    border: var(--border);
     border-radius: calc(var(--radius) * 2);
-    box-shadow: var(--shadow);
 }
 /* Corner-badged frames can center their demo instead of labeling it. */
 .pitch__demo--center {
@@ -100,30 +100,6 @@
     letter-spacing: .04em;
     color: var(--faint);
 }
-
-.pitch__demo {
-    background:
-        linear-gradient(135deg, color-mix(in srgb, var(--link) 10%, transparent), transparent 34%),
-        var(--bg);
-}
-
-/* Give bare demo controls a reasonable look without fighting any
-   component-colocated CSS — :where() keeps specificity at zero. */
-.pitch__demo :where(.component-counter) {
-    width: 100%;
-}
-.pitch__demo :where(button) {
-    align-self: flex-start;
-    padding: .4em .85em;
-    border: var(--border-strong);
-    border-radius: var(--radius);
-    background: var(--control-bg);
-    color: var(--text);
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
-}
-.pitch__demo :where(button):hover { background: var(--control-hover); }
 
 /* "no X" struck list */
 .pitch__nots {
@@ -234,7 +210,9 @@
 }
 
 @media (min-width: 900px) {
-    .pitch__deep { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .pitch__deep {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }
 
 /* Desktop breakout: the three panels take 150% of the measure, centered

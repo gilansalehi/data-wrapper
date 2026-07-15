@@ -31,6 +31,36 @@
     font-weight: 600;
 }
 
+/* ============================================================
+   Card — THE panel shape. One padding, one radius, bordered on
+   the page bg. Inside a surface-colored frame, use .card--flat:
+   bg alternation carries the edge instead of a border (rule 7).
+   ============================================================ */
+
+.card {
+    padding: 1rem;
+    border: var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: currentColor;
+}
+.card--flat {
+    border: 0;
+    background: var(--bg);
+}
+
+/* Kicker — THE eyebrow. Tiny + mono + uppercase + letterspaced;
+   contexts recolor it with a color override alone. */
+.kicker {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: .74rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--faint);
+}
+
 /* Typography & a11y */
 
 .note { font-size: .78rem; color: var(--faint); margin: .2rem 0 1.5rem; }

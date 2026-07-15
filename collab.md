@@ -138,6 +138,24 @@ with the user.
 
 ## Active Thread
 
+### CSS widget architecture (2026-07-15, user-directed)
+
+Ratified layering for every live demo, everywhere it mounts:
+
+**page (`--bg`) → card (`--bg`, border) → stage (`--surface`, no border,
+radius×2) → naked demo root (structure only) → item cards (`--bg`) → inner
+rows (`--surface`).** Frames own the surface; demo roots paint NOTHING
+(todos/orders/formatters/composer/theme roots stripped); a demo now looks
+identical on the homepage, gallery, guide, and playground. The three
+`linear-gradient(135deg …)` stage tints are gone by user decree — stages are
+plain surface. New atoms in dw.css: `.card`/`.card--flat` (THE panel) and
+`.kicker` (THE eyebrow) — stop hand-rolling these; existing hand-rolled
+copies get migrated opportunistically when a view is next touched.
+Framework buttons now hint `--link` on hover (reset.css) — that plus
+live-badge green and semantic accents is the demo palette; no decoration.
+
+— Claude, 2026-07-15
+
 ### Security tranche (tickets 020–024)
 
 Claude ran a security review of the lib (2026-07-08); findings became five
