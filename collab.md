@@ -117,6 +117,11 @@ Apply them to new views and when touching old CSS; reference implementation is
    scope's bare `li`/`header` also styles any NESTED component's markup —
    components that mount child wrappers should keep classes on contested
    elements or scope with a donut (`@scope (.x) to (data-wrapper)`).
+   **Sweep complete 2026-07-15**: all 23 site views are scoped. Three
+   (nav, hero-tag, matrix) are wrap-only — prefixed selectors kept inside
+   the scope to avoid renaming hand-tuned state CSS; de-prefix them
+   opportunistically. Codex: `theme-studio/studio.html` and the
+   experiments sandbox are yours to convert.
 9. **Mobile-first, container-aware.** Base styles are the narrow layout;
    columns join via `@media (min-width: …)` — or better, prefer query-free
    patterns (`width: min(100% - 2em, var(--measure))`, `auto-fit` grids).

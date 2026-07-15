@@ -139,6 +139,10 @@
 </section>
 
 <style>
+    /* House pattern: scoped to the component root. Selectors inside keep
+       their .tag-hero prefixes (the root is in scope, so they still
+       match) — the scope adds the boundary without a risky rename. */
+    @scope (.tag-hero) {
     .tag-hero {
         position: relative;
         display: grid;
@@ -449,5 +453,6 @@
     .tag-hero__more:hover { color: var(--text); }
     @keyframes tag-nudge {
         50% { translate: 0 .3rem; }
+    }
     }
 </style>

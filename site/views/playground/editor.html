@@ -106,70 +106,64 @@
 </script>
 
 <section class="play-editor">
-    <header class="play-editor__bar">
-        <p class="play-pane-label">component source — one html file</p>
-        <span class="play-editor__actions">
+    <header>
+        <p class="kicker">component source — one html file</p>
+        <span>
             <button class="btn btn-primary" @click="run">Run ▸</button>
             <button class="btn btn-outline" @click="reset">Reset</button>
         </span>
     </header>
     <textarea id="play-source" spellcheck="false" autocomplete="off"
               aria-label="Component source"></textarea>
-    <p class="play-status" $data-tone="tone" $text="status" aria-live="polite"></p>
+    <p class="status" $data-tone="tone" $text="status" aria-live="polite"></p>
 </section>
 
 <style>
-    .play-editor {
-        display: flex;
-        flex-direction: column;
-        gap: .6rem;
-        min-width: 0;
+    @scope (.play-editor) {
+        :scope {
+            display: flex;
+            flex-direction: column;
+            gap: .6rem;
+            min-width: 0;
+        }
+
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: .5rem;
+
+            & span { display: inline-flex; gap: .5rem; }
+        }
+
+        textarea {
+            min-height: 24rem;
+            padding: .9rem 1.1rem;
+            border: var(--border-strong);
+            border-radius: var(--radius);
+            background: var(--ink);
+            color: var(--ink-text);
+            font-family: var(--mono);
+            font-size: .82rem;
+            line-height: 1.6;
+            resize: vertical;
+            tab-size: 4;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        textarea:focus-visible {
+            outline: 2px solid color-mix(in srgb, var(--link) 60%, transparent);
+            outline-offset: 2px;
+        }
+
+        .status {
+            margin: 0;
+            font-family: var(--mono);
+            font-size: .78rem;
+            color: var(--muted);
+        }
+        .status[data-tone="ok"]  { color: var(--ok); }
+        .status[data-tone="err"] { color: var(--err); }
     }
-    .play-editor__bar {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: .5rem;
-    }
-    .play-editor__actions {
-        display: inline-flex;
-        gap: .5rem;
-    }
-    .play-pane-label {
-        margin: 0;
-        font-family: var(--mono);
-        font-size: .74rem;
-        font-weight: 600;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-        color: var(--faint);
-    }
-    #play-source {
-        min-height: 24rem;
-        padding: .9rem 1.1rem;
-        border: var(--border-strong);
-        border-radius: var(--radius);
-        background: var(--ink);
-        color: var(--ink-text);
-        font-family: var(--mono);
-        font-size: .82rem;
-        line-height: 1.6;
-        resize: vertical;
-        tab-size: 4;
-        white-space: pre;
-        overflow-x: auto;
-    }
-    #play-source:focus-visible {
-        outline: 2px solid color-mix(in srgb, var(--link) 60%, transparent);
-        outline-offset: 2px;
-    }
-    .play-status {
-        margin: 0;
-        font-family: var(--mono);
-        font-size: .78rem;
-        color: var(--muted);
-    }
-    .play-status[data-tone="ok"]  { color: var(--ok); }
-    .play-status[data-tone="err"] { color: var(--err); }
 </style>

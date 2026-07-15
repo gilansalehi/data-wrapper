@@ -68,20 +68,20 @@
     </p>
 
     <div class="fit-grid">
-        <fieldset class="fit-group fit-group--for">
+        <fieldset class="for">
             <legend>Points toward data-wrapper</legend>
             <template *list="signals">
-                <label class="fit-item">
+                <label>
                     <input type="checkbox" $checked="./checked" @change="toggleSignal">
                     <span $text="./text"></span>
                 </label>
             </template>
         </fieldset>
 
-        <fieldset class="fit-group fit-group--against">
+        <fieldset class="against">
             <legend>Points toward an industry framework</legend>
             <template *list="cautions">
-                <label class="fit-item">
+                <label>
                     <input type="checkbox" $checked="./checked" @change="toggleCaution">
                     <span $text="./text"></span>
                 </label>
@@ -89,67 +89,71 @@
         </fieldset>
     </div>
 
-    <div class="fit-verdict" $data-tone="tone" aria-live="polite">
-        <strong class="fit-score" $text="score"></strong>
+    <div class="verdict" $data-tone="tone" aria-live="polite">
+        <strong $text="score"></strong>
         <p $text="verdict"></p>
     </div>
 </section>
 
 <style>
-    .fit-grid {
-        display: grid;
-        gap: 1rem;
-        margin: 1rem 0;
-    }
-    @media (min-width: 720px) {
-        .fit-grid { grid-template-columns: 1fr 1fr; }
-    }
+    @scope (#checklist) {
+        .fit-grid {
+            display: grid;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        @media (min-width: 720px) {
+            .fit-grid { grid-template-columns: 1fr 1fr; }
+        }
 
-    .fit-group {
-        margin: 0;
-        padding: 1rem 1.1rem;
-        border: var(--border);
-        border-radius: 8px;
-        background: var(--surface);
-    }
-    .fit-group legend {
-        padding: 0 .4rem;
-        font-size: .78rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .06em;
-    }
-    .fit-group--for     legend { color: var(--ok); }
-    .fit-group--against legend { color: var(--err); }
+        fieldset {
+            margin: 0;
+            padding: 1rem 1.1rem;
+            border: var(--border);
+            border-radius: calc(var(--radius) * 2);
+            background: var(--surface);
+        }
+        legend {
+            padding: 0 .4rem;
+            font-size: .78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+        .for legend     { color: var(--ok); }
+        .against legend { color: var(--err); }
 
-    .fit-item {
-        display: flex;
-        align-items: baseline;
-        gap: .6rem;
-        padding: .4rem 0;
-        font-size: .92rem;
-        line-height: 1.45;
-        cursor: pointer;
-    }
-    .fit-item input { flex: 0 0 auto; }
+        label {
+            display: flex;
+            align-items: baseline;
+            gap: .6rem;
+            padding: .4rem 0;
+            font-size: .92rem;
+            line-height: 1.45;
+            cursor: pointer;
 
-    .fit-verdict {
-        display: flex;
-        flex-direction: column;
-        gap: .35rem;
-        padding: 1rem 1.1rem;
-        border: var(--border-strong);
-        border-left: 4px solid var(--muted);
-        border-radius: 8px;
-        background: var(--bg);
+            & input { flex: 0 0 auto; }
+        }
+
+        .verdict {
+            display: flex;
+            flex-direction: column;
+            gap: .35rem;
+            padding: 1rem 1.1rem;
+            border: var(--border-strong);
+            border-left: 4px solid var(--muted);
+            border-radius: calc(var(--radius) * 2);
+            background: var(--bg);
+
+            & p { margin: 0; }
+            & strong {
+                font-family: var(--mono);
+                font-size: .8rem;
+                color: var(--muted);
+            }
+        }
+        .verdict[data-tone="go"]   { border-left-color: var(--ok); }
+        .verdict[data-tone="warn"] { border-left-color: color-mix(in srgb, var(--err) 55%, var(--ok)); }
+        .verdict[data-tone="stop"] { border-left-color: var(--err); }
     }
-    .fit-verdict p { margin: 0; }
-    .fit-score {
-        font-family: var(--mono);
-        font-size: .8rem;
-        color: var(--muted);
-    }
-    .fit-verdict[data-tone="go"]   { border-left-color: var(--ok); }
-    .fit-verdict[data-tone="warn"] { border-left-color: color-mix(in srgb, var(--err) 55%, var(--ok)); }
-    .fit-verdict[data-tone="stop"] { border-left-color: var(--err); }
 </style>

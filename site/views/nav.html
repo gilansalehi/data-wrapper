@@ -11,11 +11,12 @@
     const path = location.pathname.replace(/(?:index)?\.html$/, '') || '/';
 
     // Top-level site pages. `current` flags the active one for aria-current.
+    // Theme Studio ships unlisted until it's a complete feature —
+    // /theme-studio still works, it's just not linked from here.
     export const pages = [
         { href: '/',          label: 'Home' },
         { href: '/tutorials', label: 'Tutorial' },
         { href: '/examples',  label: 'Examples' },
-        { href: '/theme-studio', label: 'Theme Studio' },
         { href: '/playground', label: 'Playground' },
         { href: '/framework', label: 'Framework guide' },
         { href: '/compare',   label: 'Comparison' },
@@ -77,6 +78,9 @@
 </dialog>
 
 <style>
+    /* Scoped to the nav wrapper element; inner selectors keep their
+       prefixes — the scope adds the boundary without a rename. */
+    @scope (#nav) {
     #nav { --nav-width: 240px; }
 
     /* ── sticky header ──
@@ -313,5 +317,6 @@
         padding: .35em .4em;
 
         &:hover:not(:disabled) { background: var(--surface); color: var(--text); }
+    }
     }
 </style>
