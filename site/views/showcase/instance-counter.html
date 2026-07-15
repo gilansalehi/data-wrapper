@@ -13,43 +13,34 @@
     };
 </script>
 
-<article class="instance-counter">
+<style>
+    @scope (.instance-counter) {
+        :scope { display: grid; gap: .75rem; }
+
+        h3 { margin: 0; color: var(--muted); font-size: .92rem; }
+
+        :scope > div {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: .55rem;
+        }
+
+        output {
+            min-width: 2ch;
+            text-align: center;
+            font-size: 1.55rem;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+    }
+</style>
+
+<article class="card card--flat instance-counter">
     <h3 $text="title"></h3>
-    <div class="instance-counter__controls">
+    <div>
         <button @click="decrement">-</button>
         <output $text="count"></output>
         <button @click="increment">+</button>
     </div>
 </article>
-
-<style>
-    /* Inner card: alternates back to --bg on the stage's surface. */
-    .instance-counter {
-        display: grid;
-        gap: .75rem;
-        padding: 1rem;
-        border-radius: var(--radius);
-        background: var(--bg);
-    }
-
-    .instance-counter h3 {
-        margin: 0;
-        color: var(--muted);
-        font-size: .92rem;
-    }
-
-    .instance-counter__controls {
-        display: grid;
-        grid-template-columns: auto 1fr auto;
-        align-items: center;
-        gap: .55rem;
-    }
-
-    .instance-counter output {
-        min-width: 2ch;
-        text-align: center;
-        font-size: 1.55rem;
-        font-weight: 800;
-        font-variant-numeric: tabular-nums;
-    }
-</style>

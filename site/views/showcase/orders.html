@@ -84,33 +84,73 @@
 </script>
 
     <style>
-    /* Naked root: the hosting stage paints the surface. Sized by its
-       container (card, pane, or page), not the viewport. */
-    .orders-demo {
-        container-type: inline-size;
-    }
+    /* Scoped; the donut (to data-wrapper) keeps bare selectors out of
+       the nested monitor component. Looks come from the atoms (card,
+       rows, chip, kicker, btn-ghost) — only orders layout lives here.
+       Sized by its container (card, pane, or page), not the viewport. */
+    @scope (.orders-demo) to (data-wrapper) {
+        :scope { container-type: inline-size; }
 
-    .orders-demo .orders-head,
-    .orders-demo .order-card-head {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-    }
+        header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        :scope > header { margin-bottom: 1rem; }
 
-    .orders-demo h2,
-    .orders-demo h3,
-    .orders-demo p { margin-top: 0; }
+        h2, h3, p { margin-top: 0; }
 
-    .orders-demo .orders-head { margin-bottom: 1rem; }
+        /* Mobile-first: one column; the side monitor joins at width. */
+        .orders-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            align-items: start;
+            min-width: 0;
+        }
 
-    /* Mobile-first: one column; the side monitor joins at width. */
-    .orders-demo .orders-layout {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        align-items: start;
-        min-width: 0;
+        .order-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+            margin: 0 0 1rem;
+        }
+
+        .order-list {
+            display: grid;
+            gap: .85rem;
+            min-width: 0;
+        }
+
+        .order-card { min-width: 0; }
+        .order-card[data-status="priority"] {
+            border-color: color-mix(in srgb, var(--warn) 45%, transparent);
+        }
+
+        .order-card ul {
+            margin: .75rem 0 0;
+            overflow-x: auto;
+        }
+        .order-card li {
+            display: grid;
+            grid-template-columns: auto minmax(5.5rem, .7fr) minmax(8rem, 1fr) auto;
+        }
+        .order-card li.packed { color: var(--muted); }
+        .order-card li.packed span {
+            text-decoration: line-through;
+            opacity: .7;
+        }
+        .order-card li strong {
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        .order-actions {
+            display: flex;
+            align-items: center;
+            gap: .35rem;
+        }
     }
 
     @container (width >= 44rem) {
@@ -118,96 +158,6 @@
             grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
         }
     }
-
-    .orders-demo .order-stats {
-        display: flex;
-        flex-wrap: wrap;
-        gap: .5rem;
-        margin: 0 0 1rem;
-    }
-
-    .orders-demo .order-stats span {
-        border-radius: var(--radius);
-        padding: .35rem .6rem;
-        background: var(--bg);
-        font-size: .86rem;
-    }
-
-    .orders-demo .order-list {
-        display: grid;
-        gap: .85rem;
-        min-width: 0;
-    }
-
-    .orders-demo .order-card {
-        border: var(--border);
-        border-radius: var(--radius);
-        padding: .9rem;
-        background: var(--bg);
-        min-width: 0;
-    }
-
-    .orders-demo .order-card[data-status="priority"] {
-        border-color: color-mix(in srgb, var(--warn) 45%, transparent);
-    }
-
-    .orders-demo .order-status {
-        display: inline-block;
-        margin-top: .2rem;
-        font-size: .7rem;
-        text-transform: uppercase;
-        letter-spacing: .08em;
-        color: var(--muted);
-    }
-
-    .orders-demo .order-actions {
-        display: flex;
-        align-items: center;
-        gap: .35rem;
-    }
-
-    .orders-demo .delete-btn {
-        margin-left: auto;
-        color: var(--err);
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: .15rem .4rem;
-        font-size: 1rem;
-        min-height: 0;
-    }
-
-    .orders-demo .line-list {
-        list-style: none;
-        padding: 0;
-        margin: .75rem 0 0;
-        display: grid;
-        gap: .35rem;
-        overflow-x: auto;
-    }
-
-    .orders-demo .line-item {
-        display: grid;
-        grid-template-columns: auto minmax(5.5rem, .7fr) minmax(8rem, 1fr) auto;
-        align-items: center;
-        gap: .55rem;
-        padding: .5rem .6rem;
-        border-radius: var(--radius);
-        background: var(--surface);
-    }
-
-    .orders-demo .line-item.packed { color: var(--muted); }
-
-    .orders-demo .line-item.packed span {
-        text-decoration: line-through;
-        opacity: .7;
-    }
-
-    .orders-demo .line-qty {
-        font-variant-numeric: tabular-nums;
-        white-space: nowrap;
-    }
-
 </style>
 
 <section class="orders-demo">
@@ -220,33 +170,33 @@
     </header>
 
     <div class="order-stats" aria-label="Order totals">
-        <span><strong $text="orderCount"></strong> orders</span>
-        <span><strong $text="lineCount"></strong> lines</span>
-        <span><strong $text="packedCount"></strong> packed</span>
+        <span class="chip pill tint mono"><strong $text="orderCount"></strong>&nbsp;orders</span>
+        <span class="chip pill tint mono"><strong $text="lineCount"></strong>&nbsp;lines</span>
+        <span class="chip pill tint mono"><strong $text="packedCount"></strong>&nbsp;packed</span>
     </div>
 
     <div class="orders-layout">
         <div class="order-list">
             <template *list="orders">
-                <article class="order-card" $data-status="./status">
-                    <header class="order-card-head">
+                <article class="card order-card" $data-status="./status">
+                    <header>
                         <div>
                             <h3 $text="./customer"></h3>
-                            <span class="order-status" $text="./status"></span>
+                            <span class="kicker" $text="./status"></span>
                         </div>
                         <div class="order-actions">
                             <button @click="addLine">Add line</button>
-                            <button class="delete-btn" @click="removeOrder" aria-label="Remove order">✕</button>
+                            <button class="btn-ghost error" @click="removeOrder" aria-label="Remove order">✕</button>
                         </div>
                     </header>
 
-                    <ul class="line-list">
+                    <ul class="rows">
                         <template *list="./lines">
-                            <li class="line-item" $class="./packed?bool=packed:open">
+                            <li $class="./packed?bool=packed:open">
                                 <input type="checkbox" $checked="./packed" @change="togglePacked" aria-label="Toggle packed">
                                 <code $text="./sku"></code>
                                 <span $text="./name"></span>
-                                <strong class="line-qty">× <span $text="./qty"></span></strong>
+                                <strong>× <span $text="./qty"></span></strong>
                             </li>
                         </template>
                     </ul>

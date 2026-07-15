@@ -3,10 +3,12 @@
 </script>
 
 <style>
-    .module-import-demo {
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: var(--border);
+    @scope (.module-import-demo) {
+        :scope {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: var(--border);
+        }
     }
 </style>
 

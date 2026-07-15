@@ -82,7 +82,7 @@
     padding: 1rem;
     background: var(--surface);
     border: var(--border);
-    border-radius: calc(var(--radius) * 2);
+    border-radius: var(--radius);
 }
 /* Corner-badged frames can center their demo instead of labeling it. */
 .pitch__demo--center {

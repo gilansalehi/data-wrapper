@@ -3,10 +3,10 @@
 </script>
 
 <style>
-    /* Naked root: the hosting stage paints the surface. */
-    .theme-demo {
-        & p:first-child { margin-top: 0; }
-        & p:last-child  { margin-bottom: 0; }
+    /* Naked root; donut-scoped so nothing reaches the nested importer. */
+    @scope (.theme-demo) to (data-wrapper) {
+        p:first-child { margin-top: 0; }
+        p:last-child  { margin-bottom: 0; }
     }
 </style>
 

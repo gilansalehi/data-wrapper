@@ -126,20 +126,20 @@
     <div class="examples-grid">
         <template *list="examples">
             <article class="example-card" $class="./wide?bool=example-card--wide:">
-                <header class="example-card__header">
+                <span class="live-badge live-badge--corner">live</span>
+                <header>
                     <h3 $text="./title"></h3>
                     <p $text="./summary"></p>
                 </header>
 
-                <div class="example-card__tags" aria-label="Feature tags">
+                <div class="tags" aria-label="Feature tags">
                     <template *list="./tags">
                         <span class="chip tint muted" $text="./label"></span>
                     </template>
                 </div>
 
-                <div class="example-card__stage">
-                    <p class="example-card__label"><span class="live-badge">live</span></p>
-                    <div class="example-card__preview">
+                <div class="stage">
+                    <div class="preview">
                         <template *src="./preview">
                             <p class="note">Preview unavailable.</p>
                         </template>
@@ -148,7 +148,7 @@
 
                 <data-wrapper src="/views/docs/peek.html?file=./file&title=./sourceTitle"></data-wrapper>
 
-                <footer class="example-card__actions">
+                <footer>
                     <a class="btn btn-primary" $href="./playground">Open in playground ▸</a>
                     <a class="btn btn-outline" $href="./guide">Guide: <span $text="./guideLabel"></span></a>
                 </footer>
@@ -158,128 +158,113 @@
 </section>
 
 <style>
-    .examples-page {
-        border-top: 0;
+    /* Donut-scoped: nested previews/peeks are beyond the data-wrapper
+       boundary. Direct-child (>) guards cover *src-loaded content too. */
+    @scope (.examples-page) to (data-wrapper) {
+        :scope { border-top: 0; }
+        :scope > h2 { margin-bottom: .6rem; }
+
+        .examples-lead {
+            max-width: 44rem;
+            margin: 0 0 1.5rem;
+            color: var(--muted);
+            font-size: 1.02rem;
+            line-height: 1.55;
+        }
+
+        .examples-feature {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .75rem;
+            margin: 0 0 1.25rem;
+            padding: .85rem 1rem;
+            border: var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--muted);
+
+            & span { font-size: .92rem; line-height: 1.4; }
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+            gap: 1rem;
+        }
+
+        /* Card on page bg; the preview stage inside is the surface layer,
+           so demo item cards alternate back to --bg — same chain as the
+           homepage pitch frames. */
+        .example-card {
+            position: relative;
+            display: grid;
+            align-content: start;
+            gap: .9rem;
+            min-width: 0;
+            padding: 1.1rem 1.25rem;
+            border: var(--border);
+            border-radius: calc(var(--radius) * 2);
+            background: var(--bg);
+            transition: border-color var(--speed) var(--ease),
+                        transform var(--speed) var(--ease);
+        }
+        .example-card--wide {
+            grid-column: 1 / -1;
+        }
+
+        .example-card > header h3 {
+            margin: 0 0 .35rem;
+            font-size: 1.15rem;
+            line-height: 1.2;
+        }
+        .example-card > header p {
+            margin: 0;
+            color: var(--muted);
+            font-size: .92rem;
+            line-height: 1.5;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .35rem;
+
+            & .chip {
+                font-family: var(--mono);
+                font-size: .72rem;
+                font-weight: 600;
+            }
+        }
+
+        .stage {
+            display: grid;
+            gap: .4rem;
+            min-width: 0;
+        }
+
+        .preview {
+            min-width: 0;
+            padding: 1.1rem;
+            border-radius: var(--radius);
+            background: var(--surface);
+            overflow: auto;
+
+            & > data-wrapper { display: block; min-width: 0; }
+        }
+
+        .example-card > footer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+            align-items: center;
+
+            & .btn { font-size: .82rem; white-space: nowrap; }
+        }
     }
 
-    .examples-page h2 {
-        margin-bottom: .6rem;
-    }
-
-    .examples-lead {
-        max-width: 44rem;
-        margin: 0 0 1.5rem;
-        color: var(--muted);
-        font-size: 1.02rem;
-        line-height: 1.55;
-    }
-
-    .examples-feature {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: .75rem;
-        margin: 0 0 1.25rem;
-        padding: .85rem 1rem;
-        border: var(--border);
-        border-radius: var(--radius);
-        background: var(--surface);
-        color: var(--muted);
-    }
-
-    .examples-feature span {
-        font-size: .92rem;
-        line-height: 1.4;
-    }
-
-    .examples-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
-        gap: 1rem;
-    }
-
-    /* Card on page bg; the preview stage inside is the surface layer,
-       so demo item cards alternate back to --bg — same chain as the
-       homepage pitch frames. */
-    .example-card {
-        display: grid;
-        align-content: start;
-        gap: .9rem;
-        min-width: 0;
-        padding: 1.1rem 1.25rem;
-        border: var(--border);
-        border-radius: calc(var(--radius) * 2);
-        background: var(--bg);
-        transition: border-color var(--speed) var(--ease),
-                    transform var(--speed) var(--ease);
-    }
-    .example-card--wide {
-        grid-column: 1 / -1;
-    }
-
-    .example-card__header h3 {
-        margin: 0 0 .35rem;
-        font-size: 1.15rem;
-        line-height: 1.2;
-    }
-
-    .example-card__header p {
-        margin: 0;
-        color: var(--muted);
-        font-size: .92rem;
-        line-height: 1.5;
-    }
-
-    .example-card__tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: .35rem;
-    }
-    .example-card__tags .chip {
-        font-family: var(--mono);
-        font-size: .72rem;
-        font-weight: 600;
-    }
-
-    .example-card__stage {
-        display: grid;
-        gap: .4rem;
-        min-width: 0;
-    }
-    .example-card__label {
-        margin: 0;
-        font-family: var(--mono);
-        font-size: .72rem;
-        font-weight: 600;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-        color: var(--faint);
-    }
-    .example-card__preview {
-        min-width: 0;
-        padding: 1.1rem;
-        border-radius: var(--radius);
-        background: var(--surface);
-        overflow: auto;
-    }
-
-    .example-card__preview > data-wrapper {
-        display: block;
-        min-width: 0;
-    }
-
+    /* The peek lives in a nested component — beyond the donut. */
     .example-card .source-peek {
         margin-top: 0;
-    }
-
-    .example-card__actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: .5rem;
-        align-items: center;
-    }
-    .example-card__actions .btn {
-        font-size: .82rem;
-        white-space: nowrap;
     }
 </style>

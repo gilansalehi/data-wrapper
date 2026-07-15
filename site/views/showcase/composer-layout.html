@@ -26,99 +26,88 @@
 </script>
 
 <section class="composer-layout">
-    <header class="composer-layout__header">
-        <p class="composer-layout__eyebrow">*src composition</p>
+    <header>
+        <p class="kicker">*src composition</p>
         <h3 $text="title"></h3>
     </header>
 
     <template *src="nav">
-        <p class="composer-layout__empty">No navigation was supplied.</p>
+        <p class="empty">No navigation was supplied.</p>
     </template>
 
-    <section class="composer-layout__screen" aria-live="polite">
+    <section class="screen" aria-live="polite">
         <template *src="panel">
-            <p class="composer-layout__empty">Choose a panel.</p>
+            <p class="empty">Choose a panel.</p>
         </template>
     </section>
 </section>
 
 <style>
-    /* Naked root: the hosting stage paints the surface. */
-    .composer-layout {
-        display: grid;
-        gap: .9rem;
+    /* Naked root on the stage. Scoped: .tabs/.tab arrive via the host's
+       projected <nav slot="nav">, which lands inside this subtree. */
+    @scope (.composer-layout) {
+        :scope { display: grid; gap: .9rem; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 1rem;
+            padding-bottom: .8rem;
+            border-bottom: var(--border);
+        }
+
+        h3 {
+            margin: .15rem 0 0;
+            font-size: 1.2rem;
+            line-height: 1.15;
+        }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .45rem;
+        }
+
+        .tab {
+            padding: .42rem .72rem;
+            border: var(--border);
+            border-radius: 999px;
+            background: var(--bg);
+            color: var(--muted);
+            font: inherit;
+            font-size: .86rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .tab:hover {
+            background: var(--control-hover);
+            color: var(--text);
+        }
+        .tab.is-selected {
+            border-color: color-mix(in srgb, var(--link) 45%, transparent);
+            background: color-mix(in srgb, var(--link) 10%, var(--bg));
+            color: var(--link);
+        }
+
+        .screen {
+            min-height: 12rem;
+            border-radius: var(--radius);
+            background: var(--bg);
+            overflow: clip;
+        }
+        .screen > data-wrapper { display: block; }
+
+        .empty {
+            margin: 0;
+            padding: 1rem;
+            color: var(--faint);
+        }
     }
 
-    .composer-layout__header {
-        display: flex;
-        justify-content: space-between;
-        align-items: end;
-        gap: 1rem;
-        padding-bottom: .8rem;
-        border-bottom: var(--border);
-    }
-
-    .composer-layout__eyebrow {
-        margin: 0;
-        color: var(--faint);
-        font-family: var(--mono);
-        font-size: .72rem;
-        letter-spacing: .1em;
-        text-transform: uppercase;
-    }
-
-    .composer-layout h3 {
-        margin: .15rem 0 0;
-        font-size: 1.2rem;
-        line-height: 1.15;
-    }
-
-    .composer-layout__tabs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: .45rem;
-    }
-
-    .composer-layout__tab {
-        padding: .42rem .72rem;
-        border: var(--border);
-        border-radius: 999px;
-        background: var(--bg);
-        color: var(--muted);
-        font: inherit;
-        font-size: .86rem;
-        font-weight: 700;
-        cursor: pointer;
-    }
-
-    .composer-layout__tab:hover {
-        background: var(--control-hover);
-        color: var(--text);
-    }
-
-    .composer-layout__tab.is-selected {
-        border-color: color-mix(in srgb, var(--link) 45%, transparent);
-        background: color-mix(in srgb, var(--link) 10%, var(--bg));
-        color: var(--link);
-    }
-
-    .composer-layout__screen {
-        min-height: 12rem;
-        border-radius: var(--radius);
-        background: var(--bg);
-        overflow: clip;
-    }
-
-    .composer-layout__screen > data-wrapper {
-        display: block;
-    }
-
-    .composer-layout__empty {
-        margin: 0;
-        padding: 1rem;
-        color: var(--faint);
-    }
-
+    /* Panel views load into .screen through *src, so their rules stay
+       outside the scope block. Kicker/rows atoms cover their labels
+       and list; only panel layout lives here. */
     .composer-panel {
         display: grid;
         gap: .9rem;
@@ -136,6 +125,11 @@
         line-height: 1.45;
     }
 
+    .composer-panel .kicker {
+        display: block;
+        margin-bottom: .25rem;
+    }
+
     .composer-panel__grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
@@ -148,35 +142,13 @@
         background: var(--surface);
     }
 
-    .composer-panel__label {
-        display: block;
-        margin-bottom: .25rem;
-        color: var(--faint);
-        font-family: var(--mono);
-        font-size: .68rem;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-    }
-
     .composer-panel__value {
         color: var(--text);
         font-weight: 800;
     }
 
-    .composer-panel__list {
-        display: grid;
-        gap: .5rem;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-    }
-
-    .composer-panel__list li {
-        display: flex;
+    .composer-panel .rows > li {
         justify-content: space-between;
         gap: 1rem;
-        padding: .62rem .72rem;
-        border-radius: var(--radius);
-        background: var(--surface);
     }
 </style>

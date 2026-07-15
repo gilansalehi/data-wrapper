@@ -54,7 +54,7 @@
         <button type="submit">Add</button>
     </form>
 
-    <ul>
+    <ul class="rows">
         <template *list="view">
             <li $class="./done?bool=done:active">
                 <input type="checkbox" $checked="./done" @change="toggleTodo" aria-label="Toggle todo completion">
@@ -98,23 +98,14 @@
             & button { white-space: nowrap; }
         }
 
-        ul {
-            margin: .75rem 0;
-            border-radius: var(--radius);
-            overflow: clip;
-        }
+        /* Row look comes from the .rows atom; only todo behavior here.
+           (:scope > ul outranks the atom's margin: 0.) */
+        :scope > ul { margin: .75rem 0; }
 
         li {
-            display: flex;
-            align-items: center;
-            gap: .6rem;
-            padding: .6rem;
-            background: var(--bg);
-
             & span { flex: 1; }
             &.done span { text-decoration: line-through; opacity: .45; }
         }
-        li + li { border-top: var(--border); }
 
         footer {
             display: flex;
