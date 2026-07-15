@@ -4,14 +4,16 @@
 </section>
 
 <style>
-    .instances-demo {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-        gap: .75rem;
-    }
+    @scope (.instances-demo) {
+        :scope {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+            gap: .75rem;
+        }
 
-    .instances-demo > data-wrapper {
-        display: block;
-        min-width: 0;
+        :scope > data-wrapper {
+            display: block;
+            min-width: 0;
+        }
     }
 </style>

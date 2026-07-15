@@ -1,4 +1,4 @@
-<section class="pitch pitch--band">
+<section class="pitch pitch--band token-deep">
     <div class="container">
         <p class="pitch__kicker">04 — token deep dive</p>
         <h2 class="pitch__title">Each token has one job.</h2>
@@ -9,7 +9,7 @@
             needs more behavior.
         </p>
 
-        <div class="pitch__deep">
+        <div class="breakout-3">
             <section class="pitch__token-panel">
                 <p class="pitch__mini-title"><code class="token-highlight">$</code> writes values</p>
                 <h3>Read a binding and write it to the DOM.</h3>
@@ -86,10 +86,14 @@
 </section>
 
 <style>
-.pitch__mini-title { text-align: center; }
-.token-highlight {
-    font-size: 1.35em;
-    font-weight: 800;
-    color: var(--link);
-}
+    /* Scoped: without this the mini-title centering leaked site-wide. */
+    @scope (.token-deep) {
+        .pitch__mini-title { text-align: center; }
+
+        .token-highlight {
+            font-size: 1.35em;
+            font-weight: 800;
+            color: var(--link);
+        }
+    }
 </style>

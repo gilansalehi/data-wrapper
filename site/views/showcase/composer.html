@@ -17,8 +17,10 @@
 </article>
 
 <style>
-    .composer-demo {
-        display: block;
-        overflow: clip;
+    @scope (.composer-demo) {
+        :scope {
+            display: block;
+            overflow: clip;
+        }
     }
 </style>

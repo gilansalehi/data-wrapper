@@ -5,6 +5,27 @@
    into the data-wrapper docs, comparison, playground, and info pages.
    ============================================================ */
 
+/* Three-up breakout: a card stack on mobile, three columns from 900px,
+   and at desktop the row takes 150% of the measure, centered (-25% =
+   half the overhang). Shared by the token deep-dive and the tutorial's
+   compare/contrast columns. */
+.breakout-3 {
+    display: grid;
+    gap: 1rem;
+}
+.breakout-3 > * { min-width: 0; }
+
+@media (min-width: 900px) {
+    .breakout-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 75rem) {
+    .breakout-3 {
+        width: 150%;
+        margin-left: -25%;
+    }
+}
+
 .page-hero {
     background: var(--ink);
     color: var(--ink-text);

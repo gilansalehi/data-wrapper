@@ -141,12 +141,6 @@
     letter-spacing: .04em;
 }
 
-.info-status {
-    display: inline-block;
-    min-width: 5.5rem;
-    font-weight: 700;
-}
-
 .budget-meters {
     list-style: none;
     margin: 1rem 0;

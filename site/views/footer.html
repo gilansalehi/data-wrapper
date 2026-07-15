@@ -1,10 +1,10 @@
 <footer class="site-footer">
-    <div class="container site-footer__inner">
-        <p class="site-footer__brand">
+    <div class="container">
+        <p class="brand">
             <strong>&lt;data-wrapper&gt;</strong>
             <span>HTML-first reactivity · MIT licensed</span>
         </p>
-        <nav class="site-footer__links" aria-label="Footer">
+        <nav aria-label="Footer">
             <a href="/framework">Guide</a>
             <a href="/tutorials">Tutorial</a>
             <a href="/examples">Examples</a>
@@ -13,7 +13,7 @@
             <a href="/info">Technical info</a>
             <a href="https://github.com/gilansalehi/data-wrapper" rel="noopener">GitHub</a>
         </nav>
-        <p class="site-footer__note">
+        <p class="note">
             This site is built with data-wrapper — every page you're reading is
             plain HTML views, loaded with no build step. View source, it's all
             there.
@@ -22,49 +22,37 @@
 </footer>
 
 <style>
-    .site-footer {
-        margin-top: 3rem;
-        padding-block: 1.75rem 2.25rem;
-        border-top: var(--border);
-        background: var(--surface);
-        font-size: .85rem;
-    }
-    .site-footer__inner {
-        display: grid;
-        gap: .75rem;
-    }
-    .site-footer__brand {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: .6rem;
-        margin: 0;
-    }
-    .site-footer__brand strong {
-        font-family: var(--mono);
-        font-size: .9rem;
-    }
-    .site-footer__brand span {
-        color: var(--muted);
-    }
-    .site-footer__links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: .35rem 1.25rem;
-        margin: 0;
-    }
-    .site-footer__links a {
-        color: var(--muted);
-        text-decoration: none;
-    }
-    .site-footer__links a:hover {
-        color: var(--link);
-        text-decoration: underline;
-    }
-    .site-footer__note {
-        margin: 0;
-        color: var(--faint);
-        font-size: .78rem;
-        max-width: 46rem;
+    @scope (.site-footer) {
+        :scope {
+            margin-top: 3rem;
+            padding-block: 1.75rem 2.25rem;
+            border-top: var(--border);
+            background: var(--surface);
+            font-size: .85rem;
+        }
+
+        .container { display: grid; gap: .75rem; }
+
+        .brand {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: .6rem;
+            margin: 0;
+
+            & strong { font-family: var(--mono); font-size: .9rem; }
+            & span   { color: var(--muted); }
+        }
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .35rem 1.25rem;
+
+            & a { color: var(--muted); text-decoration: none; }
+            & a:hover { color: var(--link); text-decoration: underline; }
+        }
+
+        .note { margin: 0; max-width: 46rem; }
     }
 </style>

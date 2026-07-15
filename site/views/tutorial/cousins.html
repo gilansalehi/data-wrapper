@@ -122,49 +122,49 @@
 
 <aside class="cousins">
     <div class="container">
-        <p class="cousins__kicker">field notes — <span $text="hook"></span></p>
-        <p class="cousins__tagline" $text="tagline"></p>
-        <div class="cousins__grid">
-            <div class="cousins__col cousins__col--self">
-                <p class="cousins__label">data-wrapper</p>
+        <p class="kicker">field notes — <span $text="hook"></span></p>
+        <p class="tagline" $text="tagline"></p>
+        <div class="breakout-3">
+            <div class="self">
+                <p class="kicker">data-wrapper</p>
                 <ul>
                     <template *list="self?key=name">
-                        <li class="cousin-card">
-                            <p class="cousin-card__name" $text="./name"></p>
+                        <li class="card">
+                            <h4 $text="./name"></h4>
                             <hr>
-                            <p class="cousin-card__note" $text="./note"></p>
+                            <p $text="./note"></p>
                             <template *if="./code">
-                                <pre class="cousin-card__code"><code $text="./code"></code></pre>
+                                <pre><code $text="./code"></code></pre>
                             </template>
                         </li>
                     </template>
                 </ul>
             </div>
-            <div class="cousins__col cousins__col--compare">
-                <p class="cousins__label">Compare</p>
+            <div class="compare">
+                <p class="kicker">Compare</p>
                 <ul>
                     <template *list="compare?key=name">
-                        <li class="cousin-card">
-                            <p class="cousin-card__name" $text="./name"></p>
+                        <li class="card">
+                            <h4 $text="./name"></h4>
                             <hr>
-                            <p class="cousin-card__note" $text="./note"></p>
+                            <p $text="./note"></p>
                             <template *if="./code">
-                                <pre class="cousin-card__code"><code $text="./code"></code></pre>
+                                <pre><code $text="./code"></code></pre>
                             </template>
                         </li>
                     </template>
                 </ul>
             </div>
-            <div class="cousins__col cousins__col--contrast">
-                <p class="cousins__label">Contrast</p>
+            <div class="contrast">
+                <p class="kicker">Contrast</p>
                 <ul>
                     <template *list="contrast?key=name">
-                        <li class="cousin-card">
-                            <p class="cousin-card__name" $text="./name"></p>
+                        <li class="card">
+                            <h4 $text="./name"></h4>
                             <hr>
-                            <p class="cousin-card__note" $text="./note"></p>
+                            <p $text="./note"></p>
                             <template *if="./code">
-                                <pre class="cousin-card__code"><code $text="./code"></code></pre>
+                                <pre><code $text="./code"></code></pre>
                             </template>
                         </li>
                     </template>
@@ -175,132 +175,78 @@
 </aside>
 
 <style>
-    .cousins {
-        padding-block: 1.4rem;
-        background: color-mix(in srgb, var(--link) 5%, var(--surface));
-        border-block: var(--border);
-    }
-    .cousins__kicker {
-        margin: 0 0 .35rem;
-        font-family: var(--mono);
-        font-size: .74rem;
-        font-weight: 600;
-        letter-spacing: .12em;
-        text-transform: uppercase;
-        color: var(--link);
-    }
-    .cousins__tagline {
-        margin: 0 0 .9rem;
-        max-width: 46rem;
-        font-size: .92rem;
-        color: var(--muted);
-    }
-    .cousins__grid {
-        display: grid;
-        gap: 1rem;
-        align-items: start;
-    }
-
-    /* Grid items default to min-width:auto, so the unbreakable code
-       snippets set a min-content floor and the cards blow out their
-       track. min-width:0 at both grid levels (columns, then cards)
-       lets them shrink so the pre's own overflow-x:auto takes over. */
-    .cousins__grid > *,
-    .cousins ul > * {
-        min-width: 0;
-    }
-    @media (min-width: 75rem) {
-        .cousins__grid {
-            grid-template-columns: 1fr 1fr 1fr;
-            /* -25% of the container = half the 50% overhang: stays
-               centered at every viewport, unlike the old -16.66vw
-               which drifted left on wide screens. */
-            margin-left: -25%;
-            width: 150%;
+    /* Grid + cards + kickers come from the atoms (breakout-3, card,
+       kicker); only the field-note semantics live here. */
+    @scope (.cousins) {
+        :scope {
+            padding-block: 1.4rem;
+            background: color-mix(in srgb, var(--link) 5%, var(--surface));
+            border-block: var(--border);
         }
-    }
-    .cousins__label {
-        margin: 0 0 .4rem;
-        font-size: .72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .06em;
-    }
-    .cousins__col--self     .cousins__label { color: var(--link); }
-    .cousins__col--compare  .cousins__label { color: var(--ok); }
-    .cousins__col--contrast .cousins__label { color: var(--err); }
 
-    .cousins ul {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-        display: grid;
-        gap: .6rem;
-    }
+        .kicker { margin-bottom: .35rem; color: var(--link); }
+        .compare  .kicker { color: var(--ok); }
+        .contrast .kicker { color: var(--err); }
 
-    .cousin-card {
-        padding: .8rem .95rem;
-        background: var(--bg);
-        border: var(--border);
-        border-radius: var(--radius);
-    }
-    .cousin-card__name {
-        display: flex;
-        align-items: baseline;
-        gap: .5rem;
-        margin: 0;
-        font-weight: 700;
-        font-size: .92rem;
-    }
-    .cousin-card__name::before {
-        flex: 0 0 auto;
-        font-weight: 700;
-    }
-    .cousins__col--self .cousin-card__name::before {
-        content: "◆";
-        color: var(--link);
-    }
-    .cousins__col--compare .cousin-card__name::before {
-        content: "✓";
-        color: var(--ok);
-    }
-    .cousins__col--contrast .cousin-card__name::before {
-        content: "✗";
-        color: var(--err);
-    }
-    .cousin-card hr {
-        border: 0;
-        margin: .5rem 0 .55rem;
-    }
-    .cousins__col--self .cousin-card hr {
-        border-top: 1px solid color-mix(in srgb, var(--link) 35%, transparent);
-    }
-    .cousins__col--compare .cousin-card hr {
-        border-top: 1px solid color-mix(in srgb, var(--ok) 35%, transparent);
-    }
-    .cousins__col--contrast .cousin-card hr {
-        border-top: 1px solid color-mix(in srgb, var(--err) 35%, transparent);
-    }
-    .cousin-card__note {
-        margin: 0;
-        font-size: .85rem;
-        line-height: 1.5;
-        color: var(--text);
-    }
-    .cousin-card__code {
-        margin: .55rem 0 0;
-        padding: .45rem .65rem;
-        background: var(--ink);
-        color: var(--ink-text);
-        border-radius: var(--radius);
-        font-size: .74rem;
-        line-height: 1.5;
-        overflow-x: auto;
-    }
-    .cousin-card__code code {
-        padding: 0;
-        background: none;
-        color: inherit;
-        font-family: var(--mono);
+        .tagline {
+            margin: 0 0 .9rem;
+            max-width: 46rem;
+            font-size: .92rem;
+            color: var(--muted);
+        }
+
+        .breakout-3 { align-items: start; }
+
+        ul {
+            margin: 0;
+            display: grid;
+            gap: .6rem;
+        }
+        /* Second-level min-width guard: the unbreakable code snippets
+           set a min-content floor; breakout-3 guards the first level. */
+        ul > * { min-width: 0; }
+
+        h4 {
+            display: flex;
+            align-items: baseline;
+            gap: .5rem;
+            margin: 0;
+            font-weight: 700;
+            font-size: .92rem;
+
+            &::before { flex: 0 0 auto; font-weight: 700; }
+        }
+        .self h4::before     { content: "◆"; color: var(--link); }
+        .compare h4::before  { content: "✓"; color: var(--ok); }
+        .contrast h4::before { content: "✗"; color: var(--err); }
+
+        hr { border: 0; margin: .5rem 0 .55rem; }
+        .self hr     { border-top: 1px solid color-mix(in srgb, var(--link) 35%, transparent); }
+        .compare hr  { border-top: 1px solid color-mix(in srgb, var(--ok) 35%, transparent); }
+        .contrast hr { border-top: 1px solid color-mix(in srgb, var(--err) 35%, transparent); }
+
+        li p {
+            margin: 0;
+            font-size: .85rem;
+            line-height: 1.5;
+        }
+
+        pre {
+            margin: .55rem 0 0;
+            padding: .45rem .65rem;
+            background: var(--ink);
+            color: var(--ink-text);
+            border-radius: var(--radius);
+            font-size: .74rem;
+            line-height: 1.5;
+            overflow-x: auto;
+
+            & code {
+                padding: 0;
+                background: none;
+                color: inherit;
+                font-family: var(--mono);
+            }
+        }
     }
 </style>

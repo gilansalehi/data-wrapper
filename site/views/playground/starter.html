@@ -7,23 +7,27 @@
 <div class="starter-counter">
     <button @click="increment">+1</button>
     <output $text="count">0</output>
-    <span class="starter-hint">← a whole component: state, action, binding</span>
+    <span>← a whole component: state, action, binding</span>
 </div>
 
 <style>
-    .starter-counter {
-        display: flex;
-        align-items: center;
-        gap: .9rem;
-        font-size: 1.3rem;
-    }
-    .starter-counter output {
-        font-family: var(--mono);
-        font-weight: 700;
-        min-width: 2ch;
-    }
-    .starter-hint {
-        font-size: .78rem;
-        color: var(--faint);
+    @scope (.starter-counter) {
+        :scope {
+            display: flex;
+            align-items: center;
+            gap: .9rem;
+            font-size: 1.3rem;
+        }
+
+        output {
+            font-family: var(--mono);
+            font-weight: 700;
+            min-width: 2ch;
+        }
+
+        span {
+            font-size: .78rem;
+            color: var(--faint);
+        }
     }
 </style>
