@@ -54,9 +54,9 @@
         <button type="submit">Add</button>
     </form>
 
-    <ul class="todo-list">
+    <ul>
         <template *list="view">
-            <li class="todo-item" $class="./done?bool=done:active">
+            <li $class="./done?bool=done:active">
                 <input type="checkbox" $checked="./done" @change="toggleTodo" aria-label="Toggle todo completion">
                 <span $text="./task"></span>
                 <template *if="./done"><strong class="status status--ok">done</strong></template>
@@ -76,53 +76,53 @@
 </article>
 
 <style>
-    /* Only the layout this demo owns; looks come from the reset and
-       the atoms (chip/tint, status, btn-ghost, row). */
-    .todo-demo header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-        margin: 1rem 0;
-        padding-bottom: .9rem;
-        border-bottom: var(--border);
+    /* scoped component css composes with the app css */
+    @scope (.todo-demo) {
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+            padding-bottom: .9rem;
+            border-bottom: var(--border);
 
-        & h3 { margin: 0; font-size: 1.2rem; }
-    }
+            & h3 { margin: 0; font-size: 1.2rem; }
+        }
 
-    .todo-demo form {
-        display: flex;
-        gap: .5rem;
+        form {
+            display: flex;
+            gap: .5rem;
 
-        & input  { flex: 1; margin: 0; }
-        & button { white-space: nowrap; }
-    }
+            & input[type="text"] { flex: 1; margin: 0; }
+            & button { white-space: nowrap; }
+        }
 
-    /* The list clips its rows' corners; rows separate with one rule. */
-    .todo-list {
-        margin: .75rem 0;
-        border-radius: var(--radius);
-        overflow: clip;
-    }
+        ul {
+            margin: .75rem 0;
+            border-radius: var(--radius);
+            overflow: clip;
+        }
 
-    .todo-item {
-        display: flex;
-        align-items: center;
-        gap: .6rem;
-        padding: .6rem;
-        background: var(--bg);
+        li {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            padding: .6rem;
+            background: var(--bg);
 
-        & span { flex: 1; }
-        &.done span { text-decoration: line-through; opacity: .45; }
-    }
-    .todo-item + .todo-item { border-top: var(--border); }
+            & span { flex: 1; }
+            &.done span { text-decoration: line-through; opacity: .45; }
+        }
+        li + li { border-top: var(--border); }
 
-    .todo-demo footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: .5rem;
-        font-size: .88rem;
+        footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: .5rem;
+            font-size: .88rem;
+        }
     }
 </style>

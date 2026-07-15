@@ -107,7 +107,17 @@ Apply them to new views and when touching old CSS; reference implementation is
    (table rows, list rows, a header rule) are fine — the rule targets boxes,
    not lines. Never nest two bordered boxes directly: demo roots inside
    framed previews are flat.
-8. **Mobile-first, container-aware.** Base styles are the narrow layout;
+8. **Component CSS is @scope-d** (user directive, 2026-07-15). One scope
+   class on the component root, then `@scope (.that-class) { … }` with bare
+   element selectors inside — no BEM prefixes, no leakage, and the scope
+   class is the lookup key from DOM to styles. Reference:
+   `todos.v3.html`. Two traps when converting: (a) bare selectors keep
+   their low specificity, so matching a reset rule needs the same shape
+   (`input[type="text"]`, not `input`, to beat the reset's margin); (b) a
+   scope's bare `li`/`header` also styles any NESTED component's markup —
+   components that mount child wrappers should keep classes on contested
+   elements or scope with a donut (`@scope (.x) to (data-wrapper)`).
+9. **Mobile-first, container-aware.** Base styles are the narrow layout;
    columns join via `@media (min-width: …)` — or better, prefer query-free
    patterns (`width: min(100% - 2em, var(--measure))`, `auto-fit` grids).
    Showcase views render inside cards, panes, and pages, so they adapt with
