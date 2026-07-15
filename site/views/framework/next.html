@@ -22,9 +22,17 @@
             href: 'https://github.com/gilansalehi/data-wrapper',
         },
     ];
+
+    // The card is clickable, but the anchor is the one real link: card
+    // clicks forward to it, and clicks ON it are left alone.
+    export function follow(event) {
+        const clicked = event.detail.originalEvent?.target;
+        if (clicked?.closest?.('a')) return;
+        event.target.querySelector('a')?.click();
+    }
 </script>
 
-<section class="pitch pitch--cta">
+<section class="pitch pitch--cta next-up">
     <div class="container">
         <p class="pitch__kicker">06 — keep going</p>
         <h2 class="pitch__title">Go deeper when the basics click.</h2>
@@ -34,20 +42,47 @@
             reusing modules, and polishing a project for release.
         </p>
 
-        <div class="pitch__next-grid">
+        <div class="breakout-3">
             <template *list="links">
-                <a class="pitch__next-card" $href="./href">
-                    <span class="pitch__next-kicker" $text="./kicker"></span>
+                <article class="card" @click="follow">
+                    <p class="kicker" $text="./kicker"></p>
                     <strong $text="./title"></strong>
                     <span $text="./body"></span>
-                    <em $text="./action"></em>
-                </a>
+                    <a $href="./href" $text="./action"></a>
+                </article>
             </template>
         </div>
-
-        <p class="pitch__foot">
-            A longer tutorial path belongs on its own page, where it can build
-            from the same basics without crowding the homepage.
-        </p>
     </div>
 </section>
+
+<style>
+    @scope (.next-up) {
+        .breakout-3 { margin-top: 1.4rem; }
+
+        .card {
+            display: grid;
+            align-content: start;
+            gap: .5rem;
+            min-height: 100%;
+            cursor: pointer;
+            transition: border-color var(--speed) var(--ease);
+
+            &:hover {
+                border-color: color-mix(in srgb, var(--link) 45%, transparent);
+            }
+
+            & strong { font-size: 1.08rem; line-height: 1.25; }
+
+            & span {
+                color: var(--muted);
+                font-size: .92rem;
+                line-height: 1.45;
+            }
+
+            & a {
+                margin-top: .25rem;
+                font-weight: 700;
+            }
+        }
+    }
+</style>
