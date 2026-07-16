@@ -89,8 +89,8 @@ Known external blockers:
 - [ ] Examples gallery renders; source peeks and "open in playground" links
   work.
 - [ ] Playground runs, resets, and surfaces an invalid-script error.
-- [ ] Theme Studio renders; token edits, preview swapping, reset, copy CSS, and
-  apply-to-site/clear work.
+- [x] Theme Studio is delisted for alpha; `/theme-studio` remains in the repo
+  as an unlinked work-in-progress for a later release.
 - [ ] Security section matches the current runtime contract.
 - [ ] Theme toggle, docs nav, source peeks, todos, orders, and formatter demos
   work in the browser.
@@ -140,6 +140,7 @@ avoid mutating `~/.npm`.
 - No release automation for this beta.
 - No TypeScript declaration output for this beta.
 - No strict CSP / Trusted Types tier for this beta.
+- No Theme Studio release commitment for this beta.
 
 ## Acceptance
 

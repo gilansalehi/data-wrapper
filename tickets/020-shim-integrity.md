@@ -1,14 +1,17 @@
 # Ticket 020: Subresource Integrity for the module-shim fallback
 
-## Status (2026-07-09)
+## Status (2026-07-16)
 
 Runtime support is implemented and covered by a focused security test:
 `data-shim-integrity` is copied to the injected shim script and sets
 `crossOrigin = 'anonymous'`.
 
-Still open: choose site adoption. Either self-host the shim, or keep the
-pinned CDN shim and add a verified SRI hash to the site/docs examples. Do not
-paste an unverified hash into the docs.
+Implementation is wired. Site adoption uses a third-party pinned CDN shim. The
+site shells and docs now carry a blank `data-shim-integrity="sha384-Ojz/JNsyOdkNfGWOlfhDmeq68SXcsoWSABV4yVQn8Wr/YaKJJTrZs5p2Zi39PWuL"` slot next to
+the pinned `es-module-shims@2.8.1` URL.
+
+Final release step: release owner fills that slot with the trusted
+`sha384-...` value for the exact CDN file before publishing.
 
 **Suggested owner:** Codex implements (loader territory), Opus or Claude tests + reviews.
 **Difficulty:** well-scoped, standalone. Safe for any agent.
@@ -30,16 +33,13 @@ page that hits the fallback path. Close this with opt-in SRI support.
    SRI stays opt-in, the docs make it recommended.
 2. Update the install docs (`site/views/docs/install.html` and the
    `docs-install-05-shim-fallback` snippet) so the canonical shim example
-   carries a pinned version + integrity hash.
-3. Update `site/views/info/security.html` → "Application responsibilities":
+   carries a pinned version + integrity slot.
+3. Update `site/views/info/security.html` -> "Application responsibilities":
    the existing SRI bullet covers the framework script; extend it to name
    `data-shim-integrity` for the shim.
-4. Site adoption — propose one of the following for the user to ratify:
-   - **(a) Self-host the shim** under `site/assets/vendor/` and point
-     `data-shim-src` at it (removes the third-party runtime dependency
-     entirely; strongest option), or
-   - **(b) Pin + hash**: keep `ga.jspm.io` but add the integrity attribute on
-     all four pages (index, framework, info, compare).
+4. Site adoption: keep `ga.jspm.io`, pin `es-module-shims@2.8.1`, and add
+   `data-shim-integrity="sha384-Ojz/JNsyOdkNfGWOlfhDmeq68SXcsoWSABV4yVQn8Wr/YaKJJTrZs5p2Zi39PWuL"` on each site shell. The final hash value is supplied
+   by the release owner.
 
 ## Testing
 
@@ -59,6 +59,7 @@ checklist in the ticket close-out instead, per repo norm.
 
 - `data-shim-integrity` present → injected script has `integrity` +
   `crossorigin="anonymous"`. Absent → unchanged behavior.
-- Docs and site pages updated; `bun review` green; browser smoke: shim
+- Docs and site pages updated; release owner has pasted the verified hash;
+  `bun review` green; browser smoke: shim
   fallback still loads a bare-specifier view module with the attribute set,
   and fails closed (script blocked, load error surfaces) with a wrong hash.

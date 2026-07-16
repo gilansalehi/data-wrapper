@@ -357,12 +357,14 @@ actually fails, so native-capable browsers never download it.
 
 ```html
 <script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"
-        data-shim-src="https://ga.jspm.io/npm:es-module-shims@2/dist/es-module-shims.js"></script>
+        data-shim-src="https://ga.jspm.io/npm:es-module-shims@2.8.1/dist/es-module-shims.js"
+        data-shim-integrity="sha384-Ojz/JNsyOdkNfGWOlfhDmeq68SXcsoWSABV4yVQn8Wr/YaKJJTrZs5p2Zi39PWuL"></script>
 ```
 
-A CDN URL is the simplest option; vendoring a copy and pointing
-`data-shim-src` at it works identically. If a module fails to resolve and no
-shim is configured, the loader throws a clear error telling you to add one.
+A pinned CDN URL is the simplest option. Fill `data-shim-integrity` with the
+trusted `sha384-...` hash for that exact shim file before publishing. If a
+module fails to resolve and no shim is configured, the loader throws a clear
+error telling you to add one.
 
 ## Known Limitations
 

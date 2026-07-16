@@ -60,13 +60,15 @@ import { action, flush, DW_FORMATTERS } from 'data-wrapper';</code></pre>
     </p>
 
     <pre><code data-title="shim fallback">&lt;script src="/dist/data-wrapper.js" type="module"
-    data-shim-src="https://ga.jspm.io/npm:es-module-shims@2/dist/es-module-shims.js"&gt;
+    data-shim-src="https://ga.jspm.io/npm:es-module-shims@2.8.1/dist/es-module-shims.js"
+    data-shim-integrity="sha384-Ojz/JNsyOdkNfGWOlfhDmeq68SXcsoWSABV4yVQn8Wr/YaKJJTrZs5p2Zi39PWuL"&gt;
 &lt;/script&gt;</code></pre>
 
     <p>
-        A CDN URL is the simplest shim source. Vendoring a copy works the same
-        way. If a module cannot be resolved and no shim is configured, the
-        loader throws a clear error that points back to this browser support
-        setup.
+        A pinned CDN URL is the simplest shim source. Before publishing, fill
+        <code>data-shim-integrity</code> with the trusted <code>sha384-...</code>
+        hash for that exact shim file. If a module cannot be resolved and no
+        shim is configured, the loader throws a clear error that points back to
+        this browser support setup.
     </p>
 </section>

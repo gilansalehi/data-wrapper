@@ -161,7 +161,8 @@
             not script execution in modern browsers, but it can still deface UI
             or enable browser-specific data exfiltration tricks.</li>
         <li>Set defense-in-depth the framework cannot: <code>HttpOnly</code>
-            cookies, Subresource Integrity on the CDN framework script, and the
-            CSP directives noted above.</li>
+            cookies, Subresource Integrity on the CDN framework script,
+            <code>data-shim-integrity</code> for the shim fallback, and the CSP
+            directives noted above.</li>
     </ul>
 </section>
