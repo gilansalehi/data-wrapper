@@ -2,3 +2,8 @@ User-agent: *
 Allow: /
 
 Sitemap: https://data-wrapper.org/sitemap.xml
+
+# Agent orientation:
+# https://data-wrapper.org/llms.txt
+# https://data-wrapper.org/llms-full.txt
+# https://data-wrapper.org/agent.md

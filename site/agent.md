@@ -10,8 +10,35 @@ briefs. Some planning documents contain rejected syntax.
 - Public package exports live in `src/lib/index.ts`.
 - Public guide pages live in `site/views/docs/`.
 - Showcase examples live in `site/views/showcase/`.
+- Public agent docs live at `/llms.txt`, `/llms-full.txt`, and `/agent.md`.
 
 If a claim conflicts with source, source wins.
+
+## Distribution
+
+For browser use, load the alpha build from the project domain:
+
+```html
+<script src="https://data-wrapper.org/dist/data-wrapper.min.js"></script>
+```
+
+When component modules import from `data-wrapper`, map the package name to the
+ESM build:
+
+```html
+<script type="importmap">
+{
+    "imports": {
+        "data-wrapper": "https://data-wrapper.org/dist/data-wrapper.js"
+    }
+}
+</script>
+```
+
+The framework script may be hosted on `data-wrapper.org`, but component view
+URLs still resolve on the consuming app's origin. For example,
+`<data-wrapper src="/views/home.html">` on `gilansalehi.com` loads
+`https://gilansalehi.com/views/home.html`.
 
 ## Do Not Invent APIs
 

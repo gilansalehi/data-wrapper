@@ -16,7 +16,7 @@ modules.
 Load the browser artifact and mount a view:
 
 ```html
-<script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"></script>
+<script src="https://data-wrapper.org/dist/data-wrapper.min.js"></script>
 <data-wrapper src="/views/counter.html"></data-wrapper>
 ```
 
@@ -27,7 +27,7 @@ import map:
 <script type="importmap">
 {
     "imports": {
-        "data-wrapper": "https://unpkg.com/data-wrapper/dist/data-wrapper.js"
+        "data-wrapper": "https://data-wrapper.org/dist/data-wrapper.js"
     }
 }
 </script>

@@ -8,7 +8,7 @@ script. The view binds DOM effects to live module exports with three tokens:
 There is no build step, virtual DOM, JSX, or component compiler.
 
 ```html
-<script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"></script>
+<script src="https://data-wrapper.org/dist/data-wrapper.min.js"></script>
 <data-wrapper src="counter.html"></data-wrapper>
 ```
 
@@ -41,7 +41,7 @@ the framework script:
 <script type="importmap">
 {
     "imports": {
-        "data-wrapper": "https://unpkg.com/data-wrapper/dist/data-wrapper.js"
+        "data-wrapper": "https://data-wrapper.org/dist/data-wrapper.js"
     }
 }
 </script>
@@ -356,7 +356,7 @@ at [es-module-shims](https://github.com/guybedford/es-module-shims) with a
 actually fails, so native-capable browsers never download it.
 
 ```html
-<script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"
+<script src="https://data-wrapper.org/dist/data-wrapper.min.js"
         data-shim-src="https://ga.jspm.io/npm:es-module-shims@2.8.1/dist/es-module-shims.js"
         data-shim-integrity="sha384-Ojz/JNsyOdkNfGWOlfhDmeq68SXcsoWSABV4yVQn8Wr/YaKJJTrZs5p2Zi39PWuL"></script>
 ```

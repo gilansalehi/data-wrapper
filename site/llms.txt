@@ -1,28 +1,31 @@
+# data-wrapper
+
 data-wrapper is a zero-dependency, HTML-first reactivity library built around
-one custom element: <data-wrapper>. A view is an HTML file with an optional
-module script. The framework has exactly three binding tokens: $ writes DOM
-properties and attributes, * runs structural directives, and @ listens for
+one custom element: `<data-wrapper>`. A view is an HTML file with an optional
+module script. The framework has exactly three binding tokens: `$` writes DOM
+properties and attributes, `*` runs structural directives, and `@` listens for
 events. There is no JSX, virtual DOM, compiler, or text interpolation.
 
 Canonical docs:
 
-- Framework guide: /framework
-- Technical info: /info
-- Framework comparison: /compare
-- Live examples: /examples
-- Tutorials: /tutorials
-- Full AI reference: /llms-full.txt
-- Agent authoring guide: /agent.md
+- Framework guide: https://data-wrapper.org/framework
+- Technical info: https://data-wrapper.org/info
+- Framework comparison: https://data-wrapper.org/compare
+- Live examples: https://data-wrapper.org/examples
+- Tutorials: https://data-wrapper.org/tutorials
+- Full AI reference: https://data-wrapper.org/llms-full.txt
+- Agent authoring guide: https://data-wrapper.org/agent.md
 
 Core facts:
 
 - Install with the framework script, then mount a view:
-  <data-wrapper src="/views/example.html"></data-wrapper>
-- Views may contain one <script type="module" data-module="...">.
-- Built-in directives are exactly *list, *if, and *src.
-- Bindings are attributes. Do not invent {{ interpolation }}, *for, *each,
-  *match, bind:value, or inline expression syntax.
+  `<script src="https://data-wrapper.org/dist/data-wrapper.min.js"></script>`
+  and `<data-wrapper src="/views/example.html"></data-wrapper>`.
+- Views may contain one `<script type="module" data-module="...">`.
+- Built-in directives are exactly `*list`, `*if`, and `*src`.
+- Bindings are attributes. Do not invent `{{ interpolation }}`, `*for`,
+  `*each`, `*match`, `bind:value`, or inline expression syntax.
 - Named module exports are shared component state. A default export factory
   creates per-wrapper instance state.
-- Use action() or flush() after mutations so active bindings update.
+- Use `action()` or `flush()` after mutations so active bindings update.
 - Loaded view URLs are trusted code and must remain same-origin.
