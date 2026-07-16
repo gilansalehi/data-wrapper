@@ -14,38 +14,30 @@ git history, not in this file.
 redefined across several contract-test files. Extract the shared harness pieces
 into `tests/helpers.ts` once the test shapes settle.
 
-### 2. Keep public API docs aligned with exports
-
-`src/lib/index.ts` should remain the intentional authoring surface:
-`action`, `flush`, `DW_DIRECTIVES`, `DW_FORMATTERS`, public directive,
-formatter, and factory types, plus the supported helpers `p`, `pURL`, `on`,
-`emit`, and `q`. If TypeScript declarations ship later, revisit which public
-types are stable enough to freeze.
-
-### 3. Generate more technical-info data
+### 2. Generate more technical-info data
 
 `bun report` already keeps the size view current. Later, feed
 `site/views/info/` with generated package metadata and public-export data too,
 so the technical info page cannot drift from the package surface.
 
-### 4. Dist smoke tests
+### 3. Dist smoke tests
 
 Add a small browser smoke fixture that loads both published artifacts:
 `dist/data-wrapper.js` as ESM and `dist/data-wrapper.min.js` as the classic
 script artifact, then renders a minimal `<data-wrapper>` view through each one.
 
-### 5. Built-dist example audit
+### 4. Built-dist example audit
 
 Before public beta, verify that public examples run against the current
 `dist/` build, not only `src/lib` through the test harness.
 
-### 6. npm publish provenance
+### 5. npm publish provenance
 
 When ticket 014 reaches its publish step: enable npm 2FA on the publishing
 account and publish with `--provenance` so the registry links the package to
 its source commit. Closes the publish-side supply chain; zero code change.
 
-### 7. View-path allowlist — decision parked
+### 6. View-path allowlist — decision parked
 
 A configurable path-prefix restriction for view loading (e.g. views only
 under `/views/`) was considered during the security review and parked:
@@ -53,7 +45,7 @@ ticket 021's documentation covers the realistic risk (user uploads on the
 app origin), and config surface needs dogfood-proven demand. Revisit only if
 a real adopter hits the uploads-origin problem.
 
-### 8. Homepage ↔ tutorials duplication — direction ratified, refactor deferred
+### 7. Homepage ↔ tutorials duplication — direction ratified, refactor deferred
 
 The user's call (2026-07-09): the industry shape is homepage = splashy CTAs /
 social proof, tutorials page = the teaching walk. Today the homepage steps

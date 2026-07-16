@@ -9,13 +9,13 @@
     </p>
 
     <table>
-        <thead><tr><th>Group</th><th>Likely public exports</th><th>Status</th><th>Notes</th></tr></thead>
+        <thead><tr><th>Group</th><th>Public exports</th><th>Status</th><th>Notes</th></tr></thead>
         <tbody>
             <tr><td>Reactivity</td><td><code>action</code>, <code>flush</code></td><td><span class="status status--ok">Stable</span></td><td>Documented and tested.</td></tr>
             <tr><td>Formatters</td><td><code>DW_FORMATTERS</code>, <code>Formatter</code></td><td><span class="status status--ok">Stable</span></td><td>Documented extension point.</td></tr>
-            <tr><td>Directives</td><td><code>DW_DIRECTIVES</code>, <code>DirectiveContext</code>, <code>DirectiveHandler</code>, <code>DirectiveUpdater</code>, <code>nearestItem</code></td><td><span class="status status--ok">Stable</span></td><td>Documented extension point.</td></tr>
-            <tr><td>Helpers</td><td><code>p</code>, <code>pURL</code>, <code>on</code>, <code>emit</code>, <code>q</code></td><td><span class="status status--ok">Stable</span></td><td>Small advanced helpers.</td></tr>
-            <tr><td>Component factory</td><td><code>ComponentContext</code>, <code>ComponentFactory</code>, <code>ComponentInstance</code>, <code>ComponentModule</code>, <code>ComponentProps</code></td><td><span class="status status--part">Planned</span></td><td>Useful for TypeScript authors if types ship.</td></tr>
+            <tr><td>Directives</td><td><code>DW_DIRECTIVES</code>, <code>nearestItem</code>, <code>DirectiveContext</code>, <code>DirectiveHandler</code>, <code>DirectiveUpdater</code>, <code>DispatchDetail</code>, <code>Item</code></td><td><span class="status status--ok">Stable</span></td><td>Documented extension point.</td></tr>
+            <tr><td>Helpers</td><td><code>p</code>, <code>pURL</code>, <code>on</code>, <code>emit</code>, <code>q</code>, <code>Off</code></td><td><span class="status status--ok">Stable</span></td><td>Small advanced helpers.</td></tr>
+            <tr><td>Component factory</td><td><code>ComponentContext</code>, <code>ComponentFactory</code>, <code>ComponentInstance</code>, <code>ComponentModule</code>, <code>ComponentProps</code></td><td><span class="status status--ok">Stable</span></td><td>Factory context types exported from the package entry.</td></tr>
             <tr><td>Internals</td><td><code>wake</code>, <code>wire</code>, <code>resolveSource</code>, station helpers, runtime classes, loader</td><td><span class="status status--off">Internal</span></td><td>Not exported from the package entry.</td></tr>
         </tbody>
     </table>

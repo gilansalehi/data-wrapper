@@ -1,51 +1,12 @@
-# Ticket 027: Homepage conversion polish — CTAs, fit section, footer
+# COMPLETED
 
-## Status (2026-07-09)
+Ticket 027 is complete as of 2026-07-16.
 
-**Implemented by Claude (user reassigned from Codex); awaiting browser pass.**
-- Hero CTAs: kept `Get Started` (#nobuild) primary; added `Tutorial` and
-  `GitHub`; kept `Docs`; dropped `Specs` (/info now lives in the footer).
-  No Playground CTA until 028 ships.
-- Fit band: `views/framework/fit.html`, mounted as `#fit` between the todos
-  and keep-going sections; TOC + nav pick it up. Content is a verbatim
-  4+4 subset of the compare checklist (source-of-truth comment in the file);
-  links to /compare#checklist for the interactive version.
-- Footer: `views/footer.html` (static view, no module), mounted on index,
-  framework, info, compare, tutorials. Guide/Tutorial/Comparison/Info/GitHub
-  links + "this site is built with data-wrapper" note. No npm link until
-  the package is actually published.
+Homepage conversion polish has landed:
 
-**Source:** site-shape brief §6 / §8-Ticket-2 (the parts not already built).
-**Suggested owner:** Codex — the homepage is their surface; Claude reviews.
-**Effort:** small.
+- Hero CTAs include `Get started`, `Tutorial`, `Playground`, and `GitHub`.
+- The fit band is mounted on the homepage as `/views/framework/fit.html`.
+- The footer is mounted on the public page shells: home, framework, info,
+  compare, tutorials, and examples.
 
-## Goal
-
-The homepage teaches well but under-converts. Three additions from the
-brief's homepage blueprint, all content that already exists elsewhere:
-
-1. **Hero CTAs.** Above the fold: `Get started` (→ /framework#install),
-   `Tutorial` (→ /tutorials), `GitHub`. The brief also wants a Playground
-   CTA — add it only when ticket 028 ships something.
-2. **Good fit / not a good fit band.** Trust signal. The content is already
-   written and ratified — the compare page's checklist items are exactly
-   this list. A compact two-column band (reuse the field-notes/checklist
-   visual pattern) with a link to /compare#checklist for the interactive
-   version. Do not write new fit claims; reuse the existing ones.
-3. **Footer.** Site-wide simple footer: GitHub, npm (when published),
-   /compare, /tutorials, /info, license. Currently pages just end.
-
-## Ground rules
-
-- Keep the "stops before overloading anyone's cognitives" property — these
-  are small bands, not new teaching sections.
-- House visual style per collab.md; no new colors, tokens only.
-- Voice per the brief §7.1 (this part of the brief is good): no
-  "revolutionary", no "blazing fast", humble about scope.
-
-## Acceptance
-
-- CTAs visible above the fold at mobile and desktop widths.
-- Fit band content matches the compare page checklist (no drift, link over
-  copy where possible).
-- Footer present on index, framework, info, compare, tutorials.
+`Playground` is included because ticket 028 has shipped.
