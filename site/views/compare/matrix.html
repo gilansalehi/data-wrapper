@@ -22,7 +22,7 @@
             reactivity: { grade: 'C+', text: 'Re-read exports on action, publish changes' },
             build:      { grade: 'A+', text: 'None — files are the deployment' },
             ssr:        { grade: 'F',  text: 'None; client-rendered' },
-            ecosystem:  { grade: 'F',  text: 'One hobbyist' },
+            ecosystem:  { grade: 'F',  text: 'Independent; no hiring market yet' },
         },
         {
             id: 'alpine', name: 'Alpine.js', self: false, shown: true,
@@ -39,7 +39,7 @@
             templating: { grade: 'B',  text: 'Tagged template literals in JS' },
             reactivity: { grade: 'B+', text: 'Reactive props re-render the template' },
             build:      { grade: 'A-', text: 'Runs from CDN; tooling recommended' },
-            ssr:        { grade: 'C',  text: 'Emerging (lit-labs)' },
+            ssr:        { grade: 'C',  text: 'Supported through Lit Labs' },
             ecosystem:  { grade: 'B',  text: 'Google-backed; web-components interop' },
         },
         {
@@ -94,13 +94,13 @@
             reactivity: { grade: 'A+', text: 'Fine-grained signals, no re-render' },
             build:      { grade: 'D',  text: 'Required (JSX)' },
             ssr:        { grade: 'B+', text: 'SolidStart' },
-            ecosystem:  { grade: 'B-', text: 'Moderate; benchmark darling' },
+            ecosystem:  { grade: 'B-', text: 'Moderate; performance-focused' },
         },
         {
             id: 'angular', name: 'Angular', self: false, shown: true,
             model:      { grade: 'C+', text: 'Full platform: DI, CLI, opinions' },
             templating: { grade: 'B',  text: 'HTML + Angular template syntax' },
-            reactivity: { grade: 'B',  text: 'Zone-based detection, moving to signals' },
+            reactivity: { grade: 'B',  text: 'Change detection + signals' },
             build:      { grade: 'D',  text: 'Required — CLI-managed' },
             ssr:        { grade: 'A-', text: 'Built-in' },
             ecosystem:  { grade: 'A-', text: 'Enterprise-grade; LTS culture' },
@@ -140,11 +140,11 @@
 
     const rationale = {
         model: 'Alpine takes it because its mental model is “your HTML, plus attributes” — nothing to restructure, almost nothing to learn. The pack behind it each add one idea: htmx moves the logic to your server, data-wrapper adds a component boundary, Svelte adds a compile step.',
-        templating: 'Svelte’s templates look like HTML but the compiler checks every expression at build time — the best of both worlds, if you accept the build. Vue’s compiled templates run close behind. data-wrapper keeps templates as literal HTML — which is the point — but its bindings stay unchecked strings.',
+        templating: 'Svelte’s templates look like HTML but the compiler checks every expression at build time — the best of both worlds, if you accept the build. Vue’s compiled templates run close behind. data-wrapper keeps templates as literal HTML — which is the point — and checks bindings at runtime instead of build time.',
         reactivity: 'Solid’s fine-grained signals update exactly the DOM nodes that depend on a changed value — no re-render, no diff, and the benchmark results to show for it. Runner-up Svelte reaches similar output by compiling updates ahead of time, at component-level granularity.',
         build: 'A three-way tie, and it can’t be broken: data-wrapper, Alpine, and htmx are script-tag-and-go, with no optional compiler you’re missing out on. Mithril trails only because real Mithril apps tend to want bundling for JSX and modules.',
         ssr: 'htmx wins by definition — server rendering isn’t a feature it supports, it’s the architecture. The frameworks behind it all render on the server too, but each needs a metaframework (Next, Nuxt, SvelteKit) to do what htmx does by existing.',
-        ecosystem: 'React, and it isn’t close: the hiring pool, package count, and tutorial volume run an order of magnitude past everyone else. Vue is the strongest runner-up, with the more curated, officially-maintained core.',
+        ecosystem: 'React leads this axis by a wide margin: the hiring pool, package count, and tutorial volume are its own kind of product. Vue is the strongest runner-up, with a more curated, officially maintained core.',
     };
 
     export const winners = () => axes.map(axis => {

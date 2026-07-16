@@ -5,12 +5,13 @@
 
     <p>
         Before comparing anything, be clear about what this is:
-        <strong>data-wrapper is a hobby-scale library, not an industry framework.</strong>
-        It is one custom element and about 1,400 lines of TypeScript —
-        18&nbsp;kB minified, ~7&nbsp;kB gzipped, zero dependencies, no build step.
-        This page compares it to frameworks maintained by companies and
-        thousand-contributor communities. Read the gaps section as seriously as
-        the pitch.
+        <strong>data-wrapper is an independent, early-stage library, not a
+        full-stack platform.</strong> It is one custom element and about 1,400
+        lines of TypeScript — 18&nbsp;kB minified, ~7&nbsp;kB gzipped, zero
+        dependencies, no build step. This page compares that focused design to
+        mature frameworks with large teams, companies, and communities behind
+        them. The adoption risks are real, but so is the leverage when the fit
+        is right.
     </p>
 
     <h3>The model, in one paragraph</h3>
@@ -53,8 +54,8 @@
         publishes only the values that changed. No dependency graph, no proxies,
         no virtual DOM, no compiler. Mutate plain data, and the flush boundary
         finds it. The cost is proportional to active bindings — cheap for pages
-        and dashboards, and honestly the wrong tool for a 60&nbsp;fps data grid
-        (see the gaps below).
+        and dashboards. Animation-rate state, streaming updates, and very large
+        grids need finer-grained machinery (see the gaps below).
     </p>
 
     <h3>Bindings are URLs</h3>

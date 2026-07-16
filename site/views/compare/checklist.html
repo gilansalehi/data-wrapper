@@ -5,7 +5,7 @@
         { id: 'origin',  checked: false, text: 'Views and data live on the same origin' },
         { id: 'vanilla', checked: false, text: 'The team writes HTML, CSS, and vanilla JS — framework onboarding would be a real cost' },
         { id: 'source',  checked: false, text: 'You’d rather read 1,400 lines of source than trust a black box' },
-        { id: 'churn',   checked: false, text: 'Pre-1.0 churn is acceptable — this is a side project, prototype, or internal tool' },
+        { id: 'churn',   checked: false, text: 'You can adopt a focused pre-1.0 tool and adjust with it' },
     ];
 
     export let cautions = [
@@ -14,7 +14,7 @@
         { id: 'spa',    checked: false, text: 'You need routing, code-splitting, and an app shell' },
         { id: 'eco',    checked: false, text: 'You need an ecosystem: component libraries, devtools, a hiring pool' },
         { id: 'types',  checked: false, text: 'Type-checked templates are non-negotiable for the team' },
-        { id: 'derisk', checked: false, text: 'Someone else must have de-risked the choice (support, LTS, a vendor to blame)' },
+        { id: 'derisk', checked: false, text: 'You need formal support, LTS, or vendor accountability' },
     ];
 
     const count = list => list.filter(i => i.checked).length;
@@ -35,12 +35,12 @@
         if (forIt === 0 && against === 0)
             return 'Check what applies to your project.';
         if (against >= 2)
-            return 'Use a mainstream framework. Two or more of those needs are exactly what React, Vue, Svelte, Solid, or Angular exist to solve — data-wrapper would fight you.';
+            return 'Use a mainstream framework. Two or more of those needs are exactly what React, Vue, Svelte, Solid, or Angular are built to solve.';
         if (against === 1)
             return 'Borderline. One hard requirement above is unmet — if you can’t design around it, pick a framework that has it built in.';
         if (forIt >= 3)
             return 'Good fit. Your project is the kind data-wrapper was built for — try it on one page before committing further.';
-        return 'Plausible fit, weak signal. Nothing rules it out, but nothing argues for it strongly either — vanilla JS might be enough.';
+        return 'Plausible fit. Nothing rules it out, but if the no-build component model is not important here, vanilla JS might be enough.';
     };
 
     export function toggleSignal(event) {

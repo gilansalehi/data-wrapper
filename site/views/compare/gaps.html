@@ -5,33 +5,31 @@
 
     <p>
         These gaps are consequences of the core bet — no build step, no
-        compiler, no dependency tracking. They are permanent by definition: if
-        any one of them is a dealbreaker for your project, no future release of
-        data-wrapper fixes it, and you should pick from the right-hand side of
-        the table above.
+        compiler, no dependency tracking. They are structural tradeoffs: if one
+        is a hard requirement for your project, a framework built around that
+        requirement is the better fit.
     </p>
 
-    <h3>Templates are invisible to TypeScript — forever</h3>
+    <h3>Templates are runtime-checked, not type-checked</h3>
     <p>
         Bindings are strings in HTML attributes, and having no compiler is the
-        product. Nothing will ever check at build time that
-        <code>$text="todoCont"</code> should have been <code>todoCount</code> —
-        at runtime it renders the literal text and warns in the console, which
-        is honest but late. Angular, Svelte, and Vue type-check templates
-        during compilation; JSX frameworks get it free from TypeScript itself.
-        If your team leans on the compiler to refactor safely, this is the gap
-        that bites hardest, and it is out of our hands by design.
+        product. The browser will not check at build time that
+        <code>$text="todoCont"</code> should have been <code>todoCount</code>.
+        data-wrapper surfaces the mistake at runtime by rendering the literal
+        text and warning in the console. Angular, Svelte, and Vue can type-check
+        templates during compilation; JSX frameworks lean on TypeScript in the
+        JavaScript layer. If your team relies on compile-time template checks to
+        refactor safely, this is the main tradeoff.
     </p>
 
     <h3>Coarse-grained invalidation is the model</h3>
     <p>
         A flush re-reads <em>every subscribed export of every live component</em>
         and diffs with <code>Object.is</code>. There is no dependency graph to
-        narrow the work, and there never will be — that's the trade that keeps
-        the whole reactivity model explainable in one paragraph. At page scale
-        it's invisible. Streaming data, large keyed grids, or animation-rate
-        state belong with Solid, Svelte, or Vue, which update exactly what
-        changed.
+        narrow the work — that's the trade that keeps the whole reactivity model
+        explainable in one paragraph. At page scale it's invisible. Streaming
+        data, large keyed grids, or animation-rate state belong with Solid,
+        Svelte, or Vue, which update exactly what changed.
     </p>
 
     <h3>No server rendering, no hydration</h3>
@@ -41,17 +39,18 @@
         JavaScript. A static prerender helper could soften first paint someday,
         but a real SSR-and-hydration protocol is a framework-scale commitment
         that contradicts the ship-files philosophy. If your dynamic content is
-        SEO-critical, Next, Nuxt, SvelteKit, and Angular solved this years ago.
+        SEO-critical, Next, Nuxt, SvelteKit, and Angular are designed for that
+        job.
     </p>
 
-    <h3>Ecosystem of one</h3>
+    <h3>Early ecosystem, single maintainer</h3>
     <p>
-        No Stack Overflow tag, no hiring pool, no LTS policy, and a bus factor
-        of one. This isn't a design decision — but no roadmap manufactures a
-        community either. React's real product is not the virtual DOM; it's the
-        ten thousand packages and the person you can hire tomorrow who already
-        knows it. Nothing at hobby scale competes with that, and this page
-        won't pretend to.
+        data-wrapper does not yet have a Stack Overflow tag, a hiring pool, an
+        LTS policy, or a community of maintainers. That is not a flaw in the
+        design, but it is an adoption fact. React's real product is not only
+        the virtual DOM; it is the packages, tutorials, conventions, and people
+        already trained to use it. data-wrapper has to earn that trust over
+        time.
     </p>
 </section>
 
