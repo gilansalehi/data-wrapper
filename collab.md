@@ -108,20 +108,24 @@ Apply them to new views and when touching old CSS; reference implementation is
    not lines. Never nest two bordered boxes directly: demo roots inside
    framed previews are flat.
 8. **Component CSS is @scope-d** (user directive, 2026-07-15). One scope
-   class on the component root, then `@scope (.that-class) { … }` with bare
-   element selectors inside — no BEM prefixes, no leakage, and the scope
-   class is the lookup key from DOM to styles. Reference:
-   `todos.v3.html`. Two traps when converting: (a) bare selectors keep
-   their low specificity, so matching a reset rule needs the same shape
-   (`input[type="text"]`, not `input`, to beat the reset's margin); (b) a
-   scope's bare `li`/`header` also styles any NESTED component's markup —
-   components that mount child wrappers should keep classes on contested
-   elements or scope with a donut (`@scope (.x) to (data-wrapper)`).
-   **Sweep complete 2026-07-15**: all 23 site views are scoped. Three
-   (nav, hero-tag, matrix) are wrap-only — prefixed selectors kept inside
-   the scope to avoid renaming hand-tuned state CSS; de-prefix them
-   opportunistically. Codex: `theme-studio/studio.html` and the
-   experiments sandbox are yours to convert.
+   class on the component root, then `@scope (.that-class) { … }`. Root
+   styles use `:scope`, not the root selector again:
+   `@scope (.card) { :scope { ... } }`, never
+   `@scope (.card) { .card { ... } }`. Child selectors can stay bare unless
+   root state, direct-child targeting, or specificity requires `:scope`
+   (`:scope[data-open] .panel`, `:scope > header`). This keeps parity with
+   the unscoped CSS and avoids the hero bug where the root background failed
+   to apply. Reference: `todos.v3.html`. Two traps when converting: (a) bare
+   selectors keep their low specificity, so matching a reset rule needs the
+   same shape (`input[type="text"]`, not `input`, to beat the reset's
+   margin); (b) a scope's bare `li`/`header` also styles any NESTED
+   component's markup — components that mount child wrappers should keep
+   classes on contested elements or scope with a donut
+   (`@scope (.x) to (data-wrapper)`). Container/media rules that belong to a
+   component should stay inside the same scope when possible. **Sweep note
+   2026-07-16**: audit for `.root` inside `@scope (.root)`; use `:scope`.
+   Codex: `theme-studio/studio.html` and the experiments sandbox are yours
+   to convert.
 9. **Mobile-first, container-aware.** Base styles are the narrow layout;
    columns join via `@media (min-width: …)` — or better, prefer query-free
    patterns (`width: min(100% - 2em, var(--measure))`, `auto-fit` grids).

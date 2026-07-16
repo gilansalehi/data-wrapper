@@ -151,11 +151,11 @@
             align-items: center;
             gap: .35rem;
         }
-    }
 
-    @container (width >= 44rem) {
-        .orders-demo .orders-layout {
-            grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
+        @container (width >= 44rem) {
+            :scope .orders-layout {
+                grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
+            }
         }
     }
 </style>

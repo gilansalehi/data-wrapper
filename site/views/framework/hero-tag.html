@@ -140,9 +140,9 @@
 </section>
 
 <style>
-    /* House pattern: scoped to the component root. Selectors inside keep
-       their .tag-hero prefixes (the root is in scope, so they still
-       match) — the scope adds the boundary without a risky rename. */
+    /* Prefix-scoped by convention. If this moves back to CSS @scope,
+       the root selector must become :scope; child selectors can stay
+       prefixed or be simplified inside the scope. */
 
     .tag-hero {
         position: relative;
