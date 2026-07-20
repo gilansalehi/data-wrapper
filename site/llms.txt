@@ -29,3 +29,6 @@ Core facts:
   creates per-wrapper instance state.
 - Use `action()` or `flush()` after mutations so active bindings update.
 - Loaded view URLs are trusted code and must remain same-origin.
+- Multi-page projects use a physical `index.html` document per route plus a
+  shared layout view composed through `*src`. A client-side router is only
+  justified for stateful app screens, not a finite set of content pages.

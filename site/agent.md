@@ -95,6 +95,39 @@ Rules:
 - The factory may return an object of per-wrapper instance bindings.
 - Instance bindings shadow module exports with the same name.
 
+## Project Structure and Routing
+
+data-wrapper has no built-in router and no history-API integration. Do not
+build or add one by default. For a multi-page project, the platform-native
+default is one physical HTML document per route, deployed as-is by a static
+host:
+
+- Every public route is its own real `<route>/index.html` document, not a
+  client-side match against a single entrypoint. That gets you direct-link
+  support, native Back/Forward, and the host's ordinary 404 behavior for
+  free, with no router code.
+- Root-relative URLs (`/about/`, `/views/...`) resolve the same from every
+  route, unlike relative paths.
+- Everything under the public root is fetchable by any browser. Never place
+  secrets there; gate private data behind an authenticated API instead.
+
+Use `*src` to share chrome (nav, theme, page outlet) across route documents
+instead of duplicating it, without turning it into a router:
+
+```html
+<template *src="currentView"></template>
+```
+
+A non-empty string resolved by that binding loads another view as a child
+`<data-wrapper>`; the route document supplies which view, the shared layout
+just renders the outlet. How a project names the views or organizes its
+`views/` folder is a project-level choice, not a framework contract — there
+is no required directory layout or attribute naming scheme.
+
+A client-side router is only worth reaching for when the app has genuinely
+stateful screens that cannot be represented by deployed files. A finite set
+of content pages should stay physical.
+
 ## Reactivity
 
 data-wrapper does not track property reads. It re-reads active bindings during a

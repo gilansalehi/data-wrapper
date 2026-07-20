@@ -884,3 +884,52 @@ Source: /views/showcase/orders-monitor.html
     </dl>
 </aside>
 ```
+
+
+18. Project Structure and Routing
+----------------------------------
+
+data-wrapper ships no router and no history-API integration, and does not
+expect one. Do not add a client-side router by default when structuring a
+multi-page project; that is the most common invalid assumption agents make
+about this framework.
+
+The platform-native default:
+
+- Give every public route a physical `index.html` document, deployed as-is
+  by a static host. Each document owns its own doctype, meta, canonical URL,
+  stylesheets, import map, framework script, shim, and root `<data-wrapper>`
+  mount. In exchange you get direct-link support, native Back/Forward
+  behavior, and the host's ordinary 404 handling with no routing code.
+- Choose one directory as the public web root (for example `site/` or
+  `docs/`); its name is not part of the public URL. Everything inside it is
+  fetchable by any browser, so treat it as public — never place secrets
+  there, and serve private data from an authenticated API instead.
+- Use root-relative URLs (`/about/`, `/views/...`) so links and view sources
+  resolve the same from every route, rather than relative to the current
+  document.
+
+Sharing chrome across routes:
+
+`*src` is the mechanism for composing a shared layout without duplicating
+markup or introducing a router:
+
+```html
+<main class="page-outlet">
+  <template *src="currentView"></template>
+</main>
+```
+
+A non-empty string resolved by `currentView` loads that view as a child
+`<data-wrapper>`, so the routed-in view is its own component with its own
+module and lifecycle. The layout view can own site-wide concerns (nav, theme,
+page outlet) while each route document just supplies which view to load.
+There is no required naming scheme for that binding or a mandated `views/`
+directory layout — that is a project-level choice, not a framework contract.
+
+When a router is justified:
+
+- Reach for a client-side router only when the app has genuinely stateful
+  screens that cannot be represented by deployed files.
+- A finite collection of content pages does not need one. Prefer physical
+  route documents plus the browser and static host.
