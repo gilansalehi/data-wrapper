@@ -56,6 +56,26 @@ with two style rules). When the big pass happens: homepage keeps the hero +
 one taste of the product + CTAs; the step-by-step content consolidates into
 /tutorials.
 
+### 8. Diagnostics and a sibling-coordination showcase — from Codex 5.6 dogfood feedback
+
+Docs were updated (agent.md, llms.txt, llms-full.txt) to state the rule and
+the "small magic" event/prop semantics Codex flagged after building a
+personal-site consumer of the framework. Two items from that feedback are
+runtime/example work, not doc text, and are parked here:
+
+- Dev-mode diagnostics: misspelled `@event` action names currently fail
+  silently (the binding just falls through to an emitted CustomEvent).
+  Unresolved bindings and blocked URL schemes already warn; this case
+  doesn't. Worth a console warning when a `@event` path matches no export
+  and isn't clearly used for child-to-parent signaling.
+- A composition-cookbook showcase example demonstrating sibling
+  coordination through a shared module (the pattern now documented in
+  agent.md's "Coordinating Sibling Components"). `composition.html` today
+  only covers parent/child composition via `*src`; there's no worked example
+  for peers with no ownership relationship, which is exactly the gap that
+  led Codex to reach for an imperative DOM-querying fix before converting it
+  to the declarative pattern.
+
 ## Non-Goals
 
 - No behavioral changes.

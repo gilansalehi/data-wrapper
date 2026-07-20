@@ -155,10 +155,36 @@ setTimeout(() => {
 }, 1000);
 ```
 
+`flush()` updates every mounted component runtime, not just the caller's.
+Importing a shared `action()`-wrapped writer from another module and calling
+it is therefore a valid way to keep sibling components in sync — see
+Coordinating Sibling Components below.
+
 Functions used as values are called when bindings are read. For example,
 `$text="doubled"` calls `doubled()` if `doubled` is an exported function.
 Event bindings are different: `@click="increment"` invokes the function when
 the event fires.
+
+## Events
+
+`@event="name"` always wraps the native event. The handler — whether
+invoked directly or reached through an emitted event — receives a
+`CustomEvent` whose `detail` holds `originalEvent` (the real DOM event),
+`path`, `isRel`, and `item` (the nearest `*list` row, or `undefined` outside
+a list). Do not assume the argument is the native event.
+
+```js
+export const removeTodo = action(event => {
+    const item = event.detail.item;
+    todos = todos.filter(todo => todo.id !== item.id);
+});
+```
+
+If no exported function matches `name`, the same event is dispatched as a
+bubbling DOM `CustomEvent` named `name` instead of being invoked directly —
+useful for child-to-parent signaling. It also means a misspelled action name
+fails silently rather than throwing; double-check action names against their
+exports.
 
 ## Binding Paths
 
@@ -189,6 +215,12 @@ Inside `*list`, use `./` for row-relative data:
 template bodies to one root element. The runtime clones the first element child
 from a structural template.
 
+A plain `src` attribute on `<data-wrapper>` is read once, when the wrapper
+connects; it does not react to later changes. `<template *src="binding">` is
+different: it re-reads its binding on every flush, so the outlet can swap to
+a different view, project different children, or fall back to template
+content as the bound value changes over time.
+
 ## Inputs and Slots
 
 Query params on `src` become factory `props`:
@@ -197,13 +229,40 @@ Query params on `src` become factory `props`:
 <data-wrapper src="/views/counter.html?start=5&label=%22Demo%22"></data-wrapper>
 ```
 
-Literal assigned values are parsed with `JSON.parse` when possible, so `5`,
-`true`, `null`, arrays, objects, and quoted strings recover their JSON types.
-If a param resolves to a parent binding, the prop is a stable function reader.
+Each param's right-hand side is tried as a binding path against the parent
+context first. If it resolves, the prop is a stable function reader — call
+it to get the current value. Only when nothing resolves does the value fall
+back to a literal parsed with `JSON.parse`, so `5`, `true`, `null`, arrays,
+objects, and quoted strings recover their JSON types.
+
+This means `?entries=entries` does not read as the literal string
+`"entries"` if the parent has a binding named `entries` — it resolves to
+that binding instead, and the child receives a live reader function, not a
+static string. Quote a value (`?label=%22entries%22`) to force a literal
+when that ambiguity matters.
 
 Captured light-DOM children are grouped by their ordinary `slot` attribute and
 passed to the factory as `slots`. The `slot` attribute is a grouping key; this
 is not Shadow DOM slotting.
+
+## Coordinating Sibling Components
+
+Do not coordinate sibling `<data-wrapper>` components by querying or
+mutating each other's rendered DOM. That is an imperative escape hatch, not
+the framework's integration surface, and it breaks the moment markup changes.
+
+Put shared data in one place instead, and pick based on the relationship:
+
+- **No ownership relationship (peers):** a shared ES module exporting state
+  and `action()`-wrapped writers. Every component that imports from it reads
+  the same live bindings; calling an imported writer flushes every mounted
+  component that reads the affected exports. This is the default choice for
+  catalogs, relationship state, and view-model functions shared across
+  components that don't compose each other.
+- **One component only needs to read another's state:** `//wrapperId/name`
+  cross-wrapper reads. Read-only, and only reaches component root scope.
+- **A parent already composes a child directly:** pass data down through
+  `src` query params instead of reaching for shared module state.
 
 ## Security Defaults
 

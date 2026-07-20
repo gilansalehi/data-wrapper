@@ -32,3 +32,9 @@ Core facts:
 - Multi-page projects use a physical `index.html` document per route plus a
   shared layout view composed through `*src`. A client-side router is only
   justified for stateful app screens, not a finite set of content pages.
+- Never coordinate sibling components by querying or mutating each other's
+  DOM. Use a shared module (state + `action()`), `//wrapperId/name` for
+  read-only cross-wrapper reads, or `src` query props for parent-to-child.
+- `@event="name"` handlers receive a `CustomEvent` wrapping the original
+  event, not the native event directly; `event.detail.item` is the nearest
+  `*list` row.

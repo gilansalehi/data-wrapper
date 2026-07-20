@@ -139,10 +139,14 @@ Supported event modifiers are query params:
 - `?stop` calls `event.stopPropagation()`.
 - `?immediate` calls `event.stopImmediatePropagation()`.
 
-If the path names an exported function, the component runtime invokes that
-function when the event fires. If there is no matching function, the binding
-emits a bubbling CustomEvent with the assigned path as the event name. This is
-useful for child-to-parent signaling.
+The handler always receives a `CustomEvent`, never the raw native event
+directly, whether the path matches an exported function or not. If the path
+names an exported function, the component runtime invokes that function
+with the `CustomEvent`. If there is no matching function, the same
+`CustomEvent` is dispatched as a bubbling DOM event with the assigned path as
+the event name. This is useful for child-to-parent signaling, but it also
+means a misspelled action name fails silently instead of throwing — double-
+check action names against their exports.
 
 The CustomEvent detail contains:
 
@@ -150,6 +154,13 @@ The CustomEvent detail contains:
 - `path`: the assigned action path.
 - `isRel`: whether the path was relative.
 - `item`: the nearest `*list` row item, when inside a row.
+
+```js
+export const removeTodo = action(event => {
+    const item = event.detail.item;
+    todos = todos.filter(todo => todo.id !== item.id);
+});
+```
 
 
 6. `*` Directives
@@ -204,6 +215,11 @@ when the value is falsy.
     <p>Choose a panel.</p>
 </template>
 ```
+
+`*src` is reactive: it re-reads its binding on every flush, so the outlet
+can swap sources as the bound value changes. This differs from a plain `src`
+attribute directly on `<data-wrapper>`, which is read once when the wrapper
+connects and does not react to later changes.
 
 
 7. Binding Path Grammar
@@ -277,15 +293,20 @@ The factory receives:
 - `slots`: captured light-DOM child groups keyed by `slot`.
 - `cleanup(off)`: registers teardown callbacks.
 
-Query params on `src` become props. Assigned literal values are parsed with
-`JSON.parse` when possible:
+Query params on `src` become props. Each param's right-hand side is tried as
+a binding path against the parent context first; if it resolves, the prop is
+a stable reader function. Only when nothing resolves is the value parsed as a
+literal with `JSON.parse`:
 
 ```html
 <data-wrapper src="/views/counter.html?start=5&debug=true"></data-wrapper>
 ```
 
-If a query value resolves to a parent binding, the prop is a stable reader
-function. If it does not resolve, it becomes a static value.
+This resolution order means a param like `?entries=entries` does not read as
+the literal string `"entries"` if the parent has a binding named `entries` —
+it resolves to that binding instead, and the child receives a live reader
+function, not a static string. Quote a value (`?label=%22entries%22`) to
+force a literal when that ambiguity matters.
 
 The original full `src` string is always available as `props.url`.
 
@@ -321,6 +342,11 @@ setTimeout(() => {
     flush();
 }, 1000);
 ```
+
+`flush()` updates every mounted component runtime, not just the caller's.
+Importing a shared `action()`-wrapped writer from another module and calling
+it is therefore a valid way to keep sibling components in sync (see section
+19, Coordinating Sibling Components).
 
 When a binding reads a function as a value, the function is called with no
 arguments. This is how computed exports work:
@@ -933,3 +959,26 @@ When a router is justified:
   screens that cannot be represented by deployed files.
 - A finite collection of content pages does not need one. Prefer physical
   route documents plus the browser and static host.
+
+
+19. Coordinating Sibling Components
+------------------------------------
+
+Do not coordinate sibling `<data-wrapper>` components by querying or
+mutating each other's rendered DOM. That is an imperative escape hatch, not
+the framework's integration surface, and it breaks the moment markup changes.
+
+Put shared data in one place instead, and pick based on the relationship:
+
+- No ownership relationship (peers): a shared ES module exporting state and
+  `action()`-wrapped writers. Every component that imports from it reads the
+  same live bindings; calling an imported writer flushes every mounted
+  component that reads the affected exports (see section 9, Reactivity).
+  This is the default choice for catalogs, relationship state, and
+  view-model functions shared across components that don't compose each
+  other.
+- One component only needs to read another's state: `//wrapperId/name`
+  cross-wrapper reads (section 7). Read-only, and only reaches component
+  root scope.
+- A parent already composes a child directly: pass data down through `src`
+  query params instead (section 8).
