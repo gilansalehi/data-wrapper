@@ -56,3 +56,60 @@ an adopter can actually deploy.
   from this ticket (user-witnessed), not to reasoning from source.
 - The recommended policy is verified against home, framework, info, and
   compare pages — including the todos/orders demos and one `*src` swap.
+
+---
+
+## Status 2026-07-16 — harness ready, browser passes are next
+
+The `CSP` env-var harness is in `serve.ts` (Claude): set `CSP='...'` and every
+response carries that `Content-Security-Policy` header; unset means no header.
+Typecheck green. No other config surface added.
+
+### Browser pass procedure (user runs; record console output verbatim)
+
+Run each policy below, then visit **home, framework, info, compare,
+playground**, exercise the **todos + orders demos**, and trigger one ***src
+swap** (composer tabs). Note every CSP violation the console reports — the
+violated directive and the blocked resource — before moving to the next rung.
+
+Rung 1 — strict baseline (expected to break; the errors are the data):
+
+```sh
+CSP="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'" bun serve.ts
+```
+
+Rung 2 — add `blob:` for view modules (answers: is `blob:` alone enough for
+component scripts, including nested `*src` loads?):
+
+```sh
+CSP="default-src 'self'; script-src 'self' blob:; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'" bun serve.ts
+```
+
+Rung 3 — add `'unsafe-inline'` to script-src (answers: do the inline theme
+snippet + inline import map need it, or did rung 2 already pass them?):
+
+```sh
+CSP="default-src 'self'; script-src 'self' blob: 'unsafe-inline'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'" bun serve.ts
+```
+
+Rung 4 — add `'unsafe-inline'` to style-src (component `<style>` tags):
+
+```sh
+CSP="default-src 'self'; script-src 'self' blob: 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'" bun serve.ts
+```
+
+Rung 5 — shim host: repeat the passing rung with `https://ga.jspm.io` added to
+`script-src` in a browser that needs the shim (or force it by clearing native
+import-map support assumptions); confirms whether adopters must list the shim
+host.
+
+Rung 6 — Trusted Types probe: append
+`; require-trusted-types-for 'script'` to the passing policy and record WHICH
+sinks report violations (candidates from source: loader innerHTML, `$unsafeHTML`,
+`srcdoc`). Observation only — scopes the future Trusted Types tier.
+
+### Close-out
+
+The minimal passing policy from the rungs becomes the "recommended CSP"
+snippet on `views/info/security.html`, and the CSP row there gets rewritten
+from these observations. Findings note lands here.

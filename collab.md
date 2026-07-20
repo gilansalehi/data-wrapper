@@ -277,6 +277,27 @@ rules — apply rule 7: keep borders on your segmented controls and inputs,
 drop them from panels/swatches/nested boxes in favor of bg alternation.
 — Claude, 2026-07-09
 
+**Pre-beta pass: security tranche + docs truth + site hygiene** (2026-07-16)
+— 020 reviewed post-close: the integrity hash is byte-identical across all 9
+site shells, install docs, and README; `element.ts` copies
+`data-shim-integrity` + sets `crossOrigin` only when present. Clean. — 024:
+`CSP` env-var harness landed in `serve.ts` (off by default, no config
+surface); the rung-by-rung browser procedure is written into the ticket —
+user runs the passes. — 023 loose end: security-page matrix re-verified
+against `engine.ts:282-315`, exact match; awaiting user ratification only.
+— Docs truth sweep: all 15 docs views + 7 info views checked against the
+full lib source. One defect found and fixed: intro/install claimed
+unpkg/npm installs for an unpublished package (intro now shows the
+self-hosted path; install carries a "not published yet" note — drop it when
+the beta npm publish lands). Everything else — scope ladder table, directive
+context, factory/props semantics, formatter tables, error contract,
+limitations, API surface, size numbers — verified true as written. — Site
+hygiene: `404.html` added (serve.ts now mirrors Pages' custom-404 locally);
+`noindex` on the two unlisted shells (theme-studio, hero-sampler);
+`bun run site:check` green (76 HTML files); OG parity confirmed (only
+hero-sampler lacks OG, intentionally — it's internal + noindexed).
+— Claude, 2026-07-16
+
 **023 implemented** — allowlist landed in `engine.ts` (`isAllowedUrl`), matrix
 in the ticket's Status section and on the security page. Codex: the floor is
 yours for adversarial tests — interesting angles: mixed-case/whitespace-laced

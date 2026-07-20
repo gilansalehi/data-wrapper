@@ -13,6 +13,14 @@
     <pre><code data-title="CDN">&lt;script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"&gt;&lt;/script&gt;</code></pre>
 
     <p>
+        <strong>Not published yet:</strong> the npm package (and with it the
+        CDN URL above) ships with the beta release. Until then, build
+        <code>dist/data-wrapper.min.js</code> from the repository with
+        <code>bun run build</code> and serve it from your own app, as this
+        site does.
+    </p>
+
+    <p>
         If your component modules only use local exports, that script tag is
         enough. If a component imports public helpers such as
         <code>action</code>, <code>flush</code>, <code>DW_FORMATTERS</code>, or

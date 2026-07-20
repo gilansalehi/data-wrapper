@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>data-wrapper — page not found</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="description" content="This page does not exist.">
+    <script type="importmap">{"imports":{"data-wrapper":"/dist/data-wrapper.js","state/":"/state/"}}</script>
+    <script>
+        (() => {
+            try {
+                const v = localStorage.getItem('data-wrapper:theme');
+                if (v === 'light' || v === 'dark') document.documentElement.dataset.theme = v;
+            } catch {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/assets/css/index.css">
+    <script src="/dist/data-wrapper.js" type="module"
+            data-shim-src="https://ga.jspm.io/npm:es-module-shims@2.8.1/dist/es-module-shims.js"
+            data-shim-integrity="sha384-Ojz/JNsyOdkNfGWOlfhDmeq68SXcsoWSABV4yVQn8Wr/YaKJJTrZs5p2Zi39PWuL"></script>
+</head>
+<body>
+
+<data-wrapper id="nav" src="/views/nav.html" $data-nav-open="open"></data-wrapper>
+
+<header class="page-hero">
+    <div class="container">
+        <p class="page-hero__kicker">404</p>
+        <h1 class="page-hero__title">This view failed to resolve.</h1>
+        <p class="page-hero__lead">
+            No page lives at this address. In keeping with house style, we throw
+            loudly instead of guessing what you meant — but every real page is
+            one click away.
+        </p>
+        <p class="page-hero__motif" aria-hidden="true">
+            <span class="hero-chip"><b>✗</b> not found</span>
+            <span class="hero-chip"><b>▸</b> pick a route below</span>
+        </p>
+    </div>
+</header>
+
+<main class="container">
+    <nav aria-label="Site pages" style="margin-block: 2rem 3rem;">
+        <ul class="rows" style="max-width: 28rem; padding: 0; list-style: none;">
+            <li><a href="/">Home</a></li>
+            <li><a href="/tutorials">Tutorial</a></li>
+            <li><a href="/examples">Examples</a></li>
+            <li><a href="/playground">Playground</a></li>
+            <li><a href="/framework">Framework guide</a></li>
+            <li><a href="/compare">Comparison</a></li>
+            <li><a href="/info">Technical info</a></li>
+        </ul>
+    </nav>
+</main>
+
+<data-wrapper src="/views/footer.html"></data-wrapper>
+</body>
+</html>

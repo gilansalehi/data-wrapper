@@ -13,6 +13,10 @@ const port = Number.isFinite(envPort) ? envPort : 3000;
 const hostname = Bun.env.HOST || '127.0.0.1';
 const root = Bun.env.SERVE_ROOT || 'site';
 
+// Ticket 024 harness: CSP='...policy...' bun serve.ts sends the policy on every
+// response so CSP claims can be verified in a real browser. Off by default.
+const csp = Bun.env.CSP;
+
 const server = Bun.serve({
     port,
     hostname,
@@ -25,19 +29,27 @@ const server = Bun.serve({
         let file = Bun.file(`${root}/${parts.join('/')}`);
 
         // Mirror Cloudflare Pages' clean-URL behavior locally: /framework -> /framework.html.
+        let status = 200;
         if (!(await file.exists())) {
             const htmlFallback = Bun.file(`${root}/${parts.join('/')}.html`);
             if (await htmlFallback.exists()) file = htmlFallback;
-            else return new Response('Not found', { status: 404 });
+            else {
+                // Mirror Cloudflare Pages: missing routes serve the custom 404 page.
+                const notFound = Bun.file(`${root}/404.html`);
+                if (!(await notFound.exists())) return new Response('Not found', { status: 404 });
+                file = notFound;
+                status = 404;
+            }
         }
 
-        return new Response(file, {
-            headers: {
-                "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-                "Pragma": "no-cache",
-                "Expires": "0",
-            },
-        });
+        const headers: Record<string, string> = {
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        };
+        if (csp) headers["Content-Security-Policy"] = csp;
+
+        return new Response(file, { status, headers });
     },
 });
 
