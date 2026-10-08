@@ -5,19 +5,19 @@
 
     <p>
         The fastest way to try data-wrapper is to load the browser bundle from
-        a CDN. Once the script is on the page, every
+        data-wrapper.org. Once the script is on the page, every
         <code>&lt;data-wrapper&gt;</code> element can load a view file with its
         own HTML and component module.
     </p>
 
-    <pre><code data-title="CDN">&lt;script src="https://unpkg.com/data-wrapper/dist/data-wrapper.min.js"&gt;&lt;/script&gt;</code></pre>
+    <pre><code data-title="script tag">&lt;script src="https://data-wrapper.org/dist/data-wrapper.min.js"&gt;&lt;/script&gt;</code></pre>
 
     <p>
-        <strong>Not published yet:</strong> the npm package (and with it the
-        CDN URL above) ships with the beta release. Until then, build
-        <code>dist/data-wrapper.min.js</code> from the repository with
-        <code>bun run build</code> and serve it from your own app, as this
-        site does.
+        <strong>Pre-alpha:</strong> data-wrapper.org is the only hosted build
+        for now. The npm package (and unpkg/jsDelivr URLs) ships with the
+        alpha release. To self-host, build <code>dist/</code> from the
+        repository with <code>bun run build</code> and serve it from your own
+        app.
     </p>
 
     <p>
@@ -38,15 +38,12 @@
 &lt;script src="/dist/data-wrapper.js" type="module"&gt;&lt;/script&gt;</code></pre>
 
     <p>
-        Package installs use the same module name. Importing
-        <code>data-wrapper</code> registers the custom element. Named imports
-        give component modules access to the public reactivity and extension
-        APIs.
+        Importing <code>data-wrapper</code> registers the custom element. Named
+        imports give component modules access to the public reactivity and
+        extension APIs. Package installs (<code>npm install</code> /
+        <code>bun add</code>) will use the same module name once the package
+        is published.
     </p>
-
-    <pre><code data-title="package install">npm install data-wrapper
-# or
-bun add data-wrapper</code></pre>
 
     <pre><code data-title="application module">import 'data-wrapper';
 

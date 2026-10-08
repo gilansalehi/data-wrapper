@@ -16,7 +16,7 @@ If a claim conflicts with source, source wins.
 
 ## Distribution
 
-For browser use, load the alpha build from the project domain:
+For browser use, load the pre-alpha build from the project domain:
 
 ```html
 <script src="https://data-wrapper.org/dist/data-wrapper.min.js"></script>
